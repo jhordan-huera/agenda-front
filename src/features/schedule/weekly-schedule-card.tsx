@@ -1,0 +1,62 @@
+import { useState } from "react";
+import { toast } from "sonner";
+import { SubmitButton } from "@/components/shared/submit-button";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSaveSchedules } from "@/hooks/queries/use-schedule";
+import { getErrorMessage } from "@/lib/data";
+import type { Schedule } from "@/types";
+import { toWeekInputs, validateWeek } from "./schedule-utils";
+import { WeeklyScheduleEditor } from "./weekly-schedule-editor";
+
+export function WeeklyScheduleCard({ schedules }: { schedules: Schedule[] }) {
+  const saveSchedules = useSaveSchedules();
+  const saved = toWeekInputs(schedules);
+  const [week, setWeek] = useState(saved);
+  const [errors, setErrors] = useState<Record<number, string>>({});
+  const dirty = JSON.stringify(week) !== JSON.stringify(saved);
+
+  const save = async () => {
+    const validation = validateWeek(week);
+    setErrors(validation);
+    if (Object.keys(validation).length > 0) {
+      toast.error("Revisa los intervalos marcados");
+      return;
+    }
+    try {
+      await saveSchedules.mutateAsync(week);
+      toast.success("Horario guardado");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Horario semanal</CardTitle>
+        <CardDescription>
+          Activa los días que atiendes. Usa “Agregar intervalo” para horarios partidos (p. ej. 08:00–12:00 y 14:00–18:00).
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <WeeklyScheduleEditor value={week} onChange={setWeek} errors={errors} />
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            disabled={!dirty || saveSchedules.isPending}
+            onClick={() => {
+              setWeek(saved);
+              setErrors({});
+            }}
+          >
+            Descartar cambios
+          </Button>
+          <SubmitButton type="button" onClick={save} disabled={!dirty} loading={saveSchedules.isPending}>
+            Guardar horario
+          </SubmitButton>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

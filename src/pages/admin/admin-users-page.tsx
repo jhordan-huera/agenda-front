@@ -1,0 +1,232 @@
+import { KeyRound, MoreHorizontal, Search, ShieldCheck, UserCheck, UserX } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router";
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { EmptyState } from "@/components/shared/empty-state";
+import { ErrorState } from "@/components/shared/error-state";
+import { ListSkeleton } from "@/components/shared/list-skeleton";
+import { PageHeader } from "@/components/shared/page-header";
+import { PageTitle } from "@/components/shared/page-title";
+import { UserAvatar } from "@/components/shared/user-avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { UserStatusBadge } from "@/features/admin/business-badges";
+import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
+import { useAdminUsers, useSetUserActive } from "@/hooks/queries/use-admin";
+import { getErrorMessage } from "@/lib/data";
+import { formatNumericDate, getFullName, normalizeSearch } from "@/lib/format";
+import { ROLE_LABELS } from "@/lib/permissions";
+import type { AdminUserSummary } from "@/types";
+
+type UserFilter = "all" | "owners" | "team" | "no_business" | "disabled";
+
+const FILTERS: { value: UserFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "owners", label: "Propietarios" },
+  { value: "team", label: "Equipos (admin / staff)" },
+  { value: "no_business", label: "Sin negocio" },
+  { value: "disabled", label: "Desactivados" },
+];
+
+
+function matchesFilter({ user, memberships }: AdminUserSummary, filter: UserFilter) {
+  switch (filter) {
+    case "owners":
+      return memberships.some((m) => m.role === "owner");
+    case "team":
+      return memberships.some((m) => m.role !== "owner");
+    case "no_business":
+      return !user.platformRole && memberships.length === 0;
+    case "disabled":
+      return !user.isActive;
+    default:
+      return true;
+  }
+}
+
+export default function AdminUsersPage() {
+  const users = useAdminUsers();
+  const setActive = useSetUserActive();
+  const setPassword = useSetPasswordDialog();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<UserFilter>("all");
+  // Se conserva el usuario al cerrar para que el texto no cambie durante la animación.
+  const [toggleDialog, setToggleDialog] = useState<{ open: boolean; row: AdminUserSummary | null }>({ open: false, row: null });
+  const toggling = toggleDialog.row;
+
+  const rows = (users.data ?? []).filter((row) => {
+    const term = normalizeSearch(search.trim());
+    const matchesSearch =
+      !term ||
+      [getFullName(row.user), row.user.email, ...row.memberships.map((m) => m.businessName)].some((v) =>
+        normalizeSearch(v).includes(term),
+      );
+    return matchesSearch && matchesFilter(row, filter);
+  });
+
+  return (
+    <div className="space-y-6">
+      <PageTitle title="Usuarios" />
+      <PageHeader
+        title="Usuarios"
+        description="Todas las cuentas de la plataforma: propietarios, equipos y registros sin negocio."
+      />
+
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            aria-label="Buscar usuarios"
+            placeholder="Buscar por nombre, email o negocio…"
+            className="h-9 bg-background pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Select value={filter} onValueChange={(value) => setFilter(value as UserFilter)}>
+          <SelectTrigger aria-label="Filtrar usuarios" className="h-9 w-full bg-background sm:w-56">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent position="popper">
+            {FILTERS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {users.isPending ? (
+        <ListSkeleton rows={8} />
+      ) : users.isError ? (
+        <ErrorState onRetry={() => users.refetch()} />
+      ) : rows.length === 0 ? (
+        <EmptyState icon={Search} title="Sin resultados" description="No hay usuarios que coincidan con la búsqueda o el filtro." />
+      ) : (
+        <div className="overflow-hidden rounded-xl border bg-background">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="pl-4">Usuario</TableHead>
+                <TableHead className="hidden md:table-cell">Negocio y rol</TableHead>
+                <TableHead className="hidden lg:table-cell">Alta</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="w-12 pr-4">
+                  <span className="sr-only">Acciones</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => {
+                const { user, memberships } = row;
+                const name = getFullName(user);
+                return (
+                  <TableRow key={user.id}>
+                    <TableCell className="pl-4">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar name={name} src={user.avatarUrl} size="sm" className="size-8" />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{name}</p>
+                          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {user.platformRole ? (
+                        <Badge>
+                          <ShieldCheck /> Super admin
+                        </Badge>
+                      ) : memberships.length === 0 ? (
+                        <span className="text-muted-foreground">Sin negocio</span>
+                      ) : (
+                        memberships.map((m) => (
+                          <p key={m.businessId} className="truncate">
+                            <Link to={`/admin/businesses/${m.businessId}`} className="hover:underline">
+                              {m.businessName}
+                            </Link>{" "}
+                            <span className="text-muted-foreground">· {ROLE_LABELS[m.role]}</span>
+                          </p>
+                        ))
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden whitespace-nowrap lg:table-cell">
+                      {formatNumericDate(user.createdAt.slice(0, 10))}
+                    </TableCell>
+                    <TableCell>
+                      <UserStatusBadge active={user.isActive} />
+                    </TableCell>
+                    <TableCell className="pr-4">
+                      {!user.platformRole && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon-sm" aria-label={`Acciones para ${name}`}>
+                              <MoreHorizontal />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onSelect={() => setPassword.request({ id: user.id, name, email: user.email })}>
+                              <KeyRound /> Cambiar contraseña
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant={user.isActive ? "destructive" : "default"}
+                              onSelect={() => setToggleDialog({ open: true, row })}
+                            >
+                              {user.isActive ? <UserX /> : <UserCheck />}
+                              {user.isActive ? "Desactivar acceso" : "Reactivar acceso"}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {setPassword.dialog}
+      <ConfirmDialog
+        open={toggleDialog.open}
+        onOpenChange={(open) => setToggleDialog((current) => ({ ...current, open }))}
+        title={
+          toggling?.user.isActive
+            ? `¿Desactivar el acceso de ${toggling ? getFullName(toggling.user) : ""}?`
+            : `¿Reactivar el acceso de ${toggling ? getFullName(toggling.user) : ""}?`
+        }
+        description={
+          toggling?.user.isActive
+            ? "No podrá iniciar sesión hasta que lo reactives. Sus datos y los de su negocio se conservan."
+            : "Podrá volver a iniciar sesión con su contraseña."
+        }
+        confirmLabel={toggling?.user.isActive ? "Desactivar" : "Reactivar"}
+        destructive={toggling?.user.isActive}
+        onConfirm={async () => {
+          if (!toggling) return;
+          try {
+            await setActive.mutateAsync({ userId: toggling.user.id, isActive: !toggling.user.isActive });
+            toast.success(toggling.user.isActive ? "Acceso desactivado" : "Acceso reactivado");
+          } catch (error) {
+            toast.error(getErrorMessage(error));
+            throw error;
+          }
+        }}
+      />
+    </div>
+  );
+}
