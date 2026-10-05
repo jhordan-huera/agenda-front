@@ -177,7 +177,9 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>ntfy y healthchecks.io</strong>, para avisos internos de funcionamiento al equipo de {APP_NAME}, con
-                datos mínimos (cifras y, en las alertas de seguridad, el email de la cuenta parcialmente oculto).
+                datos mínimos: qué emails automáticos se enviaron, con el nombre abreviado del destinatario, su email
+                parcialmente oculto, el negocio y la fecha de la cita; y, en las alertas de seguridad, el email de la
+                cuenta parcialmente oculto.
               </li>
             </ul>
             <p>
