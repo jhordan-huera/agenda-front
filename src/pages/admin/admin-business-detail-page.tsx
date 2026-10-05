@@ -9,6 +9,7 @@ import {
   PauseCircle,
   Phone,
   PlayCircle,
+  Trash2,
   UserPlus,
 } from "lucide-react";
 import { useState } from "react";
@@ -27,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AdminAuditList } from "@/features/admin/admin-audit-list";
 import { BusinessStatusBadge, PlanBadge } from "@/features/admin/business-badges";
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
+import { DeleteBusinessDialog } from "@/features/admin/delete-business-dialog";
 import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
 import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
 import { useSession } from "@/features/auth/use-session";
@@ -57,6 +59,7 @@ export default function AdminBusinessDetailPage() {
   const navigate = useNavigate();
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   // El plan elegido se conserva al cerrar para que el título no cambie durante la animación.
   const [planDialog, setPlanDialog] = useState<{ open: boolean; plan: PlanId | null }>({ open: false, plan: null });
 
@@ -321,6 +324,20 @@ export default function AdminBusinessDetailPage() {
               </dl>
             </CardContent>
           </Card>
+
+          <Card className="border-destructive/30">
+            <CardHeader>
+              <CardTitle>Eliminar negocio</CardTitle>
+              <CardDescription>
+                Borra para siempre sus datos, sus historias clínicas y las cuentas de su equipo. No se puede deshacer.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" className="w-full" onClick={() => setDeleteOpen(true)}>
+                <Trash2 /> Eliminar negocio
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -364,6 +381,7 @@ export default function AdminBusinessDetailPage() {
         }}
       />
       {setPassword.dialog}
+      <DeleteBusinessDialog business={business} members={members.length} open={deleteOpen} onOpenChange={setDeleteOpen} />
       <AddMemberDialog
         businessId={business.id}
         businessName={business.name}

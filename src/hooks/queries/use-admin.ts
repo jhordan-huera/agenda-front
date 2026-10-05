@@ -83,6 +83,21 @@ export const useChangeBusinessPlan = () =>
     data.admin.changeBusinessPlan(businessId, plan),
   );
 
+/**
+ * Sin esperar a recargar el panel: la ficha del negocio eliminado mostraría "no encontrado"
+ * antes de que la página salga de ella.
+ */
+export function useDeleteBusiness() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ businessId, confirmName }: { businessId: string; confirmName: string }) =>
+      data.admin.deleteBusiness(businessId, { confirmName }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+    },
+  });
+}
+
 export const useSetUserActive = () =>
   useAdminMutation(({ userId, isActive }: { userId: string; isActive: boolean }) =>
     data.admin.setUserActive(userId, isActive),

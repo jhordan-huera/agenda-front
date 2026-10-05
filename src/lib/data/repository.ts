@@ -2,6 +2,7 @@ import type {
   AdminBusinessInput,
   AdminMemberInput,
   BusinessCategoryInput,
+  BusinessDeletionInput,
   PlanRejectionInput,
   PlatformSettingsInput,
   UserPasswordInput,
@@ -244,6 +245,8 @@ export interface PlatformAdminRepository {
   /** Suspender bloquea el panel y la página pública del negocio; reactivar lo devuelve a la normalidad. */
   setBusinessStatus(businessId: string, status: BusinessStatus): Promise<Business>;
   changeBusinessPlan(businessId: string, plan: PlanId): Promise<Subscription>;
+  /** Para siempre: sus datos, sus archivos y las cuentas de su equipo. Hay que escribir su nombre. */
+  deleteBusiness(businessId: string, input: BusinessDeletionInput): Promise<void>;
   listCategories(): Promise<AdminBusinessCategory[]>;
   createCategory(input: BusinessCategoryInput): Promise<BusinessCategoryInfo>;
   updateCategory(categoryId: string, input: BusinessCategoryInput): Promise<BusinessCategoryInfo>;

@@ -179,6 +179,7 @@ export const apiRepository: DataRepository = {
       api.patch<Business>(`/admin/businesses/${id(businessId)}/status`, { status }),
     changeBusinessPlan: (businessId, plan) =>
       api.put<Subscription>(`/admin/businesses/${id(businessId)}/plan`, { plan }),
+    deleteBusiness: (businessId, input) => api.delete(`/admin/businesses/${id(businessId)}`, input),
     listCategories: () => api.get<AdminBusinessCategory[]>("/admin/categories"),
     createCategory: (input) => api.post<BusinessCategoryInfo>("/admin/categories", input),
     updateCategory: (categoryId, input) => api.put<BusinessCategoryInfo>(`/admin/categories/${id(categoryId)}`, input),
