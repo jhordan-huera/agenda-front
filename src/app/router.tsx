@@ -74,6 +74,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: "/book/:username", lazy: lazyPage(() => import("@/pages/booking-page")) },
+      { path: "/privacidad", lazy: lazyPage(() => import("@/pages/privacy-page")) },
       { path: "*", Component: NotFoundPage },
     ],
   },

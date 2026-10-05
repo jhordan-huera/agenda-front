@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { data, type AdminAuditScope } from "@/lib/data";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { data, type AdminAuditFilters } from "@/lib/data";
 import type {
   AdminBusinessInput,
   AdminMemberInput,
@@ -53,8 +53,14 @@ export const useAdminPlanRequests = () =>
 
 export const useAdminUsers = () => useQuery({ queryKey: queryKeys.admin.users, queryFn: () => data.admin.listUsers() });
 
-export const useAdminAuditLogs = (scope: AdminAuditScope) =>
-  useQuery({ queryKey: queryKeys.admin.auditLogs(scope), queryFn: () => data.admin.listAuditLogs(scope) });
+/** Auditoría de la plataforma con "Cargar más". */
+export const useAdminAuditFeed = (filters: Omit<AdminAuditFilters, "cursor">) =>
+  useInfiniteQuery({
+    queryKey: queryKeys.admin.auditLogs(filters),
+    queryFn: ({ pageParam }) => data.admin.listAuditLogs({ ...filters, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
 
 export const useAdminEmails = () => useQuery({ queryKey: queryKeys.admin.emails, queryFn: () => data.admin.listEmails() });
 

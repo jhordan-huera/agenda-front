@@ -1,5 +1,5 @@
 import { CalendarCheck, Globe, Users } from "lucide-react";
-import { Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 import { Logo } from "@/components/shared/logo";
 import { RedirectIfAuthenticated } from "@/features/auth/redirect-if-authenticated";
 import { APP_NAME } from "@/lib/constants/app";
@@ -24,7 +24,10 @@ export function AuthLayout() {
           </div>
         </main>
         <p className="text-xs text-muted-foreground">
-          © {CURRENT_YEAR} {APP_NAME}
+          © {CURRENT_YEAR} {APP_NAME} ·{" "}
+          <Link to="/privacidad" className="hover:text-foreground hover:underline">
+            Política de privacidad
+          </Link>
         </p>
       </div>
       <aside className="relative hidden overflow-hidden bg-foreground text-background lg:flex lg:flex-col lg:justify-center lg:px-16">

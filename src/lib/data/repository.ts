@@ -36,7 +36,7 @@ import type {
   Appointment,
   AppointmentStatus,
   AuditEntityType,
-  AuditLog,
+  AuditLogPage,
   BlockedTime,
   BookingConfirmation,
   Business,
@@ -194,17 +194,27 @@ export interface BlockedTimeRepository {
 export interface NotificationRepository {
   /** Emails del negocio y emails de cuenta de sus miembros (bandeja de salida). */
   list(businessId: string): Promise<EmailNotification[]>;
-  /** Envía los recordatorios pendientes (la API también lo hace cada pocos minutos). */
-  runReminderJob(businessId: string): Promise<number>;
 }
 
 export interface AuditLogFilters {
   entityType?: AuditEntityType;
   entityId?: string;
+  /** Un usuario, "online" (reservas desde la página pública) o "support" (el super admin). */
+  actorId?: string;
+  /** Desde y hasta (ISO 8601; `to` no incluido). */
+  from?: string;
+  to?: string;
+  /** Busca en el resumen y en el autor. */
+  q?: string;
+  /** Id de la última entrada vista ("Cargar más"). */
+  cursor?: string;
+  /** Por página (máximo 1000). */
+  limit?: number;
 }
 
 export interface AuditLogRepository {
-  list(businessId: string, filters?: AuditLogFilters): Promise<AuditLog[]>;
+  /** Actividad del negocio, sin los eventos de sesión (ésos sólo los ve el super admin). */
+  list(businessId: string, filters?: AuditLogFilters): Promise<AuditLogPage>;
 }
 
 /** Operaciones públicas (sin sesión): página de reservas /book/:slug. */
@@ -230,7 +240,15 @@ export interface AdminCreateBusinessResult {
   existingAccount: boolean;
 }
 
-export type AdminAuditScope = "admin" | "all";
+/** "admin": acciones del super admin · "security": sesiones (con IP y navegador) · "all": todo. */
+export type AdminAuditScope = "admin" | "all" | "security";
+
+export interface AdminAuditFilters extends AuditLogFilters {
+  scope: AdminAuditScope;
+  businessId?: string;
+  /** Una acción concreta, p. ej. "session.login_failed". */
+  action?: string;
+}
 
 /**
  * Panel del super admin (operador de la plataforma). La API exige
@@ -263,7 +281,7 @@ export interface PlatformAdminRepository {
   setUserPassword(userId: string, input: UserPasswordInput): Promise<void>;
   /** Crea un miembro del equipo de un negocio con la contraseña que elige el super admin. */
   addBusinessMember(businessId: string, input: AdminMemberInput): Promise<TeamMember>;
-  listAuditLogs(scope: AdminAuditScope): Promise<AdminAuditLog[]>;
+  listAuditLogs(filters: AdminAuditFilters): Promise<AuditLogPage<AdminAuditLog>>;
   /** Todos los emails de la plataforma (bandeja de salida global). */
   listEmails(): Promise<EmailNotification[]>;
   updateSettings(input: PlatformSettingsInput): Promise<PlatformSettings>;

@@ -149,9 +149,9 @@ export function SubscriptionSettings() {
         <CardContent>
           {history.isPending ? (
             <Skeleton className="h-20" />
-          ) : history.data?.length ? (
+          ) : history.data?.entries.length ? (
             <ul className="divide-y rounded-lg border text-sm">
-              {history.data.map((entry) => (
+              {history.data.entries.map((entry) => (
                 <li key={entry.id} className="flex flex-wrap justify-between gap-2 px-4 py-3">
                   <span>{entry.summary}</span>
                   <span className="text-muted-foreground">

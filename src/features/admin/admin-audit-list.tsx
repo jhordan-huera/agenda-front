@@ -1,10 +1,8 @@
 import { History } from "lucide-react";
-import { Link } from "react-router";
-import { UserAvatar } from "@/components/shared/user-avatar";
-import { formatDateTime } from "@/lib/format";
+import { AuditEntry } from "@/features/activity/audit-entry";
 import type { AdminAuditLog, AuditLog } from "@/types";
 
-/** Lista de auditoría. Con `showBusiness`, enlaza al negocio afectado (vista de plataforma). */
+/** Lista corta de auditoría (p. ej. la actividad reciente en la ficha de un negocio). */
 export function AdminAuditList({ entries, showBusiness }: { entries: (AuditLog | AdminAuditLog)[]; showBusiness?: boolean }) {
   if (entries.length === 0) {
     return (
@@ -14,31 +12,11 @@ export function AdminAuditList({ entries, showBusiness }: { entries: (AuditLog |
       </div>
     );
   }
-
   return (
     <ol className="max-h-[36rem] divide-y overflow-y-auto rounded-lg border">
-      {entries.map((entry) => {
-        const businessName = "businessName" in entry ? entry.businessName : null;
-        return (
-          <li key={entry.id} className="flex items-start gap-3 px-4 py-3">
-            <UserAvatar name={entry.actorName} size="sm" className="mt-0.5" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm">{entry.summary}</p>
-              <p className="text-xs text-muted-foreground">
-                {entry.actorName} · {formatDateTime(entry.createdAt)}
-                {showBusiness && businessName && entry.businessId && (
-                  <>
-                    {" · "}
-                    <Link to={`/admin/businesses/${entry.businessId}`} className="font-medium text-foreground hover:underline">
-                      {businessName}
-                    </Link>
-                  </>
-                )}
-              </p>
-            </div>
-          </li>
-        );
-      })}
+      {entries.map((entry) => (
+        <AuditEntry key={entry.id} entry={entry} showBusiness={showBusiness} />
+      ))}
     </ol>
   );
 }

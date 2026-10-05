@@ -1,77 +1,76 @@
-import { History } from "lucide-react";
-import { useState } from "react";
-import { ErrorState } from "@/components/shared/error-state";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { Download, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAuditLogs } from "@/hooks/queries/use-activity";
-import { formatDateTime } from "@/lib/format";
+import { AuditFeed } from "@/features/activity/audit-feed";
+import { EMPTY_AUDIT_FILTERS, toAuditQuery } from "@/features/activity/audit-filters";
+import { AuditFiltersBar } from "@/features/activity/audit-filters-bar";
+import { exportAuditCsv } from "@/features/activity/export-audit";
+import { useBusinessId } from "@/features/auth/use-session";
+import { useAuditFeed } from "@/hooks/queries/use-activity";
+import { useTeam } from "@/hooks/queries/use-team";
+import { APP_NAME } from "@/lib/constants/app";
+import { data, getErrorMessage } from "@/lib/data";
+import { plural } from "@/lib/format";
 import type { AuditEntityType } from "@/types";
 
-const FILTERS: { value: AuditEntityType | "all"; label: string }[] = [
-  { value: "all", label: "Toda la actividad" },
-  { value: "appointment", label: "Citas" },
-  { value: "client", label: "Clientes" },
-  { value: "service", label: "Servicios" },
-  { value: "schedule", label: "Horarios" },
-  { value: "blocked_time", label: "Bloqueos" },
-  { value: "business", label: "Negocio" },
-  { value: "team", label: "Equipo" },
-  { value: "subscription", label: "Suscripción" },
-  { value: "clinical_record", label: "Historias clínicas" },
+const TYPES: AuditEntityType[] = [
+  "appointment",
+  "client",
+  "service",
+  "schedule",
+  "blocked_time",
+  "business",
+  "team",
+  "subscription",
+  "clinical_record",
 ];
 
-/** Registro de auditoría (§31): quién hizo qué y cuándo. */
+/** Registro de auditoría del negocio: quién hizo qué y cuándo, con lo que cambió. */
 export function ActivityLog() {
-  const [filter, setFilter] = useState<AuditEntityType | "all">("all");
-  const logs = useAuditLogs(filter === "all" ? {} : { entityType: filter });
+  const businessId = useBusinessId();
+  const team = useTeam();
+  const [filters, setFilters] = useState(EMPTY_AUDIT_FILTERS);
+  const query = useMemo(() => toAuditQuery(filters), [filters]);
+  const feed = useAuditFeed(query);
+  const [exporting, setExporting] = useState(false);
+
+  const people = [
+    ...(team.data ?? []).map((member) => ({ value: member.userId, label: `${member.firstName} ${member.lastName}` })),
+    { value: "online", label: "Reservas online" },
+    { value: "support", label: `Soporte de ${APP_NAME}` },
+  ];
+
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const count = await exportAuditCsv(
+        (cursor) => data.auditLogs.list(businessId, { ...query, cursor, limit: 1000 }),
+        `actividad-${new Date().toISOString().slice(0, 10)}.csv`,
+      );
+      toast.success(count ? `Exportaste ${plural(count, "entrada", "entradas")}` : "No hay actividad con esos filtros");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Actividad</CardTitle>
-        <CardDescription>Acciones importantes realizadas en tu negocio (últimas 200).</CardDescription>
+        <CardDescription>Quién hizo qué y cuándo en tu negocio, con lo que cambió. No se puede modificar.</CardDescription>
         <CardAction>
-          <Select value={filter} onValueChange={(value) => setFilter(value as AuditEntityType | "all")}>
-            <SelectTrigger size="sm" className="w-44" aria-label="Filtrar actividad">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper" align="end">
-              {FILTERS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Button variant="outline" size="sm" disabled={exporting} onClick={exportCsv}>
+            {exporting ? <Loader2 className="animate-spin" aria-hidden /> : <Download />} Exportar
+          </Button>
         </CardAction>
       </CardHeader>
-      <CardContent>
-        {logs.isPending ? (
-          <Skeleton className="h-60" />
-        ) : logs.isError ? (
-          <ErrorState onRetry={() => logs.refetch()} />
-        ) : logs.data.length === 0 ? (
-          <div className="flex flex-col items-center rounded-lg border border-dashed px-4 py-10 text-center">
-            <History className="size-6 text-muted-foreground" aria-hidden />
-            <p className="mt-2 text-sm font-medium">Sin actividad registrada</p>
-          </div>
-        ) : (
-          <ol className="max-h-[32rem] divide-y overflow-y-auto rounded-lg border">
-            {logs.data.map((entry) => (
-              <li key={entry.id} className="flex items-start gap-3 px-4 py-3">
-                <UserAvatar name={entry.actorName} size="sm" className="mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm">{entry.summary}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.actorName} · {formatDateTime(entry.createdAt)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
+      <CardContent className="grid gap-4">
+        <AuditFiltersBar value={filters} onChange={setFilters} types={TYPES} people={people} />
+        <AuditFeed feed={feed} />
       </CardContent>
     </Card>
   );

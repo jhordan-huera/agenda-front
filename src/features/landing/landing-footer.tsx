@@ -13,6 +13,7 @@ export function LandingFooter() {
           <Link to="/login" className="hover:text-foreground">Iniciar sesión</Link>
           <Link to="/register" className="hover:text-foreground">Crear cuenta</Link>
           <Link to="/book/jhordan" className="hover:text-foreground">Página de reservas demo</Link>
+          <Link to="/privacidad" className="hover:text-foreground">Privacidad</Link>
         </nav>
         <p>© {CURRENT_YEAR} {APP_NAME}</p>
       </div>

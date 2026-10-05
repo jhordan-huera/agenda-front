@@ -105,6 +105,14 @@ export function ConfirmStep({
           Confirmar reserva
         </SubmitButton>
       </div>
+      <p className="text-center text-xs text-muted-foreground sm:text-right">
+        Al confirmar, {business.name} usará tus datos para gestionar tu cita, según nuestra{" "}
+        {/* En otra pestaña: así no se pierde la reserva a medio hacer. */}
+        <a href="/privacidad" target="_blank" rel="noreferrer" className="underline hover:text-foreground">
+          política de privacidad
+        </a>
+        .
+      </p>
     </div>
   );
 }

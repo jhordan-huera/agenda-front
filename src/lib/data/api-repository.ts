@@ -7,7 +7,7 @@ import type {
   AdminPlanRequest,
   AdminUserSummary,
   Appointment,
-  AuditLog,
+  AuditLogPage,
   BlockedTime,
   BookingConfirmation,
   Business,
@@ -146,16 +146,10 @@ export const apiRepository: DataRepository = {
 
   notifications: {
     list: (businessId) => api.get<EmailNotification[]>(`${business(businessId)}/notifications`),
-    runReminderJob: async (businessId) =>
-      (await api.post<{ sent: number }>(`${business(businessId)}/notifications/reminders`)).sent,
   },
 
   auditLogs: {
-    list: (businessId, filters = {}) =>
-      api.get<AuditLog[]>(`${business(businessId)}/audit-logs`, {
-        entityType: filters.entityType,
-        entityId: filters.entityId,
-      }),
+    list: (businessId, filters = {}) => api.get<AuditLogPage>(`${business(businessId)}/audit-logs`, { ...filters }),
   },
 
   publicBooking: {
@@ -192,7 +186,7 @@ export const apiRepository: DataRepository = {
     setUserPassword: (userId, input) => api.put<void>(`/admin/users/${id(userId)}/password`, input),
     addBusinessMember: (businessId, input) =>
       api.post<TeamMember>(`/admin/businesses/${id(businessId)}/members`, input),
-    listAuditLogs: (scope) => api.get<AdminAuditLog[]>("/admin/audit-logs", { scope }),
+    listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),
     listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),
   },

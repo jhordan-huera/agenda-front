@@ -36,7 +36,7 @@ export const queryKeys = {
     users: ["admin", "users"] as const,
     planRequests: ["admin", "plan-requests"] as const,
     categories: ["admin", "categories"] as const,
-    auditLogs: (scope: string) => ["admin", "audit-logs", scope] as const,
+    auditLogs: (filters: object) => ["admin", "audit-logs", filters] as const,
     emails: ["admin", "emails"] as const,
   },
 };

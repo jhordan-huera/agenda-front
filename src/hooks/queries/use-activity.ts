@@ -1,5 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useBusinessId } from "@/features/auth/use-session";
 import { data, type AuditLogFilters } from "@/lib/data";
 import { queryKeys } from "./query-keys";
@@ -9,6 +8,7 @@ export function useEmailOutbox() {
   return useQuery({ queryKey: queryKeys.notifications(businessId), queryFn: () => data.notifications.list(businessId) });
 }
 
+/** Una página de la actividad (p. ej. el historial del plan). */
 export function useAuditLogs(filters: AuditLogFilters = {}, enabled = true) {
   const businessId = useBusinessId();
   return useQuery({
@@ -18,25 +18,13 @@ export function useAuditLogs(filters: AuditLogFilters = {}, enabled = true) {
   });
 }
 
-const REMINDER_INTERVAL_MS = 5 * 60_000;
-
-/**
- * Pide a la API los recordatorios pendientes al abrir el panel y cada 5 minutos.
- * La API también los envía sola periódicamente, aunque nadie tenga la app abierta.
- */
-export function useReminderJob() {
+/** Actividad del negocio con "Cargar más". */
+export function useAuditFeed(filters: Omit<AuditLogFilters, "cursor">) {
   const businessId = useBusinessId();
-  const queryClient = useQueryClient();
-  const { mutate } = useMutation({
-    mutationFn: () => data.notifications.runReminderJob(businessId),
-    onSuccess: (sent) => {
-      if (sent > 0) queryClient.invalidateQueries({ queryKey: queryKeys.notifications(businessId) });
-    },
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.auditLogs(businessId), "feed", filters],
+    queryFn: ({ pageParam }) => data.auditLogs.list(businessId, { ...filters, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
-
-  useEffect(() => {
-    mutate();
-    const interval = setInterval(() => mutate(), REMINDER_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [mutate]);
 }

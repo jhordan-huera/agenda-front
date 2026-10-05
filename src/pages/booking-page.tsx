@@ -86,6 +86,10 @@ export default function BookingPage() {
         <Link to="/" className="font-medium text-foreground hover:underline">
           {APP_NAME}
         </Link>
+        {" · "}
+        <a href="/privacidad" target="_blank" rel="noreferrer" className="hover:text-foreground hover:underline">
+          Privacidad
+        </a>
       </footer>
     </div>
   );

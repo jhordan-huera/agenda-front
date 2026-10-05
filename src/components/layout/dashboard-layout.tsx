@@ -4,7 +4,6 @@ import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { useSession } from "@/features/auth/use-session";
-import { useReminderJob } from "@/hooks/queries/use-activity";
 import { getHomePath } from "@/lib/auth";
 import { AppShell } from "./app-shell";
 import { SidebarContent } from "./sidebar-content";
@@ -26,7 +25,6 @@ export default function DashboardLayout() {
 }
 
 function DashboardShell() {
-  useReminderJob();
   const { session } = useSession();
   return (
     <AppShell
