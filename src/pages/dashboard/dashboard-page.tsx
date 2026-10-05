@@ -20,6 +20,7 @@ import { PendingBookings } from "@/features/dashboard/pending-bookings";
 import { PlanLimitBanner } from "@/features/dashboard/plan-limit-banner";
 import { TodayList } from "@/features/dashboard/today-list";
 import { WeekBars } from "@/features/dashboard/week-bars";
+import { InstallAppCard } from "@/features/install/install-app";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
 import { useCurrentBusiness, useCurrentUser } from "@/hooks/queries/use-account";
 import { useAppointments, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
@@ -122,6 +123,8 @@ export default function DashboardPage() {
           </>
         }
       />
+
+      <InstallAppCard className="lg:hidden" />
 
       <PlanLimitBanner />
 

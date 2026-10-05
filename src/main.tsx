@@ -5,6 +5,8 @@ import { RouterProvider } from "react-router/dom";
 import { AppProviders } from "@/app/providers";
 import { router } from "@/app/router";
 import "./index.css";
+// Guarda el aviso de "se puede instalar" aunque llegue antes de que se monte el panel.
+import "@/features/install/install-prompt";
 
 // Algunos navegadores (Vivaldi, Safari) siguen mostrando en la pestaña un icono anterior guardado
 // en su caché. Al volver a declararlo al arrancar, con una versión en la URL, pintan el actual.

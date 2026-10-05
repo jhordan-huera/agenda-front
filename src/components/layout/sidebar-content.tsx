@@ -2,6 +2,7 @@ import { ExternalLink, LogOut } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/features/auth/use-permissions";
+import { InstallAppButton } from "@/features/install/install-app";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { NAV_ITEMS } from "./nav-items";
@@ -41,6 +42,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <ExternalLink className="size-3.5 shrink-0" aria-hidden />
           </a>
         )}
+        <InstallAppButton />
         <PlanStatus onNavigate={onNavigate} />
         <UserMenu onNavigate={onNavigate} />
         <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={signOut}>

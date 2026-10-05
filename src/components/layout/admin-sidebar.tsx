@@ -3,6 +3,7 @@ import { Logo } from "@/components/shared/logo";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InstallAppButton } from "@/features/install/install-app";
 import { useCurrentUser } from "@/hooks/queries/use-account";
 import { getFullName } from "@/lib/format";
 import { ADMIN_NAV_ITEMS } from "./nav-items";
@@ -32,6 +33,7 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <SidebarNav label="Plataforma" items={ADMIN_NAV_ITEMS} onNavigate={onNavigate} />
 
       <div className="space-y-2 border-t p-3">
+        <InstallAppButton />
         {user ? (
           <div className="flex items-center gap-3 rounded-lg p-2">
             <UserAvatar name={getFullName(user)} src={user.avatarUrl} />

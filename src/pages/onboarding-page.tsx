@@ -6,6 +6,7 @@ import { Logo } from "@/components/shared/logo";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/features/auth/use-session";
+import { useInstallableApp } from "@/features/install/use-installable-app";
 import { OnboardingWizard } from "@/features/onboarding/onboarding-wizard";
 import { useCurrentUser } from "@/hooks/queries/use-account";
 import { getHomePath } from "@/lib/auth";
@@ -14,6 +15,7 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { status, session, signOut } = useSession();
   const { data: user } = useCurrentUser();
+  useInstallableApp();
 
   // Sólo para cuentas sin negocio; el super admin y quien ya tiene negocio van a su inicio.
   const home = session ? getHomePath(session) : null;

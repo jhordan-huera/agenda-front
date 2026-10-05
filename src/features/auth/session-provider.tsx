@@ -1,8 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { authService, isTwoFactorChallenge, type Session } from "@/lib/auth";
+import { setApiUnreachable } from "@/lib/connection-status";
 import { DataError } from "@/lib/data/errors";
 import { SessionContext, type SessionContextValue, type SessionStatus } from "./use-session";
+
+/** Cada cuánto se vuelve a pedir la sesión si la API no responde al arrancar. */
+const SESSION_RETRY_MS = 5000;
 
 /** Negocio que el super admin está gestionando (por pestaña: sobrevive a recargar la página). */
 const SUPPORT_KEY = "agendo:support-business";
@@ -46,15 +50,34 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    // Si la API no responde, se muestra el login (que explicará el error al intentar entrar).
-    authService
-      .getSession()
-      .catch(() => null)
-      .then((current) => {
-        if (!cancelled) applySession(current);
-      });
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const load = () => {
+      clearTimeout(retry);
+      authService.getSession().then(
+        (current) => {
+          setApiUnreachable(false);
+          if (!cancelled) applySession(current);
+        },
+        (error: unknown) => {
+          if (cancelled) return;
+          // Sin conexión con la API (sin internet, o una wifi sin salida; p. ej. al abrir la app
+          // instalada sin señal): se sigue en la pantalla de carga con el aviso y se reintenta, en
+          // vez de mandar al login como si la sesión se hubiera cerrado.
+          if (error instanceof DataError && error.code === "network") {
+            setApiUnreachable(true);
+            retry = setTimeout(load, SESSION_RETRY_MS);
+            window.addEventListener("online", load, { once: true });
+            return;
+          }
+          applySession(null);
+        },
+      );
+    };
+    load();
     return () => {
       cancelled = true;
+      clearTimeout(retry);
+      window.removeEventListener("online", load);
     };
   }, [applySession]);
 

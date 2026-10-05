@@ -2,11 +2,13 @@ import { Link, Outlet } from "react-router";
 import { Logo } from "@/components/shared/logo";
 import { RedirectIfAuthenticated } from "@/features/auth/redirect-if-authenticated";
 import { AgendaWeek } from "@/features/auth/agenda-week";
+import { useInstallableApp } from "@/features/install/use-installable-app";
 import { APP_NAME } from "@/lib/constants/app";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export function AuthLayout() {
+  useInstallableApp();
   return (
     <div className="grid min-h-screen lg:grid-cols-[1fr_1.1fr]">
       <RedirectIfAuthenticated />

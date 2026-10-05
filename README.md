@@ -214,6 +214,16 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   de 0 a 720 horas (24 al crear el negocio; 0 = hasta justo antes de la cita). La página pública y
   la API usan ese valor (también se valida en el backend). El profesional, desde su panel, puede
   agendar a cualquier hora.
+- **Aplicación instalable (PWA)**: el panel se instala en el celular o el computador y se abre desde
+  un icono, sin la barra del navegador (`public/manifest.webmanifest`, iconos `icon-app-*`). En
+  Chrome y Edge, el botón "Instalar aplicación" del menú lateral (y una tarjeta en Inicio, sólo en el
+  celular, que se puede descartar) abre el diálogo del navegador; en iPhone y iPad muestra los pasos
+  de Compartir → "Agregar a inicio". El service worker (`src/sw.ts`, con `vite-plugin-pwa` en modo
+  injectManifest) guarda sólo la app de cada versión, nunca datos de la API: abrir una página va
+  primero a la red (4 s) y, sin conexión, usa el index.html guardado. Sólo lo activan el login, el
+  onboarding, el panel y el panel de plataforma (`useInstallableApp`); la portada y la página de
+  reservas no enlazan el manifiesto ni descargan la app. Sin conexión, la app espera en la pantalla
+  de carga con un aviso y sigue sola cuando vuelve (no manda al login).
 - **Código QR de la página de reservas**: en Configuración → Negocio, junto al enlace público,
   "Código QR" lo muestra y lo descarga como PNG listo para imprimir (con "Reserva tu cita", el
   nombre del negocio y el enlace escrito) o como SVG. Se genera en el navegador con `uqr`.

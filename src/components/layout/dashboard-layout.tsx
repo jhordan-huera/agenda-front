@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { useSession } from "@/features/auth/use-session";
 import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
+import { useInstallableApp } from "@/features/install/use-installable-app";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { getHomePath } from "@/lib/auth";
 import { AppShell } from "./app-shell";
@@ -15,6 +16,7 @@ import { SuspendedBusinessScreen } from "./suspended-business-screen";
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const { status, session } = useSession();
+  useInstallableApp();
 
   useEffect(() => {
     if (status === "unauthenticated") navigate("/login", { replace: true });

@@ -25,5 +25,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  /* El service worker tiene otro entorno (WebWorker): lo revisa tsconfig.sw.json. */
+  "exclude": ["src/sw.ts"]
 }
