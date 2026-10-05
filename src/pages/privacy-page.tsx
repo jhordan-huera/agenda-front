@@ -161,10 +161,11 @@ export default function PrivacyPage() {
                 en Estados Unidos.
               </li>
               <li>
-                <strong>Google (Gmail)</strong>, para enviar los emails.
+                <strong>Google (Gmail)</strong>, para enviar los emails y guardar las copias de seguridad (cifradas).
               </li>
               <li>
-                <strong>GitHub</strong>, que ejecuta las tareas automáticas (por ejemplo, los recordatorios de las citas).
+                <strong>GitHub</strong>, que ejecuta las tareas automáticas (por ejemplo, los recordatorios de las citas y
+                la copia de seguridad diaria).
               </li>
               <li>
                 <strong>OpenFreeMap</strong>, que dibuja los mapas: tu navegador le pide las imágenes del mapa, así que ve tu
@@ -211,6 +212,9 @@ export default function PrivacyPage() {
                 sospechosos.
               </li>
               <li>Verificación anti-robots en la página de reservas.</li>
+              <li>
+                Una copia de seguridad diaria de la base de datos, cifrada: sólo {APP_NAME} tiene la clave para abrirla.
+              </li>
               <li>Verificación en dos pasos (código del celular) en la cuenta de administración de la plataforma.</li>
               <li>Un registro de actividad que nadie puede modificar ni borrar desde la aplicación.</li>
             </ul>
