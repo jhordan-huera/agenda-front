@@ -1,18 +1,22 @@
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, QrCode } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { BookingQrDialog } from "./booking-qr-dialog";
 
 interface BookingLinkFieldProps {
   /** Enlace guardado (el que funciona ahora mismo). */
   savedSlug: string;
   /** El usuario está editando el enlace y aún no lo guarda. */
   pendingChange: boolean;
+  /** Nombre guardado del negocio (va en la lámina del QR). */
+  businessName: string;
 }
 
-/** Enlace público de reservas con acciones de copiar y abrir. */
-export function BookingLinkField({ savedSlug, pendingChange }: BookingLinkFieldProps) {
+/** Enlace público de reservas con acciones de copiar, abrir y descargar su código QR. */
+export function BookingLinkField({ savedSlug, pendingChange, businessName }: BookingLinkFieldProps) {
   const [copied, setCopied] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const url = `${window.location.origin}/book/${savedSlug}`;
 
   useEffect(() => {
@@ -51,7 +55,11 @@ export function BookingLinkField({ savedSlug, pendingChange }: BookingLinkFieldP
             <ExternalLink aria-hidden /> Ver página
           </a>
         </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => setQrOpen(true)}>
+          <QrCode aria-hidden /> Código QR
+        </Button>
       </div>
+      <BookingQrDialog open={qrOpen} onOpenChange={setQrOpen} url={url} businessName={businessName} slug={savedSlug} />
     </div>
   );
 }

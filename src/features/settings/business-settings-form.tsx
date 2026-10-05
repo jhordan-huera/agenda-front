@@ -130,7 +130,7 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
           </div>
         )}
       </FormField>
-      <BookingLinkField savedSlug={business.slug} pendingChange={values.slug !== business.slug} />
+      <BookingLinkField savedSlug={business.slug} pendingChange={values.slug !== business.slug} businessName={business.name} />
       <div className="grid gap-5 sm:grid-cols-2">
         <FormField label="Teléfono del negocio" error={errors.phone} optional>
           {(field) => <Input {...field} type="tel" value={values.phone} onChange={(e) => setField("phone", e.target.value)} />}

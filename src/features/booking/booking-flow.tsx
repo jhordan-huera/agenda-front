@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useCreateBooking } from "@/hooks/queries/use-public-booking";
 import { getMinNoticeHours } from "@/lib/availability";
 import { DataError, getErrorMessage } from "@/lib/data";
-import { capitalize, formatLongDate } from "@/lib/format";
+import { capitalize, formatLongDate, plural } from "@/lib/format";
 import { addDaysISO } from "@/lib/time";
 import type { PublicBookingInput } from "@/lib/validations/booking";
 import type { BookingConfirmation, ISODate, PublicBusinessProfile } from "@/types";
@@ -76,11 +76,15 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
     return <BookingSuccess confirmation={confirmation} business={business} onBookAnother={reset} />;
   }
 
+  const minNotice = getMinNoticeHours(business.bookingSettings);
   const copy =
     currentStep === "datetime"
       ? {
           ...STEP_COPY.datetime,
-          description: `Sólo se muestran los horarios disponibles. Reserva con al menos ${getMinNoticeHours(business.bookingSettings)} horas de anticipación.`,
+          description:
+            minNotice > 0
+              ? `Sólo se muestran los horarios disponibles. Reserva con al menos ${plural(minNotice, "hora", "horas")} de anticipación.`
+              : "Sólo se muestran los horarios disponibles.",
         }
       : STEP_COPY[currentStep];
 

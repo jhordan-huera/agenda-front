@@ -1,5 +1,6 @@
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { getMinNoticeHours } from "@/lib/availability";
+import { plural } from "@/lib/format";
 import { getBusinessWhatsAppUrl } from "@/lib/whatsapp";
 import type { PublicBusiness } from "@/types";
 
@@ -10,13 +11,15 @@ import type { PublicBusiness } from "@/types";
 export function WhatsAppHelp({ business }: { business: PublicBusiness }) {
   const url = getBusinessWhatsAppUrl(business);
   if (!url) return null;
+  const minNotice = getMinNoticeHours(business.bookingSettings);
 
   return (
     <div className="flex items-start gap-3 px-1 text-sm">
       <WhatsAppIcon className="mt-0.5 size-5 shrink-0" />
       <p className="text-muted-foreground">
-        ¿Necesitas una cita con menos de {getMinNoticeHours(business.bookingSettings)} horas de anticipación o tienes una
-        duda?{" "}
+        {minNotice > 0
+          ? `¿Necesitas una cita con menos de ${plural(minNotice, "hora", "horas")} de anticipación o tienes una duda?`
+          : "¿Tienes una duda?"}{" "}
         <a
           href={url}
           target="_blank"

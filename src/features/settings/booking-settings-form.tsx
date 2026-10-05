@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
-import { PUBLIC_BOOKING_MIN_NOTICE_HOURS, SLOT_INTERVAL_OPTIONS } from "@/lib/constants/business";
+import { SLOT_INTERVAL_OPTIONS } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
 import { formatDuration } from "@/lib/format";
 import { bookingSettingsSchema } from "@/lib/validations/business";
@@ -87,14 +87,15 @@ export function BookingSettingsForm({ business }: { business: Business }) {
         <FormField
           label="Anticipación mínima (horas)"
           error={errors.minNoticeHours}
-          hint={`Para reservas online: mínimo ${PUBLIC_BOOKING_MIN_NOTICE_HOURS} h. Desde tu panel puedes agendar a cualquier hora.`}
+          hint="Cuántas horas antes, como mínimo, pueden reservar tus clientes (0: hasta justo antes de la cita). Desde tu panel puedes agendar a cualquier hora."
         >
           {(field) => (
             <Input
               {...field}
               type="number"
               inputMode="numeric"
-              min={PUBLIC_BOOKING_MIN_NOTICE_HOURS}
+              min={0}
+              max={720}
               value={values.minNoticeHours}
               onChange={(e) => setField("minNoticeHours", e.target.value)}
             />

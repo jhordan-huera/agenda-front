@@ -201,12 +201,16 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   OpenStreetMap; gratis, sin clave de API ni límite de visitas, uso comercial permitido). Se carga
   bajo demanda sólo en las pantallas con mapa. La búsqueda de direcciones usa Nominatim (gratis,
   sin clave, pero con poco tráfico permitido: en producción conviene un proveedor de geocodificación).
-- **Anticipación mínima de 24 h para reservas online**: los clientes no pueden reservar con
-  menos de un día de antelación (el negocio puede exigir más, nunca menos; también se valida en
-  el backend). El profesional, desde su panel, puede agendar a cualquier hora.
+- **Anticipación mínima para reservas online**: la elige cada profesional en Configuración → Agenda,
+  de 0 a 720 horas (24 al crear el negocio; 0 = hasta justo antes de la cita). La página pública y
+  la API usan ese valor (también se valida en el backend). El profesional, desde su panel, puede
+  agendar a cualquier hora.
+- **Código QR de la página de reservas**: en Configuración → Negocio, junto al enlace público,
+  "Código QR" lo muestra y lo descarga como PNG listo para imprimir (con "Reserva tu cita", el
+  nombre del negocio y el enlace escrito) o como SVG. Se genera en el navegador con `uqr`.
 - **WhatsApp**: el negocio escribe al cliente desde el detalle de la cita o su ficha, y el
   cliente escribe al negocio desde la página de reservas ("Escríbenos por WhatsApp", p. ej. para
-  una cita con menos de 24 h). Abre la conversación con un mensaje ya escrito (enlace `wa.me`, sin API ni coste). Los números sin
+  una cita con menos anticipación de la permitida). Abre la conversación con un mensaje ya escrito (enlace `wa.me`, sin API ni coste). Los números sin
   prefijo internacional toman el del país del negocio.
 - Onboarding en 6 pasos, agenda día/semana/mes, clientes (con buscador en "Nueva cita"),
   servicios, horarios partidos, bloqueos, página pública de reservas sin registro, reportes y configuración.

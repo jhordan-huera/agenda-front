@@ -1,5 +1,4 @@
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
-import { PUBLIC_BOOKING_MIN_NOTICE_HOURS } from "@/lib/constants/business";
 import {
   addDaysISO,
   daysBetween,
@@ -98,12 +97,12 @@ export function isDateWithinBookingWindow(
 }
 
 /**
- * Anticipación mínima para reservar online. Estas funciones sólo calculan la
- * disponibilidad de la página pública: las citas creadas desde el panel no la usan,
- * así que el profesional puede agendar a cualquier hora.
+ * Anticipación mínima para reservar online, la que eligió el profesional (0: hasta justo antes
+ * de la cita). Estas funciones sólo calculan la disponibilidad de la página pública: las citas
+ * creadas desde el panel no la usan, así que el profesional puede agendar a cualquier hora.
  */
 export function getMinNoticeHours(settings: Pick<AvailabilitySettings, "minNoticeHours">): number {
-  return Math.max(PUBLIC_BOOKING_MIN_NOTICE_HOURS, settings.minNoticeHours);
+  return Math.max(0, settings.minNoticeHours);
 }
 
 /**
@@ -121,7 +120,7 @@ export function getSlotStep(durationMinutes: number, settings: AvailabilitySetti
  * 1. Está en la cuadrícula del intervalo del horario (ver `getSlotStep`).
  * 2. La cita completa cabe dentro de ese intervalo del horario de atención.
  * 3. No se solapa con citas activas ni con horarios bloqueados.
- * 4. Respeta la anticipación mínima (al menos 24 h) y máxima configuradas.
+ * 4. Respeta la anticipación mínima y máxima que configuró el negocio.
  */
 export function getAvailableSlots(
   date: ISODate,
