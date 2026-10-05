@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { authService, type Session } from "@/lib/auth";
+import { authService, isTwoFactorChallenge, type Session } from "@/lib/auth";
 import { DataError } from "@/lib/data/errors";
 import { SessionContext, type SessionContextValue, type SessionStatus } from "./use-session";
 
@@ -104,7 +104,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       refresh,
       enterSupport: (business) => updateSupport({ id: business.id, name: business.name }),
       exitSupport: () => updateSupport(null),
-      signIn: async (input) => applySession(await authService.signIn(input))!,
+      signIn: async (input) => {
+        const result = await authService.signIn(input);
+        return isTwoFactorChallenge(result) ? result : applySession(result)!;
+      },
+      verifyTwoFactor: async (input) => applySession(await authService.verifyTwoFactor(input))!,
       signUp: async (input) => applySession(await authService.signUp(input))!,
       signOut: async () => {
         await authService.signOut();

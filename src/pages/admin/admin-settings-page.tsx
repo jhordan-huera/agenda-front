@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ChangePasswordForm } from "@/features/settings/change-password-form";
 import { SettingsSection, SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { SwitchField } from "@/features/settings/switch-field";
+import { TwoFactorSettings } from "@/features/settings/two-factor-settings";
 import { useSettingsForm } from "@/features/settings/use-settings-form";
 import { usePlatformSettings, useUpdatePlatformSettings } from "@/hooks/queries/use-admin";
 import { getErrorMessage } from "@/lib/data";
@@ -30,6 +31,7 @@ export default function AdminSettingsPage() {
         ) : (
           <PlatformSettingsForm settings={settings.data} />
         )}
+        <TwoFactorSettings />
         <ChangePasswordForm />
       </div>
     </div>

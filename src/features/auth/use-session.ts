@@ -1,13 +1,16 @@
 import { createContext, useContext } from "react";
 import type { Session } from "@/lib/auth";
-import type { LoginInput, RegisterInput } from "@/lib/validations/auth";
+import type { LoginInput, RegisterInput, TwoFactorLoginInput } from "@/lib/validations/auth";
+import type { TwoFactorChallenge } from "@/types";
 
 export type SessionStatus = "loading" | "authenticated" | "unauthenticated";
 
 export interface SessionContextValue {
   status: SessionStatus;
   session: Session | null;
-  signIn: (input: LoginInput) => Promise<Session>;
+  /** Con la verificación en dos pasos activada, todavía no hay sesión: falta el código (verifyTwoFactor). */
+  signIn: (input: LoginInput) => Promise<Session | TwoFactorChallenge>;
+  verifyTwoFactor: (input: TwoFactorLoginInput) => Promise<Session>;
   signUp: (input: RegisterInput) => Promise<Session>;
   signOut: () => Promise<void>;
   /** Vuelve a leer la sesión (p. ej. tras crear el negocio en el onboarding). */

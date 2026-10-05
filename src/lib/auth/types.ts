@@ -1,5 +1,11 @@
-import type { ChangePasswordInput, LoginInput, RegisterInput } from "@/lib/validations/auth";
-import type { BusinessRole, BusinessStatus, PlatformRole } from "@/types";
+import type {
+  ChangePasswordInput,
+  LoginInput,
+  RegisterInput,
+  TwoFactorDisableInput,
+  TwoFactorLoginInput,
+} from "@/lib/validations/auth";
+import type { BusinessRole, BusinessStatus, PlatformRole, RecoveryCodes, TwoFactorChallenge, TwoFactorSetup, TwoFactorStatus } from "@/types";
 
 export interface Session {
   userId: string;
@@ -26,10 +32,27 @@ export interface Session {
  */
 export interface AuthService {
   getSession(): Promise<Session | null>;
-  signIn(input: LoginInput): Promise<Session>;
+  /** Con la verificación en dos pasos activada devuelve el paso del código (ver verifyTwoFactor). */
+  signIn(input: LoginInput): Promise<Session | TwoFactorChallenge>;
+  /** Segundo paso del inicio de sesión: código de la app o de recuperación. */
+  verifyTwoFactor(input: TwoFactorLoginInput): Promise<Session>;
   /** Falla con `forbidden` si el super admin cerró el registro público. */
   signUp(input: RegisterInput): Promise<Session>;
   signOut(): Promise<void>;
   /** Sólo el super admin: las contraseñas de los usuarios las pone él desde el panel /admin. */
   changePassword(input: ChangePasswordInput): Promise<void>;
+  /** Verificación en dos pasos de la propia cuenta (hoy, sólo el super admin). */
+  twoFactor: {
+    status(): Promise<TwoFactorStatus>;
+    /** Clave nueva para escanear; se activa al confirmar un código con `enable`. */
+    setup(): Promise<TwoFactorSetup>;
+    enable(code: string): Promise<RecoveryCodes>;
+    disable(input: TwoFactorDisableInput): Promise<void>;
+    regenerateRecoveryCodes(code: string): Promise<RecoveryCodes>;
+  };
+}
+
+/** El inicio de sesión pide el código de la verificación en dos pasos. */
+export function isTwoFactorChallenge(result: Session | TwoFactorChallenge): result is TwoFactorChallenge {
+  return "twoFactorRequired" in result;
 }

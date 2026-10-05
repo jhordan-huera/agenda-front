@@ -26,6 +26,8 @@ export const queryKeys = {
   blockedTimes: (businessId: string) => ["blocked-times", businessId] as const,
   publicProfile: (slug: string) => ["public-profile", slug] as const,
   platformSettings: ["platform-settings"] as const,
+  /** Verificación en dos pasos de la propia cuenta. */
+  twoFactor: ["two-factor"] as const,
   categories: ["categories"] as const,
   /** Panel del super admin: todo cuelga de "admin" para invalidarlo de una vez. */
   admin: {

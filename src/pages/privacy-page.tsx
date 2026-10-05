@@ -211,6 +211,7 @@ export default function PrivacyPage() {
                 sospechosos.
               </li>
               <li>Verificación anti-robots en la página de reservas.</li>
+              <li>Verificación en dos pasos (código del celular) en la cuenta de administración de la plataforma.</li>
               <li>Un registro de actividad que nadie puede modificar ni borrar desde la aplicación.</li>
             </ul>
           </Section>
