@@ -1,24 +1,27 @@
 import { Lock } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { ErrorState } from "@/components/shared/error-state";
 import { FormField } from "@/components/shared/form-field";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getServiceName } from "@/features/appointments/appointment-utils";
-import { useAppointments } from "@/hooks/queries/use-appointments";
-import { useAddClinicalNote } from "@/hooks/queries/use-clinical";
-import { useLookups } from "@/hooks/queries/use-lookups";
-import { getErrorMessage } from "@/lib/data";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
+import { useAppointments } from "@/hooks/queries/use-appointments";
+import { useAddClinicalNote, useClinicalRecord, useClinicalTemplates } from "@/hooks/queries/use-clinical";
+import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBusinessNow } from "@/hooks/use-business-now";
+import { defaultTemplateId } from "@/lib/clinical-templates";
+import { DataError, getErrorMessage } from "@/lib/data";
 import { capitalize, formatNumericDate, formatShortDate } from "@/lib/format";
-import { clinicalNoteSchema, type ClinicalNoteInput } from "@/lib/validations/clinical";
+import { clinicalNoteDataSchema } from "@/lib/validations/clinical";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import { NOTE_FIELDS } from "./clinical-labels";
+import type { ClinicalTemplate } from "@/types";
+import { ClinicalFieldInput } from "./clinical-field-input";
+import { initialClinicalValues, type ClinicalFormValues } from "./clinical-form-values";
 
 interface ClinicalNoteDialogProps {
   open: boolean;
@@ -32,10 +35,39 @@ interface ClinicalNoteDialogProps {
 export function ClinicalNoteDialog({ open, onOpenChange, ...props }: ClinicalNoteDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
-        {open && <ClinicalNoteForm {...props} onDone={() => onOpenChange(false)} />}
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+        {open && <ClinicalNoteLoader {...props} onDone={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
+  );
+}
+
+type FormProps = Omit<ClinicalNoteDialogProps, "open" | "onOpenChange"> & { onDone: () => void };
+
+/** Espera las plantillas (y la historia, para proponer el formato de la última evolución). */
+function ClinicalNoteLoader(props: FormProps) {
+  const templates = useClinicalTemplates();
+  const record = useClinicalRecord(props.clientId);
+
+  if (templates.isError) {
+    return <ErrorState title="No pudimos cargar los formatos de evolución" onRetry={() => templates.refetch()} />;
+  }
+  if (templates.isPending || record.isPending) {
+    return (
+      <div className="grid gap-4" role="status" aria-label="Cargando">
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="h-9" />
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
+  return (
+    <ClinicalNoteForm
+      {...props}
+      templates={templates.data}
+      initialTemplateId={defaultTemplateId(templates.data, record.data)}
+      onTemplatesOutdated={() => void templates.refetch()}
+    />
   );
 }
 
@@ -46,100 +78,156 @@ function ClinicalNoteForm({
   clientName,
   appointmentId = null,
   onDone,
-}: Omit<ClinicalNoteDialogProps, "open" | "onOpenChange"> & { onDone: () => void }) {
+  templates,
+  initialTemplateId,
+  onTemplatesOutdated,
+}: FormProps & { templates: ClinicalTemplate[]; initialTemplateId?: string; onTemplatesOutdated: () => void }) {
   const addNote = useAddClinicalNote(clientId);
   const { data: appointments = [] } = useAppointments({ clientId });
   const { servicesById } = useLookups();
   // La fecha de la evolución es siempre la de hoy (la pone la API): no se puede fechar con retraso.
   const { data: business } = useCurrentBusiness();
   const today = useBusinessNow(business?.timezone).date;
-  const [values, setValues] = useState<ClinicalNoteInput>({
-    appointmentId,
-    reason: "",
-    findings: "",
-    diagnosis: "",
-    treatment: "",
-    indications: "",
-    nextControl: "",
-  });
+  const [templateId, setTemplateId] = useState(initialTemplateId);
+  const [linkedAppointment, setLinkedAppointment] = useState<string | null>(appointmentId);
+  // Lo escrito en cada formato se conserva al cambiar de uno a otro.
+  const [valuesByTemplate, setValuesByTemplate] = useState<Record<string, ClinicalFormValues>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
-  const set = <K extends keyof ClinicalNoteInput>(key: K, value: ClinicalNoteInput[K]) =>
-    setValues((current) => ({ ...current, [key]: value }));
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const template = templates.find((t) => t.id === templateId);
+  const values = template ? (valuesByTemplate[template.id] ?? initialClinicalValues(template.fields)) : {};
+  const recommended = templates.filter((t) => t.recommended);
+  const others = templates.filter((t) => !t.recommended);
   // Citas del paciente que no están canceladas, de la más reciente a la más antigua.
   const linkable = appointments.filter((a) => a.status !== "cancelled").toReversed();
 
+  const setValue = (id: string, value: unknown) => {
+    if (!template) return;
+    setValuesByTemplate((current) => ({ ...current, [template.id]: { ...values, [id]: value } }));
+    setErrors((current) => {
+      if (!(id in current) && !("form" in current)) return current;
+      const next = { ...current };
+      delete next[id];
+      delete next.form;
+      return next;
+    });
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(clinicalNoteSchema, values);
+    if (!template) return;
+    const result = validate(clinicalNoteDataSchema(template.fields), values);
     setErrors(result.errors);
-    if (!result.success) return;
+    if (!result.success) {
+      // Lleva al primer campo con error (las plantillas pueden ser largas).
+      requestAnimationFrame(() => {
+        const invalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"], [id$="-error"], [role="alert"]');
+        invalid?.scrollIntoView({ block: "center", behavior: "smooth" });
+      });
+      return;
+    }
     try {
-      await addNote.mutateAsync(result.data);
+      await addNote.mutateAsync({ appointmentId: linkedAppointment, templateVersionId: template.versionId, data: result.data });
       toast.success("Evolución registrada");
       onDone();
     } catch (error) {
       toast.error(getErrorMessage(error));
+      // La plantilla cambió mientras se escribía: se recargan los formatos (lo escrito se conserva).
+      if (error instanceof DataError && error.code === "conflict") onTemplatesOutdated();
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="grid gap-4">
+    <form ref={formRef} onSubmit={handleSubmit} noValidate className="grid gap-4">
       <DialogHeader>
         <DialogTitle>Nueva evolución</DialogTitle>
         <DialogDescription>Historia clínica de {clientName}.</DialogDescription>
       </DialogHeader>
-      <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
-        <div className="grid content-start gap-1.5">
+
+      <div className="grid gap-4 sm:grid-cols-[1fr_150px]">
+        <FormField label="Formato" hint={template?.description}>
+          {(field) => (
+            <Select
+              value={templateId}
+              onValueChange={(id) => {
+                setTemplateId(id);
+                setErrors({});
+              }}
+            >
+              <SelectTrigger {...field} className="w-full">
+                <SelectValue placeholder="Elige un formato" />
+              </SelectTrigger>
+              <SelectContent position="popper" className="max-h-80">
+                {recommended.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Para tu especialidad</SelectLabel>
+                    {recommended.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+                <SelectGroup>
+                  {recommended.length > 0 && <SelectLabel>Otros formatos</SelectLabel>}
+                  {others.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      {option.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
+        </FormField>
+        <div className="grid content-start gap-2">
           <p className="text-sm font-medium">Fecha</p>
           <p className="flex h-8 items-center gap-2 rounded-lg border bg-muted/40 px-2.5 text-sm" title="La pone el sistema: no se puede cambiar">
             <Lock className="size-3.5 text-muted-foreground" aria-hidden /> {formatNumericDate(today)}
           </p>
         </div>
-        <FormField label="Cita" hint="Une la evolución a la consulta en la que se hizo.">
-          {(field) => (
-            <Select
-              value={values.appointmentId ?? NO_APPOINTMENT}
-              onValueChange={(value) => {
-                const appointment = linkable.find((a) => a.id === value);
-                setValues((current) => ({ ...current, appointmentId: appointment?.id ?? null }));
-              }}
-            >
-              <SelectTrigger {...field} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" className="max-h-64">
-                <SelectItem value={NO_APPOINTMENT}>Sin cita</SelectItem>
-                {linkable.map((appointment) => (
-                  <SelectItem key={appointment.id} value={appointment.id}>
-                    {capitalize(formatShortDate(appointment.date))} · {appointment.startTime} ·{" "}
-                    {getServiceName(servicesById, appointment.serviceId)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FormField>
       </div>
-      {NOTE_FIELDS.map(({ key, label }) =>
-        key === "nextControl" ? (
-          <FormField key={key} label={label} error={errors[key]} optional>
-            {(field) => (
-              <Input {...field} placeholder="Ej.: en 15 días" value={values[key]} onChange={(e) => set(key, e.target.value)} />
-            )}
-          </FormField>
-        ) : (
-          <FormField key={key} label={label} error={errors[key]} optional={key !== "reason"}>
-            {(field) => (
-              <Textarea
-                {...field}
-                autoFocus={key === "reason"}
-                rows={key === "reason" || key === "diagnosis" ? 2 : 3}
-                value={values[key]}
-                onChange={(e) => set(key, e.target.value)}
-              />
-            )}
-          </FormField>
-        ),
+
+      <FormField label="Cita" hint="Une la evolución a la consulta en la que se hizo.">
+        {(field) => (
+          <Select
+            value={linkedAppointment ?? NO_APPOINTMENT}
+            onValueChange={(value) => setLinkedAppointment(linkable.find((a) => a.id === value)?.id ?? null)}
+          >
+            <SelectTrigger {...field} className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" className="max-h-64">
+              <SelectItem value={NO_APPOINTMENT}>Sin cita</SelectItem>
+              {linkable.map((appointment) => (
+                <SelectItem key={appointment.id} value={appointment.id}>
+                  {capitalize(formatShortDate(appointment.date))} · {appointment.startTime} ·{" "}
+                  {getServiceName(servicesById, appointment.serviceId)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </FormField>
+
+      {template && (
+        <>
+          <p className="text-xs text-muted-foreground">
+            Completa sólo lo que aplique a esta consulta. Los campos con * son obligatorios.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-6">
+            {template.fields.map((field) => (
+              <ClinicalFieldInput key={field.id} field={field} values={values} onChange={setValue} error={errors[field.id]} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {errors.form && (
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive" role="alert">
+          {errors.form}
+        </p>
       )}
       <p className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
         <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -149,7 +237,9 @@ function ClinicalNoteForm({
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <SubmitButton loading={addNote.isPending}>Guardar evolución</SubmitButton>
+        <SubmitButton loading={addNote.isPending} disabled={!template}>
+          Guardar evolución
+        </SubmitButton>
       </DialogFooter>
     </form>
   );

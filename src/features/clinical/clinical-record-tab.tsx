@@ -62,7 +62,7 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
               <EmptyState
                 icon={Stethoscope}
                 title="Sin evoluciones todavía"
-                description="Registra lo que pasó en cada consulta: motivo, hallazgos, diagnóstico y tratamiento."
+                description="Registra cada consulta con el formato de tu especialidad: signos vitales, procedimientos, sesiones, receta…"
                 action={
                   <Button onClick={() => setNoteOpen(true)}>
                     <FilePlus2 /> Registrar la primera
@@ -71,7 +71,12 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
               />
             ) : (
               record.data.notes.map((note) => (
-                <ClinicalNoteCard key={note.id} note={note} serviceName={serviceOf(note.appointmentId)} />
+                <ClinicalNoteCard
+                  key={note.id}
+                  note={note}
+                  template={record.data.templateVersions[note.templateVersionId]}
+                  serviceName={serviceOf(note.appointmentId)}
+                />
               ))
             )}
           </section>

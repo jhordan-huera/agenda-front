@@ -16,6 +16,7 @@ import type {
   ClinicalNote,
   ClinicalProfile,
   ClinicalRecord,
+  ClinicalTemplate,
   EmailNotification,
   PlanChangeRequest,
   PlanUsage,
@@ -83,6 +84,7 @@ export const apiRepository: DataRepository = {
   },
 
   clinicalRecords: {
+    listTemplates: (businessId) => api.get<ClinicalTemplate[]>(`${business(businessId)}/clinical-templates`),
     get: (businessId, clientId) =>
       api.get<ClinicalRecord>(`${business(businessId)}/clients/${id(clientId)}/clinical-record`),
     saveProfile: (businessId, clientId, input) =>

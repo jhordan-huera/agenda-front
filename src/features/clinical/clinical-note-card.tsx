@@ -2,16 +2,24 @@ import { MessageSquarePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/shared/submit-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useAddClinicalAddendum } from "@/hooks/queries/use-clinical";
 import { getErrorMessage } from "@/lib/data";
 import { capitalize, formatDateTime, formatLongDate } from "@/lib/format";
-import type { ClinicalNote } from "@/types";
-import { NOTE_FIELDS } from "./clinical-labels";
+import type { ClinicalNote, ClinicalTemplateVersion } from "@/types";
+import { ClinicalNoteContent } from "./clinical-note-content";
 
-export function ClinicalNoteCard({ note, serviceName }: { note: ClinicalNote; serviceName?: string }) {
+interface ClinicalNoteCardProps {
+  note: ClinicalNote;
+  /** Versión de plantilla con que se escribió (sus campos y su nombre). */
+  template?: ClinicalTemplateVersion;
+  serviceName?: string;
+}
+
+export function ClinicalNoteCard({ note, template, serviceName }: ClinicalNoteCardProps) {
   const addAddendum = useAddClinicalAddendum(note.clientId);
   const [writing, setWriting] = useState(false);
   const [text, setText] = useState("");
@@ -30,20 +38,20 @@ export function ClinicalNoteCard({ note, serviceName }: { note: ClinicalNote; se
   return (
     <Card className="gap-4" aria-label={`Evolución del ${formatLongDate(note.date)}`}>
       <CardHeader>
-        <CardTitle className="text-base">{capitalize(formatLongDate(note.date))}</CardTitle>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <CardTitle className="text-base">{capitalize(formatLongDate(note.date))}</CardTitle>
+          {template && <Badge variant="secondary">{template.name}</Badge>}
+        </div>
         <CardDescription>
           {serviceName ? `${serviceName} · ` : ""}Registrada por {note.authorName} · {formatDateTime(note.createdAt)}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
-        <dl className="grid gap-3 text-sm">
-          {NOTE_FIELDS.filter(({ key }) => note[key]).map(({ key, label }) => (
-            <div key={key}>
-              <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-              <dd className="whitespace-pre-line">{note[key]}</dd>
-            </div>
-          ))}
-        </dl>
+        {template ? (
+          <ClinicalNoteContent fields={template.fields} data={note.data} />
+        ) : (
+          <p className="text-sm text-muted-foreground">No se pudo cargar el formato de esta evolución.</p>
+        )}
 
         {note.addenda.length > 0 && (
           <ul className="grid gap-2 border-t pt-3">

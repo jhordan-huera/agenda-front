@@ -14,6 +14,17 @@ export function useClinicalRecord(clientId: string, enabled = true) {
   });
 }
 
+/** Formatos de evolución disponibles (cambian poco: se guardan 10 minutos). */
+export function useClinicalTemplates(enabled = true) {
+  const businessId = useBusinessId();
+  return useQuery({
+    queryKey: queryKeys.clinicalTemplates(businessId),
+    queryFn: () => data.clinicalRecords.listTemplates(businessId),
+    staleTime: 10 * 60_000,
+    enabled,
+  });
+}
+
 /** Tras escribir, se recarga la historia y la auditoría (que registra cada cambio). */
 function useClinicalMutation<TVariables, TResult>(
   clientId: string,

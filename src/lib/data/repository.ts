@@ -40,6 +40,7 @@ import type {
   ClinicalNote,
   ClinicalProfile,
   ClinicalRecord,
+  ClinicalTemplate,
   EmailNotification,
   ISODate,
   PlanChangeRequest,
@@ -118,6 +119,8 @@ export interface SubscriptionRepository {
  * evoluciones sólo admiten aclaraciones.
  */
 export interface ClinicalRecordRepository {
+  /** Formatos de evolución del negocio: los de la plataforma y los suyos, recomendados primero. */
+  listTemplates(businessId: string): Promise<ClinicalTemplate[]>;
   /** Devuelve antecedentes y evoluciones, y deja constancia del acceso en la auditoría. */
   get(businessId: string, clientId: string): Promise<ClinicalRecord>;
   saveProfile(businessId: string, clientId: string, input: ClinicalProfileInput): Promise<ClinicalProfile>;

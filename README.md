@@ -146,8 +146,13 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   el profesional siempre ve y edita el precio real.
 - **Historia clínica** (negocios de salud; se activa en Configuración → Negocio): pestaña en la
   ficha del cliente con antecedentes (cédula, alergias, enfermedades, medicación, consentimiento
-  informado…) y evoluciones por consulta (motivo, hallazgos, diagnóstico, tratamiento,
-  indicaciones). Atajo "Registrar evolución" desde el detalle de la cita y vista para imprimir o
+  informado…) y evoluciones por consulta con el **formato de cada especialidad** (plantillas):
+  atención médica (signos vitales, examen físico, diagnósticos CIE-10, receta, descargo de
+  responsabilidad), psicología, odontología, nutrición con IMC automático, fisioterapia,
+  fonoaudiología, medicina estética, evolución general y nota libre. Se propone el formato de la
+  última evolución del paciente o el recomendado para la especialidad; lo escrito en cada formato se
+  conserva al cambiar de uno a otro. Formulario y vista en `src/features/clinical/`
+  (`clinical-field-input.tsx`, `clinical-note-content.tsx`). Atajo "Registrar evolución" desde el detalle de la cita y vista para imprimir o
   guardar en PDF (para el archivo del profesional). Acceso: el propietario, los miembros que él
   autoriza en Equipo y el super admin en "Gestionar negocio"; las evoluciones no se editan ni se borran (se añaden
   aclaraciones); cada acceso queda en la auditoría; un paciente con historia no se puede eliminar.

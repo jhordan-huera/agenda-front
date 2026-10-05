@@ -7,7 +7,8 @@ import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getServiceName } from "@/features/appointments/appointment-utils";
-import { HISTORY_FIELDS, NOTE_FIELDS, SEX_OPTIONS } from "@/features/clinical/clinical-labels";
+import { HISTORY_FIELDS, SEX_OPTIONS } from "@/features/clinical/clinical-labels";
+import { ClinicalNoteContent } from "@/features/clinical/clinical-note-content";
 import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
 import { useCurrentBusiness, useCurrentUser } from "@/hooks/queries/use-account";
 import { useAppointments } from "@/hooks/queries/use-appointments";
@@ -41,14 +42,14 @@ export default function ClinicalPrintPage() {
   if (record.isError || !clientQuery.data) return <ErrorState onRetry={() => record.refetch()} />;
 
   const client = clientQuery.data;
-  const { profile, notes } = record.data;
+  const { profile, notes, templateVersions } = record.data;
   const chronological = notes.toReversed();
   const serviceOf = (appointmentId: string | null) => {
     const appointment = appointmentId ? appointments.find((a) => a.id === appointmentId) : undefined;
     return appointment ? getServiceName(servicesById, appointment.serviceId) : null;
   };
   const personal = [
-    ["Cédula / documento", profile?.documentId],
+    ["Cédula", profile?.documentId],
     ["Fecha de nacimiento", profile?.birthDate && formatNumericDate(profile.birthDate)],
     ["Sexo", profile?.sex && SEX_OPTIONS.find((o) => o.value === profile.sex)?.label],
     ["Tipo de sangre", profile?.bloodType],
@@ -126,15 +127,12 @@ export default function ClinicalPrintPage() {
                   {capitalize(formatLongDate(note.date))}
                   {serviceOf(note.appointmentId) && ` · ${serviceOf(note.appointmentId)}`}
                 </p>
-                <p className="text-xs text-muted-foreground">Registrada por {note.authorName}</p>
-                <dl className="mt-2 grid gap-1.5">
-                  {NOTE_FIELDS.filter(({ key }) => note[key]).map(({ key, label }) => (
-                    <div key={key}>
-                      <dt className="text-xs text-muted-foreground">{label}</dt>
-                      <dd className="whitespace-pre-line">{note[key]}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <p className="text-xs text-muted-foreground">
+                  {templateVersions[note.templateVersionId]?.name ?? "Evolución"} · Registrada por {note.authorName}
+                </p>
+                {templateVersions[note.templateVersionId] && (
+                  <ClinicalNoteContent className="mt-2" fields={templateVersions[note.templateVersionId].fields} data={note.data} />
+                )}
                 {note.addenda.map((addendum) => (
                   <p key={addendum.id} className="mt-2 text-xs">
                     <span className="font-medium">Aclaración ({addendum.authorName}, {formatDateTime(addendum.createdAt)}):</span>{" "}
