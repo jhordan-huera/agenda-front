@@ -152,7 +152,14 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   fonoaudiología, medicina estética, evolución general y nota libre. Se propone el formato de la
   última evolución del paciente o el recomendado para la especialidad; lo escrito en cada formato se
   conserva al cambiar de uno a otro. Formulario y vista en `src/features/clinical/`
-  (`clinical-field-input.tsx`, `clinical-note-content.tsx`). Atajo "Registrar evolución" desde el detalle de la cita y vista para imprimir o
+  (`clinical-field-input.tsx`, `clinical-note-content.tsx`).
+  - **Odontograma** (se copia el último y se actualiza), **mapa del cuerpo** para lesiones o dolor
+    y **escalas PHQ-9 y GAD-7** con puntaje y aviso de riesgo.
+  - **Gráfico de evolución** en la ficha: peso, IMC, dolor, puntajes… a lo largo de las consultas.
+  - **Formatos propios** (Pro y Business): Configuración → Negocio → Gestionar formatos, editor con
+    vista previa; duplicar uno de la plataforma o crear desde cero. Cada servicio puede tener su
+    formato, que se propone al registrar la evolución de esa cita.
+  - **Archivos** (Pro y Business): radiografías, exámenes, fotos o PDF en la ficha del paciente. Atajo "Registrar evolución" desde el detalle de la cita y vista para imprimir o
   guardar en PDF (para el archivo del profesional). Acceso: el propietario, los miembros que él
   autoriza en Equipo y el super admin en "Gestionar negocio"; las evoluciones no se editan ni se borran (se añaden
   aclaraciones); cada acceso queda en la auditoría; un paciente con historia no se puede eliminar.

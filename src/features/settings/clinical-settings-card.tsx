@@ -1,5 +1,7 @@
-import { Stethoscope } from "lucide-react";
+import { FileStack, Stethoscope } from "lucide-react";
+import { Link } from "react-router";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
 import { useCategories } from "@/hooks/queries/use-categories";
@@ -33,7 +35,7 @@ export function ClinicalSettingsCard({ business }: { business: Business }) {
             : "Pensada para negocios de salud: psicología, odontología, nutrición, fisioterapia…"}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-4">
         <SwitchField
           label="Registrar historias clínicas de mis pacientes"
           description="Antecedentes y evoluciones de cada consulta en la ficha del cliente. Sólo la ves tú y las personas que autorices en Equipo; cada acceso queda registrado y nada se puede borrar."
@@ -41,6 +43,21 @@ export function ClinicalSettingsCard({ business }: { business: Business }) {
           disabled={updateBusiness.isPending}
           onCheckedChange={toggle}
         />
+        {business.clinicalRecordsEnabled && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+            <span>
+              <span className="block text-sm font-medium">Formatos de historia clínica</span>
+              <span className="block text-xs text-muted-foreground">
+                Qué se registra en cada evolución: los de tu especialidad o los tuyos (planes Pro y Business).
+              </span>
+            </span>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/dashboard/clinical-templates">
+                <FileStack /> Gestionar formatos
+              </Link>
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

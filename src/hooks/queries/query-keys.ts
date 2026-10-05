@@ -15,6 +15,9 @@ export const queryKeys = {
   client: (businessId: string, clientId: string) => ["clients", businessId, clientId] as const,
   clinicalRecord: (businessId: string, clientId: string) => ["clinical", businessId, clientId] as const,
   clinicalTemplates: (businessId: string) => ["clinical-templates", businessId] as const,
+  clinicalTemplateList: (businessId: string, includeInactive: boolean) =>
+    ["clinical-templates", businessId, includeInactive ? "all" : "active"] as const,
+  clinicalTemplate: (businessId: string, templateId: string) => ["clinical-templates", businessId, "one", templateId] as const,
   services: (businessId: string) => ["services", businessId] as const,
   appointments: (businessId: string) => ["appointments", businessId] as const,
   appointmentList: (businessId: string, filters: AppointmentFilters) =>

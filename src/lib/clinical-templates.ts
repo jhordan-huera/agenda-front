@@ -65,13 +65,14 @@ export function visibleNoteFields(fields: ClinicalField[], data: ClinicalNoteDat
 
 /**
  * Formato propuesto para una evolución nueva: el de la última evolución del paciente (continuidad),
- * si no el recomendado para la especialidad y si no el general.
+ * si no uno propio del negocio, el recomendado para la especialidad o el general.
  */
 export function defaultTemplateId(templates: ClinicalTemplate[], record?: ClinicalRecord): string | undefined {
   const last = record?.notes[0];
   const lastTemplateId = last ? record.templateVersions[last.templateVersionId]?.templateId : undefined;
   return (
     templates.find((template) => template.id === lastTemplateId)?.id ??
+    templates.find((template) => template.businessId !== null)?.id ??
     templates.find((template) => template.recommended)?.id ??
     templates.find((template) => template.id === "evolucion-general")?.id ??
     templates[0]?.id

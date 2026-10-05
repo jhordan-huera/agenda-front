@@ -7,8 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { computeBmi, describeBmi } from "@/lib/clinical-templates";
 import { cn } from "@/lib/utils";
-import type { ClinicalField } from "@/types";
+import type { BodyMapMark, ClinicalField, OdontogramValue } from "@/types";
+import { BodyMapInput } from "./body-map";
 import { clinicalFieldSpan, emptyListRow, type ClinicalFormValues, type ListRowDraft } from "./clinical-form-values";
+import { OdontogramInput } from "./odontogram";
+import { QuestionnaireInput } from "./questionnaire";
 
 /** Botón-opción (chip): para elegir rápido entre pocas opciones. */
 function Chip({ selected, onClick, children, role }: { selected: boolean; onClick: () => void; children: string; role: "radio" | "checkbox" }) {
@@ -74,6 +77,24 @@ export function ClinicalFieldInput({ field, values, onChange, error }: ClinicalF
             );
           case "date":
             return <Input {...control} type="date" value={String(value ?? "")} onChange={(e) => set(e.target.value)} />;
+          case "questionnaire":
+            return (
+              <div id={control.id} aria-describedby={control["aria-describedby"]}>
+                <QuestionnaireInput field={field} value={Array.isArray(value) ? (value as (number | null)[]) : []} onChange={set} />
+              </div>
+            );
+          case "odontogram":
+            return (
+              <div id={control.id} aria-describedby={control["aria-describedby"]}>
+                <OdontogramInput value={(value as OdontogramValue | undefined) ?? {}} onChange={set} />
+              </div>
+            );
+          case "bodymap":
+            return (
+              <div id={control.id} aria-describedby={control["aria-describedby"]}>
+                <BodyMapInput value={Array.isArray(value) ? (value as BodyMapMark[]) : []} onChange={set} />
+              </div>
+            );
           case "number":
             return (
               <div className="flex items-center rounded-lg border border-input focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">

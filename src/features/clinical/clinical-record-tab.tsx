@@ -10,6 +10,8 @@ import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useClinicalRecord } from "@/hooks/queries/use-clinical";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import type { Client } from "@/types";
+import { ClinicalAttachmentsCard } from "./clinical-attachments-card";
+import { ClinicalEvolutionChart } from "./clinical-evolution-chart";
 import { ClinicalNoteCard } from "./clinical-note-card";
 import { ClinicalNoteDialog } from "./clinical-note-dialog";
 import { ClinicalProfileForm } from "./clinical-profile-form";
@@ -55,6 +57,7 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
       ) : (
         <div className="grid items-start gap-6 lg:grid-cols-5">
           <section aria-labelledby="notes-heading" className="space-y-4 lg:col-span-3">
+            <ClinicalEvolutionChart record={record.data} />
             <h2 id="notes-heading" className="font-semibold">
               Evoluciones <span className="font-normal text-muted-foreground">({record.data.notes.length})</span>
             </h2>
@@ -80,13 +83,14 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
               ))
             )}
           </section>
-          <div className="lg:col-span-2">
+          <div className="grid gap-6 lg:col-span-2">
             <ClinicalProfileForm
               key={record.data.profile?.updatedAt ?? "new"}
               clientId={client.id}
               clientDocumentId={client.documentId}
               profile={record.data.profile}
             />
+            <ClinicalAttachmentsCard clientId={client.id} record={record.data} />
           </div>
         </div>
       )}

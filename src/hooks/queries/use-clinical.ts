@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusinessId } from "@/features/auth/use-session";
 import { data } from "@/lib/data";
-import type { ClinicalAddendumInput, ClinicalNoteInput, ClinicalProfileInput } from "@/lib/validations/clinical";
+import type {
+  ClinicalAddendumInput,
+  ClinicalAttachmentInput,
+  ClinicalNoteInput,
+  ClinicalProfileInput,
+  ClinicalTemplateInput,
+} from "@/lib/validations/clinical";
+import type { ClinicalTemplate } from "@/types";
 import { queryKeys } from "./query-keys";
 import { useInvalidateActivity } from "./use-invalidate-activity";
 
@@ -15,15 +22,47 @@ export function useClinicalRecord(clientId: string, enabled = true) {
 }
 
 /** Formatos de evolución disponibles (cambian poco: se guardan 10 minutos). */
-export function useClinicalTemplates(enabled = true) {
+export function useClinicalTemplates(enabled = true, includeInactive = false) {
   const businessId = useBusinessId();
   return useQuery({
-    queryKey: queryKeys.clinicalTemplates(businessId),
-    queryFn: () => data.clinicalRecords.listTemplates(businessId),
+    queryKey: queryKeys.clinicalTemplateList(businessId, includeInactive),
+    queryFn: () => data.clinicalRecords.listTemplates(businessId, includeInactive),
     staleTime: 10 * 60_000,
     enabled,
   });
 }
+
+/** Un formato (propio o de la plataforma) para editarlo o duplicarlo. */
+export function useClinicalTemplate(templateId: string | undefined) {
+  const businessId = useBusinessId();
+  return useQuery({
+    queryKey: queryKeys.clinicalTemplate(businessId, templateId ?? ""),
+    queryFn: () => data.clinicalRecords.getTemplate(businessId, templateId!),
+    enabled: Boolean(templateId),
+  });
+}
+
+/** Tras crear o editar un formato se recargan las listas (y el propio formato). */
+function useTemplateMutation<TVariables>(mutationFn: (businessId: string, variables: TVariables) => Promise<ClinicalTemplate>) {
+  const businessId = useBusinessId();
+  const queryClient = useQueryClient();
+  const invalidateActivity = useInvalidateActivity();
+  return useMutation({
+    mutationFn: (variables: TVariables) => mutationFn(businessId, variables),
+    onSuccess: () =>
+      Promise.all([queryClient.invalidateQueries({ queryKey: queryKeys.clinicalTemplates(businessId) }), invalidateActivity()]),
+  });
+}
+
+export const useSaveClinicalTemplate = () =>
+  useTemplateMutation((businessId, { id, input }: { id?: string; input: ClinicalTemplateInput }) =>
+    id ? data.clinicalRecords.updateTemplate(businessId, id, input) : data.clinicalRecords.createTemplate(businessId, input),
+  );
+
+export const useSetClinicalTemplateActive = () =>
+  useTemplateMutation((businessId, { id, active }: { id: string; active: boolean }) =>
+    data.clinicalRecords.setTemplateActive(businessId, id, active),
+  );
 
 /** Tras escribir, se recarga la historia y la auditoría (que registra cada cambio). */
 function useClinicalMutation<TVariables, TResult>(
@@ -57,3 +96,46 @@ export const useAddClinicalAddendum = (clientId: string) =>
   useClinicalMutation(clientId, (businessId, { noteId, input }: { noteId: string; input: ClinicalAddendumInput }) =>
     data.clinicalRecords.addAddendum(businessId, noteId, input),
   );
+
+/**
+ * Sube un archivo a la historia: pide la URL firmada, el navegador lo envía directo al
+ * almacenamiento (con progreso) y la API confirma que llegó.
+ */
+export const useUploadClinicalAttachment = (clientId: string) =>
+  useClinicalMutation(
+    clientId,
+    async (businessId, { file, description, onProgress }: { file: File; description: string; onProgress?: (percent: number) => void }) => {
+      // Algunos navegadores no informan el tipo de HEIC o PDF: se deduce de la extensión.
+      const byExtension: Record<string, string> = { heic: "image/heic", pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg" };
+      const contentType = file.type || byExtension[file.name.split(".").pop()?.toLowerCase() ?? ""] || "";
+      const input = { fileName: file.name, contentType, sizeBytes: file.size, description } as ClinicalAttachmentInput;
+      const { attachment, upload } = await data.clinicalRecords.requestAttachmentUpload(businessId, clientId, input);
+      await new Promise<void>((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open(upload.method, upload.url);
+        for (const [name, value] of Object.entries(upload.headers)) request.setRequestHeader(name, value);
+        // Con el tipo deducido, se envía el mismo que se declaró.
+        if (!file.type) request.overrideMimeType(contentType);
+        request.upload.onprogress = (event) => event.lengthComputable && onProgress?.(Math.round((event.loaded / event.total) * 100));
+        request.onload = () => (request.status < 300 ? resolve() : reject(new Error("No se pudo subir el archivo. Inténtalo de nuevo.")));
+        request.onerror = () => reject(new Error("Se perdió la conexión al subir el archivo."));
+        request.send(file);
+      });
+      return data.clinicalRecords.completeAttachmentUpload(businessId, attachment.id);
+    },
+  );
+
+/** Abre un archivo (URL firmada de unos minutos) en otra pestaña. */
+export async function openClinicalAttachment(businessId: string, attachmentId: string): Promise<void> {
+  // La pestaña se abre antes de esperar a la API: si no, el navegador la bloquea como emergente.
+  const tab = window.open("about:blank", "_blank");
+  if (tab) tab.opener = null;
+  try {
+    const { url } = await data.clinicalRecords.getAttachmentUrl(businessId, attachmentId);
+    if (tab) tab.location.href = url;
+    else window.location.href = url;
+  } catch (error) {
+    tab?.close();
+    throw error;
+  }
+}

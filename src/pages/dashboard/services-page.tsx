@@ -35,11 +35,21 @@ function ServicesPageContent() {
   const openCreate = () => setFormState({ open: true });
 
   const toggleActive = async (service: Service) => {
-    const { name, description, durationMinutes, price, showPrice, location, homeVisitFee } = service;
+    const { name, description, durationMinutes, price, showPrice, location, homeVisitFee, clinicalTemplateId } = service;
     try {
       await saveService.mutateAsync({
         id: service.id,
-        input: { name, description, durationMinutes, price, showPrice, location, homeVisitFee, isActive: !service.isActive },
+        input: {
+          name,
+          description,
+          durationMinutes,
+          price,
+          showPrice,
+          location,
+          homeVisitFee,
+          clinicalTemplateId,
+          isActive: !service.isActive,
+        },
       });
       toast.success(service.isActive ? "Servicio desactivado" : "Servicio activado");
     } catch (error) {

@@ -44,6 +44,9 @@ export const router = createBrowserRouter([
           { path: "schedule", lazy: lazyPage(() => import("@/pages/dashboard/schedule-page")) },
           { path: "reports", lazy: lazyPage(() => import("@/pages/dashboard/reports-page")) },
           { path: "settings", lazy: lazyPage(() => import("@/pages/dashboard/settings-page")) },
+          { path: "clinical-templates", lazy: lazyPage(() => import("@/pages/dashboard/clinical-templates-page")) },
+          { path: "clinical-templates/new", lazy: lazyPage(() => import("@/pages/dashboard/clinical-template-editor-page")) },
+          { path: "clinical-templates/:id", lazy: lazyPage(() => import("@/pages/dashboard/clinical-template-editor-page")) },
         ],
       },
       {

@@ -7,7 +7,13 @@ import type {
   UserPasswordInput,
 } from "@/lib/validations/admin";
 import type { AppointmentInput } from "@/lib/validations/appointment";
-import type { ClinicalAddendumInput, ClinicalNoteInput, ClinicalProfileInput } from "@/lib/validations/clinical";
+import type {
+  ClinicalAddendumInput,
+  ClinicalAttachmentInput,
+  ClinicalNoteInput,
+  ClinicalProfileInput,
+  ClinicalTemplateInput,
+} from "@/lib/validations/clinical";
 import type { PublicBookingInput } from "@/lib/validations/booking";
 import type {
   BookingSettingsInput,
@@ -39,6 +45,8 @@ import type {
   Client,
   ClinicalNote,
   ClinicalProfile,
+  ClinicalAttachment,
+  ClinicalAttachmentUpload,
   ClinicalRecord,
   ClinicalTemplate,
   EmailNotification,
@@ -119,8 +127,20 @@ export interface SubscriptionRepository {
  * evoluciones sólo admiten aclaraciones.
  */
 export interface ClinicalRecordRepository {
-  /** Formatos de evolución del negocio: los de la plataforma y los suyos, recomendados primero. */
-  listTemplates(businessId: string): Promise<ClinicalTemplate[]>;
+  /**
+   * Formatos de evolución del negocio: los propios primero, luego los recomendados y el resto.
+   * Con `includeInactive`, también los propios desactivados (gestión de formatos).
+   */
+  listTemplates(businessId: string, includeInactive?: boolean): Promise<ClinicalTemplate[]>;
+  getTemplate(businessId: string, templateId: string): Promise<ClinicalTemplate>;
+  /** Formatos propios: planes Pro y Business, sólo el propietario. Cada cambio crea una versión. */
+  createTemplate(businessId: string, input: ClinicalTemplateInput): Promise<ClinicalTemplate>;
+  updateTemplate(businessId: string, templateId: string, input: ClinicalTemplateInput): Promise<ClinicalTemplate>;
+  setTemplateActive(businessId: string, templateId: string, active: boolean): Promise<ClinicalTemplate>;
+  /** Archivos: pide la URL de subida, el navegador sube y luego se confirma. */
+  requestAttachmentUpload(businessId: string, clientId: string, input: ClinicalAttachmentInput): Promise<ClinicalAttachmentUpload>;
+  completeAttachmentUpload(businessId: string, attachmentId: string): Promise<ClinicalAttachment>;
+  getAttachmentUrl(businessId: string, attachmentId: string): Promise<{ url: string }>;
   /** Devuelve antecedentes y evoluciones, y deja constancia del acceso en la auditoría. */
   get(businessId: string, clientId: string): Promise<ClinicalRecord>;
   saveProfile(businessId: string, clientId: string, input: ClinicalProfileInput): Promise<ClinicalProfile>;

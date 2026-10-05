@@ -205,6 +205,8 @@ export interface Service {
   location: ServiceLocation;
   /** Recargo por atender a domicilio; se suma al precio. */
   homeVisitFee: number;
+  /** Formato de historia clínica propuesto al registrar la evolución de una cita de este servicio. */
+  clinicalTemplateId: string | null;
   isActive: boolean;
   createdAt: ISODateTime;
 }
@@ -417,14 +419,64 @@ export type ClinicalField =
   /** Filas con columnas: receta, diagnósticos CIE-10, procedimientos por pieza… */
   | (ClinicalFieldBase & { type: "list"; columns: ClinicalListColumn[]; addLabel?: string })
   /** Índice de masa corporal calculado de otros dos campos (peso en kg y talla en cm); no guarda valor. */
-  | (ClinicalFieldBase & { type: "bmi"; weightField: string; heightField: string });
+  | (ClinicalFieldBase & { type: "bmi"; weightField: string; heightField: string })
+  /** Cuestionario con puntaje (PHQ-9, GAD-7…): cada pregunta se responde con una opción que suma puntos. */
+  | (ClinicalFieldBase & {
+      type: "questionnaire";
+      /** Enunciado común de las preguntas ("Durante las últimas 2 semanas…"). */
+      prompt?: string;
+      items: string[];
+      options: { label: string; points: number }[];
+      /** Interpretación del total: el primer rango que lo contiene. */
+      ranges: { min: number; max: number; label: string }[];
+      /** Avisos por pregunta (p. ej. ideación suicida en la 9 del PHQ-9). */
+      alerts?: { item: number; minPoints: number; message: string }[];
+    })
+  /** Odontograma (numeración FDI): estado por superficie y de la pieza completa. */
+  | (ClinicalFieldBase & { type: "odontogram" })
+  /** Mapa del cuerpo (frente y espalda) para marcar lesiones o zonas de dolor. */
+  | (ClinicalFieldBase & { type: "bodymap" });
 
 export type ClinicalFieldType = ClinicalField["type"];
 
 export type ClinicalListRow = Record<string, string | number | null>;
 
-/** Valor de un campo: texto, número, sí/no, opciones elegidas o filas de una lista. */
-export type ClinicalFieldValue = string | number | boolean | string[] | ClinicalListRow[];
+/** Superficies de una pieza: oclusal/incisal, mesial, distal, vestibular y lingual/palatina. */
+export type ToothSurface = "O" | "M" | "D" | "V" | "L";
+export type ToothSurfaceState = "caries" | "obturado" | "sellante" | "fractura";
+export type ToothWholeState = "corona" | "endodoncia" | "extraccion" | "ausente" | "implante";
+
+/** Estado de una pieza en el odontograma (sólo las piezas con hallazgos). */
+export interface ToothState {
+  surfaces?: Partial<Record<ToothSurface, ToothSurfaceState>>;
+  whole?: ToothWholeState;
+  note?: string;
+}
+
+/** Odontograma: por número de pieza FDI ("16", "21", "55"…). */
+export type OdontogramValue = Record<string, ToothState>;
+
+/** Marca en el mapa del cuerpo: vista y posición relativa (0 a 1). */
+export interface BodyMapMark {
+  view: "front" | "back";
+  x: number;
+  y: number;
+  note: string;
+}
+
+/**
+ * Valor de un campo: texto, número, sí/no, opciones elegidas, filas de una lista, respuestas de un
+ * cuestionario (puntos por pregunta), odontograma o marcas del mapa del cuerpo.
+ */
+export type ClinicalFieldValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | number[]
+  | ClinicalListRow[]
+  | OdontogramValue
+  | BodyMapMark[];
 
 /** Contenido de una evolución: sólo los campos completados, por id de campo. */
 export type ClinicalNoteData = Record<string, ClinicalFieldValue>;
@@ -441,6 +493,8 @@ export interface ClinicalTemplate {
   categories: string[];
   /** Recomendada para la especialidad de este negocio. */
   recommended: boolean;
+  /** Las propias se pueden desactivar (dejan de ofrecerse; sus evoluciones se siguen viendo). */
+  isActive: boolean;
   /** Versión vigente: las evoluciones nuevas se escriben con ella. */
   versionId: string;
   version: number;
@@ -474,12 +528,37 @@ export interface ClinicalNote {
   addenda: ClinicalNoteAddendum[];
 }
 
+/** Archivo de la historia clínica (radiografía, examen, foto…). No se borra. */
+export interface ClinicalAttachment {
+  id: string;
+  clientId: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  description: string;
+  uploadedByName: string;
+  createdAt: ISODateTime;
+}
+
+/** Subida directa al almacenamiento: el navegador envía el archivo a esta URL. */
+export interface ClinicalAttachmentUpload {
+  attachment: ClinicalAttachment;
+  upload: { url: string; method: "PUT"; headers: Record<string, string> };
+}
+
 export interface ClinicalRecord {
   profile: ClinicalProfile | null;
   /** De la más reciente a la más antigua. */
   notes: ClinicalNote[];
   /** Versiones de plantilla con que se escribieron las evoluciones (por id). */
   templateVersions: Record<string, ClinicalTemplateVersion>;
+  /** Archivos ya subidos, del más reciente al más antiguo. */
+  attachments: ClinicalAttachment[];
+  /**
+   * ¿Se pueden subir archivos? "upgrade": el plan no lo incluye (Pro y Business sí);
+   * "unavailable": el almacenamiento no está configurado.
+   */
+  attachmentAccess: "available" | "upgrade" | "unavailable";
 }
 
 /* ------------------------------------------------------- Cambios de plan ---- */

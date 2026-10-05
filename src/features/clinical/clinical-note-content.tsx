@@ -1,6 +1,9 @@
 import { computeBmi, describeBmi, describeClinicalValue, visibleNoteFields } from "@/lib/clinical-templates";
 import { cn } from "@/lib/utils";
-import type { ClinicalField, ClinicalListRow, ClinicalNoteData } from "@/types";
+import type { BodyMapMark, ClinicalField, ClinicalListRow, ClinicalNoteData, OdontogramValue } from "@/types";
+import { BodyMapView } from "./body-map";
+import { OdontogramView } from "./odontogram";
+import { QuestionnaireView } from "./questionnaire";
 
 /** Valores cortos (números, escalas, sí/no…): van en una cuadrícula para ocupar menos. */
 const COMPACT_TYPES = new Set<ClinicalField["type"]>(["number", "scale", "boolean", "date", "bmi", "select"]);
@@ -47,6 +50,9 @@ function Value({ field, data }: { field: ClinicalField; data: ClinicalNoteData }
     return <>{bmi === null ? "—" : describeBmi(bmi)}</>;
   }
   if (field.type === "list") return <ListValue field={field} rows={data[field.id] as ClinicalListRow[]} />;
+  if (field.type === "questionnaire") return <QuestionnaireView field={field} answers={data[field.id] as number[]} />;
+  if (field.type === "odontogram") return <OdontogramView value={data[field.id] as OdontogramValue} />;
+  if (field.type === "bodymap") return <BodyMapView marks={data[field.id] as BodyMapMark[]} />;
   return <>{describeClinicalValue(field, data[field.id])}</>;
 }
 
@@ -80,7 +86,7 @@ export function ClinicalNoteContent({ fields, data, className }: { fields: Clini
             {block.map((field) => (
               <div key={field.id}>
                 <dt className="text-xs font-medium text-muted-foreground">{field.label}</dt>
-                <dd className={cn("whitespace-pre-line", field.type === "list" && "mt-1")}>
+                <dd className={cn("whitespace-pre-line", ["list", "odontogram", "bodymap", "questionnaire"].includes(field.type) && "mt-1")}>
                   <Value field={field} data={data} />
                 </dd>
               </div>

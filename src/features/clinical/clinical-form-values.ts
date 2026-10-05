@@ -16,7 +16,12 @@ export function initialClinicalValues(fields: ClinicalField[]): ClinicalFormValu
         case "bmi":
           return [];
         case "multiselect":
+        case "bodymap":
           return [[field.id, []]];
+        case "odontogram":
+          return [[field.id, {}]];
+        case "questionnaire":
+          return [[field.id, field.items.map(() => null)]];
         case "list":
           return [[field.id, [emptyListRow(field)]]];
         case "boolean":

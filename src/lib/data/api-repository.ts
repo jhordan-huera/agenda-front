@@ -15,6 +15,8 @@ import type {
   Client,
   ClinicalNote,
   ClinicalProfile,
+  ClinicalAttachment,
+  ClinicalAttachmentUpload,
   ClinicalRecord,
   ClinicalTemplate,
   EmailNotification,
@@ -84,7 +86,21 @@ export const apiRepository: DataRepository = {
   },
 
   clinicalRecords: {
-    listTemplates: (businessId) => api.get<ClinicalTemplate[]>(`${business(businessId)}/clinical-templates`),
+    listTemplates: (businessId, includeInactive) =>
+      api.get<ClinicalTemplate[]>(`${business(businessId)}/clinical-templates`, includeInactive ? { all: "1" } : undefined),
+    getTemplate: (businessId, templateId) =>
+      api.get<ClinicalTemplate>(`${business(businessId)}/clinical-templates/${id(templateId)}`),
+    createTemplate: (businessId, input) => api.post<ClinicalTemplate>(`${business(businessId)}/clinical-templates`, input),
+    updateTemplate: (businessId, templateId, input) =>
+      api.put<ClinicalTemplate>(`${business(businessId)}/clinical-templates/${id(templateId)}`, input),
+    setTemplateActive: (businessId, templateId, active) =>
+      api.patch<ClinicalTemplate>(`${business(businessId)}/clinical-templates/${id(templateId)}/active`, { active }),
+    requestAttachmentUpload: (businessId, clientId, input) =>
+      api.post<ClinicalAttachmentUpload>(`${business(businessId)}/clients/${id(clientId)}/clinical-record/attachments`, input),
+    completeAttachmentUpload: (businessId, attachmentId) =>
+      api.post<ClinicalAttachment>(`${business(businessId)}/clinical-attachments/${id(attachmentId)}/complete`),
+    getAttachmentUrl: (businessId, attachmentId) =>
+      api.get<{ url: string }>(`${business(businessId)}/clinical-attachments/${id(attachmentId)}/url`),
     get: (businessId, clientId) =>
       api.get<ClinicalRecord>(`${business(businessId)}/clients/${id(clientId)}/clinical-record`),
     saveProfile: (businessId, clientId, input) =>

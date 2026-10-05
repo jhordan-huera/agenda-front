@@ -19,7 +19,7 @@ import { DataError, getErrorMessage } from "@/lib/data";
 import { capitalize, formatNumericDate, formatShortDate } from "@/lib/format";
 import { clinicalNoteDataSchema } from "@/lib/validations/clinical";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import type { ClinicalTemplate } from "@/types";
+import type { ClinicalField, ClinicalRecord, ClinicalTemplate, OdontogramValue } from "@/types";
 import { ClinicalFieldInput } from "./clinical-field-input";
 import { initialClinicalValues, type ClinicalFormValues } from "./clinical-form-values";
 
@@ -65,6 +65,7 @@ function ClinicalNoteLoader(props: FormProps) {
     <ClinicalNoteForm
       {...props}
       templates={templates.data}
+      record={record.data}
       initialTemplateId={defaultTemplateId(templates.data, record.data)}
       onTemplatesOutdated={() => void templates.refetch()}
     />
@@ -73,32 +74,67 @@ function ClinicalNoteLoader(props: FormProps) {
 
 const NO_APPOINTMENT = "none";
 
+/** Último odontograma registrado del paciente (en cualquier formato), si lo hay. */
+function findLastOdontogram(record?: ClinicalRecord): { value: OdontogramValue; date: string } | null {
+  for (const note of record?.notes ?? []) {
+    const field = record?.templateVersions[note.templateVersionId]?.fields.find(
+      (candidate) => candidate.type === "odontogram" && note.data[candidate.id] !== undefined,
+    );
+    if (field) return { value: note.data[field.id] as OdontogramValue, date: note.date };
+  }
+  return null;
+}
+
 function ClinicalNoteForm({
   clientId,
   clientName,
   appointmentId = null,
   onDone,
   templates,
+  record,
   initialTemplateId,
   onTemplatesOutdated,
-}: FormProps & { templates: ClinicalTemplate[]; initialTemplateId?: string; onTemplatesOutdated: () => void }) {
+}: FormProps & {
+  templates: ClinicalTemplate[];
+  record?: ClinicalRecord;
+  initialTemplateId?: string;
+  onTemplatesOutdated: () => void;
+}) {
   const addNote = useAddClinicalNote(clientId);
   const { data: appointments = [] } = useAppointments({ clientId });
   const { servicesById } = useLookups();
   // La fecha de la evolución es siempre la de hoy (la pone la API): no se puede fechar con retraso.
   const { data: business } = useCurrentBusiness();
   const today = useBusinessNow(business?.timezone).date;
-  const [templateId, setTemplateId] = useState(initialTemplateId);
+  // Mientras no se elija un formato a mano, se usa el del servicio de la cita (si tiene) o el habitual.
+  const [chosenTemplateId, setChosenTemplateId] = useState<string | null>(null);
   const [linkedAppointment, setLinkedAppointment] = useState<string | null>(appointmentId);
   // Lo escrito en cada formato se conserva al cambiar de uno a otro.
   const [valuesByTemplate, setValuesByTemplate] = useState<Record<string, ClinicalFormValues>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
   const formRef = useRef<HTMLFormElement>(null);
 
+  const appointmentServiceTemplate = (() => {
+    const appointment = linkedAppointment ? appointments.find((a) => a.id === linkedAppointment) : undefined;
+    const serviceTemplate = appointment ? servicesById.get(appointment.serviceId)?.clinicalTemplateId : undefined;
+    return templates.some((t) => t.id === serviceTemplate) ? serviceTemplate : undefined;
+  })();
+  const templateId = chosenTemplateId ?? appointmentServiceTemplate ?? initialTemplateId;
   const template = templates.find((t) => t.id === templateId);
-  const values = template ? (valuesByTemplate[template.id] ?? initialClinicalValues(template.fields)) : {};
-  const recommended = templates.filter((t) => t.recommended);
-  const others = templates.filter((t) => !t.recommended);
+  // El odontograma parte del último registrado: sólo se actualiza lo que cambió.
+  const lastOdontogram = findLastOdontogram(record);
+  const hasOdontogram = Boolean(template?.fields.some((field) => field.type === "odontogram"));
+  const initialValues = (fields: ClinicalField[]) => {
+    const initial = initialClinicalValues(fields);
+    for (const field of fields) {
+      if (field.type === "odontogram" && lastOdontogram) initial[field.id] = structuredClone(lastOdontogram.value);
+    }
+    return initial;
+  };
+  const values = template ? (valuesByTemplate[template.id] ?? initialValues(template.fields)) : {};
+  const own = templates.filter((t) => t.businessId !== null);
+  const recommended = templates.filter((t) => t.businessId === null && t.recommended);
+  const others = templates.filter((t) => t.businessId === null && !t.recommended);
   // Citas del paciente que no están canceladas, de la más reciente a la más antigua.
   const linkable = appointments.filter((a) => a.status !== "cancelled").toReversed();
 
@@ -151,7 +187,7 @@ function ClinicalNoteForm({
             <Select
               value={templateId}
               onValueChange={(id) => {
-                setTemplateId(id);
+                setChosenTemplateId(id);
                 setErrors({});
               }}
             >
@@ -159,6 +195,16 @@ function ClinicalNoteForm({
                 <SelectValue placeholder="Elige un formato" />
               </SelectTrigger>
               <SelectContent position="popper" className="max-h-80">
+                {own.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Tus formatos</SelectLabel>
+                    {own.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
                 {recommended.length > 0 && (
                   <SelectGroup>
                     <SelectLabel>Para tu especialidad</SelectLabel>
@@ -170,7 +216,7 @@ function ClinicalNoteForm({
                   </SelectGroup>
                 )}
                 <SelectGroup>
-                  {recommended.length > 0 && <SelectLabel>Otros formatos</SelectLabel>}
+                  {(recommended.length > 0 || own.length > 0) && <SelectLabel>Otros formatos</SelectLabel>}
                   {others.map((option) => (
                     <SelectItem key={option.id} value={option.id}>
                       {option.name}
@@ -216,6 +262,11 @@ function ClinicalNoteForm({
           <p className="text-xs text-muted-foreground">
             Completa sólo lo que aplique a esta consulta. Los campos con * son obligatorios.
           </p>
+          {hasOdontogram && lastOdontogram && (
+            <p className="rounded-lg bg-accent/60 px-3 py-2 text-xs text-accent-foreground">
+              El odontograma parte del registrado el {formatNumericDate(lastOdontogram.date)}: actualiza sólo lo que cambió.
+            </p>
+          )}
           <div className="grid gap-4 sm:grid-cols-6">
             {template.fields.map((field) => (
               <ClinicalFieldInput key={field.id} field={field} values={values} onChange={setValue} error={errors[field.id]} />

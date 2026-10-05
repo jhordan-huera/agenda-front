@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
+import { useClinicalTemplates } from "@/hooks/queries/use-clinical";
 import { useSaveService } from "@/hooks/queries/use-services";
 import { SERVICE_LOCATIONS } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
@@ -44,6 +46,8 @@ export function ServiceFormDialog({ open, onOpenChange, service }: ServiceFormDi
   );
 }
 
+const NO_TEMPLATE = "none";
+
 function ServiceForm({ service, onDone }: { service?: Service; onDone: () => void }) {
   const saveService = useSaveService();
   const [values, setValues] = useState({
@@ -54,8 +58,15 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
     showPrice: service?.showPrice ?? true,
     location: service?.location ?? ("business" as ServiceLocation),
     homeVisitFee: String(service?.homeVisitFee ?? 0),
+    clinicalTemplateId: service?.clinicalTemplateId ?? null,
     isActive: service?.isActive ?? true,
   });
+  // Formato de historia clínica: sólo si el negocio la usa y el usuario tiene acceso.
+  const clinicalAccess = useClinicalAccess();
+  const templates = useClinicalTemplates(clinicalAccess);
+  const templateOptions = (templates.data ?? []).filter(
+    (template) => template.isActive || template.id === values.clinicalTemplateId,
+  );
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) =>
@@ -187,6 +198,32 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
           </FormField>
         )}
       </div>
+      {clinicalAccess && templateOptions.length > 0 && (
+        <FormField
+          label="Formato de historia clínica"
+          error={errors.clinicalTemplateId}
+          hint="Se propone al registrar la evolución de una cita de este servicio."
+        >
+          {(field) => (
+            <Select
+              value={values.clinicalTemplateId ?? NO_TEMPLATE}
+              onValueChange={(id) => set("clinicalTemplateId", id === NO_TEMPLATE ? null : id)}
+            >
+              <SelectTrigger {...field} className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" className="max-h-72">
+                <SelectItem value={NO_TEMPLATE}>El habitual (el de la última evolución del paciente)</SelectItem>
+                {templateOptions.map((template) => (
+                  <SelectItem key={template.id} value={template.id}>
+                    {template.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </FormField>
+      )}
       <label className="flex items-center justify-between gap-4 rounded-lg border p-3">
         <span>
           <span className="block text-sm font-medium">Servicio activo</span>
