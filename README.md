@@ -1,4 +1,4 @@
-# Agendo · Frontend (agenda-front)
+# Agenda360 · Frontend (agenda-front)
 
 Plataforma SaaS de agenda y reservas para profesionales independientes y pequeños negocios
 (psicólogos, odontólogos, nutricionistas, entrenadores, salones de belleza, abogados…).

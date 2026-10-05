@@ -28,7 +28,7 @@ export default function AdminOverviewPage() {
       <PageTitle title="Plataforma" />
       <PageHeader
         title="Resumen de la plataforma"
-        description="Todos los negocios, usuarios y suscripciones de Agendo."
+        description="Todos los negocios, usuarios y suscripciones de Agenda360."
         actions={
           <Button size="lg" onClick={() => setCreating(true)}>
             <Plus /> Nuevo negocio
