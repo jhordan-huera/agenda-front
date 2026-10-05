@@ -41,6 +41,7 @@ export function ClientsTable({ clients, summaries, onEdit, onDelete }: ClientsTa
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
             <TableHead className="pl-4">Nombre</TableHead>
+            <TableHead className="hidden md:table-cell">Cédula</TableHead>
             <TableHead className="hidden md:table-cell">Teléfono</TableHead>
             <TableHead className="hidden xl:table-cell">Email</TableHead>
             <TableHead className="hidden lg:table-cell">Última cita</TableHead>
@@ -71,9 +72,14 @@ export function ClientsTable({ clients, summaries, onEdit, onDelete }: ClientsTa
                       >
                         {client.name}
                       </Link>
-                      <p className="truncate text-xs text-muted-foreground md:hidden">{client.phone || client.email}</p>
+                      <p className="truncate text-xs text-muted-foreground tabular-nums md:hidden">
+                        {client.documentId ? `Cédula ${client.documentId}` : client.phone || client.email}
+                      </p>
                     </div>
                   </div>
+                </TableCell>
+                <TableCell className="hidden whitespace-nowrap tabular-nums md:table-cell">
+                  {client.documentId || <span className="text-muted-foreground">Sin cédula</span>}
                 </TableCell>
                 <TableCell className="hidden whitespace-nowrap md:table-cell">{client.phone || "—"}</TableCell>
                 <TableCell className="hidden max-w-56 truncate xl:table-cell">{client.email || "—"}</TableCell>

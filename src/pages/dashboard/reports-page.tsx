@@ -1,14 +1,14 @@
-import { BarChart3, CalendarCheck, CalendarDays, CalendarRange, CalendarX, CircleCheck, Sun, UserX, Wallet } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { RequirePermission } from "@/components/layout/require-permission";
 import { PageTitle } from "@/components/shared/page-title";
-import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MetricStrip } from "@/features/dashboard/metric-strip";
 import { AppointmentsVolumeChart } from "@/features/reports/appointments-volume-chart";
 import { RankedBars } from "@/features/reports/ranked-bars";
 import {
@@ -94,52 +94,67 @@ function ReportsPageContent() {
         <ErrorState onRetry={() => appointmentsQuery.refetch()} />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
-            <StatCard label="Total de citas" value={summary.total} icon={CalendarCheck} loading={loading} />
-            <StatCard
-              label="Completadas"
-              value={summary.byStatus.completed}
-              icon={CircleCheck}
-              hint={`${percent(share(summary.byStatus.completed, summary.total))} del total`}
-              loading={loading}
-            />
-            <StatCard
-              label="Cancelaciones"
-              value={summary.byStatus.cancelled}
-              icon={CalendarX}
-              hint={`${percent(share(summary.byStatus.cancelled, summary.total))} del total`}
-              loading={loading}
-            />
-            <StatCard
-              label="No asistió"
-              value={summary.byStatus.no_show}
-              icon={UserX}
-              hint={
-                summary.attendanceRate === null
-                  ? "Sin citas pasadas"
-                  : `Asistencia: ${percent(summary.attendanceRate)}`
-              }
-              loading={loading}
-            />
-            <StatCard
-              label="Ingresos estimados"
-              value={formatCurrency(summary.estimatedRevenue, currency)}
-              icon={Wallet}
-              hint={`Cobrado (completadas): ${formatCurrency(summary.completedRevenue, currency)}`}
-              loading={loading}
-            />
-          </div>
-
-          <section aria-labelledby="revenue-heading" className="space-y-3">
-            <h2 id="revenue-heading" className="text-sm font-medium text-muted-foreground">
-              Ingresos estimados (citas no canceladas)
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
-              <StatCard label="Hoy" value={formatCurrency(report.revenue.day, currency)} icon={Sun} loading={loading} />
-              <StatCard label="Esta semana" value={formatCurrency(report.revenue.week, currency)} icon={CalendarDays} loading={loading} />
-              <StatCard label="Este mes" value={formatCurrency(report.revenue.month, currency)} icon={CalendarRange} loading={loading} />
+          {/* La cifra que el profesional busca primero: cuánto generó en el periodo. */}
+          <section
+            aria-labelledby="revenue-heading"
+            className="grid gap-6 rounded-xl border bg-card p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-end"
+          >
+            <div>
+              <h2 id="revenue-heading" className="text-sm font-semibold text-muted-foreground">
+                Ingresos estimados en {period} días
+              </h2>
+              {loading ? (
+                <Skeleton className="mt-2 h-12 w-48" />
+              ) : (
+                <p className="mt-1 text-5xl leading-none font-extrabold tracking-[-0.03em] text-ink tabular-nums">
+                  {formatCurrency(summary.estimatedRevenue, currency)}
+                </p>
+              )}
+              <p className="mt-2 text-sm text-muted-foreground">
+                Cobrado en citas completadas:{" "}
+                <span className="font-semibold text-foreground tabular-nums">
+                  {formatCurrency(summary.completedRevenue, currency)}
+                </span>
+              </p>
             </div>
+            <dl className="grid grid-cols-3 gap-4 lg:border-l lg:pl-6">
+              {[
+                { label: "Hoy", value: report.revenue.day },
+                { label: "Esta semana", value: report.revenue.week },
+                { label: "Este mes", value: report.revenue.month },
+              ].map((item) => (
+                <div key={item.label}>
+                  <dt className="text-sm text-muted-foreground">{item.label}</dt>
+                  <dd className="text-xl font-bold tabular-nums">
+                    {loading ? <Skeleton className="h-7 w-16" /> : formatCurrency(item.value, currency)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </section>
+
+          <MetricStrip
+            loading={loading}
+            className="md:grid-cols-4 2xl:grid-cols-4"
+            metrics={[
+              { label: "Citas del periodo", value: summary.total },
+              {
+                label: "Completadas",
+                value: summary.byStatus.completed,
+                hint: `${percent(share(summary.byStatus.completed, summary.total))} del total`,
+              },
+              {
+                label: "Cancelaciones",
+                value: summary.byStatus.cancelled,
+                hint: `${percent(share(summary.byStatus.cancelled, summary.total))} del total`,
+              },
+              {
+                label: "No asistió",
+                value: summary.byStatus.no_show,
+                hint: summary.attendanceRate === null ? "Sin citas pasadas" : `Asistencia: ${percent(summary.attendanceRate)}`,
+              },
+            ]}
+          />
 
           {loading ? (
             <Skeleton className="h-80 rounded-xl" />

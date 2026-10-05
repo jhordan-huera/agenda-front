@@ -115,7 +115,7 @@ export function SubscriptionSettings() {
           return (
             <Card key={plan.id} className={cn("gap-4 px-5", isCurrent && "ring-2 ring-primary")}>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold tracking-wide uppercase">{plan.name}</p>
+                <p className="text-lg font-bold">{plan.name}</p>
                 {isCurrent && <Badge>Plan actual</Badge>}
               </div>
               <p className="flex items-baseline gap-1">

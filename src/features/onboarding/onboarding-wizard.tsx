@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/shared/submit-button";
@@ -178,11 +178,11 @@ export function OnboardingWizard({ firstName }: { firstName?: string }) {
             </Button>
             {isLast ? (
               <SubmitButton size="lg" className="h-10 px-4" loading={pending} loadingText="Creando negocio…">
-                Crear mi negocio <ArrowRight />
+                Crear mi negocio
               </SubmitButton>
             ) : (
               <Button type="submit" size="lg" className="h-10 px-4">
-                Continuar <ArrowRight />
+                Continuar
               </Button>
             )}
           </div>

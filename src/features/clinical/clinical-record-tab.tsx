@@ -10,11 +10,13 @@ import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useClinicalRecord } from "@/hooks/queries/use-clinical";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import type { Client } from "@/types";
+import { BusinessTemplateBanner } from "./business-template-banner";
 import { ClinicalAttachmentsCard } from "./clinical-attachments-card";
 import { ClinicalEvolutionChart } from "./clinical-evolution-chart";
 import { ClinicalNoteCard } from "./clinical-note-card";
 import { ClinicalNoteDialog } from "./clinical-note-dialog";
 import { ClinicalProfileForm } from "./clinical-profile-form";
+import { useBusinessTemplate } from "./use-business-template";
 
 /** Historia clínica de un paciente: evoluciones y antecedentes. */
 export function ClinicalRecordTab({ client }: { client: Client }) {
@@ -22,6 +24,9 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
   const { data: appointments = [] } = useAppointments({ clientId: client.id });
   const { servicesById } = useLookups();
   const [noteOpen, setNoteOpen] = useState(false);
+  // Para señalar las evoluciones escritas con un formato creado por el negocio.
+  const { templates } = useBusinessTemplate();
+  const ownTemplateIds = new Set((templates.data ?? []).filter((t) => t.businessId !== null).map((t) => t.id));
 
   const serviceOf = (appointmentId: string | null) => {
     const appointment = appointmentId ? appointments.find((a) => a.id === appointmentId) : undefined;
@@ -46,6 +51,8 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
           </Button>
         </div>
       </div>
+
+      <BusinessTemplateBanner />
 
       {record.isPending ? (
         <div className="grid gap-6 lg:grid-cols-5">
@@ -78,6 +85,7 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
                   key={note.id}
                   note={note}
                   template={record.data.templateVersions[note.templateVersionId]}
+                  ownTemplate={ownTemplateIds.has(record.data.templateVersions[note.templateVersionId]?.templateId ?? "")}
                   serviceName={serviceOf(note.appointmentId)}
                 />
               ))

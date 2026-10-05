@@ -34,7 +34,7 @@ export function BookingLinkField({ savedSlug, pendingChange }: BookingLinkFieldP
   return (
     <div className="grid gap-2 rounded-lg bg-muted/60 p-3">
       <p className="text-xs font-medium text-muted-foreground">Tu enlace público actual</p>
-      <p className="truncate font-mono text-xs" title={url}>
+      <p className="truncate text-sm font-semibold text-ink" title={url}>
         {url}
       </p>
       {pendingChange && (

@@ -36,11 +36,11 @@ export function ConfirmStep({
   const showPrice = isPriceVisible(service);
   return (
     <div className="space-y-5">
-      <dl className="divide-y rounded-xl border text-sm">
+      <dl className="divide-y rounded-xl border">
         <Row icon={CalendarDays} label="Cita">
-          <p className="font-medium">{service.name}</p>
-          <p className="text-muted-foreground">
-            {capitalize(formatLongDate(input.date))} ·{" "}
+          <p className="font-semibold">{service.name}</p>
+          <p className="text-muted-foreground">{capitalize(formatLongDate(input.date))}</p>
+          <p className="text-xl font-extrabold text-ink tabular-nums">
             {formatTimeRange(input.startTime, addMinutesToTime(input.startTime, service.durationMinutes))}
           </p>
         </Row>
@@ -48,8 +48,9 @@ export function ConfirmStep({
           {formatDuration(service.durationMinutes)}
           {showPrice && (
             <>
-              {" · "}
-              {formatCurrency(getListPrice(service, Boolean(input.homeVisit)), business.currency)}
+              <span className="block font-semibold tabular-nums">
+                {formatCurrency(getListPrice(service, Boolean(input.homeVisit)), business.currency)}
+              </span>
               {input.homeVisit && service.homeVisitFee > 0 && (
                 <span className="block text-muted-foreground">
                   Incluye recargo a domicilio de {formatCurrency(service.homeVisitFee, business.currency)}
@@ -59,7 +60,7 @@ export function ConfirmStep({
           )}
         </Row>
         <Row icon={MapPin} label="Lugar">
-          {professional.displayName} · {business.name}
+          {professional.displayName}, {business.name}
           {input.homeVisit ? (
             <a
               href={getPlaceMapsUrl(input.homeVisit)}
@@ -67,7 +68,7 @@ export function ConfirmStep({
               rel="noreferrer"
               className="block text-muted-foreground hover:text-foreground hover:underline"
             >
-              A domicilio: {describeHomeVisit(input.homeVisit)} · Ver en el mapa
+              A domicilio: {describeHomeVisit(input.homeVisit)}. Ver en el mapa
             </a>
           ) : business.address && (
             <a
@@ -76,22 +77,22 @@ export function ConfirmStep({
               rel="noreferrer"
               className="block text-muted-foreground hover:text-foreground hover:underline"
             >
-              {business.address} · Ver en el mapa
+              {business.address}. Ver en el mapa
             </a>
           )}
         </Row>
         <Row icon={User} label="Tus datos">
-          {knownClientName ?? input.name}
+          <span className="font-semibold">{knownClientName ?? input.name}</span>
+          <span className="block text-muted-foreground tabular-nums">Cédula {input.documentId}</span>
           <span className="block text-muted-foreground">
-            Cédula {input.documentId}
-            {knownClientName ? " · usaremos tus datos de contacto registrados" : ` · ${input.email} · ${input.phone}`}
+            {knownClientName ? "Usaremos tus datos de contacto registrados" : `${input.email}, ${input.phone}`}
           </span>
           {input.notes && <span className="mt-1 block text-muted-foreground italic">“{input.notes}”</span>}
         </Row>
       </dl>
 
       {bookingSettings.allowCancellations && bookingSettings.cancellationPolicy && (
-        <p className="flex gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+        <p className="flex gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground">
           <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
           {bookingSettings.cancellationPolicy}
         </p>

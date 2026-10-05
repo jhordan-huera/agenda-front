@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, Home, Wallet } from "lucide-react";
+import { Home } from "lucide-react";
 import { getListPrice } from "@/features/appointments/appointment-utils";
 import { capitalize, formatCurrency, formatDuration, formatLongDate, formatTimeRange, isPriceVisible } from "@/lib/format";
 import { addMinutesToTime } from "@/lib/time";
@@ -14,61 +14,53 @@ interface BookingSummaryProps {
   atHome: boolean;
 }
 
-/** Resumen de la selección actual (columna lateral en escritorio). */
+/** Resumen de la selección actual (columna lateral en escritorio), como el talón de una cita. */
 export function BookingSummary({ business, professional, service, date, time, atHome }: BookingSummaryProps) {
   const showPrice = service ? isPriceVisible(service) : false;
   return (
-    <div className="rounded-xl border bg-background p-5">
-      <h2 className="text-sm font-semibold">Resumen de tu reserva</h2>
+    <div className="rounded-xl border border-t-4 border-t-ink bg-background p-5">
+      <h2 className="font-bold">Tu reserva</h2>
       {!service ? (
-        <p className="mt-3 text-sm text-muted-foreground">Elige un servicio para comenzar.</p>
+        <p className="mt-2 text-muted-foreground">Elige un servicio para empezar.</p>
       ) : (
-        <dl className="mt-4 space-y-3 text-sm">
+        <dl className="mt-3 space-y-4">
           <div>
             <dt className="sr-only">Servicio</dt>
-            <dd className="font-medium">{service.name}</dd>
-            <dd className="text-muted-foreground">con {professional.displayName}</dd>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <dt>
-              <Clock className="size-4 text-muted-foreground" aria-label="Duración" />
-            </dt>
-            <dd>{formatDuration(service.durationMinutes)}</dd>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <dt>
-              <CalendarDays className="size-4 text-muted-foreground" aria-label="Fecha y hora" />
-            </dt>
-            <dd>
-              {date ? capitalize(formatLongDate(date)) : "Fecha por elegir"}
-              {date && time && (
-                <span className="block text-muted-foreground">
-                  {formatTimeRange(time, addMinutesToTime(time, service.durationMinutes))}
-                </span>
-              )}
+            <dd className="font-semibold">{service.name}</dd>
+            <dd className="text-sm text-muted-foreground">
+              {formatDuration(service.durationMinutes)} con {professional.displayName}
             </dd>
           </div>
+          <div>
+            <dt className="sr-only">Fecha y hora</dt>
+            <dd className="text-sm text-muted-foreground">{date ? capitalize(formatLongDate(date)) : "Fecha por elegir"}</dd>
+            {date && time ? (
+              <dd className="text-2xl font-extrabold tracking-[-0.02em] text-ink tabular-nums">
+                {formatTimeRange(time, addMinutesToTime(time, service.durationMinutes))}
+              </dd>
+            ) : (
+              date && <dd className="text-muted-foreground">Hora por elegir</dd>
+            )}
+          </div>
           {atHome && (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-start gap-2">
               <dt>
-                <Home className="size-4 text-muted-foreground" aria-label="Lugar" />
+                <Home className="mt-0.5 size-4 text-ink" aria-label="Lugar" />
               </dt>
               <dd>
                 A domicilio
                 {service.homeVisitFee > 0 && showPrice && (
-                  <span className="block text-muted-foreground">
-                    Incluye recargo de {formatCurrency(service.homeVisitFee, business.currency)}
+                  <span className="block text-sm text-muted-foreground">
+                    Incluye {formatCurrency(service.homeVisitFee, business.currency)} por la visita
                   </span>
                 )}
               </dd>
             </div>
           )}
           {showPrice && (
-            <div className="flex items-center justify-between border-t pt-3">
-              <dt className="flex items-center gap-2.5 text-muted-foreground">
-                <Wallet className="size-4" aria-hidden /> Total
-              </dt>
-              <dd className="text-lg font-semibold tabular-nums">
+            <div className="flex items-baseline justify-between border-t border-dashed pt-3">
+              <dt className="text-muted-foreground">Total</dt>
+              <dd className="text-xl font-extrabold tabular-nums">
                 {formatCurrency(getListPrice(service, atHome), business.currency)}
               </dd>
             </div>

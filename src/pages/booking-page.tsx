@@ -18,7 +18,7 @@ export default function BookingPage() {
 
   if (profileQuery.isPending) {
     return (
-      <div className="min-h-screen bg-muted/40" role="status" aria-label="Cargando">
+      <div className="min-h-screen bg-muted" role="status" aria-label="Cargando">
         <div className="border-b bg-background">
           <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-8">
             <Skeleton className="size-16 rounded-2xl" />
@@ -67,7 +67,7 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/40">
+    <div className="flex min-h-screen flex-col bg-muted">
       <PageTitle title={`Reservar con ${profile.business.name}`} />
       <BookingHeader business={profile.business} professional={profile.professional} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">

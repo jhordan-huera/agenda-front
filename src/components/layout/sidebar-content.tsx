@@ -17,13 +17,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-16 shrink-0 items-center px-5">
+      <div className="shrink-0 px-6 pt-6 pb-4">
         <Logo href="/dashboard" />
-      </div>
-
-      <div className="mx-3 mb-2 rounded-lg border bg-background px-3 py-2.5">
-        <p className="truncate text-sm font-medium">{business?.name ?? "…"}</p>
-        <p className="text-xs text-muted-foreground">{role ? ROLE_LABELS[role] : "…"}</p>
+        <p className="mt-4 truncate font-bold">{business?.name ?? "…"}</p>
+        <p className="text-sm text-muted-foreground">{role ? ROLE_LABELS[role] : "…"}</p>
       </div>
 
       <SidebarNav
@@ -38,7 +35,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             href={`/book/${business.slug}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-sidebar-accent"
           >
             <span className="truncate">Página de reservas</span>
             <ExternalLink className="size-3.5 shrink-0" aria-hidden />

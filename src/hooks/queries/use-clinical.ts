@@ -49,8 +49,13 @@ function useTemplateMutation<TVariables>(mutationFn: (businessId: string, variab
   const invalidateActivity = useInvalidateActivity();
   return useMutation({
     mutationFn: (variables: TVariables) => mutationFn(businessId, variables),
+    // El negocio guarda cuál es su formato: también se recarga.
     onSuccess: () =>
-      Promise.all([queryClient.invalidateQueries({ queryKey: queryKeys.clinicalTemplates(businessId) }), invalidateActivity()]),
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.clinicalTemplates(businessId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.business(businessId) }),
+        invalidateActivity(),
+      ]),
   });
 }
 
@@ -63,6 +68,9 @@ export const useSetClinicalTemplateActive = () =>
   useTemplateMutation((businessId, { id, active }: { id: string; active: boolean }) =>
     data.clinicalRecords.setTemplateActive(businessId, id, active),
   );
+
+export const useSetDefaultClinicalTemplate = () =>
+  useTemplateMutation((businessId, id: string) => data.clinicalRecords.setDefaultTemplate(businessId, id));
 
 /** Tras escribir, se recarga la historia y la auditoría (que registra cada cambio). */
 function useClinicalMutation<TVariables, TResult>(

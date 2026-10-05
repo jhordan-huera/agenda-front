@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/plus-jakarta-sans";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -60,8 +60,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-ink: var(--ink);
+  --color-lilac-ink: var(--lilac-ink);
+  --color-field: var(--field);
+  --color-rule-strong: var(--rule-strong);
+  --ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -101,43 +108,67 @@
 }
 
 /*
- * Paleta: neutros fríos + un índigo-violeta como color de marca.
- * Los estados (pendiente, confirmada…) usan colores semánticos definidos
- * en lib/constants/appointment-status.ts.
+ * Identidad de Agenda360: la agenda de un consultorio, en azul y lila pastel.
+ * - Azul consultorio (#4A6CB0, --ink): acciones, títulos y lo activo. Suave, pero legible sobre
+ *   blanco (5,2:1 con texto blanco encima).
+ * - Azul pastel (#E8EEFB, --accent) y bruma (#F5F7FC, --desk): superficies y fondos.
+ * - Lila pastel (#DDD4F8, --highlight): marca lo elegido o lo nuevo (la hora reservada, el día
+ *   elegido, la reserva que entra), con el trazo de marcador (.marker). Su tono suave (#EFEBFC,
+ *   --secondary) viste insignias y botones secundarios.
+ * - Tipografía: Plus Jakarta Sans; las horas, grandes, gruesas y con cifras tabulares.
+ * Los estados de las citas (pendiente, confirmada…) usan sus colores en
+ * lib/constants/appointment-status.ts.
  */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.21 0.02 268);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 268);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.02 268);
-  --primary: oklch(0.51 0.23 277);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.967 0.004 268);
-  --secondary-foreground: oklch(0.27 0.02 268);
-  --muted: oklch(0.975 0.003 268);
-  --muted-foreground: oklch(0.54 0.02 268);
-  --accent: oklch(0.962 0.018 277);
-  --accent-foreground: oklch(0.42 0.2 277);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.925 0.005 268);
-  --input: oklch(0.905 0.006 268);
-  --ring: oklch(0.62 0.18 277);
-  --chart-1: oklch(0.51 0.23 277);
-  --chart-2: oklch(0.7 0.14 277);
-  --chart-3: oklch(0.65 0.15 162);
-  --chart-4: oklch(0.75 0.15 75);
-  --chart-5: oklch(0.63 0.2 17);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.99 0.002 268);
-  --sidebar-foreground: oklch(0.3 0.02 268);
-  --sidebar-primary: oklch(0.51 0.23 277);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.962 0.018 277);
-  --sidebar-accent-foreground: oklch(0.42 0.2 277);
-  --sidebar-border: oklch(0.925 0.005 268);
-  --sidebar-ring: oklch(0.62 0.18 277);
+  /* Mundo del consultorio: papel, bruma azul, tinta azul suave, grafito, renglones y marcador lila. */
+  --paper: #ffffff;
+  --desk: #f5f7fc;
+  --ink: #4a6cb0;
+  --graphite: #5b6478;
+  --text: #1d2433;
+  /* Renglones: bordes translúcidos que se ven cuando se buscan, no antes. */
+  --rule: rgb(29 36 51 / 0.1);
+  --rule-strong: rgb(29 36 51 / 0.18);
+  /* Campos: un poco más oscuros que el papel (reciben lo que se escribe). */
+  --field: rgb(29 36 51 / 0.025);
+  --highlight: #ddd4f8;
+  --highlight-foreground: var(--text);
+  --lilac-ink: #5a4ea3;
+  --red-pen: #b4453c;
+
+  --background: var(--paper);
+  --foreground: var(--text);
+  --card: var(--paper);
+  --card-foreground: var(--text);
+  --popover: var(--paper);
+  --popover-foreground: var(--text);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: #efebfc;
+  --secondary-foreground: var(--lilac-ink);
+  --muted: var(--desk);
+  --muted-foreground: var(--graphite);
+  --accent: #e8eefb;
+  --accent-foreground: var(--ink);
+  --destructive: var(--red-pen);
+  --border: var(--rule);
+  --input: var(--rule-strong);
+  --ring: var(--ink);
+  --chart-1: var(--ink);
+  --chart-2: #a9bde8;
+  --chart-3: #a99be0;
+  --chart-4: #e3b5c8;
+  --chart-5: var(--red-pen);
+  --radius: 0.5rem;
+  /* La barra lateral es la misma bruma que el escritorio; la pestaña activa, del papel de la hoja. */
+  --sidebar: var(--desk);
+  --sidebar-foreground: #283044;
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: #e4ebf9;
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--ink);
 }
 
 @layer base {
@@ -154,6 +185,54 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/*
+ * Trazo de resaltador detrás de un texto (la hora elegida, hoy, una reserva nueva).
+ * Forma irregular de marcador; el color sale de --highlight.
+ */
+@layer components {
+  .marker {
+    position: relative;
+    isolation: isolate;
+  }
+  .marker::before {
+    content: "";
+    position: absolute;
+    inset: -0.08em -0.22em;
+    z-index: -1;
+    background: var(--highlight);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'%3E%3Cpath d='M2.5 8.5C22 4.2 61 2.6 97.6 5.4c1.6 9 1.2 19.6-.6 29.2-37 3.2-71.4 2.2-95.6-1.4C.4 24.6.6 15.8 2.5 8.5Z'/%3E%3C/svg%3E")
+      center / 100% 100% no-repeat;
+  }
+  /* El trazo se dibuja de izquierda a derecha (al elegir, o una sola vez al cargar). */
+  .marker-sweep::before {
+    animation: marker-sweep 0.45s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+    animation-delay: var(--marker-delay, 0s);
+  }
+  @keyframes marker-sweep {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marker-sweep::before {
+      animation: none;
+    }
   }
 }
 

@@ -1,10 +1,11 @@
-import { Building2, CalendarCheck, Globe, Plus, TrendingUp, Users } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
-import { StatCard } from "@/components/shared/stat-card";
+import { MetricStrip } from "@/features/dashboard/metric-strip";
+import { APP_NAME } from "@/lib/constants/app";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +29,7 @@ export default function AdminOverviewPage() {
       <PageTitle title="Plataforma" />
       <PageHeader
         title="Resumen de la plataforma"
-        description="Todos los negocios, usuarios y suscripciones de Agenda360."
+        description={`Todos los negocios, usuarios y suscripciones de ${APP_NAME}.`}
         actions={
           <Button size="lg" onClick={() => setCreating(true)}>
             <Plus /> Nuevo negocio
@@ -41,43 +42,25 @@ export default function AdminOverviewPage() {
       {stats.isError ? (
         <ErrorState onRetry={() => stats.refetch()} />
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
-          <StatCard
-            label="Negocios activos"
-            value={data?.businesses.active}
-            icon={Building2}
-            hint={data && `${plural(data.businesses.suspended, "suspendido", "suspendidos")} · ${data.businesses.total} en total`}
-            loading={loading}
-          />
-          <StatCard
-            label="Ingresos recurrentes"
-            value={data && formatCurrency(data.monthlyRecurringRevenue)}
-            icon={TrendingUp}
-            hint="MRR · suscripciones de pago activas"
-            loading={loading}
-          />
-          <StatCard
-            label="Usuarios"
-            value={data?.users}
-            icon={Users}
-            hint="Propietarios y equipos"
-            loading={loading}
-          />
-          <StatCard
-            label="Citas este mes"
-            value={data?.appointmentsThisMonth}
-            icon={CalendarCheck}
-            hint="No canceladas, en todos los negocios"
-            loading={loading}
-          />
-          <StatCard
-            label="Reservas online"
-            value={data?.onlineBookingsThisMonth}
-            icon={Globe}
-            hint="Este mes, desde páginas públicas"
-            loading={loading}
-          />
-        </div>
+        <MetricStrip
+          loading={loading}
+          className="md:grid-cols-5 2xl:grid-cols-5"
+          metrics={[
+            {
+              label: "Negocios activos",
+              value: data?.businesses.active,
+              hint: data && `${plural(data.businesses.suspended, "suspendido", "suspendidos")}, ${data.businesses.total} en total`,
+            },
+            {
+              label: "Ingresos recurrentes",
+              value: data && formatCurrency(data.monthlyRecurringRevenue),
+              hint: "Suscripciones de pago activas (MRR)",
+            },
+            { label: "Usuarios", value: data?.users, hint: "Propietarios y equipos" },
+            { label: "Citas este mes", value: data?.appointmentsThisMonth, hint: "No canceladas, en todos los negocios" },
+            { label: "Reservas online", value: data?.onlineBookingsThisMonth, hint: "Este mes, desde páginas públicas" },
+          ]}
+        />
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">

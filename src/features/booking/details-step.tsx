@@ -1,4 +1,4 @@
-import { ArrowRight, Home, Search, Store, UserCheck } from "lucide-react";
+import { Home, Search, Store, UserCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
@@ -148,7 +148,7 @@ export function DetailsStep({
 
       {!verified ? (
         <Button type="submit" size="lg" className="h-11 text-sm" disabled={lookup.isPending}>
-          Continuar <ArrowRight />
+          Continuar
         </Button>
       ) : (
         <>
@@ -264,7 +264,7 @@ export function DetailsStep({
             )}
           </FormField>
           <Button type="submit" size="lg" className="h-11 text-sm">
-            Continuar <ArrowRight />
+            Continuar
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Usaremos tus datos sólo para gestionar esta cita. No necesitas crear una cuenta.

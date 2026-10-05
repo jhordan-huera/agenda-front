@@ -93,7 +93,7 @@ export function PlanRequestsCard({ businessId }: { businessId?: string }) {
 
         {!businessId && resolved.length > 0 && (
           <div className="grid gap-2">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Resueltas recientemente</p>
+            <p className="text-sm font-semibold text-muted-foreground">Resueltas recientemente</p>
             <ul className="grid gap-1 text-xs text-muted-foreground">
               {resolved.map((request) => (
                 <li key={request.id}>

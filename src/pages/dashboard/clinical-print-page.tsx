@@ -77,7 +77,7 @@ export default function ClinicalPrintPage() {
       <article className="mx-auto max-w-3xl space-y-8 rounded-xl border bg-background p-8 text-sm print:max-w-none print:rounded-none print:border-0 print:p-0">
         <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-6">
           <div>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Historia clínica</p>
+            <p className="text-sm font-semibold text-muted-foreground">Historia clínica</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight">{client.name}</h1>
           </div>
           <div className="text-right text-xs text-muted-foreground">

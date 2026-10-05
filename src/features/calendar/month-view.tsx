@@ -31,7 +31,7 @@ export function MonthView({
     <div className="overflow-hidden rounded-xl border bg-background">
       <div className="grid grid-cols-7 border-b bg-muted/50">
         {WEEK_DAYS.map((day) => (
-          <div key={day.value} className="py-2 text-center text-xs font-medium text-muted-foreground uppercase">
+          <div key={day.value} className="py-2 text-center text-xs font-semibold text-muted-foreground">
             {day.short}
           </div>
         ))}

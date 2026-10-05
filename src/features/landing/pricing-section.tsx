@@ -11,34 +11,36 @@ export function PricingSection() {
     <section id="precios" className="scroll-mt-20 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
-          eyebrow="Precios"
-          title="Planes simples, sin sorpresas"
-          description="Empieza gratis y cambia de plan cuando tu negocio lo necesite."
+          title="Precios"
+          description="Empieza gratis. Cambia de plan cuando tu agenda se llene o sumes a alguien a tu equipo."
         />
-        <div className="mx-auto mt-14 grid max-w-5xl gap-6 lg:grid-cols-3">
-          {PLANS.map((plan) => (
+        {/* Una sola tabla de planes: las columnas se comparan de un vistazo. */}
+        <div className="mt-12 grid overflow-hidden rounded-2xl border lg:grid-cols-3">
+          {PLANS.map((plan, index) => (
             <div
               key={plan.id}
               className={cn(
-                "relative flex flex-col rounded-2xl border bg-background p-6",
-                plan.highlighted && "border-primary shadow-xl shadow-primary/10 ring-1 ring-primary",
+                "flex flex-col p-6 sm:p-8",
+                index > 0 && "border-t lg:border-t-0 lg:border-l",
+                // El plan recomendado, sobre el salvia de la marca.
+                plan.highlighted && "bg-accent",
               )}
             >
-              {plan.highlighted && (
-                <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-primary-foreground">
-                  Más popular
-                </span>
-              )}
-              <h3 className="text-sm font-semibold tracking-wide uppercase">{plan.name}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
-              <p className="mt-6 flex items-baseline gap-1">
-                <span className="text-4xl font-semibold tracking-tight">{formatCurrency(plan.price)}</span>
-                <span className="text-sm text-muted-foreground">/mes</span>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-xl font-bold">{plan.name}</h3>
+                {plan.highlighted && (
+                  <span className="rounded-full bg-highlight px-2.5 py-0.5 text-sm font-semibold text-ink">Recomendado</span>
+                )}
+              </div>
+              <p className="mt-1 text-muted-foreground">{plan.description}</p>
+              <p className="mt-6 flex items-baseline gap-1.5">
+                <span className="text-5xl font-extrabold tracking-[-0.02em] tabular-nums">{formatCurrency(plan.price)}</span>
+                <span className="text-muted-foreground">al mes</span>
               </p>
-              <ul className="mt-6 flex-1 space-y-3 text-sm">
+              <ul className="mt-6 flex-1 space-y-2.5">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex gap-2">
-                    <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                  <li key={feature} className="flex gap-2.5">
+                    <Check className="mt-1 size-4 shrink-0 text-ink" aria-hidden />
                     {feature}
                   </li>
                 ))}
@@ -47,15 +49,15 @@ export function PricingSection() {
                 asChild
                 size="lg"
                 variant={plan.highlighted ? "default" : "outline"}
-                className="mt-8 h-10 w-full"
+                className="mt-8 h-11 w-full text-base"
               >
-                <Link to="/register">{plan.price === 0 ? "Comenzar gratis" : `Elegir ${plan.name}`}</Link>
+                <Link to="/register">{plan.price === 0 ? "Crear mi agenda gratis" : `Empezar con ${plan.name}`}</Link>
               </Button>
             </div>
           ))}
         </div>
-        <p className="mt-8 text-center text-xs text-muted-foreground">
-          Precios en USD. Durante la beta todas las funciones están disponibles sin coste.
+        <p className="mt-6 text-sm text-muted-foreground">
+          Precios en dólares. Durante la beta todas las funciones están disponibles sin costo.
         </p>
       </div>
     </section>

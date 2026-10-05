@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
 import { useClinicalTemplates } from "@/hooks/queries/use-clinical";
+import { businessTemplate } from "@/lib/clinical-templates";
 import { useSaveService } from "@/hooks/queries/use-services";
 import { SERVICE_LOCATIONS } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
@@ -67,6 +68,7 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
   const templateOptions = (templates.data ?? []).filter(
     (template) => template.isActive || template.id === values.clinicalTemplateId,
   );
+  const businessDefault = businessTemplate(templates.data ?? []);
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) =>
@@ -202,7 +204,7 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
         <FormField
           label="Formato de historia clínica"
           error={errors.clinicalTemplateId}
-          hint="Se propone al registrar la evolución de una cita de este servicio."
+          hint="En las citas de este servicio se propone este formato en vez del de tu negocio."
         >
           {(field) => (
             <Select
@@ -213,8 +215,10 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper" className="max-h-72">
-                <SelectItem value={NO_TEMPLATE}>El habitual (el de la última evolución del paciente)</SelectItem>
-                {templateOptions.map((template) => (
+                <SelectItem value={NO_TEMPLATE}>
+                  El de tu negocio{businessDefault ? ` (${businessDefault.name})` : ""}
+                </SelectItem>
+                {templateOptions.filter((template) => template.id !== businessDefault?.id || values.clinicalTemplateId === template.id).map((template) => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.name}
                   </SelectItem>

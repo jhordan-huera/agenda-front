@@ -55,7 +55,7 @@ export default function SettingsPage() {
 
       <Tabs value={tab} onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}>
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <TabsList>
+          <TabsList variant="folder">
             {tabs.map((option) => (
               <TabsTrigger key={option.value} value={option.value} className="px-3">
                 {option.label}

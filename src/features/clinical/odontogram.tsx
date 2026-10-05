@@ -167,14 +167,14 @@ function OdontogramChart({
                       y={numberY}
                       textAnchor="middle"
                       fontSize={9}
-                      fill={selected === tooth ? "#4f46e5" : "#64748b"}
+                      fill={selected === tooth ? "#4a6cb0" : "#5b6478"}
                       fontWeight={selected === tooth ? 700 : 400}
                     >
                       {tooth}
                     </text>
                     <g transform={`translate(0, ${toothY})`}>
                       {selected === tooth && (
-                        <rect x={-3} y={-3} width={TOOTH + 6} height={TOOTH + 6} rx={4} fill="none" stroke="#4f46e5" strokeWidth={2} />
+                        <rect x={-3} y={-3} width={TOOTH + 6} height={TOOTH + 6} rx={4} fill="none" stroke="#4a6cb0" strokeWidth={2} />
                       )}
                       <ToothShape tooth={tooth} state={value[tooth]} size={TOOTH} />
                     </g>

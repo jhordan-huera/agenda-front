@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -86,112 +86,114 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
-      <section className="space-y-6 rounded-2xl border bg-background p-4 sm:p-6" aria-labelledby="booking-step-title">
+      <div>
         <BookingSteps current={currentStep} onStepClick={setStep} />
-        <div className="space-y-1">
-          <h2 id="booking-step-title" className="text-lg font-semibold">
-            {copy.title}
-          </h2>
-          <p className="text-sm text-muted-foreground">{copy.description}</p>
-        </div>
+        <section className="space-y-6 rounded-2xl border bg-background p-4 sm:p-7" aria-labelledby="booking-step-title">
+          <div className="space-y-1">
+            <h2 id="booking-step-title" className="text-2xl font-extrabold tracking-[-0.02em]">
+              {copy.title}
+            </h2>
+            <p className="text-muted-foreground">{copy.description}</p>
+          </div>
 
-        {currentStep === "service" && (
-          <ServiceStep
-            services={services}
-            currency={business.currency}
-            selectedId={serviceId}
-            onSelect={(selected) => {
-              setServiceId(selected.id);
-              setRequestedDate(null);
-              setRequestedTime(null);
-              setStep("datetime");
-            }}
-          />
-        )}
-
-        {currentStep === "datetime" && service && (
-          <>
-            {availableDates.size === 0 ? (
-              <p className="rounded-xl border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
-                No hay horarios disponibles en los próximos {business.bookingSettings.maxAdvanceDays} días. Prueba con
-                otro servicio o vuelve más tarde.
-              </p>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-[minmax(0,300px)_1fr]">
-                <BookingCalendar
-                  key={service.id}
-                  today={today}
-                  lastDate={addDaysISO(today, business.bookingSettings.maxAdvanceDays)}
-                  availableDates={availableDates}
-                  selected={date}
-                  onSelect={(day) => {
-                    setRequestedDate(day);
-                    setRequestedTime(null);
-                  }}
-                />
-                <div>
-                  {date && <p className="mb-3 text-sm font-medium">{capitalize(formatLongDate(date))}</p>}
-                  <TimeSlots slots={slots} selected={time} onSelect={setRequestedTime} />
-                </div>
-              </div>
-            )}
-            <div className="flex justify-between gap-3 border-t pt-4">
-              <Button variant="ghost" onClick={() => setStep("service")}>
-                <ArrowLeft /> Cambiar servicio
-              </Button>
-              <Button size="lg" disabled={!date || !time} onClick={() => setStep("details")}>
-                Continuar <ArrowRight />
-              </Button>
-            </div>
-          </>
-        )}
-
-        {currentStep === "confirm" && service && pendingInput && time && (
-          <ConfirmStep
-            business={business}
-            professional={professional}
-            service={service}
-            input={pendingInput}
-            knownClientName={contact.knownClientName}
-            submitting={createBooking.isPending}
-            onConfirm={() => submit(pendingInput)}
-            onEdit={() => setStep("details")}
-          />
-        )}
-
-        {currentStep === "details" && service && date && time && (
-          <>
-            <DetailsStep
-              slug={slug}
-              getCaptchaToken={getCaptchaToken}
-              selection={{ serviceId: service.id, date, startTime: time }}
-              service={service}
-              business={business}
-              initialValues={contact}
-              onContinue={(input, values) => {
-                setContact(values);
-                setPendingInput(input);
-                setStep("confirm");
+          {currentStep === "service" && (
+            <ServiceStep
+              services={services}
+              currency={business.currency}
+              selectedId={serviceId}
+              onSelect={(selected) => {
+                setServiceId(selected.id);
+                setRequestedDate(null);
+                setRequestedTime(null);
+                setStep("datetime");
               }}
             />
-            <Button variant="ghost" onClick={() => setStep("datetime")}>
-              <ArrowLeft /> Cambiar fecha u hora
-            </Button>
-          </>
-        )}
-        {/* CAPTCHA: sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
-        <div ref={captchaRef} className="flex justify-center empty:hidden" />
-        {(currentStep === "details" || currentStep === "confirm") && !time && (
-          <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm">
-            <p className="text-muted-foreground">La hora elegida ya no está disponible.</p>
-            <Button variant="outline" className="mt-3" onClick={() => setStep("datetime")}>
-              Elegir otra hora
-            </Button>
-          </div>
-        )}
-      </section>
+          )}
 
-      <aside className="space-y-4 lg:sticky lg:top-6">
+          {currentStep === "datetime" && service && (
+            <>
+              {availableDates.size === 0 ? (
+                <p className="rounded-xl border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
+                  No hay horarios disponibles en los próximos {business.bookingSettings.maxAdvanceDays} días. Prueba con
+                  otro servicio o vuelve más tarde.
+                </p>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-[minmax(0,300px)_1fr]">
+                  <BookingCalendar
+                    key={service.id}
+                    today={today}
+                    lastDate={addDaysISO(today, business.bookingSettings.maxAdvanceDays)}
+                    availableDates={availableDates}
+                    selected={date}
+                    onSelect={(day) => {
+                      setRequestedDate(day);
+                      setRequestedTime(null);
+                    }}
+                  />
+                  <div>
+                    {date && <p className="mb-3 text-sm font-medium">{capitalize(formatLongDate(date))}</p>}
+                    <TimeSlots slots={slots} selected={time} onSelect={setRequestedTime} />
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-between gap-3 border-t pt-4">
+                <Button variant="ghost" onClick={() => setStep("service")}>
+                  <ArrowLeft /> Cambiar servicio
+                </Button>
+                <Button size="lg" disabled={!date || !time} onClick={() => setStep("details")}>
+                  Continuar
+                </Button>
+              </div>
+            </>
+          )}
+
+          {currentStep === "confirm" && service && pendingInput && time && (
+            <ConfirmStep
+              business={business}
+              professional={professional}
+              service={service}
+              input={pendingInput}
+              knownClientName={contact.knownClientName}
+              submitting={createBooking.isPending}
+              onConfirm={() => submit(pendingInput)}
+              onEdit={() => setStep("details")}
+            />
+          )}
+
+          {currentStep === "details" && service && date && time && (
+            <>
+              <DetailsStep
+                slug={slug}
+                getCaptchaToken={getCaptchaToken}
+                selection={{ serviceId: service.id, date, startTime: time }}
+                service={service}
+                business={business}
+                initialValues={contact}
+                onContinue={(input, values) => {
+                  setContact(values);
+                  setPendingInput(input);
+                  setStep("confirm");
+                }}
+              />
+              <Button variant="ghost" onClick={() => setStep("datetime")}>
+                <ArrowLeft /> Cambiar fecha u hora
+              </Button>
+            </>
+          )}
+          {/* CAPTCHA: sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
+          <div ref={captchaRef} className="flex justify-center empty:hidden" />
+          {(currentStep === "details" || currentStep === "confirm") && !time && (
+            <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm">
+              <p className="text-muted-foreground">La hora elegida ya no está disponible.</p>
+              <Button variant="outline" className="mt-3" onClick={() => setStep("datetime")}>
+                Elegir otra hora
+              </Button>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <aside className="space-y-6 lg:sticky lg:top-6 lg:mt-11">
         <BookingSummary
           business={business}
           professional={professional}

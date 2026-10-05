@@ -34,7 +34,7 @@ export const BASE_MAP_OPTIONS = {
 } satisfies Partial<MapOptions>;
 
 const PIN_SVG = `<svg width="38" height="46" viewBox="0 0 36 44" aria-hidden="true" style="display:block;filter:drop-shadow(0 3px 4px rgba(15,23,42,.35))">
-  <path d="M18 1C8.6 1 1 8.4 1 17.6 1 30 18 43 18 43s17-13 17-25.4C35 8.4 27.4 1 18 1Z" fill="#4f46e5" stroke="#fff" stroke-width="2"/>
+  <path d="M18 1C8.6 1 1 8.4 1 17.6 1 30 18 43 18 43s17-13 17-25.4C35 8.4 27.4 1 18 1Z" fill="#4a6cb0" stroke="#fff" stroke-width="2"/>
   <circle cx="18" cy="17" r="6" fill="#fff"/>
 </svg>`;
 

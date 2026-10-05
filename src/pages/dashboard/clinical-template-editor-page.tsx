@@ -32,8 +32,14 @@ import {
 } from "@/features/clinical/templates/template-editor-model";
 import { TemplateFieldEditor } from "@/features/clinical/templates/template-field-editor";
 import { TemplatePreview } from "@/features/clinical/templates/template-preview";
-import { useSubscription } from "@/hooks/queries/use-account";
-import { useClinicalTemplate, useClinicalTemplates, useSaveClinicalTemplate } from "@/hooks/queries/use-clinical";
+import { SwitchField } from "@/features/settings/switch-field";
+import { useCurrentBusiness, useSubscription } from "@/hooks/queries/use-account";
+import {
+  useClinicalTemplate,
+  useClinicalTemplates,
+  useSaveClinicalTemplate,
+  useSetDefaultClinicalTemplate,
+} from "@/hooks/queries/use-clinical";
 import { getPlan } from "@/lib/constants/plans";
 import { getErrorMessage } from "@/lib/data";
 import { clinicalTemplateInputSchema } from "@/lib/validations/clinical";
@@ -119,7 +125,12 @@ function TemplateEditor({
 }) {
   const navigate = useNavigate();
   const save = useSaveClinicalTemplate();
+  const setDefault = useSetDefaultClinicalTemplate();
+  const { data: business } = useCurrentBusiness();
   const editing = Boolean(editingId);
+  const isBusinessDefault = editing && Boolean(source?.isDefault);
+  // Un formato nuevo pasa a ser el del negocio si aún no se había elegido ninguno.
+  const [applyToBusiness, setApplyToBusiness] = useState(() => !editing && !business?.clinicalDefaultTemplateId);
   const [name, setName] = useState(() => (source ? (editing ? source.name : `${source.name} (mi versión)`) : ""));
   const [description, setDescription] = useState(source?.description ?? "");
   const [drafts, setDrafts] = useState<FieldDraft[]>(() =>
@@ -159,7 +170,21 @@ function TemplateEditor({
     setErrors({ fields: {} });
     try {
       const saved = await save.mutateAsync({ id: editingId, input: result.data });
-      toast.success(editing ? `Formato guardado (versión ${saved.version})` : "Formato creado");
+      // El formato ya quedó guardado: si falla elegirlo para el negocio, sólo se avisa.
+      const madeDefault =
+        applyToBusiness &&
+        !isBusinessDefault &&
+        (await setDefault.mutateAsync(saved.id).then(
+          () => true,
+          (error: unknown) => {
+            toast.error(getErrorMessage(error));
+            return false;
+          },
+        ));
+      toast.success(
+        editing ? `Formato guardado (versión ${saved.version})` : "Formato creado",
+        madeDefault ? { description: "Es ahora el formato de todo tu negocio." } : undefined,
+      );
       navigate("/dashboard/clinical-templates");
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -185,17 +210,17 @@ function TemplateEditor({
               : "Define qué se registra en cada consulta. Podrás cambiarlo cuando quieras."}
           </p>
         </div>
-        <SubmitButton type="button" size="lg" loading={save.isPending} disabled={!canEdit} onClick={submit}>
+        <SubmitButton type="button" size="lg" loading={save.isPending || setDefault.isPending} disabled={!canEdit} onClick={submit}>
           {editing ? "Guardar cambios" : "Crear formato"}
         </SubmitButton>
       </div>
 
       {!canEdit && (
-        <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <p className="flex items-start gap-2 rounded-lg border border-highlight bg-highlight/40 px-3 py-2 text-sm">
+          <Lock className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
           <span>
             Crear y adaptar formatos está en los planes Pro y Business.{" "}
-            <Link to="/dashboard/settings?tab=suscripcion" className="font-medium underline">
+            <Link to="/dashboard/settings?tab=suscripcion" className="font-semibold text-ink underline underline-offset-4">
               Ver planes
             </Link>
           </span>
@@ -220,6 +245,18 @@ function TemplateEditor({
                   />
                 )}
               </FormField>
+              {isBusinessDefault ? (
+                <p className="rounded-lg bg-accent px-3 py-2 text-sm text-accent-foreground">
+                  Es el formato de tu negocio: se propone en cada evolución nueva.
+                </p>
+              ) : (
+                <SwitchField
+                  label="Usar en todo el negocio"
+                  description="Se propondrá en cada evolución nueva (salvo en los servicios que tengan su propio formato)."
+                  checked={applyToBusiness}
+                  onCheckedChange={setApplyToBusiness}
+                />
+              )}
             </CardContent>
           </Card>
 

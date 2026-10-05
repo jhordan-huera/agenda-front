@@ -12,25 +12,23 @@ const LocationMap = lazy(() => import("@/components/shared/location-map"));
 export function BusinessLocationCard({ business }: { business: PublicBusiness }) {
   if (!hasMapPoint(business)) return null;
   return (
-    <div className="overflow-hidden rounded-xl border bg-background">
-      <Suspense fallback={<Skeleton className="h-44 rounded-none" />}>
-        <LocationMap
-          point={{ lat: business.lat!, lng: business.lng! }}
-          label={`Ubicación de ${business.name} en el mapa`}
-          className="h-44 border-b"
-        />
-      </Suspense>
-      <div className="space-y-3 p-4">
-        <div>
-          <h2 className="text-sm font-semibold">Cómo llegar</h2>
-          {business.address && <p className="mt-1 text-sm text-muted-foreground">{business.address}</p>}
-        </div>
-        <Button asChild variant="outline" className="w-full">
-          <a href={getDirectionsUrl(business)} target="_blank" rel="noreferrer">
-            <Navigation /> Abrir en Google Maps
-          </a>
-        </Button>
+    <section aria-labelledby="business-location-heading" className="space-y-3">
+      <div className="overflow-hidden rounded-xl border">
+        <Suspense fallback={<Skeleton className="h-40 rounded-none" />}>
+          <LocationMap point={{ lat: business.lat!, lng: business.lng! }} label={`Ubicación de ${business.name} en el mapa`} className="h-40" />
+        </Suspense>
       </div>
-    </div>
+      <div className="px-1">
+        <h2 id="business-location-heading" className="font-bold">
+          Cómo llegar
+        </h2>
+        {business.address && <p className="text-sm text-muted-foreground">{business.address}</p>}
+      </div>
+      <Button asChild variant="outline" className="h-10 w-full">
+        <a href={getDirectionsUrl(business)} target="_blank" rel="noreferrer">
+          <Navigation /> Abrir en Google Maps
+        </a>
+      </Button>
+    </section>
   );
 }

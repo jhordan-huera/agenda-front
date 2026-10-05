@@ -1,14 +1,15 @@
-import { Search, UserPlus, Users, X } from "lucide-react";
+import { LayoutGrid, List, Search, UserPlus, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
-import { ListSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePermissions } from "@/features/auth/use-permissions";
+import { ClientCards } from "@/features/clients/client-cards";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
 import { getClientSummary, summarizeByClient } from "@/features/clients/client-summary";
 import { ClientsTable } from "@/features/clients/clients-table";
@@ -18,6 +19,7 @@ import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useClients } from "@/hooks/queries/use-clients";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { normalizeSearch } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { Client } from "@/types";
 
 type ClientFilter = "all" | "active" | "inactive" | "upcoming";
@@ -29,6 +31,26 @@ const FILTERS: { value: ClientFilter; label: string }[] = [
   { value: "upcoming", label: "Con próxima cita" },
 ];
 
+type ClientView = "cards" | "list";
+
+// Preferencia de esta persona en este navegador (no es un dato del negocio).
+const VIEW_KEY = "agenda360:clients-view";
+
+function readView(): ClientView {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === "list" ? "list" : "cards";
+  } catch {
+    return "cards";
+  }
+}
+
+function saveView(view: ClientView) {
+  try {
+    window.localStorage.setItem(VIEW_KEY, view);
+  } catch {
+    // Sin almacenamiento disponible: la vista vale sólo para esta visita.
+  }
+}
 
 export default function ClientsPage() {
   const { data: business } = useCurrentBusiness();
@@ -39,6 +61,7 @@ export default function ClientsPage() {
   const [filter, setFilter] = useState<ClientFilter>("all");
   const [formState, setFormState] = useState<{ open: boolean; client?: Client }>({ open: false });
   const [deleting, setDeleting] = useState<Client | null>(null);
+  const [view, setView] = useState<ClientView>(readView);
   const { can } = usePermissions();
 
   const summaries = useMemo(() => summarizeByClient(appointments, now), [appointments, now]);
@@ -58,6 +81,10 @@ export default function ClientsPage() {
   });
 
   const openCreate = () => setFormState({ open: true });
+  const chooseView = (next: ClientView) => {
+    setView(next);
+    saveView(next);
+  };
 
   return (
     <div className="space-y-6">
@@ -73,7 +100,11 @@ export default function ClientsPage() {
       />
 
       {clientsQuery.isPending ? (
-        <ListSkeleton rows={6} />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-60 rounded-xl" />
+          ))}
+        </div>
       ) : clientsQuery.isError ? (
         <ErrorState onRetry={() => clientsQuery.refetch()} />
       ) : clients.length === 0 ? (
@@ -113,6 +144,28 @@ export default function ClientsPage() {
                 ))}
               </SelectContent>
             </Select>
+            <div role="group" aria-label="Vista" className="inline-flex h-9 shrink-0 self-start rounded-md border bg-background p-0.5">
+              {(
+                [
+                  { value: "cards", label: "Tarjetas", icon: LayoutGrid },
+                  { value: "list", label: "Lista", icon: List },
+                ] as const
+              ).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={view === option.value}
+                  onClick={() => chooseView(option.value)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-[5px] px-2.5 text-sm font-semibold text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+                    view === option.value && "bg-accent text-ink hover:text-ink",
+                  )}
+                >
+                  <option.icon className="size-4" aria-hidden />
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {filtered.length === 0 ? (
@@ -131,6 +184,15 @@ export default function ClientsPage() {
                   <X /> Limpiar filtros
                 </Button>
               }
+            />
+          ) : view === "cards" ? (
+            <ClientCards
+              clients={filtered}
+              summaries={summaries}
+              now={now}
+              business={business}
+              onEdit={(client) => setFormState({ open: true, client })}
+              onDelete={can("clients.delete") ? setDeleting : undefined}
             />
           ) : (
             <ClientsTable

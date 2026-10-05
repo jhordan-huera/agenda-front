@@ -154,7 +154,7 @@ function AppointmentDetails({
         )}
 
         <section aria-labelledby="status-heading" className="space-y-2">
-          <h3 id="status-heading" className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <h3 id="status-heading" className="text-sm font-semibold text-muted-foreground">
             Cambiar estado
           </h3>
           <div className="grid grid-cols-2 gap-2">
@@ -181,7 +181,7 @@ function AppointmentDetails({
           <>
             <Separator />
             <section aria-labelledby="client-heading" className="space-y-3">
-              <h3 id="client-heading" className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <h3 id="client-heading" className="text-sm font-semibold text-muted-foreground">
                 Cliente
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -215,7 +215,7 @@ function AppointmentDetails({
             </section>
             {clinicalAccess && (
               <section aria-labelledby="clinical-heading" className="space-y-3">
-                <h3 id="clinical-heading" className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <h3 id="clinical-heading" className="text-sm font-semibold text-muted-foreground">
                   Historia clínica
                 </h3>
                 <div className="flex flex-wrap gap-2">

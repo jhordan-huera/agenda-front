@@ -138,6 +138,8 @@ export interface ClinicalRecordRepository {
   createTemplate(businessId: string, input: ClinicalTemplateInput): Promise<ClinicalTemplate>;
   updateTemplate(businessId: string, templateId: string, input: ClinicalTemplateInput): Promise<ClinicalTemplate>;
   setTemplateActive(businessId: string, templateId: string, active: boolean): Promise<ClinicalTemplate>;
+  /** Formato de todo el negocio (sólo el propietario; cualquier plan). */
+  setDefaultTemplate(businessId: string, templateId: string): Promise<ClinicalTemplate>;
   /** Archivos: pide la URL de subida, el navegador sube y luego se confirma. */
   requestAttachmentUpload(businessId: string, clientId: string, input: ClinicalAttachmentInput): Promise<ClinicalAttachmentUpload>;
   completeAttachmentUpload(businessId: string, attachmentId: string): Promise<ClinicalAttachment>;

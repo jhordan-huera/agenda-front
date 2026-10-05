@@ -18,8 +18,10 @@ export function AppShell({ homeHref, renderSidebar, banner }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-muted/40 lg:pl-64 print:bg-white print:pl-0">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r lg:flex print:hidden">{renderSidebar()}</aside>
+    // El contenido es la hoja de papel; la barra lateral, el escritorio con las pestañas de la agenda.
+    // Sin borde entre ambos: la pestaña activa es del mismo papel que la hoja y se une a ella.
+    <div className="min-h-screen bg-background lg:pl-64 print:bg-white print:pl-0">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:flex print:hidden">{renderSidebar()}</aside>
 
       {banner && <div className="sticky top-0 z-20 print:hidden">{banner}</div>}
 

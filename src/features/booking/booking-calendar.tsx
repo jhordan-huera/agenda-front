@@ -35,7 +35,7 @@ export function BookingCalendar({ today, lastDate, availableDates, selected, onS
         >
           <ChevronLeft />
         </Button>
-        <p className="text-sm font-semibold" aria-live="polite">
+        <p className="font-bold" aria-live="polite">
           {capitalize(formatDate(month, "MMMM yyyy"))}
         </p>
         <Button
@@ -48,7 +48,7 @@ export function BookingCalendar({ today, lastDate, availableDates, selected, onS
           <ChevronRight />
         </Button>
       </div>
-      <div className="grid grid-cols-7 text-center text-[11px] font-medium text-muted-foreground uppercase">
+      <div className="grid grid-cols-7 text-center text-xs font-semibold text-muted-foreground">
         {WEEK_DAYS.map((day) => (
           <span key={day.value} className="py-1.5">
             {day.short}
@@ -69,15 +69,14 @@ export function BookingCalendar({ today, lastDate, availableDates, selected, onS
               aria-label={`${capitalize(formatDate(day, "EEEE d 'de' MMMM"))}${available ? "" : ", sin horas disponibles"}`}
               onClick={() => onSelect(day)}
               className={cn(
-                "flex aspect-square items-center justify-center rounded-lg text-sm transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                available
-                  ? "bg-accent/60 font-semibold text-accent-foreground hover:bg-primary/15"
-                  : "text-muted-foreground/40",
-                day === today && !isSelected && "ring-1 ring-primary/40",
-                isSelected && "bg-primary text-primary-foreground hover:bg-primary",
+                "flex aspect-square items-center justify-center rounded-md tabular-nums transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                available ? "bg-accent font-bold text-ink hover:bg-[color-mix(in_oklch,var(--accent),var(--ink)_10%)]" : "text-muted-foreground/50",
+                // El día elegido se marca con el resaltador (igual que la hora).
+                isSelected && "bg-transparent hover:bg-transparent",
+                day === today && "underline decoration-2 underline-offset-4",
               )}
             >
-              {formatDate(day, "d")}
+              <span className={cn(isSelected && "marker marker-sweep px-1.5 text-base font-extrabold")}>{formatDate(day, "d")}</span>
             </button>
           );
         })}

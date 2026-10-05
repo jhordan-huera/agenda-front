@@ -38,7 +38,27 @@ Otros scripts: `npm run build` (typecheck + build de producción), `npm run prev
 ## Stack
 
 React 19 · TypeScript · Vite · React Router 8 · Tailwind CSS v4 · shadcn/ui (Radix) · Lucide ·
-TanStack Query · Zod · date-fns · Recharts · Sonner.
+TanStack Query · Zod · date-fns · Recharts · Sonner · MapLibre · Plus Jakarta Sans.
+
+## Diseño
+
+Identidad de "agenda de consultorio en azul y lila pastel" (tokens en `src/index.css`, la misma que
+el beta):
+
+- **Azul consultorio** `#4A6CB0` (`--ink`): acciones, títulos y lo activo. **Azul pastel** `#E8EEFB` y
+  **bruma** `#F5F7FC`: superficies y fondos. **Lila pastel** `#DDD4F8` (clases `marker` y
+  `marker-sweep`): marca lo elegido o lo nuevo; su tono suave `#EFEBFC` viste insignias y botones
+  secundarios.
+- **Icono** `public/icon-calendar.svg` (y `BrandMark`), con versiones PNG de 32, 192 y 180 px. Cada
+  icono nuevo lleva otro nombre de archivo y `src/main.tsx` lo vuelve a declarar con `?v=` para que
+  los navegadores no sigan mostrando el anterior.
+- **Tipografía** Plus Jakarta Sans; las horas, grandes, gruesas y con cifras tabulares.
+- **Pestañas de agenda** (`TabsList variant="folder"`): el menú lateral, los pasos de la reserva y
+  las pestañas de Configuración y de la ficha del cliente.
+- **Inicio**: "Tu siguiente cita", "Tu día" en una franja horizontal, "Lo que queda de hoy", la
+  semana en barras, las citas por confirmar y el enlace de reservas. Las cifras van en franjas
+  (`MetricStrip`) en Reportes, la ficha del cliente y el panel de plataforma.
+- Los emails usan los mismos colores (`src/lib/email/layout.ts`).
 
 ## Estructura
 
@@ -149,13 +169,20 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   informado…) y evoluciones por consulta con el **formato de cada especialidad** (plantillas):
   atención médica (signos vitales, examen físico, diagnósticos CIE-10, receta, descargo de
   responsabilidad), psicología, odontología, nutrición con IMC automático, fisioterapia,
-  fonoaudiología, medicina estética, evolución general y nota libre. Se propone el formato de la
-  última evolución del paciente o el recomendado para la especialidad; lo escrito en cada formato se
+  fonoaudiología, medicina estética, evolución general y nota libre. Se propone el **formato de tu
+  negocio** (o el del servicio de la cita, si tiene uno); lo escrito en cada formato se
   conserva al cambiar de uno a otro. Formulario y vista en `src/features/clinical/`
   (`clinical-field-input.tsx`, `clinical-note-content.tsx`).
   - **Odontograma** (se copia el último y se actualiza), **mapa del cuerpo** para lesiones o dolor
     y **escalas PHQ-9 y GAD-7** con puntaje y aviso de riesgo.
   - **Gráfico de evolución** en la ficha: peso, IMC, dolor, puntajes… a lo largo de las consultas.
+  - **Formato de tu negocio** (cualquier plan): el que se propone en cada evolución nueva. Se elige
+    con "Usar en todo el negocio" en la página de formatos (o al crear un formato propio); si no se
+    elige ninguno, es el recomendado para la especialidad. La página de formatos lo muestra arriba
+    (con la marca "Creado por ti" si es propio), la historia del paciente lo indica sobre las
+    evoluciones con un botón "Cambiar formato", Configuración → Negocio dice cuál es y cada
+    evolución muestra con qué formato se escribió. Si se desactiva el formato elegido, se vuelve al
+    recomendado.
   - **Formatos propios** (Pro y Business): Configuración → Negocio → Gestionar formatos, editor con
     vista previa; duplicar uno de la plataforma o crear desde cero. Cada servicio puede tener su
     formato, que se propone al registrar la evolución de esa cita.

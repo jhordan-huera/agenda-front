@@ -1,4 +1,4 @@
-import { MessageSquarePlus } from "lucide-react";
+import { FileStack, MessageSquarePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/shared/submit-button";
@@ -16,10 +16,12 @@ interface ClinicalNoteCardProps {
   note: ClinicalNote;
   /** Versión de plantilla con que se escribió (sus campos y su nombre). */
   template?: ClinicalTemplateVersion;
+  /** El formato lo creó el negocio (no es de la plataforma). */
+  ownTemplate?: boolean;
   serviceName?: string;
 }
 
-export function ClinicalNoteCard({ note, template, serviceName }: ClinicalNoteCardProps) {
+export function ClinicalNoteCard({ note, template, ownTemplate = false, serviceName }: ClinicalNoteCardProps) {
   const addAddendum = useAddClinicalAddendum(note.clientId);
   const [writing, setWriting] = useState(false);
   const [text, setText] = useState("");
@@ -40,7 +42,14 @@ export function ClinicalNoteCard({ note, template, serviceName }: ClinicalNoteCa
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <CardTitle className="text-base">{capitalize(formatLongDate(note.date))}</CardTitle>
-          {template && <Badge variant="secondary">{template.name}</Badge>}
+          {template && (
+            <div className="flex flex-wrap items-center gap-1.5" title="Formato con que se registró">
+              <Badge variant="secondary">
+                <FileStack aria-hidden /> {template.name}
+              </Badge>
+              {ownTemplate && <Badge variant="outline">Creado por ti, versión {template.version}</Badge>}
+            </div>
+          )}
         </div>
         <CardDescription>
           {serviceName ? `${serviceName} · ` : ""}Registrada por {note.authorName} · {formatDateTime(note.createdAt)}
@@ -56,8 +65,8 @@ export function ClinicalNoteCard({ note, template, serviceName }: ClinicalNoteCa
         {note.addenda.length > 0 && (
           <ul className="grid gap-2 border-t pt-3">
             {note.addenda.map((addendum) => (
-              <li key={addendum.id} className="rounded-lg border-l-2 border-amber-500 bg-amber-50/60 px-3 py-2 text-sm">
-                <p className="text-xs font-medium text-amber-900">
+              <li key={addendum.id} className="rounded-lg border-l-2 border-lilac-ink/50 bg-secondary/70 px-3 py-2 text-sm">
+                <p className="text-xs font-medium text-lilac-ink">
                   Aclaración · {addendum.authorName} · {formatDateTime(addendum.createdAt)}
                 </p>
                 <p className="mt-0.5 whitespace-pre-line">{addendum.text}</p>

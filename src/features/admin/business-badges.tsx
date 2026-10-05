@@ -21,8 +21,8 @@ export function BusinessStatusBadge({ status }: { status: BusinessStatus }) {
 
 const PLAN_TONES: Record<PlanId, string> = {
   free: "bg-zinc-100 text-zinc-700 ring-zinc-500/20",
-  pro: "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
-  business: "bg-violet-50 text-violet-700 ring-violet-600/20",
+  pro: "bg-accent text-ink ring-ink/20",
+  business: "bg-ink text-white ring-ink",
 };
 
 export function PlanBadge({ plan }: { plan: PlanId }) {

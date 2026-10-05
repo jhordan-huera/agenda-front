@@ -76,7 +76,7 @@ export function ClinicalNoteContent({ fields, data, className }: { fields: Clini
         const [first] = block;
         if (first.type === "section") {
           return (
-            <h4 key={first.id} className="border-b pt-1 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <h4 key={first.id} className="border-b pt-1 pb-1 text-sm font-bold text-ink">
               {first.label}
             </h4>
           );

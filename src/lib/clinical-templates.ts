@@ -1,6 +1,6 @@
 import { formatNumericDate } from "@/lib/format";
 import { parseClinicalNumber } from "@/lib/validations/clinical";
-import type { ClinicalField, ClinicalFieldValue, ClinicalNoteData, ClinicalRecord, ClinicalTemplate } from "@/types";
+import type { ClinicalField, ClinicalFieldValue, ClinicalNoteData, ClinicalTemplate } from "@/types";
 
 /** Utilidades de las plantillas de historia clínica (formulario, ficha e impresión). */
 
@@ -64,17 +64,13 @@ export function visibleNoteFields(fields: ClinicalField[], data: ClinicalNoteDat
 }
 
 /**
- * Formato propuesto para una evolución nueva: el de la última evolución del paciente (continuidad),
- * si no uno propio del negocio, el recomendado para la especialidad o el general.
+ * Formato de todo el negocio: el que se propone en cada evolución nueva (salvo que el servicio de
+ * la cita tenga el suyo). Lo marca la API; si faltara, el general.
  */
-export function defaultTemplateId(templates: ClinicalTemplate[], record?: ClinicalRecord): string | undefined {
-  const last = record?.notes[0];
-  const lastTemplateId = last ? record.templateVersions[last.templateVersionId]?.templateId : undefined;
+export function businessTemplate(templates: ClinicalTemplate[]): ClinicalTemplate | undefined {
   return (
-    templates.find((template) => template.id === lastTemplateId)?.id ??
-    templates.find((template) => template.businessId !== null)?.id ??
-    templates.find((template) => template.recommended)?.id ??
-    templates.find((template) => template.id === "evolucion-general")?.id ??
-    templates[0]?.id
+    templates.find((template) => template.isDefault) ??
+    templates.find((template) => template.id === "evolucion-general") ??
+    templates[0]
   );
 }

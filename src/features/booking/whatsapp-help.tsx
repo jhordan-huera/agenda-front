@@ -12,20 +12,20 @@ export function WhatsAppHelp({ business }: { business: PublicBusiness }) {
   if (!url) return null;
 
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-start gap-3 rounded-xl border bg-background p-4 text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
-    >
+    <div className="flex items-start gap-3 px-1 text-sm">
       <WhatsAppIcon className="mt-0.5 size-5 shrink-0" />
-      <span>
-        <span className="block font-medium">¿Necesitas ayuda para reservar?</span>
-        <span className="block text-muted-foreground">
-          Escríbenos por WhatsApp. Si necesitas una cita con menos de {getMinNoticeHours(business.bookingSettings)} horas de
-          anticipación, te ayudamos a agendarla.
-        </span>
-      </span>
-    </a>
+      <p className="text-muted-foreground">
+        ¿Necesitas una cita con menos de {getMinNoticeHours(business.bookingSettings)} horas de anticipación o tienes una
+        duda?{" "}
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="font-semibold text-ink underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          Escríbenos por WhatsApp
+        </a>
+      </p>
+    </div>
   );
 }

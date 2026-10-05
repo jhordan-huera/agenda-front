@@ -10,42 +10,37 @@ const STEPS: { value: BookingStep; label: string }[] = [
   { value: "confirm", label: "Confirmar" },
 ];
 
-/** Indicador de pasos; los pasos ya completados permiten volver atrás. */
+/**
+ * Pasos de la reserva como pestañas de agenda sobre la hoja: la del paso actual es del mismo
+ * papel que la hoja y se une a ella; las de pasos ya hechos permiten volver atrás.
+ */
 export function BookingSteps({ current, onStepClick }: { current: BookingStep; onStepClick: (step: BookingStep) => void }) {
   const currentIndex = STEPS.findIndex((step) => step.value === current);
 
   return (
-    <ol className="flex items-center gap-2 text-sm">
+    <ol className="flex gap-1 px-2 sm:px-4">
       {STEPS.map((step, index) => {
         const done = index < currentIndex;
         const active = index === currentIndex;
         return (
-          <li key={step.value} className="flex flex-1 items-center gap-2">
+          // En móvil la pestaña actual ocupa el espacio (con su nombre); las demás sólo muestran el número.
+          <li key={step.value} className={cn("min-w-0 sm:flex-none", active ? "flex-1" : "w-12 shrink-0 sm:w-auto")}>
             <button
               type="button"
               disabled={!done}
               onClick={() => onStepClick(step.value)}
               aria-current={active ? "step" : undefined}
+              aria-label={`Paso ${index + 1}: ${step.label}${done ? " (hecho)" : ""}`}
               className={cn(
-                "flex items-center gap-2 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default",
-                done && "hover:text-primary",
+                "relative -mb-px flex h-11 w-full items-center justify-center gap-2 rounded-t-lg border border-b-0 px-3 text-sm transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset disabled:cursor-default sm:px-4",
+                active && "z-10 border-border bg-background font-bold text-ink",
+                done && "border-transparent bg-accent font-semibold text-ink hover:bg-[color-mix(in_oklch,var(--accent),var(--ink)_8%)]",
+                !active && !done && "border-transparent text-muted-foreground",
               )}
             >
-              <span
-                className={cn(
-                  "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
-                  active && "border-primary bg-primary text-primary-foreground",
-                  done && "border-primary bg-accent text-accent-foreground",
-                  !active && !done && "text-muted-foreground",
-                )}
-              >
-                {done ? <Check className="size-3.5" aria-hidden /> : index + 1}
-              </span>
-              <span className={cn("hidden font-medium sm:inline", !active && !done && "text-muted-foreground")}>
-                {step.label}
-              </span>
+              {done ? <Check className="size-4 shrink-0" aria-hidden /> : <span className="tabular-nums">{index + 1}</span>}
+              <span className={cn("truncate", !active && "hidden sm:inline")}>{step.label}</span>
             </button>
-            {index < STEPS.length - 1 && <span className="h-px flex-1 bg-border" aria-hidden />}
           </li>
         );
       })}

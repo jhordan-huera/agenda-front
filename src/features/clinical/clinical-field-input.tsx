@@ -42,7 +42,7 @@ interface ClinicalFieldInputProps {
 export function ClinicalFieldInput({ field, values, onChange, error }: ClinicalFieldInputProps) {
   if (field.type === "section") {
     return (
-      <h3 className="col-span-full mt-2 border-b pb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <h3 className="col-span-full mt-2 border-b-2 border-ink pb-1.5 text-sm font-bold text-ink">
         {field.label}
       </h3>
     );

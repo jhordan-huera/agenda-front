@@ -14,7 +14,7 @@ import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useAddClinicalNote, useClinicalRecord, useClinicalTemplates } from "@/hooks/queries/use-clinical";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBusinessNow } from "@/hooks/use-business-now";
-import { defaultTemplateId } from "@/lib/clinical-templates";
+import { businessTemplate } from "@/lib/clinical-templates";
 import { DataError, getErrorMessage } from "@/lib/data";
 import { capitalize, formatNumericDate, formatShortDate } from "@/lib/format";
 import { clinicalNoteDataSchema } from "@/lib/validations/clinical";
@@ -44,7 +44,7 @@ export function ClinicalNoteDialog({ open, onOpenChange, ...props }: ClinicalNot
 
 type FormProps = Omit<ClinicalNoteDialogProps, "open" | "onOpenChange"> & { onDone: () => void };
 
-/** Espera las plantillas (y la historia, para proponer el formato de la última evolución). */
+/** Espera las plantillas (y la historia, para partir del último odontograma). */
 function ClinicalNoteLoader(props: FormProps) {
   const templates = useClinicalTemplates();
   const record = useClinicalRecord(props.clientId);
@@ -66,7 +66,7 @@ function ClinicalNoteLoader(props: FormProps) {
       {...props}
       templates={templates.data}
       record={record.data}
-      initialTemplateId={defaultTemplateId(templates.data, record.data)}
+      initialTemplateId={businessTemplate(templates.data)?.id}
       onTemplatesOutdated={() => void templates.refetch()}
     />
   );
@@ -97,6 +97,7 @@ function ClinicalNoteForm({
 }: FormProps & {
   templates: ClinicalTemplate[];
   record?: ClinicalRecord;
+  /** El formato de todo el negocio. */
   initialTemplateId?: string;
   onTemplatesOutdated: () => void;
 }) {
@@ -106,7 +107,7 @@ function ClinicalNoteForm({
   // La fecha de la evolución es siempre la de hoy (la pone la API): no se puede fechar con retraso.
   const { data: business } = useCurrentBusiness();
   const today = useBusinessNow(business?.timezone).date;
-  // Mientras no se elija un formato a mano, se usa el del servicio de la cita (si tiene) o el habitual.
+  // Mientras no se elija un formato a mano, se usa el del servicio de la cita (si tiene) o el del negocio.
   const [chosenTemplateId, setChosenTemplateId] = useState<string | null>(null);
   const [linkedAppointment, setLinkedAppointment] = useState<string | null>(appointmentId);
   // Lo escrito en cada formato se conserva al cambiar de uno a otro.
@@ -114,13 +115,21 @@ function ClinicalNoteForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const formRef = useRef<HTMLFormElement>(null);
 
-  const appointmentServiceTemplate = (() => {
+  const linkedService = (() => {
     const appointment = linkedAppointment ? appointments.find((a) => a.id === linkedAppointment) : undefined;
-    const serviceTemplate = appointment ? servicesById.get(appointment.serviceId)?.clinicalTemplateId : undefined;
-    return templates.some((t) => t.id === serviceTemplate) ? serviceTemplate : undefined;
+    return appointment ? servicesById.get(appointment.serviceId) : undefined;
   })();
-  const templateId = chosenTemplateId ?? appointmentServiceTemplate ?? initialTemplateId;
+  const serviceTemplate = templates.find((t) => t.id === linkedService?.clinicalTemplateId)?.id;
+  const templateId = chosenTemplateId ?? serviceTemplate ?? initialTemplateId;
   const template = templates.find((t) => t.id === templateId);
+  const businessDefault = templates.find((t) => t.id === initialTemplateId);
+  // Por qué se usa este formato (se muestra bajo el selector).
+  const templateReason =
+    templateId === initialTemplateId
+      ? "Es el formato de tu negocio."
+      : !chosenTemplateId && serviceTemplate && linkedService
+        ? `Es el formato del servicio «${linkedService.name}». El de tu negocio es «${businessDefault?.name}».`
+        : `Elegido sólo para esta evolución. El de tu negocio es «${businessDefault?.name}».`;
   // El odontograma parte del último registrado: sólo se actualiza lo que cambió.
   const lastOdontogram = findLastOdontogram(record);
   const hasOdontogram = Boolean(template?.fields.some((field) => field.type === "odontogram"));
@@ -132,9 +141,11 @@ function ClinicalNoteForm({
     return initial;
   };
   const values = template ? (valuesByTemplate[template.id] ?? initialValues(template.fields)) : {};
-  const own = templates.filter((t) => t.businessId !== null);
-  const recommended = templates.filter((t) => t.businessId === null && t.recommended);
-  const others = templates.filter((t) => t.businessId === null && !t.recommended);
+  // El del negocio va primero y aparte; el resto, por grupos.
+  const rest = templates.filter((t) => t.id !== initialTemplateId);
+  const own = rest.filter((t) => t.businessId !== null);
+  const recommended = rest.filter((t) => t.businessId === null && t.recommended);
+  const others = rest.filter((t) => t.businessId === null && !t.recommended);
   // Citas del paciente que no están canceladas, de la más reciente a la más antigua.
   const linkable = appointments.filter((a) => a.status !== "cancelled").toReversed();
 
@@ -182,7 +193,7 @@ function ClinicalNoteForm({
       </DialogHeader>
 
       <div className="grid gap-4 sm:grid-cols-[1fr_150px]">
-        <FormField label="Formato" hint={template?.description}>
+        <FormField label="Formato" hint={template && <span data-testid="template-reason">{templateReason}</span>}>
           {(field) => (
             <Select
               value={templateId}
@@ -195,9 +206,15 @@ function ClinicalNoteForm({
                 <SelectValue placeholder="Elige un formato" />
               </SelectTrigger>
               <SelectContent position="popper" className="max-h-80">
+                {businessDefault && (
+                  <SelectGroup>
+                    <SelectLabel>Formato de tu negocio</SelectLabel>
+                    <SelectItem value={businessDefault.id}>{businessDefault.name}</SelectItem>
+                  </SelectGroup>
+                )}
                 {own.length > 0 && (
                   <SelectGroup>
-                    <SelectLabel>Tus formatos</SelectLabel>
+                    <SelectLabel>Creados por ti</SelectLabel>
                     {own.map((option) => (
                       <SelectItem key={option.id} value={option.id}>
                         {option.name}
@@ -216,7 +233,7 @@ function ClinicalNoteForm({
                   </SelectGroup>
                 )}
                 <SelectGroup>
-                  {(recommended.length > 0 || own.length > 0) && <SelectLabel>Otros formatos</SelectLabel>}
+                  <SelectLabel>Otros formatos</SelectLabel>
                   {others.map((option) => (
                     <SelectItem key={option.id} value={option.id}>
                       {option.name}

@@ -1,9 +1,6 @@
 import {
   ArrowLeft,
-  CalendarCheck,
   CalendarPlus,
-  CalendarX,
-  CircleCheck,
   Clock,
   IdCard,
   Mail,
@@ -13,14 +10,12 @@ import {
   Phone,
   Trash2,
   UserX,
-  Wallet,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageTitle } from "@/components/shared/page-title";
-import { StatCard } from "@/components/shared/stat-card";
 import { ActiveBadge, StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
@@ -39,6 +34,7 @@ import { AppointmentListItem } from "@/features/appointments/appointment-list-it
 import { getServiceName } from "@/features/appointments/appointment-utils";
 import { useAppointmentDialogs } from "@/features/appointments/use-appointment-dialogs";
 import { usePermissions } from "@/features/auth/use-permissions";
+import { MetricStrip } from "@/features/dashboard/metric-strip";
 import { ClinicalRecordTab } from "@/features/clinical/clinical-record-tab";
 import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
@@ -114,19 +110,17 @@ export default function ClientDetailPage() {
 
   const overview = (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-        <StatCard label="Citas" value={summary.totalAppointments} icon={CalendarCheck} hint="No canceladas" loading={statsLoading} />
-        <StatCard label="Completadas" value={summary.completed} icon={CircleCheck} loading={statsLoading} />
-        <StatCard label="Cancelaciones" value={summary.cancelled} icon={CalendarX} loading={statsLoading} />
-        <StatCard label="No asistió" value={summary.noShow} icon={UserX} loading={statsLoading} />
-        <StatCard
-          label="Total gastado"
-          value={formatCurrency(summary.totalSpent)}
-          icon={Wallet}
-          hint="Citas completadas"
-          loading={statsLoading}
-        />
-      </div>
+      <MetricStrip
+        loading={statsLoading}
+        className="md:grid-cols-5 2xl:grid-cols-5"
+        metrics={[
+          { label: "Citas", value: summary.totalAppointments, hint: "No canceladas" },
+          { label: "Completadas", value: summary.completed },
+          { label: "Cancelaciones", value: summary.cancelled },
+          { label: "No asistió", value: summary.noShow },
+          { label: "Total gastado", value: formatCurrency(summary.totalSpent), hint: "Citas completadas" },
+        ]}
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -318,7 +312,7 @@ export default function ClientDetailPage() {
 
       {clinicalAccess ? (
         <Tabs value={tab} onValueChange={(value) => setSearchParams(value === "historia" ? { tab: value } : {}, { replace: true })}>
-          <TabsList>
+          <TabsList variant="folder">
             <TabsTrigger value="resumen" className="px-3">
               Resumen
             </TabsTrigger>

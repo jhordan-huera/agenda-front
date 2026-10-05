@@ -26,7 +26,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/dashboard", label: "Inicio", icon: LayoutDashboard, end: true },
   { to: "/dashboard/calendar", label: "Agenda", icon: CalendarDays },
   { to: "/dashboard/clients", label: "Clientes", icon: Users },
   { to: "/dashboard/services", label: "Servicios", icon: ConciergeBell, permission: "services.manage" },

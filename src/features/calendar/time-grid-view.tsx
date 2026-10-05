@@ -34,6 +34,7 @@ export function TimeGridView(props: TimeGridViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
   const columns = `3.5rem repeat(${days.length}, minmax(0, 1fr))`;
+  const currentHour = days.includes(now.date) ? Math.floor(now.minutes / 60) : null;
 
   // Si hoy es visible, la vista arranca desplazada cerca de la hora actual.
   const [initialScrollTop] = useState(() =>
@@ -52,7 +53,7 @@ export function TimeGridView(props: TimeGridViewProps) {
             const isToday = day === now.date;
             return (
               <div key={day} className="border-l px-1 py-2 text-center">
-                <p className={cn("text-xs text-muted-foreground uppercase", isToday && "font-medium text-primary")}>
+                <p className={cn("text-xs text-muted-foreground", isToday && "font-medium text-primary")}>
                   {formatDate(day, "EEE")}
                 </p>
                 <p
@@ -73,7 +74,11 @@ export function TimeGridView(props: TimeGridViewProps) {
             {hours.map((hour, i) => (
               <span
                 key={hour}
-                className="absolute right-2 -translate-y-1/2 text-[11px] text-muted-foreground tabular-nums"
+                className={cn(
+                  "absolute right-2 -translate-y-1/2 text-[11px] text-muted-foreground tabular-nums",
+                  // La hora en curso, marcada con el resaltador como en la agenda de papel.
+                  hour === currentHour && "marker font-bold text-ink",
+                )}
                 style={{ top: i * HOUR_HEIGHT }}
               >
                 {i === 0 ? "" : minutesToTime(hour * 60)}
@@ -183,8 +188,8 @@ function DayColumn({
       })}
 
       {day === now.date && now.minutes >= gridStart && now.minutes <= gridEnd && (
-        <div className="pointer-events-none absolute inset-x-0 z-[2] h-0.5 bg-rose-500" style={{ top: toY(now.minutes) }}>
-          <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-rose-500" />
+        <div className="pointer-events-none absolute inset-x-0 z-[2] h-0.5 bg-ink" style={{ top: toY(now.minutes) }}>
+          <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-ink" />
         </div>
       )}
     </div>

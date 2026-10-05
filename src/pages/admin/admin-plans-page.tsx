@@ -36,7 +36,7 @@ export default function AdminPlansPage() {
             return (
               <Card key={plan.id} className="gap-5 px-5">
                 <div>
-                  <p className="text-sm font-semibold tracking-wide uppercase">{plan.name}</p>
+                  <p className="text-lg font-bold">{plan.name}</p>
                   <p className="mt-2 flex items-baseline gap-1">
                     <span className="text-3xl font-semibold tracking-tight">{formatCurrency(plan.price)}</span>
                     <span className="text-sm text-muted-foreground">/mes</span>

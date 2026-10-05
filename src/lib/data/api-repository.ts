@@ -95,6 +95,8 @@ export const apiRepository: DataRepository = {
       api.put<ClinicalTemplate>(`${business(businessId)}/clinical-templates/${id(templateId)}`, input),
     setTemplateActive: (businessId, templateId, active) =>
       api.patch<ClinicalTemplate>(`${business(businessId)}/clinical-templates/${id(templateId)}/active`, { active }),
+    setDefaultTemplate: (businessId, templateId) =>
+      api.put<ClinicalTemplate>(`${business(businessId)}/clinical-default-template`, { templateId }),
     requestAttachmentUpload: (businessId, clientId, input) =>
       api.post<ClinicalAttachmentUpload>(`${business(businessId)}/clients/${id(clientId)}/clinical-record/attachments`, input),
     completeAttachmentUpload: (businessId, attachmentId) =>

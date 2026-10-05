@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useBusinessTemplate } from "@/features/clinical/use-business-template";
+import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
 import { useCategories } from "@/hooks/queries/use-categories";
 import { getErrorMessage } from "@/lib/data";
@@ -13,6 +15,7 @@ import { SwitchField } from "./switch-field";
 export function ClinicalSettingsCard({ business }: { business: Business }) {
   const updateBusiness = useUpdateBusiness();
   const isHealth = Boolean(useCategories().find(business.category)?.isHealth);
+  const { template } = useBusinessTemplate(useClinicalAccess());
 
   const toggle = async (enabled: boolean) => {
     try {
@@ -46,9 +49,16 @@ export function ClinicalSettingsCard({ business }: { business: Business }) {
         {business.clinicalRecordsEnabled && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
             <span>
-              <span className="block text-sm font-medium">Formatos de historia clínica</span>
+              <span className="block text-sm font-semibold">Formatos de historia clínica</span>
               <span className="block text-xs text-muted-foreground">
-                Qué se registra en cada evolución: los de tu especialidad o los tuyos (planes Pro y Business).
+                {template ? (
+                  <>
+                    Tu negocio usa <span className="font-semibold text-ink">{template.name}</span>. Puedes elegir otro o crear los
+                    tuyos (planes Pro y Business).
+                  </>
+                ) : (
+                  "Qué se registra en cada evolución: los de tu especialidad o los tuyos (planes Pro y Business)."
+                )}
               </span>
             </span>
             <Button asChild variant="outline" size="sm">

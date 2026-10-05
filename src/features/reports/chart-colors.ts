@@ -4,14 +4,14 @@
  * en esos atributos, así que no se usan variables CSS aquí.
  */
 export const CHART_COLORS = {
-  /** --primary · oklch(0.51 0.23 277). Validado con el validador de paleta (contraste ≥ 3:1). */
-  series: "#4f46e5",
+  /** Azul medio (más suave que --primary). Contraste con el fondo blanco ≥ 3:1. */
+  series: "#6d8fd1",
   /** --border */
-  grid: "#e5e6ea",
+  grid: "#e3e7f0",
   /** --input */
-  axis: "#dedfe4",
+  axis: "#d2d8e5",
   /** --muted-foreground */
-  tick: "#6a6f7b",
+  tick: "#5b6478",
   /** --muted */
-  cursor: "#f6f7f9",
+  cursor: "#f5f7fc",
 } as const;
