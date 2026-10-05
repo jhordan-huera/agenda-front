@@ -203,6 +203,43 @@
  * Forma irregular de marcador; el color sale de --highlight.
  */
 @layer components {
+  /* Pantalla de carga: tres puntos que laten uno tras otro (index.html tiene una copia propia). */
+  .loading-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--ink);
+    animation: loading-dot 1.2s ease-in-out infinite both;
+  }
+  @keyframes loading-dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.25;
+      transform: translateY(0) scale(0.85);
+    }
+    40% {
+      opacity: 1;
+      transform: translateY(-5px) scale(1);
+    }
+  }
+  /* Sin movimiento: sólo se encienden y apagan. */
+  @keyframes loading-dot-fade {
+    0%,
+    80%,
+    100% {
+      opacity: 0.25;
+    }
+    40% {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .loading-dot {
+      animation-name: loading-dot-fade;
+    }
+  }
+
   .marker {
     position: relative;
     isolation: isolate;
