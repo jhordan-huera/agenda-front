@@ -4,6 +4,7 @@ import { FormField } from "@/components/shared/form-field";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Input } from "@/components/ui/input";
+import { PlatformTeamCard } from "@/features/admin/platform-team-card";
 import { ChangePasswordForm } from "@/features/settings/change-password-form";
 import { SettingsSection, SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { SwitchField } from "@/features/settings/switch-field";
@@ -31,6 +32,7 @@ export default function AdminSettingsPage() {
         ) : (
           <PlatformSettingsForm settings={settings.data} />
         )}
+        <PlatformTeamCard />
         <TwoFactorSettings />
         <ChangePasswordForm />
       </div>

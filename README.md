@@ -141,6 +141,14 @@ Super admin (plataforma)  →  crea / suspende negocios, cambia planes, gestiona
 
 ## Panel de plataforma (super admin)
 
+**Equipo de la plataforma** (Configuración del panel /admin): el super admin principal agrega a
+otros super admins para que le ayuden con el soporte (nombre, email y la contraseña que elige; les
+llega un email con sus datos). Tienen los mismos permisos de plataforma salvo gestionar a otros
+super admins: sólo el principal los agrega, les cambia la contraseña o les quita el acceso, y nadie
+puede tocar la cuenta del principal ni la propia desde ahí. La lista muestra quién tiene la
+verificación en dos pasos y su último acceso; todo lo que hace cada uno queda en la actividad con su
+nombre ("Nombre (Super admin)").
+
 - **Resumen**: negocios activos/suspendidos, ingresos recurrentes (MRR), usuarios, citas y
   reservas online del mes, nuevos negocios por mes y distribución por plan.
 - **Negocios**: búsqueda y filtros por plan/estado; ficha con uso del plan, equipo, actividad,

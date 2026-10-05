@@ -36,6 +36,7 @@ export const queryKeys = {
     businesses: ["admin", "businesses"] as const,
     business: (businessId: string) => ["admin", "businesses", businessId] as const,
     users: ["admin", "users"] as const,
+    platformAdmins: ["admin", "platform-admins"] as const,
     planRequests: ["admin", "plan-requests"] as const,
     categories: ["admin", "categories"] as const,
     auditLogs: (filters: object) => ["admin", "audit-logs", filters] as const,

@@ -4,6 +4,7 @@ import type {
   BusinessCategoryInput,
   BusinessDeletionInput,
   PlanRejectionInput,
+  PlatformAdminInput,
   PlatformSettingsInput,
   UserPasswordInput,
 } from "@/lib/validations/admin";
@@ -67,6 +68,7 @@ import type {
   TeamMember,
   User,
   WhatsAppNoticeKind,
+  PlatformAdmin,
 } from "@/types";
 
 /**
@@ -290,6 +292,10 @@ export interface PlatformAdminRepository {
   setUserActive(userId: string, isActive: boolean): Promise<User>;
   /** Pone la contraseña que elige el super admin, se la envía por email y cierra sus sesiones. */
   setUserPassword(userId: string, input: UserPasswordInput): Promise<void>;
+  /** Equipo de la plataforma: los super admins. */
+  listPlatformAdmins(): Promise<PlatformAdmin[]>;
+  /** Sólo el super admin principal: otro super admin para el soporte (le llega un email con sus datos). */
+  addPlatformAdmin(input: PlatformAdminInput): Promise<PlatformAdmin>;
   /** Crea un miembro del equipo de un negocio con la contraseña que elige el super admin. */
   addBusinessMember(businessId: string, input: AdminMemberInput): Promise<TeamMember>;
   listAuditLogs(filters: AdminAuditFilters): Promise<AuditLogPage<AdminAuditLog>>;

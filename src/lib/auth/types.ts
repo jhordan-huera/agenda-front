@@ -17,6 +17,8 @@ export interface Session {
   businessStatus: BusinessStatus | null;
   /** "super_admin" para el operador de la plataforma (panel /admin). */
   platformRole: PlatformRole | null;
+  /** Super admin principal: gestiona el equipo de super admins (los demás no). */
+  platformOwner: boolean;
   /** Puede ver historias clínicas (propietario, miembro autorizado o el super admin en modo soporte). */
   clinicalAccess: boolean;
   /**

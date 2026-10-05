@@ -4,6 +4,7 @@ import type {
   AdminBusinessInput,
   AdminMemberInput,
   BusinessCategoryInput,
+  PlatformAdminInput,
   PlatformSettingsInput,
 } from "@/lib/validations/admin";
 import type { BusinessStatus, PlanId } from "@/types";
@@ -52,6 +53,9 @@ export const useAdminPlanRequests = () =>
   useQuery({ queryKey: queryKeys.admin.planRequests, queryFn: () => data.admin.listPlanRequests() });
 
 export const useAdminUsers = () => useQuery({ queryKey: queryKeys.admin.users, queryFn: () => data.admin.listUsers() });
+
+export const usePlatformAdmins = () =>
+  useQuery({ queryKey: queryKeys.admin.platformAdmins, queryFn: () => data.admin.listPlatformAdmins() });
 
 /** Auditoría de la plataforma con "Cargar más". */
 export const useAdminAuditFeed = (filters: Omit<AdminAuditFilters, "cursor">) =>
@@ -126,6 +130,8 @@ export const useSetUserPassword = () =>
   useAdminMutation(({ userId, password }: { userId: string; password: string }) =>
     data.admin.setUserPassword(userId, { password }),
   );
+
+export const useAddPlatformAdmin = () => useAdminMutation((input: PlatformAdminInput) => data.admin.addPlatformAdmin(input));
 
 export const useAddBusinessMember = () =>
   useAdminMutation(({ businessId, input }: { businessId: string; input: AdminMemberInput }) =>

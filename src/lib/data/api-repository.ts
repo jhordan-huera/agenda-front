@@ -32,6 +32,7 @@ import type {
   Subscription,
   TeamMember,
   User,
+  PlatformAdmin,
 } from "@/types";
 import type { AdminCreateBusinessResult, DataRepository } from "./repository";
 
@@ -189,6 +190,8 @@ export const apiRepository: DataRepository = {
     listUsers: () => api.get<AdminUserSummary[]>("/admin/users"),
     setUserActive: (userId, isActive) => api.patch<User>(`/admin/users/${id(userId)}/active`, { isActive }),
     setUserPassword: (userId, input) => api.put<void>(`/admin/users/${id(userId)}/password`, input),
+    listPlatformAdmins: () => api.get<PlatformAdmin[]>("/admin/platform-admins"),
+    addPlatformAdmin: (input) => api.post<PlatformAdmin>("/admin/platform-admins", input),
     addBusinessMember: (businessId, input) =>
       api.post<TeamMember>(`/admin/businesses/${id(businessId)}/members`, input),
     listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),

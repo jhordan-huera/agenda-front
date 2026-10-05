@@ -14,6 +14,7 @@ const TYPE_LABELS: Record<EmailType, string> = {
   welcome: "Bienvenida",
   password_reset: "Contraseña",
   team_invite: "Invitación",
+  platform_admin_added: "Alta de super admin",
   booking_created: "Reserva",
   booking_received: "Nueva reserva",
   appointment_confirmed: "Confirmación",
