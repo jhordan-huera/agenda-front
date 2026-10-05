@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
+import { DEFAULT_NOTIFICATION_SETTINGS } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
 import type { Business } from "@/types";
 import { SettingsSection } from "./settings-section";
@@ -11,7 +12,8 @@ const REMINDER_OPTIONS = [2, 12, 24, 48];
 
 export function NotificationSettingsForm({ business }: { business: Business }) {
   const updateBusiness = useUpdateBusiness();
-  const { values, setField, dirty, reset } = useSettingsForm(business.notificationSettings);
+  // Con los valores por defecto: los negocios de antes no traen los ajustes nuevos.
+  const { values, setField, dirty, reset } = useSettingsForm({ ...DEFAULT_NOTIFICATION_SETTINGS, ...business.notificationSettings });
 
   const submit = async () => {
     try {
@@ -71,6 +73,53 @@ export function NotificationSettingsForm({ business }: { business: Business }) {
         description="Cuando una cita se cancela."
         checked={values.cancellations}
         onCheckedChange={(checked) => setField("cancellations", checked)}
+      />
+    </SettingsSection>
+  );
+}
+
+/**
+ * Avisos por WhatsApp al cambiar una cita: se abre WhatsApp con el mensaje ya escrito y el
+ * profesional lo envía (enlace wa.me, sin coste). Comparten el guardado con los emails.
+ */
+export function WhatsAppNoticeSettingsForm({ business }: { business: Business }) {
+  const updateBusiness = useUpdateBusiness();
+  const current = { ...DEFAULT_NOTIFICATION_SETTINGS, ...business.notificationSettings };
+  const { values, setField, dirty, reset } = useSettingsForm({
+    whatsappOnStatusChange: current.whatsappOnStatusChange,
+    whatsappFollowUps: current.whatsappFollowUps,
+  });
+
+  const submit = async () => {
+    try {
+      await updateBusiness.mutateAsync({ notificationSettings: { ...current, ...values } });
+      reset(values);
+      toast.success("Preferencias de WhatsApp guardadas");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  return (
+    <SettingsSection
+      title="Avisos por WhatsApp"
+      description="Al cambiar una cita, se abre WhatsApp con el mensaje para tu cliente ya escrito: tú sólo lo revisas y tocas Enviar. Sin costo."
+      dirty={dirty}
+      saving={updateBusiness.isPending}
+      onSubmit={submit}
+      onDiscard={() => reset()}
+    >
+      <SwitchField
+        label="Al confirmar, cancelar o cambiar una cita"
+        description="Avisa de la confirmación, la cancelación o la nueva fecha y hora (además del email)."
+        checked={values.whatsappOnStatusChange}
+        onCheckedChange={(checked) => setField("whatsappOnStatusChange", checked)}
+      />
+      <SwitchField
+        label="Al marcar Completada o No asistió"
+        description="Un gracias por la visita, o una invitación a reagendar con tu enlace de reservas."
+        checked={values.whatsappFollowUps}
+        onCheckedChange={(checked) => setField("whatsappFollowUps", checked)}
       />
     </SettingsSection>
   );

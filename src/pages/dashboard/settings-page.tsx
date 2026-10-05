@@ -11,7 +11,7 @@ import { BookingSettingsForm } from "@/features/settings/booking-settings-form";
 import { BusinessSettingsForm } from "@/features/settings/business-settings-form";
 import { ClinicalSettingsCard } from "@/features/settings/clinical-settings-card";
 import { EmailOutbox } from "@/features/settings/email-outbox";
-import { NotificationSettingsForm } from "@/features/settings/notification-settings-form";
+import { NotificationSettingsForm, WhatsAppNoticeSettingsForm } from "@/features/settings/notification-settings-form";
 import { ProfileSettingsForm } from "@/features/settings/profile-settings-form";
 import { SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { SubscriptionSettings } from "@/features/settings/subscription-settings";
@@ -91,7 +91,12 @@ export default function SettingsPage() {
             {withBusiness((business) => <BrandColorsSettings business={business} />)}
           </TabsContent>
           <TabsContent value="notificaciones" className="grid max-w-3xl gap-6">
-            {withBusiness((business) => <NotificationSettingsForm business={business} />)}
+            {withBusiness((business) => (
+              <>
+                <NotificationSettingsForm business={business} />
+                <WhatsAppNoticeSettingsForm business={business} />
+              </>
+            ))}
             <EmailOutbox />
           </TabsContent>
           <TabsContent value="equipo" className="max-w-3xl">

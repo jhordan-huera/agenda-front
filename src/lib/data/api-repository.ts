@@ -133,6 +133,8 @@ export const apiRepository: DataRepository = {
       api.put<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}`, input),
     updateStatus: (businessId, appointmentId, status) =>
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, { status }),
+    logWhatsAppNotice: (businessId, appointmentId, kind) =>
+      api.post<void>(`${business(businessId)}/appointments/${id(appointmentId)}/whatsapp-notice`, { kind }),
   },
 
   schedules: {

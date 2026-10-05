@@ -227,6 +227,12 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
 - **Código QR de la página de reservas**: en Configuración → Negocio, junto al enlace público,
   "Código QR" lo muestra y lo descarga como PNG listo para imprimir (con "Reserva tu cita", el
   nombre del negocio y el enlace escrito) o como SVG. Se genera en el navegador con `uqr`.
+- **Avisos por WhatsApp al cambiar una cita**: al confirmar, cancelar, reprogramar, completar o marcar
+  "No asistió" desde el panel se abre un aviso con el mensaje para el cliente ya escrito (editable) y
+  el botón "Abrir WhatsApp" (enlace `wa.me`: lo envía el profesional, sin coste). El email
+  automático se sigue enviando igual. Se activa o apaga en Configuración → Notificaciones → "Avisos
+  por WhatsApp" (dos interruptores: confirmar/cancelar/reprogramar y completada/no asistió). Al abrir
+  WhatsApp queda en la actividad de la cita ("Abrió WhatsApp para avisar…"; no se sabe si lo envió).
 - **WhatsApp**: el negocio escribe al cliente desde el detalle de la cita o su ficha, y el
   cliente escribe al negocio desde la página de reservas ("Escríbenos por WhatsApp", p. ej. para
   una cita con menos anticipación de la permitida). Abre la conversación con un mensaje ya escrito (enlace `wa.me`, sin API ni coste). Los números sin

@@ -1,6 +1,7 @@
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { TIMEZONES } from "@/lib/constants/business";
-import type { Business } from "@/types";
+import { formatDate } from "@/lib/format";
+import type { AppointmentStatus, Business, ISODate, WhatsAppNoticeKind } from "@/types";
 
 /**
  * Enlaces "click to chat" de WhatsApp (https://wa.me): abren la conversación con el
@@ -39,4 +40,38 @@ export function getBusinessWhatsAppUrl(business: Pick<Business, "name" | "phone"
   return business.phone
     ? getWhatsAppUrl(business.phone, business.timezone, `Hola, quisiera ayuda para agendar una cita en ${business.name}.`)
     : null;
+}
+
+/** Aviso que corresponde a un cambio de estado (pasar a "Pendiente" no tiene aviso). */
+export function noticeForStatus(status: AppointmentStatus): WhatsAppNoticeKind | null {
+  return status === "pending" ? null : status;
+}
+
+export interface AppointmentNoticeData {
+  clientName: string;
+  businessName: string;
+  serviceName: string;
+  date: ISODate;
+  startTime: string;
+  /** Página de reservas del negocio, para volver a agendar. */
+  bookingUrl: string;
+}
+
+/** Mensaje de WhatsApp al cliente según el cambio de su cita; el profesional lo revisa antes de enviarlo. */
+export function buildAppointmentNotice(kind: WhatsAppNoticeKind, data: AppointmentNoticeData): string {
+  const name = data.clientName.trim().split(/\s+/)[0] ?? "";
+  const hello = name ? `Hola ${name}` : "Hola";
+  const when = `el ${formatDate(data.date, "EEEE d 'de' MMMM")} a las ${data.startTime}`;
+  switch (kind) {
+    case "confirmed":
+      return `${hello}, te confirmamos tu cita de ${data.serviceName} ${when} con ${data.businessName}. ¡Te esperamos!`;
+    case "cancelled":
+      return `${hello}, tu cita de ${data.serviceName} ${when} con ${data.businessName} quedó cancelada. Si quieres agendar otra, puedes hacerlo aquí: ${data.bookingUrl}`;
+    case "rescheduled":
+      return `${hello}, cambiamos tu cita de ${data.serviceName} con ${data.businessName}: ahora es ${when}. Si no te queda bien, respóndenos por aquí.`;
+    case "completed":
+      return `${hello}, gracias por tu visita a ${data.businessName}. Cuando quieras volver, puedes reservar aquí: ${data.bookingUrl}`;
+    case "no_show":
+      return `${hello}, te esperábamos ${when} para tu cita de ${data.serviceName} con ${data.businessName}. ¿Quieres reagendarla? Puedes elegir otra hora aquí: ${data.bookingUrl}`;
+  }
 }

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { useSession } from "@/features/auth/use-session";
+import { WhatsAppNoticeProvider } from "@/features/appointments/whatsapp-notice";
 import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { useInstallableApp } from "@/features/install/use-installable-app";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
@@ -34,11 +35,13 @@ function DashboardShell() {
   const { data: business } = useCurrentBusiness();
   return (
     <BrandThemeProvider colors={business?.brandColors}>
-      <AppShell
-        homeHref="/dashboard"
-        renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} />}
-        banner={session?.support && <SupportBanner businessName={session.support.businessName} />}
-      />
+      <WhatsAppNoticeProvider>
+        <AppShell
+          homeHref="/dashboard"
+          renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} />}
+          banner={session?.support && <SupportBanner businessName={session.support.businessName} />}
+        />
+      </WhatsAppNoticeProvider>
     </BrandThemeProvider>
   );
 }

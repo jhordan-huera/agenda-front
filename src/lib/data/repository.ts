@@ -66,6 +66,7 @@ import type {
   Subscription,
   TeamMember,
   User,
+  WhatsAppNoticeKind,
 } from "@/types";
 
 /**
@@ -183,6 +184,8 @@ export interface AppointmentRepository {
   create(businessId: string, input: AppointmentInput): Promise<Appointment>;
   update(businessId: string, appointmentId: string, input: AppointmentInput): Promise<Appointment>;
   updateStatus(businessId: string, appointmentId: string, status: AppointmentStatus): Promise<Appointment>;
+  /** Registra en la actividad que se abrió WhatsApp con el aviso de un cambio de la cita. */
+  logWhatsAppNotice(businessId: string, appointmentId: string, kind: WhatsAppNoticeKind): Promise<void>;
 }
 
 export interface ScheduleRepository {
