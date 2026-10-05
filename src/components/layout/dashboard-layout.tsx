@@ -4,6 +4,8 @@ import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { useSession } from "@/features/auth/use-session";
+import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { getHomePath } from "@/lib/auth";
 import { AppShell } from "./app-shell";
 import { SidebarContent } from "./sidebar-content";
@@ -26,12 +28,16 @@ export default function DashboardLayout() {
 
 function DashboardShell() {
   const { session } = useSession();
+  // El panel se viste con los colores del negocio (si eligió unos propios).
+  const { data: business } = useCurrentBusiness();
   return (
-    <AppShell
-      homeHref="/dashboard"
-      renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} />}
-      banner={session?.support && <SupportBanner businessName={session.support.businessName} />}
-    />
+    <BrandThemeProvider colors={business?.brandColors}>
+      <AppShell
+        homeHref="/dashboard"
+        renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} />}
+        banner={session?.support && <SupportBanner businessName={session.support.businessName} />}
+      />
+    </BrandThemeProvider>
   );
 }
 

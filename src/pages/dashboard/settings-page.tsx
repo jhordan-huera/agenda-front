@@ -6,6 +6,7 @@ import { PageTitle } from "@/components/shared/page-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions } from "@/features/auth/use-permissions";
 import { ActivityLog } from "@/features/settings/activity-log";
+import { BrandColorsSettings } from "@/features/settings/brand-colors-settings";
 import { BookingSettingsForm } from "@/features/settings/booking-settings-form";
 import { BusinessSettingsForm } from "@/features/settings/business-settings-form";
 import { ClinicalSettingsCard } from "@/features/settings/clinical-settings-card";
@@ -23,6 +24,7 @@ const TABS: { value: string; label: string; permission?: Permission }[] = [
   { value: "perfil", label: "Perfil" },
   { value: "negocio", label: "Negocio", permission: "business.manage" },
   { value: "agenda", label: "Agenda", permission: "business.manage" },
+  { value: "colores", label: "Colores", permission: "business.manage" },
   { value: "notificaciones", label: "Notificaciones", permission: "business.manage" },
   { value: "equipo", label: "Equipo", permission: "team.manage" },
   { value: "suscripcion", label: "Suscripción", permission: "billing.manage" },
@@ -84,6 +86,9 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="agenda" className="max-w-3xl">
             {withBusiness((business) => <BookingSettingsForm business={business} />)}
+          </TabsContent>
+          <TabsContent value="colores" className="max-w-5xl">
+            {withBusiness((business) => <BrandColorsSettings business={business} />)}
           </TabsContent>
           <TabsContent value="notificaciones" className="grid max-w-3xl gap-6">
             {withBusiness((business) => <NotificationSettingsForm business={business} />)}

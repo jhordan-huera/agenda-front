@@ -52,6 +52,15 @@ el beta):
 - **Icono** `public/icon-calendar.svg` (y `BrandMark`), con versiones PNG de 32, 192 y 180 px. Cada
   icono nuevo lleva otro nombre de archivo y `src/main.tsx` lo vuelve a declarar con `?v=` para que
   los navegadores no sigan mostrando el anterior.
+- **Colores de cada negocio** (Configuración → Colores, propietario y administradores, cualquier
+  plan): una paleta lista (Agenda360, Eucalipto, Lavanda, Rosa, Turquesa, Coral, Oliva, Grafito) o
+  dos colores a elección (principal y resaltado), con vista previa. Se aplican a su panel, a su
+  página de reservas y a la lámina del QR; la portada, el login y el panel de plataforma siguen con
+  los de Agenda360. De los dos colores sale toda la paleta (fondos, bordes, textos, gráficos) en
+  `src/lib/brand-theme.ts`, calculada en OKLCH; si el principal es muy claro para texto blanco se
+  oscurece solo hasta un contraste de 4,5:1 (y el resaltado se aclara si hace falta). Se guardan en
+  `business.brandColors` (columna `brand_colors`, migración 018; null = los de Agenda360) y los
+  aplica `BrandThemeProvider`.
 - **Tipografía** Plus Jakarta Sans; las horas, grandes, gruesas y con cifras tabulares.
 - **Pestañas de agenda** (`TabsList variant="folder"`): el menú lateral, los pasos de la reserva y
   las pestañas de Configuración y de la ficha del cliente.

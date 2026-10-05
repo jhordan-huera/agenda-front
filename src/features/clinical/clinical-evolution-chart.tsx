@@ -3,7 +3,7 @@ import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipContentProps } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CHART_COLORS } from "@/features/reports/chart-colors";
+import { useChartColors } from "@/features/branding/brand-palette-context";
 import { computeBmi, formatClinicalNumber } from "@/lib/clinical-templates";
 import { formatNumericDate } from "@/lib/format";
 import { questionnaireScore } from "@/lib/validations/clinical";
@@ -81,6 +81,7 @@ function PointTooltip({ active, payload, unit }: TooltipContentProps & { unit: s
 export function ClinicalEvolutionChart({ record }: { record: ClinicalRecord }) {
   const series = buildClinicalSeries(record);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const colors = useChartColors();
   if (series.length === 0) return null;
   const current = series.find((s) => s.key === selectedKey) ?? series[0];
 
@@ -113,11 +114,11 @@ export function ClinicalEvolutionChart({ record }: { record: ClinicalRecord }) {
         <div className="h-48" role="img" aria-label={`${current.label}: ${current.points.map((p) => `${formatNumericDate(p.date)} ${p.value}`).join(", ")}`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={current.points} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-              <CartesianGrid vertical={false} stroke={CHART_COLORS.grid} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: CHART_COLORS.tick }} tickLine={false} axisLine={{ stroke: CHART_COLORS.axis }} />
-              <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.tick }} tickLine={false} axisLine={false} width={44} domain={["auto", "auto"]} />
+              <CartesianGrid vertical={false} stroke={colors.grid} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: colors.tick }} tickLine={false} axisLine={{ stroke: colors.axis }} />
+              <YAxis tick={{ fontSize: 11, fill: colors.tick }} tickLine={false} axisLine={false} width={44} domain={["auto", "auto"]} />
               <Tooltip content={(props) => <PointTooltip {...props} unit={current.unit} />} />
-              <Line type="monotone" dataKey="value" stroke={CHART_COLORS.series} strokeWidth={2} dot={{ r: 3.5, fill: CHART_COLORS.series }} />
+              <Line type="monotone" dataKey="value" stroke={colors.series} strokeWidth={2} dot={{ r: 3.5, fill: colors.series }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

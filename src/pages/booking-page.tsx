@@ -6,6 +6,7 @@ import { Logo } from "@/components/shared/logo";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { BookingFlow } from "@/features/booking/booking-flow";
 import { BookingHeader } from "@/features/booking/booking-header";
 import { usePublicProfile } from "@/hooks/queries/use-public-booking";
@@ -66,31 +67,34 @@ export default function BookingPage() {
     );
   }
 
+  // La página de reservas lleva los colores del negocio.
   return (
-    <div className="flex min-h-screen flex-col bg-muted">
-      <PageTitle title={`Reservar con ${profile.business.name}`} />
-      <BookingHeader business={profile.business} professional={profile.professional} />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
-        {profile.services.length === 0 ? (
-          <EmptyState
-            icon={CalendarX2}
-            title="Este negocio aún no tiene servicios disponibles"
-            description="Vuelve a intentarlo más tarde."
-          />
-        ) : (
-          <BookingFlow slug={username} profile={profile} />
-        )}
-      </main>
-      <footer className="py-6 text-center text-xs text-muted-foreground">
-        Reservas gestionadas con{" "}
-        <Link to="/" className="font-medium text-foreground hover:underline">
-          {APP_NAME}
-        </Link>
-        {" · "}
-        <a href="/privacidad" target="_blank" rel="noreferrer" className="hover:text-foreground hover:underline">
-          Privacidad
-        </a>
-      </footer>
-    </div>
+    <BrandThemeProvider colors={profile.business.brandColors}>
+      <div className="flex min-h-screen flex-col bg-muted">
+        <PageTitle title={`Reservar con ${profile.business.name}`} />
+        <BookingHeader business={profile.business} professional={profile.professional} />
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
+          {profile.services.length === 0 ? (
+            <EmptyState
+              icon={CalendarX2}
+              title="Este negocio aún no tiene servicios disponibles"
+              description="Vuelve a intentarlo más tarde."
+            />
+          ) : (
+            <BookingFlow slug={username} profile={profile} />
+          )}
+        </main>
+        <footer className="py-6 text-center text-xs text-muted-foreground">
+          Reservas gestionadas con{" "}
+          <Link to="/" className="font-medium text-foreground hover:underline">
+            {APP_NAME}
+          </Link>
+          {" · "}
+          <a href="/privacidad" target="_blank" rel="noreferrer" className="hover:text-foreground hover:underline">
+            Privacidad
+          </a>
+        </footer>
+      </div>
+    </BrandThemeProvider>
   );
 }

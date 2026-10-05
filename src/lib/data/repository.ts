@@ -39,6 +39,7 @@ import type {
   AuditLogPage,
   BlockedTime,
   BookingConfirmation,
+  BrandColors,
   Business,
   BusinessCategoryInfo,
   BusinessRole,
@@ -93,6 +94,8 @@ export interface UpdateBusinessInput extends Partial<BusinessProfileInput> {
   bookingSettings?: BookingSettingsInput;
   notificationSettings?: NotificationSettingsInput;
   clinicalRecordsEnabled?: boolean;
+  /** null: vuelve a los colores de Agenda360. */
+  brandColors?: BrandColors | null;
 }
 
 export interface BusinessRepository {

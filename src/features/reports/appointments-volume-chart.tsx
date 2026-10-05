@@ -3,10 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { capitalize } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { CHART_COLORS } from "./chart-colors";
+import { useChartColors } from "@/features/branding/brand-palette-context";
 import type { VolumePoint } from "./report-stats";
-
-const AXIS_TICK = { fontSize: 11, fill: CHART_COLORS.tick };
 
 function VolumeTooltip({ active, payload }: TooltipContentProps) {
   const point = payload?.[0]?.payload as VolumePoint | undefined;
@@ -35,6 +33,8 @@ function VolumeTooltip({ active, payload }: TooltipContentProps) {
 /** Columnas de una sola serie (sin leyenda: el título la nombra) + tabla accesible. */
 export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumePoint[]; groupedByWeek: boolean }) {
   const title = groupedByWeek ? "Citas por semana" : "Citas por día";
+  const colors = useChartColors();
+  const axisTick = { fontSize: 11, fill: colors.tick };
 
   return (
     <Card>
@@ -46,18 +46,18 @@ export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumeP
         <div className="h-64" role="img" aria-label={`${title}: gráfico de columnas`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -12 }}>
-              <CartesianGrid vertical={false} stroke={CHART_COLORS.grid} />
+              <CartesianGrid vertical={false} stroke={colors.grid} />
               <XAxis
                 dataKey="label"
-                tick={AXIS_TICK}
+                tick={axisTick}
                 tickLine={false}
-                axisLine={{ stroke: CHART_COLORS.axis }}
+                axisLine={{ stroke: colors.axis }}
                 interval="preserveStartEnd"
                 minTickGap={8}
               />
-              <YAxis allowDecimals={false} tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} />
-              <Tooltip content={VolumeTooltip} cursor={{ fill: CHART_COLORS.cursor }} />
-              <Bar dataKey="total" name="Citas" fill={CHART_COLORS.series} radius={[4, 4, 0, 0]} maxBarSize={24} />
+              <YAxis allowDecimals={false} tick={axisTick} tickLine={false} axisLine={false} width={40} />
+              <Tooltip content={VolumeTooltip} cursor={{ fill: colors.cursor }} />
+              <Bar dataKey="total" name="Citas" fill={colors.series} radius={[4, 4, 0, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </div>

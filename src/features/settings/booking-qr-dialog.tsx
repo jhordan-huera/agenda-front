@@ -5,8 +5,18 @@ import { encode, renderSVG } from "uqr";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-/** Colores de la marca (los mismos de src/index.css): el QR va casi negro para que lo lea cualquier cámara. */
-const COLORS = { qr: "#1d2433", ink: "#4a6cb0", text: "#1d2433", muted: "#5b6478", paper: "#ffffff" };
+/**
+ * Colores de la lámina: los del negocio (o los de Agenda360), leídos de las variables CSS. El QR va
+ * con el color del texto, casi negro, para que lo lea cualquier cámara.
+ */
+function brandColors() {
+  const style = getComputedStyle(document.documentElement);
+  const read = (name: string, fallback: string) => {
+    const value = style.getPropertyValue(name).trim();
+    return /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
+  };
+  return { qr: read("--text", "#1d2433"), ink: read("--ink", "#4a6cb0"), muted: read("--graphite", "#5b6478"), paper: "#ffffff" };
+}
 const FONT = '"Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif';
 
 interface BookingQrDialogProps {
@@ -21,7 +31,7 @@ interface BookingQrDialogProps {
 export function BookingQrDialog({ open, onOpenChange, url, businessName, slug }: BookingQrDialogProps) {
   const [pending, setPending] = useState(false);
   const preview = useMemo(
-    () => `data:image/svg+xml;utf8,${encodeURIComponent(renderSVG(url, { pixelSize: 8, border: 2, blackColor: COLORS.qr }))}`,
+    () => `data:image/svg+xml;utf8,${encodeURIComponent(renderSVG(url, { pixelSize: 8, border: 2, blackColor: brandColors().qr }))}`,
     [url],
   );
 
@@ -37,7 +47,7 @@ export function BookingQrDialog({ open, onOpenChange, url, businessName, slug }:
   };
 
   const downloadSvg = () => {
-    const svg = renderSVG(url, { pixelSize: 10, border: 4, blackColor: COLORS.qr });
+    const svg = renderSVG(url, { pixelSize: 10, border: 4, blackColor: brandColors().qr });
     download(new Blob([svg], { type: "image/svg+xml" }), `qr-reservas-${slug}.svg`);
   };
 
@@ -109,6 +119,7 @@ async function renderPrintablePng(url: string, businessName: string): Promise<Bl
     document.fonts.load(`600 40px ${FONT}`),
   ]).catch(() => undefined);
 
+  const colors = brandColors();
   const qr = encode(url, { border: 0 });
   const width = 1200;
   const margin = 100;
@@ -123,33 +134,33 @@ async function renderPrintablePng(url: string, businessName: string): Promise<Bl
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas no disponible");
 
-  ctx.fillStyle = COLORS.paper;
+  ctx.fillStyle = colors.paper;
   ctx.fillRect(0, 0, width, height);
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
 
-  ctx.fillStyle = COLORS.ink;
+  ctx.fillStyle = colors.ink;
   ctx.font = `700 52px ${FONT}`;
   ctx.fillText("Reserva tu cita", width / 2, 150);
 
-  ctx.fillStyle = COLORS.text;
+  ctx.fillStyle = colors.qr;
   fitText(ctx, businessName, 800, 72, width - margin * 2, 36);
   ctx.fillText(businessName, width / 2, 245);
 
   const left = Math.round((width - qrSize) / 2);
-  ctx.fillStyle = COLORS.qr;
+  ctx.fillStyle = colors.qr;
   qr.data.forEach((row, y) =>
     row.forEach((dark, x) => {
       if (dark) ctx.fillRect(left + x * module, qrTop + y * module, module, module);
     }),
   );
 
-  ctx.fillStyle = COLORS.ink;
+  ctx.fillStyle = colors.ink;
   const link = displayUrl(url);
   fitText(ctx, link, 600, 40, width - margin * 2, 24);
   ctx.fillText(link, width / 2, qrTop + qrSize + 100);
 
-  ctx.fillStyle = COLORS.muted;
+  ctx.fillStyle = colors.muted;
   ctx.font = `500 32px ${FONT}`;
   ctx.fillText("Escanéalo con la cámara de tu celular", width / 2, qrTop + qrSize + 165);
 
