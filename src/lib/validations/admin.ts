@@ -58,6 +58,7 @@ export const isSameBusinessName = (typed: string, name: string) => normalizeName
 export const platformSettingsSchema = z.object({
   allowPublicSignup: z.boolean(),
   supportEmail: emailField,
+  supportPhone: phoneField,
 });
 
 export type AdminBusinessInput = z.infer<typeof adminBusinessSchema>;

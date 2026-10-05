@@ -24,7 +24,7 @@ export default function AdminSettingsPage() {
 
       <div className="grid max-w-3xl gap-6">
         {settings.isPending ? (
-          <SettingsSectionSkeleton fields={2} />
+          <SettingsSectionSkeleton fields={3} />
         ) : settings.isError ? (
           <ErrorState onRetry={() => settings.refetch()} />
         ) : (
@@ -54,8 +54,8 @@ function PlatformSettingsForm({ settings }: { settings: PlatformSettings }) {
 
   return (
     <SettingsSection
-      title="Altas de negocios"
-      description="Decide quién puede crear negocios en la plataforma."
+      title="Altas de negocios y soporte"
+      description="Decide quién puede crear negocios en la plataforma y cómo te contactan."
       dirty={dirty}
       saving={update.isPending}
       onSubmit={submit}
@@ -78,6 +78,23 @@ function PlatformSettingsForm({ settings }: { settings: PlatformSettings }) {
       >
         {(field) => (
           <Input {...field} type="email" value={values.supportEmail} onChange={(e) => setField("supportEmail", e.target.value)} />
+        )}
+      </FormField>
+      <FormField
+        label="Teléfono de soporte (WhatsApp)"
+        optional
+        error={errors.supportPhone}
+        hint="Se muestra junto al email con un enlace para escribirte por WhatsApp."
+      >
+        {(field) => (
+          <Input
+            {...field}
+            type="tel"
+            inputMode="tel"
+            placeholder="099 406 0669"
+            value={values.supportPhone}
+            onChange={(e) => setField("supportPhone", e.target.value)}
+          />
         )}
       </FormField>
     </SettingsSection>

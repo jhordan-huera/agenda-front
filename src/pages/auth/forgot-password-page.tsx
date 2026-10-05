@@ -1,15 +1,21 @@
 import { ArrowLeft, Mail } from "lucide-react";
 import { Link } from "react-router";
 import { PageTitle } from "@/components/shared/page-title";
+import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuthCardHeader } from "@/features/auth/auth-card-header";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
-import { DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
+import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
+import { getSupportWhatsAppUrl } from "@/lib/whatsapp";
 
 /** Las contraseñas las pone el soporte de la plataforma: no hay recuperación automática por email. */
 export default function ForgotPasswordPage() {
   const settings = usePlatformSettings();
   const supportEmail = settings.data?.supportEmail ?? DEFAULT_SUPPORT_EMAIL;
+  const supportPhone = settings.data?.supportPhone ?? "";
+  const whatsAppUrl = supportPhone
+    ? getSupportWhatsAppUrl(supportPhone, `Hola, necesito recuperar el acceso a mi cuenta de ${APP_NAME}.`)
+    : null;
 
   return (
     <>
@@ -26,6 +32,16 @@ export default function ForgotPasswordPage() {
         ) : (
           <a href={`mailto:${supportEmail}`} className="mt-1 inline-block font-medium text-primary hover:underline">
             {supportEmail}
+          </a>
+        )}
+        {whatsAppUrl && (
+          <a
+            href={whatsAppUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 flex items-center justify-center gap-1.5 font-medium text-primary hover:underline"
+          >
+            <WhatsAppIcon className="size-4" /> {supportPhone}
           </a>
         )}
       </div>

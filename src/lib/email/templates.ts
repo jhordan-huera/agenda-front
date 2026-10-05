@@ -153,7 +153,8 @@ export const emailTemplates = {
       ],
     }),
 
-  businessSuspended: (firstName: string, businessName: string, supportEmail: string): EmailContent =>
+  /** `supportContact`: email (y teléfono) de soporte, ver formatSupportContact. */
+  businessSuspended: (firstName: string, businessName: string, supportContact: string): EmailContent =>
     platformEmail({
       subject: `${businessName} fue suspendido`,
       preheader: "El panel y la página de reservas no están disponibles por ahora.",
@@ -165,7 +166,7 @@ export const emailTemplates = {
           tone: "warning",
           text: `Suspendimos temporalmente la cuenta de ${businessName}. Mientras tanto, el panel y la página de reservas no estarán disponibles.`,
         },
-        { kind: "text", text: `Si crees que es un error o quieres reactivarla, escríbenos a ${supportEmail}.` },
+        { kind: "text", text: `Si crees que es un error o quieres reactivarla, escríbenos a ${supportContact}.` },
       ],
     }),
 
@@ -250,7 +251,7 @@ export const emailTemplates = {
     businessName: string,
     planName: string,
     reason: string,
-    supportEmail: string,
+    supportContact: string,
   ): EmailContent =>
     platformEmail({
       subject: `Tu solicitud del plan ${planName}`,
@@ -260,7 +261,7 @@ export const emailTemplates = {
       blocks: [
         { kind: "text", text: `No pudimos aprobar el cambio de ${businessName} al plan ${planName}.` },
         ...(reason ? [{ kind: "callout", tone: "warning", text: `Motivo: ${reason}` } satisfies EmailBlock] : []),
-        { kind: "text", text: `Si tienes dudas, escríbenos a ${supportEmail}.` },
+        { kind: "text", text: `Si tienes dudas, escríbenos a ${supportContact}.` },
       ],
     }),
 

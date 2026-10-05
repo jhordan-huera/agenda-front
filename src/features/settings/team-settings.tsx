@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ErrorState } from "@/components/shared/error-state";
+import { SupportContact } from "@/components/shared/support-contact";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { useSession } from "@/features/auth/use-session";
 import { useCurrentBusiness, usePlanUsage } from "@/hooks/queries/use-account";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { useRemoveMember, useSetClinicalAccess, useTeam, useUpdateMemberRole } from "@/hooks/queries/use-team";
-import { DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
+import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 import { getErrorMessage } from "@/lib/data";
 import { ASSIGNABLE_ROLES, ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/permissions";
 import type { BusinessRole, TeamMember } from "@/types";
@@ -147,9 +148,11 @@ export function TeamSettings() {
               ? "Alcanzaste el límite de usuarios de tu plan. Actualízalo en la pestaña Suscripción para sumar más personas."
               : "Para agregar a alguien a tu equipo o cambiar una contraseña, escribe a soporte: "}
             {!atLimit && (
-              <a href={`mailto:${supportEmail}`} className="font-medium text-primary hover:underline">
-                {supportEmail}
-              </a>
+              <SupportContact
+                email={supportEmail}
+                phone={platform.data?.supportPhone}
+                message={`Hola, necesito ayuda con el equipo de ${business?.name ?? "mi negocio"} en ${APP_NAME}.`}
+              />
             )}
           </p>
         </CardContent>

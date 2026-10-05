@@ -1,3 +1,4 @@
+import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { TIMEZONES } from "@/lib/constants/business";
 import type { Business } from "@/types";
 
@@ -26,6 +27,11 @@ export function toWhatsAppNumber(phone: string, timezone: string): string | null
 export function getWhatsAppUrl(phone: string, timezone: string, message: string): string | null {
   const number = toWhatsAppNumber(phone, timezone);
   return number ? `https://wa.me/${number}?text=${encodeURIComponent(message)}` : null;
+}
+
+/** Enlace al WhatsApp de soporte de la plataforma (números sin prefijo: Ecuador). */
+export function getSupportWhatsAppUrl(phone: string, message: string): string | null {
+  return getWhatsAppUrl(phone, DEFAULT_TIMEZONE, message);
 }
 
 /** Enlace para que un cliente escriba al negocio desde la página pública de reservas. */

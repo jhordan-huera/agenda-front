@@ -1,11 +1,13 @@
 import { LockKeyhole } from "lucide-react";
 import { Link } from "react-router";
 import { PageTitle } from "@/components/shared/page-title";
+import { SupportContact } from "@/components/shared/support-contact";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuthCardHeader } from "@/features/auth/auth-card-header";
 import { RegisterForm } from "@/features/auth/register-form";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
+import { APP_NAME } from "@/lib/constants/app";
 
 export default function RegisterPage() {
   const settings = usePlatformSettings();
@@ -33,9 +35,11 @@ export default function RegisterPage() {
             description={
               <>
                 Por ahora las cuentas nuevas las crea el equipo de la plataforma. Escríbenos a{" "}
-                <a href={`mailto:${settings.data.supportEmail}`} className="font-medium text-primary hover:underline">
-                  {settings.data.supportEmail}
-                </a>{" "}
+                <SupportContact
+                  email={settings.data.supportEmail}
+                  phone={settings.data.supportPhone}
+                  message={`Hola, quiero crear una cuenta en ${APP_NAME}.`}
+                />{" "}
                 y te daremos acceso.
               </>
             }
