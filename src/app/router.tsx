@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { RootLayout } from "@/components/layout/root-layout";
+import { isStaleAssetError, reloadForNewVersion } from "@/lib/new-version";
 import ForgotPasswordPage from "@/pages/auth/forgot-password-page";
 import LoginPage from "@/pages/auth/login-page";
 import RegisterPage from "@/pages/auth/register-page";
@@ -10,10 +11,18 @@ import LandingPage from "@/pages/landing-page";
 import NotFoundPage from "@/pages/not-found-page";
 import RouteErrorPage from "@/pages/route-error-page";
 
-/** Carga diferida de una página (code splitting por ruta). */
-const lazyPage = (load: () => Promise<{ default: ComponentType }>) => async () => ({
-  Component: (await load()).default,
-});
+/**
+ * Carga diferida de una página (code splitting por ruta). Si la pestaña es de antes de un
+ * despliegue, la página ya no existe en el servidor: se recarga para traer la versión nueva.
+ */
+const lazyPage = (load: () => Promise<{ default: ComponentType }>) => async () => {
+  try {
+    return { Component: (await load()).default };
+  } catch (error) {
+    if (isStaleAssetError(error) && reloadForNewVersion()) return new Promise<never>(() => {});
+    throw error;
+  }
+};
 
 export const router = createBrowserRouter([
   {

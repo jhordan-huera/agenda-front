@@ -1,13 +1,17 @@
 import { isRouteErrorResponse, Link, useRouteError } from "react-router";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
+import { APP_NAME } from "@/lib/constants/app";
+import { isStaleAssetError } from "@/lib/new-version";
 
 /** Error inesperado al renderizar una ruta (equivale a error.tsx de otros frameworks). */
 export default function RouteErrorPage() {
   const error = useRouteError();
   const message = isRouteErrorResponse(error)
     ? `${error.status} · ${error.statusText}`
-    : "Ocurrió un error inesperado.";
+    : isStaleAssetError(error)
+      ? `Hay una versión nueva de ${APP_NAME}. Recarga la página para continuar.`
+      : "Ocurrió un error inesperado.";
 
   return (
     <div role="alert" className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
