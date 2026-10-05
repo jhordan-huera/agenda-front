@@ -154,9 +154,10 @@ export const apiRepository: DataRepository = {
 
   publicBooking: {
     getProfile: (slug) => api.get<PublicBusinessProfile | null>(`/public/businesses/${id(slug)}`),
-    lookupClient: (slug, documentId) =>
-      api.post<PublicClientLookup>(`/public/businesses/${id(slug)}/clients/lookup`, { documentId }),
-    book: (slug, input) => api.post<BookingConfirmation>(`/public/businesses/${id(slug)}/bookings`, input),
+    lookupClient: (slug, documentId, captchaToken) =>
+      api.post<PublicClientLookup>(`/public/businesses/${id(slug)}/clients/lookup`, { documentId, captchaToken }),
+    book: (slug, input, captchaToken) =>
+      api.post<BookingConfirmation>(`/public/businesses/${id(slug)}/bookings`, { ...input, captchaToken }),
   },
 
   platform: {

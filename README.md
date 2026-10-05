@@ -200,7 +200,15 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
 ## Despliegue
 
 En Vercel, como proyecto Vite (build `npm run build`, salida `dist/`). `vercel.json` incluye la
-reescritura SPA para que las rutas profundas (`/dashboard/...`, `/book/...`) funcionen.
+reescritura SPA para que las rutas profundas (`/dashboard/...`, `/book/...`) funcionen y las
+cabeceras de seguridad: la política de contenido (CSP) sólo deja cargar código de este dominio y
+de Cloudflare (CAPTCHA de la página de reservas), conectarse a los mapas (OpenFreeMap), al
+buscador de direcciones (Nominatim) y a Supabase (los archivos de la historia clínica se suben
+directo desde el navegador), y nadie puede mostrar la web dentro de otra (clickjacking).
+Si se añade un servicio externo nuevo, hay que permitirlo ahí.
+
+El CAPTCHA (Cloudflare Turnstile) lo activa la API: con sus claves configuradas, el perfil público
+trae `captchaSiteKey` y la página de reservas carga el widget (`src/features/booking/use-captcha.ts`).
 
 La API es otro proyecto de Vercel (ver agenda-backend). `middleware.ts` (Routing Middleware de
 Vercel) reenvía `/api/*` a esa API: el navegador sólo habla con el dominio del frontend, así que la

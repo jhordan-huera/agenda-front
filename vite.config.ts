@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    // El worker de MapLibre es un módulo ES (ver src/components/shared/map-base.ts).
+    worker: { format: "es" },
     resolve: {
       alias: { "@": path.resolve(import.meta.dirname, "src") },
     },

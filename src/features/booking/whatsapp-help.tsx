@@ -1,13 +1,13 @@
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { getMinNoticeHours } from "@/lib/availability";
 import { getBusinessWhatsAppUrl } from "@/lib/whatsapp";
-import type { Business } from "@/types";
+import type { PublicBusiness } from "@/types";
 
 /**
  * Ayuda personal: el cliente escribe al profesional por WhatsApp, p. ej. para una cita
  * con menos anticipación de la permitida online (el profesional sí puede agendarla).
  */
-export function WhatsAppHelp({ business }: { business: Business }) {
+export function WhatsAppHelp({ business }: { business: PublicBusiness }) {
   const url = getBusinessWhatsAppUrl(business);
   if (!url) return null;
 

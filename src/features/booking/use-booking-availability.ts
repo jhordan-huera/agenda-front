@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { getAvailableDates, getAvailableSlots } from "@/lib/availability";
-import type { ISODate, PublicBusinessProfile, Service } from "@/types";
+import type { ISODate, PublicBusinessProfile, PublicService } from "@/types";
 
 /**
  * Disponibilidad para el servicio elegido. La fecha y la hora seleccionadas se
@@ -10,7 +10,7 @@ import type { ISODate, PublicBusinessProfile, Service } from "@/types";
  */
 export function useBookingAvailability(
   profile: PublicBusinessProfile,
-  service: Service | undefined,
+  service: PublicService | undefined,
   requestedDate: ISODate | null,
   requestedTime: string | null,
 ) {

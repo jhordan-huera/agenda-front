@@ -1,13 +1,13 @@
 import { Clock, Home } from "lucide-react";
 import { formatCurrency, formatDuration, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Service } from "@/types";
+import type { PublicService } from "@/types";
 
 interface ServiceStepProps {
-  services: Service[];
+  services: PublicService[];
   currency: string;
   selectedId: string | null;
-  onSelect: (service: Service) => void;
+  onSelect: (service: PublicService) => void;
 }
 
 export function ServiceStep({ services, currency, selectedId, onSelect }: ServiceStepProps) {

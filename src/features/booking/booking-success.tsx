@@ -2,11 +2,11 @@ import { CheckCircle2, Mail, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { capitalize, formatCurrency, formatLongDate, formatTimeRange } from "@/lib/format";
 import { describeHomeVisit, getDirectionsUrl, hasMapPoint } from "@/lib/maps";
-import type { BookingConfirmation, Business } from "@/types";
+import type { BookingConfirmation, PublicBusiness } from "@/types";
 
 interface BookingSuccessProps {
   confirmation: BookingConfirmation;
-  business: Business;
+  business: PublicBusiness;
   onBookAnother: () => void;
 }
 

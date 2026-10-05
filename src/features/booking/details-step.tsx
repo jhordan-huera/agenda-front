@@ -14,28 +14,38 @@ import { formatCurrency, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { clientLookupSchema, newClientContactSchema, publicBookingSchema, type PublicBookingInput } from "@/lib/validations/booking";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import type { Business, HomeVisitAddress, Service } from "@/types";
+import type { HomeVisitAddress, PublicBusiness, PublicService } from "@/types";
 import type { ContactValues } from "./contact";
 
 interface DetailsStepProps {
   slug: string;
+  /** Token del CAPTCHA para buscar la cédula (ver useCaptcha). */
+  getCaptchaToken: () => Promise<string | undefined>;
   selection: Pick<PublicBookingInput, "serviceId" | "date" | "startTime">;
-  service: Service;
-  business: Business;
+  service: PublicService;
+  business: PublicBusiness;
   initialValues: ContactValues;
   /** Devuelve la reserva y los datos del paso, que se conservan si el cliente vuelve atrás. */
   onContinue: (input: PublicBookingInput, values: ContactValues) => void;
 }
 
 /** El lugar inicial respeta lo que admite el servicio. */
-function initialHomeVisit(service: Service, current: HomeVisitAddress | null): HomeVisitAddress | null {
+function initialHomeVisit(service: PublicService, current: HomeVisitAddress | null): HomeVisitAddress | null {
   if (service.location === "business") return null;
   if (service.location === "home") return current ?? EMPTY_HOME_VISIT;
   return current;
 }
 
-export function DetailsStep({ slug, selection, service, business, initialValues, onContinue }: DetailsStepProps) {
-  const lookup = useLookupClient(slug);
+export function DetailsStep({
+  slug,
+  getCaptchaToken,
+  selection,
+  service,
+  business,
+  initialValues,
+  onContinue,
+}: DetailsStepProps) {
+  const lookup = useLookupClient(slug, getCaptchaToken);
   const [values, setValues] = useState<ContactValues>(() => ({
     ...initialValues,
     homeVisit: initialHomeVisit(service, initialValues.homeVisit),

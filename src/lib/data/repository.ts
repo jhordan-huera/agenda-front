@@ -220,10 +220,13 @@ export interface AuditLogRepository {
 /** Operaciones públicas (sin sesión): página de reservas /book/:slug. */
 export interface PublicBookingRepository {
   getProfile(slug: string): Promise<PublicBusinessProfile | null>;
-  /** ¿La cédula ya es de un cliente del negocio? Sin datos de contacto (sólo un nombre para saludar). */
-  lookupClient(slug: string, documentId: string): Promise<PublicClientLookup>;
+  /**
+   * ¿La cédula ya es de un cliente del negocio? Sin datos de contacto (sólo un nombre para saludar).
+   * `captchaToken`: token de Turnstile, si el perfil trae `captchaSiteKey` (cada token sirve una vez).
+   */
+  lookupClient(slug: string, documentId: string, captchaToken?: string): Promise<PublicClientLookup>;
   /** Revalida la disponibilidad y el plan, crea/reutiliza el cliente (por email), crea la cita y envía emails. */
-  book(slug: string, input: PublicBookingInput): Promise<BookingConfirmation>;
+  book(slug: string, input: PublicBookingInput, captchaToken?: string): Promise<BookingConfirmation>;
 }
 
 /** Configuración pública de la plataforma (p. ej. si el registro está abierto). Sin sesión. */

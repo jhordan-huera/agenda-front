@@ -5,9 +5,9 @@ import { useCategories } from "@/hooks/queries/use-categories";
 import { getInitials } from "@/lib/format";
 import { getPlaceMapsUrl } from "@/lib/maps";
 import { getBusinessWhatsAppUrl } from "@/lib/whatsapp";
-import type { Business, Professional } from "@/types";
+import type { PublicBusiness, PublicProfessional } from "@/types";
 
-export function BookingHeader({ business, professional }: { business: Business; professional: Professional }) {
+export function BookingHeader({ business, professional }: { business: PublicBusiness; professional: PublicProfessional }) {
   const whatsAppUrl = getBusinessWhatsAppUrl(business);
   const categoryLabel = useCategories().label(business.category);
 

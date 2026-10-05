@@ -1,5 +1,5 @@
 import "maplibre-gl/dist/maplibre-gl.css";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 import { CheckCircle2, Loader2, LocateFixed, MapPin, Minus, Plus, Search } from "lucide-react";
 import { useEffect, useEffectEvent, useRef, useState, type KeyboardEvent } from "react";
 import { toast } from "sonner";

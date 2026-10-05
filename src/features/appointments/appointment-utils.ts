@@ -34,6 +34,6 @@ export function clearHomeVisitErrors(errors: Record<string, string>, patch: Part
 }
 
 /** Precio de lista de un servicio según el lugar: a domicilio se suma el recargo. */
-export function getListPrice(service: Service, atHome: boolean): number {
+export function getListPrice(service: Pick<Service, "price" | "homeVisitFee">, atHome: boolean): number {
   return service.price + (atHome ? service.homeVisitFee : 0);
 }

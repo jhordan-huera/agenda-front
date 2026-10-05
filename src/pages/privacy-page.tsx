@@ -98,7 +98,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>Emails enviados:</strong> copia de los emails automáticos (confirmaciones, recordatorios y avisos) y
-                si se entregaron.
+                si se entregaron. Las contraseñas que van en los emails de acceso no se guardan en esa copia.
               </li>
             </ul>
           </Section>
@@ -171,6 +171,10 @@ export default function PrivacyPage() {
                 dirección IP.
               </li>
               <li>
+                <strong>Cloudflare (Turnstile)</strong>, que comprueba en la página de reservas que quien busca su cédula o
+                reserva no es un programa automático: ve tu dirección IP y datos técnicos de tu navegador.
+              </li>
+              <li>
                 <strong>ntfy y healthchecks.io</strong>, para avisos internos de funcionamiento al equipo de {APP_NAME}, con
                 datos mínimos (cifras y, en las alertas de seguridad, el email de la cuenta parcialmente oculto).
               </li>
@@ -202,7 +206,11 @@ export default function PrivacyPage() {
             <ul>
               <li>Conexiones cifradas (HTTPS) y contraseñas guardadas cifradas.</li>
               <li>Cookie de sesión protegida, accesos por roles y aislamiento entre negocios.</li>
-              <li>Límite de intentos de inicio de sesión y alertas ante intentos sospechosos.</li>
+              <li>
+                Bloqueo temporal de la cuenta tras varios intentos fallidos de inicio de sesión y alertas ante intentos
+                sospechosos.
+              </li>
+              <li>Verificación anti-robots en la página de reservas.</li>
               <li>Un registro de actividad que nadie puede modificar ni borrar desde la aplicación.</li>
             </ul>
           </Section>

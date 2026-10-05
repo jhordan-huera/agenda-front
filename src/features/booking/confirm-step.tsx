@@ -7,12 +7,12 @@ import { getListPrice } from "@/features/appointments/appointment-utils";
 import { describeHomeVisit, getPlaceMapsUrl } from "@/lib/maps";
 import { addMinutesToTime } from "@/lib/time";
 import type { PublicBookingInput } from "@/lib/validations/booking";
-import type { Business, Professional, Service } from "@/types";
+import type { PublicBusiness, PublicProfessional, PublicService } from "@/types";
 
 interface ConfirmStepProps {
-  business: Business;
-  professional: Professional;
-  service: Service;
+  business: PublicBusiness;
+  professional: PublicProfessional;
+  service: PublicService;
   input: PublicBookingInput;
   /** Nombre para saludar si la cédula ya era de un cliente del negocio. */
   knownClientName: string | null;

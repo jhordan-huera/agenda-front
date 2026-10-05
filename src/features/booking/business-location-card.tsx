@@ -3,13 +3,13 @@ import { lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDirectionsUrl, hasMapPoint } from "@/lib/maps";
-import type { Business } from "@/types";
+import type { PublicBusiness } from "@/types";
 
 // El mapa (Leaflet) sólo se descarga si el negocio marcó su ubicación.
 const LocationMap = lazy(() => import("@/components/shared/location-map"));
 
 /** Ubicación del local en la página de reservas: el punto exacto en el mapa y "Cómo llegar". */
-export function BusinessLocationCard({ business }: { business: Business }) {
+export function BusinessLocationCard({ business }: { business: PublicBusiness }) {
   if (!hasMapPoint(business)) return null;
   return (
     <div className="overflow-hidden rounded-xl border bg-background">

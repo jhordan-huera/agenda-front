@@ -2,12 +2,12 @@ import { CalendarDays, Clock, Home, Wallet } from "lucide-react";
 import { getListPrice } from "@/features/appointments/appointment-utils";
 import { capitalize, formatCurrency, formatDuration, formatLongDate, formatTimeRange, isPriceVisible } from "@/lib/format";
 import { addMinutesToTime } from "@/lib/time";
-import type { Business, ISODate, Professional, Service } from "@/types";
+import type { ISODate, PublicBusiness, PublicProfessional, PublicService } from "@/types";
 
 interface BookingSummaryProps {
-  business: Business;
-  professional: Professional;
-  service?: Service;
+  business: PublicBusiness;
+  professional: PublicProfessional;
+  service?: PublicService;
   date: ISODate | null;
   time: string | null;
   /** La cita es a domicilio: se muestra y se suma el recargo. */

@@ -1,4 +1,9 @@
-import type { Map as MapLibreMap, MapOptions } from "maplibre-gl";
+import { setWorkerUrl, type Map as MapLibreMap, type MapOptions } from "maplibre-gl";
+// MapLibre busca su worker junto a su propio archivo, que Vite mueve al empaquetar: se le
+// indica dónde quedó (Vite lo empaqueta con lo que importa y lo sirve desde /assets).
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+
+setWorkerUrl(workerUrl);
 
 /**
  * Mapa base: estilo vectorial "Liberty" de OpenFreeMap (datos de OpenStreetMap) dibujado con

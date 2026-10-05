@@ -7,7 +7,7 @@ import { describeUserAgent } from "@/lib/user-agent";
 import { cn } from "@/lib/utils";
 import type { AdminAuditLog, AuditLog } from "@/types";
 
-const FAILED_ACTIONS = new Set(["session.login_failed", "session.login_blocked"]);
+const FAILED_ACTIONS = new Set(["session.login_failed", "session.login_blocked", "session.login_locked"]);
 
 /**
  * Una entrada de la auditoría: qué, quién y cuándo, con los cambios desplegables. En la vista del

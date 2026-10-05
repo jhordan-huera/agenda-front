@@ -20,6 +20,7 @@ import { DetailsStep } from "./details-step";
 import { ServiceStep } from "./service-step";
 import { TimeSlots } from "./time-slots";
 import { useBookingAvailability } from "./use-booking-availability";
+import { useCaptcha } from "./use-captcha";
 import { WhatsAppHelp } from "./whatsapp-help";
 
 const STEP_COPY: Record<BookingStep, { title: string; description: string }> = {
@@ -30,7 +31,8 @@ const STEP_COPY: Record<BookingStep, { title: string; description: string }> = {
 };
 
 export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBusinessProfile }) {
-  const createBooking = useCreateBooking(slug);
+  const { containerRef: captchaRef, getToken: getCaptchaToken } = useCaptcha(profile.captchaSiteKey);
+  const createBooking = useCreateBooking(slug, getCaptchaToken);
   const [step, setStep] = useState<BookingStep>("service");
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [requestedDate, setRequestedDate] = useState<ISODate | null>(null);
@@ -161,6 +163,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
           <>
             <DetailsStep
               slug={slug}
+              getCaptchaToken={getCaptchaToken}
               selection={{ serviceId: service.id, date, startTime: time }}
               service={service}
               business={business}
@@ -176,6 +179,8 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
             </Button>
           </>
         )}
+        {/* CAPTCHA: sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
+        <div ref={captchaRef} className="flex justify-center empty:hidden" />
         {(currentStep === "details" || currentStep === "confirm") && !time && (
           <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm">
             <p className="text-muted-foreground">La hora elegida ya no está disponible.</p>
