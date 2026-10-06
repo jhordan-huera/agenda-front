@@ -97,7 +97,8 @@ export function EmailOutboxCard({
             </DialogDescription>
           </DialogHeader>
           <pre className="max-h-96 overflow-y-auto rounded-lg bg-muted/60 p-4 font-sans text-sm whitespace-pre-wrap">
-            {preview?.body}
+            {/* A los 90 días se borra el contenido para no llenar la base; queda el registro. */}
+            {preview?.body || "El contenido de los emails se guarda 90 días. De este queda sólo el registro: a quién se envió, el asunto y la fecha."}
           </pre>
         </DialogContent>
       </Dialog>
