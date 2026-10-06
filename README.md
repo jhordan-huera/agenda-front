@@ -18,7 +18,11 @@ npm run dev
 Abre <http://localhost:5173>. Vite redirige las peticiones a `/api` hacia la API
 (`http://localhost:4000` por defecto; se cambia con `API_PROXY_TARGET` en `.env.local`).
 
-Si en la API se cargaron los datos demo (`npm run db:seed`), todas las cuentas usan la contraseña
+Para probar sin tocar producción, arranca la API con `npm run dev:local` (base de datos en tu equipo
+con los datos demo). Se trabaja en la rama `dev` y se publica fusionando en `main`: Vercel sólo
+despliega `main` (ver "Ramas" en el README de agenda-backend).
+
+Con los datos demo (`npm run dev:local` o `npm run db:seed` en la API), todas las cuentas usan la contraseña
 `demo1234`:
 
 | Cuenta | Negocio | Rol | Para probar |
