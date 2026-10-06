@@ -1,12 +1,13 @@
-import { Home, Search, Store, UserCheck } from "lucide-react";
+import { Search, UserCheck, Video } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/shared/submit-button";
-import { clearHomeVisitErrors, EMPTY_HOME_VISIT } from "@/features/appointments/appointment-utils";
+import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getPlace } from "@/features/appointments/appointment-utils";
 import { HomeVisitFields } from "@/features/appointments/home-visit-fields";
+import { MODE_ICONS } from "@/features/services/mode-icons";
 import { useLookupClient } from "@/hooks/queries/use-public-booking";
 import { getErrorMessage } from "@/lib/data";
 import { documentIdError, documentIdMaxLength, normalizeDocumentId, onlyDigits } from "@/lib/identity";
@@ -14,7 +15,7 @@ import { formatCurrency, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { clientLookupSchema, newClientContactSchema, publicBookingSchema, type PublicBookingInput } from "@/lib/validations/booking";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import type { HomeVisitAddress, PublicBusiness, PublicService } from "@/types";
+import type { HomeVisitAddress, PublicBusiness, PublicService, ServiceMode } from "@/types";
 import type { ContactValues } from "./contact";
 
 interface DetailsStepProps {
@@ -29,11 +30,11 @@ interface DetailsStepProps {
   onContinue: (input: PublicBookingInput, values: ContactValues) => void;
 }
 
-/** El lugar inicial respeta lo que admite el servicio. */
-function initialHomeVisit(service: PublicService, current: HomeVisitAddress | null): HomeVisitAddress | null {
-  if (service.location === "business") return null;
-  if (service.location === "home") return current ?? EMPTY_HOME_VISIT;
-  return current;
+/** El lugar inicial: el que ya había elegido, si el servicio lo admite; si no, la primera modalidad del servicio. */
+function initialPlace(service: PublicService, current: ContactValues): Pick<ContactValues, "homeVisit" | "isVirtual"> {
+  const chosen = getPlace(current);
+  const place = service.modes.includes(chosen) ? chosen : service.modes[0];
+  return { homeVisit: place === "home" ? (current.homeVisit ?? EMPTY_HOME_VISIT) : null, isVirtual: place === "virtual" };
 }
 
 export function DetailsStep({
@@ -48,9 +49,9 @@ export function DetailsStep({
   const lookup = useLookupClient(slug, getCaptchaToken);
   const [values, setValues] = useState<ContactValues>(() => ({
     ...initialValues,
-    homeVisit: initialHomeVisit(service, initialValues.homeVisit),
+    ...initialPlace(service, initialValues),
   }));
-  // Si el cliente cambia a "en el local" y vuelve, recupera lo que ya había marcado.
+  // Si el cliente cambia a "en el local" (o virtual) y vuelve, recupera lo que ya había marcado.
   const [lastHomeVisit, setLastHomeVisit] = useState<HomeVisitAddress>(initialValues.homeVisit ?? EMPTY_HOME_VISIT);
   const [errors, setErrors] = useState<FieldErrors>({});
   const set = (key: "documentId" | "name" | "email" | "phone" | "notes") => (value: string) =>
@@ -83,9 +84,24 @@ export function DetailsStep({
     setValues((current) => ({ ...current, homeVisit: { ...(current.homeVisit ?? EMPTY_HOME_VISIT), ...patch } }));
     setErrors((current) => clearHomeVisitErrors(current, patch));
   };
-  const chooseHome = (atHome: boolean) => {
-    if (!atHome && values.homeVisit) setLastHomeVisit(values.homeVisit);
-    setValues((current) => ({ ...current, homeVisit: atHome ? lastHomeVisit : null }));
+  const choosePlace = (place: ServiceMode) => {
+    if (place !== "home" && values.homeVisit) setLastHomeVisit(values.homeVisit);
+    setValues((current) => ({
+      ...current,
+      homeVisit: place === "home" ? (current.homeVisit ?? lastHomeVisit) : null,
+      isVirtual: place === "virtual",
+    }));
+  };
+  const placeOptions: Record<ServiceMode, { title: string; detail: string }> = {
+    business: { title: `En ${business.name}`, detail: business.address || "En el local del negocio" },
+    home: {
+      title: "A domicilio",
+      detail:
+        service.homeVisitFee && isPriceVisible(service)
+          ? `Vamos a tu casa · +${formatCurrency(service.homeVisitFee, business.currency)}`
+          : "Vamos a tu casa",
+    },
+    virtual: { title: "Virtual", detail: "Por videollamada, desde donde estés" },
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -152,35 +168,24 @@ export function DetailsStep({
         </Button>
       ) : (
         <>
-          {service.location === "both" && (
+          {service.modes.length > 1 && (
             <fieldset className="grid gap-2">
-              <legend className="mb-2 text-sm font-medium">¿Dónde quieres tu cita?</legend>
-              <div role="radiogroup" aria-label="Lugar de la cita" className="grid gap-2 sm:grid-cols-2">
-                {[
-                  {
-                    atHome: false,
-                    icon: Store,
-                    title: `En ${business.name}`,
-                    detail: business.address || "En el local del negocio",
-                  },
-                  {
-                    atHome: true,
-                    icon: Home,
-                    title: "A domicilio",
-                    detail:
-                      service.homeVisitFee && isPriceVisible(service)
-                        ? `Vamos a tu casa · +${formatCurrency(service.homeVisitFee, business.currency)}`
-                        : "Vamos a tu casa",
-                  },
-                ].map((option) => {
-                  const selected = Boolean(values.homeVisit) === option.atHome;
+              <legend className="mb-2 text-sm font-medium">¿Cómo quieres tu cita?</legend>
+              <div
+                role="radiogroup"
+                aria-label="Lugar de la cita"
+                className={cn("grid gap-2 sm:grid-cols-2", service.modes.length === 3 && "lg:grid-cols-3")}
+              >
+                {service.modes.map((mode) => {
+                  const option = { ...placeOptions[mode], icon: MODE_ICONS[mode] };
+                  const selected = getPlace(values) === mode;
                   return (
                     <button
-                      key={option.title}
+                      key={mode}
                       type="button"
                       role="radio"
                       aria-checked={selected}
-                      onClick={() => chooseHome(option.atHome)}
+                      onClick={() => choosePlace(mode)}
                       className={cn(
                         "flex items-start gap-3 rounded-xl border p-3 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
                         selected && "border-primary bg-accent hover:bg-accent",
@@ -196,6 +201,12 @@ export function DetailsStep({
                 })}
               </div>
             </fieldset>
+          )}
+          {values.isVirtual && (
+            <p className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+              <Video className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Es por videollamada: el enlace para entrar te llega con la confirmación.
+            </p>
           )}
           {values.homeVisit && (
             <section aria-labelledby="home-visit-heading" className="grid gap-3 rounded-xl border bg-muted/30 p-4">

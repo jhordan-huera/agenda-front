@@ -55,6 +55,8 @@ export interface AppointmentNoticeData {
   startTime: string;
   /** Página de reservas del negocio, para volver a agendar. */
   bookingUrl: string;
+  /** Cita por videollamada: su enlace (null: el profesional aún no lo configuró). */
+  virtual?: { meetingUrl: string | null };
 }
 
 /** Mensaje de WhatsApp al cliente según el cambio de su cita; el profesional lo revisa antes de enviarlo. */
@@ -62,13 +64,20 @@ export function buildAppointmentNotice(kind: WhatsAppNoticeKind, data: Appointme
   const name = data.clientName.trim().split(/\s+/)[0] ?? "";
   const hello = name ? `Hola ${name}` : "Hola";
   const when = `el ${formatDate(data.date, "EEEE d 'de' MMMM")} a las ${data.startTime}`;
+  const videoCall = data.virtual
+    ? data.virtual.meetingUrl
+      ? ` Es por videollamada: ${data.virtual.meetingUrl}`
+      : " Es por videollamada: te enviaremos el enlace antes de la cita."
+    : "";
   switch (kind) {
     case "confirmed":
-      return `${hello}, te confirmamos tu cita de ${data.serviceName} ${when} con ${data.businessName}. ¡Te esperamos!`;
+      return data.virtual
+        ? `${hello}, te confirmamos tu cita de ${data.serviceName} ${when} con ${data.businessName}.${videoCall}`
+        : `${hello}, te confirmamos tu cita de ${data.serviceName} ${when} con ${data.businessName}. ¡Te esperamos!`;
     case "cancelled":
       return `${hello}, tu cita de ${data.serviceName} ${when} con ${data.businessName} quedó cancelada. Si quieres agendar otra, puedes hacerlo aquí: ${data.bookingUrl}`;
     case "rescheduled":
-      return `${hello}, cambiamos tu cita de ${data.serviceName} con ${data.businessName}: ahora es ${when}. Si no te queda bien, respóndenos por aquí.`;
+      return `${hello}, cambiamos tu cita de ${data.serviceName} con ${data.businessName}: ahora es ${when}.${videoCall} Si no te queda bien, respóndenos por aquí.`;
     case "completed":
       return `${hello}, gracias por tu visita a ${data.businessName}. Cuando quieras volver, puedes reservar aquí: ${data.bookingUrl}`;
     case "no_show":

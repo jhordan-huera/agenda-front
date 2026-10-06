@@ -1,4 +1,4 @@
-import { ChevronRight, DoorOpen, Home } from "lucide-react";
+import { ChevronRight, DoorOpen, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { plural } from "@/lib/format";
@@ -54,6 +54,7 @@ export function TodayList({
           </span>
           <span className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
             {appointment.homeVisit && <Home className="size-3.5 shrink-0 text-ink" aria-label="A domicilio" />}
+            {appointment.isVirtual && <Video className="size-3.5 shrink-0 text-ink" aria-label="Virtual" />}
             {serviceName(appointment.serviceId)}, hasta las {appointment.endTime}
             {professionalOf?.(appointment) && (
               <>

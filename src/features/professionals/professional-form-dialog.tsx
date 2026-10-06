@@ -61,6 +61,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
     avatarUrl: professional?.avatarUrl ?? null,
     color: professional?.color ?? PROFESSIONAL_COLORS.find((color) => !usedColors.has(color)) ?? PROFESSIONAL_COLORS[0],
     email: professional?.email ?? "",
+    meetingUrl: professional?.meetingUrl ?? "",
     userId: professional?.userId ?? null,
     allServices: professional?.allServices ?? true,
     serviceIds: professional?.serviceIds ?? [],
@@ -202,6 +203,23 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
 
       <FormField label="Email para sus avisos" error={errors.email} optional hint="Vacío: no se le envían emails.">
         {(field) => <Input {...field} type="email" value={values.email} onChange={(e) => set("email", e.target.value)} />}
+      </FormField>
+      <FormField
+        label="Enlace de videollamada"
+        error={errors.meetingUrl}
+        optional
+        hint="Su sala fija de Google Meet, Zoom o Teams. Se envía al paciente en las citas virtuales."
+      >
+        {(field) => (
+          <Input
+            {...field}
+            type="url"
+            inputMode="url"
+            placeholder="https://meet.google.com/abc-defg-hij"
+            value={values.meetingUrl}
+            onChange={(e) => set("meetingUrl", e.target.value)}
+          />
+        )}
       </FormField>
       <div className="grid gap-2">
         <SwitchRow

@@ -1,8 +1,8 @@
-import { Home } from "lucide-react";
+import { Home, Video } from "lucide-react";
 import { getListPrice } from "@/features/appointments/appointment-utils";
-import { capitalize, formatCurrency, formatDuration, formatLongDate, formatTimeRange, isPriceVisible } from "@/lib/format";
+import { capitalize, formatCurrency, formatDuration, formatLongDate, formatPrice, formatTimeRange, isPriceVisible } from "@/lib/format";
 import { addMinutesToTime } from "@/lib/time";
-import type { ISODate, PublicBusiness, PublicProfessional, PublicService } from "@/types";
+import type { ISODate, PublicBusiness, PublicProfessional, PublicService, ServiceMode } from "@/types";
 
 interface BookingSummaryProps {
   business: PublicBusiness;
@@ -11,13 +11,14 @@ interface BookingSummaryProps {
   service?: PublicService;
   date: ISODate | null;
   time: string | null;
-  /** La cita es a domicilio: se muestra y se suma el recargo. */
-  atHome: boolean;
+  /** Dónde será la cita (null: aún por elegir). A domicilio se suma el recargo. */
+  place: ServiceMode | null;
 }
 
 /** Resumen de la selección actual (columna lateral en escritorio), como el talón de una cita. */
-export function BookingSummary({ business, professional, service, date, time, atHome }: BookingSummaryProps) {
+export function BookingSummary({ business, professional, service, date, time, place }: BookingSummaryProps) {
   const showPrice = service ? isPriceVisible(service) : false;
+  const atHome = place === "home";
   return (
     <div className="rounded-xl border border-t-4 border-t-ink bg-background p-5">
       <h2 className="font-bold">Tu reserva</h2>
@@ -58,11 +59,19 @@ export function BookingSummary({ business, professional, service, date, time, at
               </dd>
             </div>
           )}
+          {place === "virtual" && (
+            <div className="flex items-start gap-2">
+              <dt>
+                <Video className="mt-0.5 size-4 text-ink" aria-label="Lugar" />
+              </dt>
+              <dd>Virtual, por videollamada</dd>
+            </div>
+          )}
           {showPrice && (
             <div className="flex items-baseline justify-between border-t border-dashed pt-3">
               <dt className="text-muted-foreground">Total</dt>
               <dd className="text-xl font-extrabold tabular-nums">
-                {formatCurrency(getListPrice(service, atHome), business.currency)}
+                {formatPrice(getListPrice(service, atHome), business.currency)}
               </dd>
             </div>
           )}

@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
@@ -12,18 +13,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
-import { useClinicalTemplates } from "@/hooks/queries/use-clinical";
-import { businessTemplate } from "@/lib/clinical-templates";
 import { useSaveService } from "@/hooks/queries/use-services";
-import { SERVICE_LOCATIONS } from "@/lib/constants/business";
+import { SERVICE_MODES } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
+import { cn } from "@/lib/utils";
 import { serviceSchema } from "@/lib/validations/service";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import type { Service, ServiceLocation } from "@/types";
+import type { Service, ServiceMode } from "@/types";
+import { MODE_ICONS } from "./mode-icons";
 
 interface ServiceFormDialogProps {
   open: boolean;
@@ -41,13 +40,30 @@ export function ServiceFormDialog({ open, onOpenChange, service }: ServiceFormDi
             La duración se usa para calcular las horas disponibles en tu página de reservas.
           </DialogDescription>
         </DialogHeader>
-        <ServiceForm service={service} onDone={() => onOpenChange(false)} />
+        <ServiceForm key={service?.id ?? "new"} service={service} onDone={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );
 }
 
-const NO_TEMPLATE = "none";
+/** Qué ven los clientes del precio. */
+type PriceDisplay = "show" | "free" | "hidden";
+
+const PRICE_DISPLAYS: { value: PriceDisplay; label: string; description: string }[] = [
+  { value: "show", label: "Mostrar el precio", description: "Los clientes ven el precio al reservar y en sus emails." },
+  { value: "free", label: "Gratis", description: "Los clientes ven «Gratis»." },
+  {
+    value: "hidden",
+    label: "No mostrar",
+    description: "Ni el precio ni «Gratis»: se lo indicas tú (precio a consultar). Tú sí lo ves en la agenda y los reportes.",
+  },
+];
+
+function initialPriceDisplay(service?: Service): PriceDisplay {
+  if (!service) return "show";
+  if (!service.showPrice) return "hidden";
+  return service.price === 0 ? "free" : "show";
+}
 
 function ServiceForm({ service, onDone }: { service?: Service; onDone: () => void }) {
   const saveService = useSaveService();
@@ -55,30 +71,38 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
     name: service?.name ?? "",
     description: service?.description ?? "",
     durationMinutes: String(service?.durationMinutes ?? 60),
-    price: String(service?.price ?? ""),
-    showPrice: service?.showPrice ?? true,
-    location: service?.location ?? ("business" as ServiceLocation),
+    price: service && service.price > 0 ? String(service.price) : "",
+    priceDisplay: initialPriceDisplay(service),
+    modes: service?.modes ?? (["business"] as ServiceMode[]),
     homeVisitFee: String(service?.homeVisitFee ?? 0),
-    clinicalTemplateId: service?.clinicalTemplateId ?? null,
     isActive: service?.isActive ?? true,
   });
-  // Formato de historia clínica: sólo si el negocio la usa y el usuario tiene acceso.
-  const clinicalAccess = useClinicalAccess();
-  const templates = useClinicalTemplates(clinicalAccess);
-  const templateOptions = (templates.data ?? []).filter(
-    (template) => template.isActive || template.id === values.clinicalTemplateId,
-  );
-  const businessDefault = businessTemplate(templates.data ?? []);
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
+  const toggleMode = (mode: ServiceMode) =>
+    set(
+      "modes",
+      values.modes.includes(mode)
+        ? values.modes.filter((m) => m !== mode)
+        : SERVICE_MODES.map((option) => option.value).filter((m) => m === mode || values.modes.includes(m)),
+    );
+  const free = values.priceDisplay === "free";
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(serviceSchema, values);
-    setErrors(result.errors);
-    if (!result.success) return;
+    const { priceDisplay, ...rest } = values;
+    const result = validate(serviceSchema, {
+      ...rest,
+      price: free ? 0 : rest.price || "0",
+      showPrice: priceDisplay !== "hidden",
+      homeVisitFee: rest.modes.includes("home") ? rest.homeVisitFee : 0,
+    });
+    // "Mostrar el precio" sin precio sería "Gratis": que lo elija a propósito.
+    const priceMissing = result.success && priceDisplay === "show" && result.data.price === 0;
+    setErrors(priceMissing ? { price: "Escribe el precio, o elige «Gratis»" } : result.errors);
+    if (!result.success || priceMissing) return;
 
     try {
       await saveService.mutateAsync({ id: service?.id, input: result.data });
@@ -127,7 +151,7 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
             />
           )}
         </FormField>
-        <FormField label="Precio (USD)" error={errors.price} hint="Con 0, el precio no se muestra a los clientes.">
+        <FormField label="Precio (USD)" error={errors.price}>
           {(field) => (
             <div className="relative">
               <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-muted-foreground">
@@ -139,99 +163,113 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
                 inputMode="decimal"
                 min={0}
                 step="0.01"
-                placeholder="0"
+                placeholder={free ? "0" : "25"}
                 className="pl-6"
-                value={values.price}
+                disabled={free}
+                value={free ? "0" : values.price}
                 onChange={(e) => set("price", e.target.value)}
               />
             </div>
           )}
         </FormField>
       </div>
-      <label className="flex items-center justify-between gap-4 rounded-lg border p-3">
-        <span>
-          <span className="block text-sm font-medium">Mostrar el precio a los clientes</span>
-          <span className="block text-xs text-muted-foreground">
-            Si lo desactivas, o si el precio es 0, en tu página de reservas y en los emails no aparecerá ningún precio.
-          </span>
-        </span>
-        <Switch checked={values.showPrice} onCheckedChange={(checked) => set("showPrice", checked)} />
-      </label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField
-          label="Dónde se presta"
-          error={errors.location}
-          hint={SERVICE_LOCATIONS.find((option) => option.value === values.location)?.description}
-        >
-          {(field) => (
-            <Select value={values.location} onValueChange={(location) => set("location", location as ServiceLocation)}>
-              <SelectTrigger {...field} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper">
-                {SERVICE_LOCATIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FormField>
-        {values.location !== "business" && (
-          <FormField label="Recargo a domicilio (USD)" error={errors.homeVisitFee} hint="Se suma al precio. 0 = sin recargo.">
-            {(field) => (
-              <div className="relative">
-                <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-muted-foreground">
-                  $
-                </span>
-                <Input
-                  {...field}
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  step="0.01"
-                  className="pl-6"
-                  value={values.homeVisitFee}
-                  onChange={(e) => set("homeVisitFee", e.target.value)}
-                />
-              </div>
-            )}
-          </FormField>
+
+      <fieldset className="grid gap-2">
+        <legend className="mb-2 text-sm font-medium">El precio en tu página de reservas</legend>
+        <div role="radiogroup" aria-label="El precio en tu página de reservas" className="grid gap-2 sm:grid-cols-3">
+          {PRICE_DISPLAYS.map((option) => {
+            const selected = values.priceDisplay === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => {
+                  set("priceDisplay", option.value);
+                  setErrors((current) => ({ ...current, price: "" }));
+                }}
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
+                  selected && "border-primary bg-accent hover:bg-accent",
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {PRICE_DISPLAYS.find((option) => option.value === values.priceDisplay)?.description}
+        </p>
+      </fieldset>
+
+      <fieldset className="grid gap-2">
+        <legend className="mb-2 text-sm font-medium">Modalidad</legend>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {SERVICE_MODES.map((mode) => {
+            const checked = values.modes.includes(mode.value);
+            const Icon = MODE_ICONS[mode.value];
+            return (
+              <button
+                key={mode.value}
+                type="button"
+                role="checkbox"
+                aria-checked={checked}
+                onClick={() => toggleMode(mode.value)}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
+                  checked && "border-primary bg-accent hover:bg-accent",
+                )}
+              >
+                <Icon className={cn("size-4 shrink-0", checked ? "text-primary" : "text-muted-foreground")} aria-hidden />
+                <span className="flex-1">{mode.label}</span>
+                {checked && <Check className="size-4 text-primary" aria-hidden />}
+              </button>
+            );
+          })}
+        </div>
+        {errors.modes ? (
+          <p className="text-xs font-medium text-destructive">{errors.modes}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            {values.modes.length > 1
+              ? `Con varias, el cliente elige al reservar.${values.modes.includes("virtual") ? " Lo virtual usa el enlace de cada profesional." : ""}`
+              : SERVICE_MODES.find((mode) => mode.value === values.modes[0])?.description}
+          </p>
         )}
-      </div>
-      {clinicalAccess && templateOptions.length > 0 && (
-        <FormField
-          label="Formato de historia clínica"
-          error={errors.clinicalTemplateId}
-          hint="En las citas de este servicio se propone este formato en vez del de tu negocio."
-        >
+      </fieldset>
+
+      {values.modes.includes("home") && (
+        <FormField label="Recargo a domicilio (USD)" error={errors.homeVisitFee} hint="Se suma al precio. 0 = sin recargo." className="sm:w-1/2">
           {(field) => (
-            <Select
-              value={values.clinicalTemplateId ?? NO_TEMPLATE}
-              onValueChange={(id) => set("clinicalTemplateId", id === NO_TEMPLATE ? null : id)}
-            >
-              <SelectTrigger {...field} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" className="max-h-72">
-                <SelectItem value={NO_TEMPLATE}>
-                  El de tu negocio{businessDefault ? ` (${businessDefault.name})` : ""}
-                </SelectItem>
-                {templateOptions.filter((template) => template.id !== businessDefault?.id || values.clinicalTemplateId === template.id).map((template) => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-muted-foreground">
+                $
+              </span>
+              <Input
+                {...field}
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                className="pl-6"
+                value={values.homeVisitFee}
+                onChange={(e) => set("homeVisitFee", e.target.value)}
+              />
+            </div>
           )}
         </FormField>
       )}
-      <label className="flex items-center justify-between gap-4 rounded-lg border p-3">
+
+      <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3">
         <span>
           <span className="block text-sm font-medium">Servicio activo</span>
-          <span className="block text-xs text-muted-foreground">Sólo los activos aparecen en tu página de reservas.</span>
+          <span className="block text-xs text-muted-foreground">
+            {values.isActive
+              ? "Aparece en tu página de reservas."
+              : "Inactivo: no aparece en tu página de reservas ni se puede agendar; sus citas se conservan."}
+          </span>
         </span>
         <Switch checked={values.isActive} onCheckedChange={(checked) => set("isActive", checked)} />
       </label>

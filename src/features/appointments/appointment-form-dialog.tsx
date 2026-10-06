@@ -29,14 +29,14 @@ import { useBusinessNow } from "@/hooks/use-business-now";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { findConflictingAppointment, findOverlappingBlock, isWithinWorkingHours, offersService } from "@/lib/availability";
 import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG, BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
-import { DURATION_OPTIONS } from "@/lib/constants/business";
+import { DURATION_OPTIONS, SERVICE_MODES } from "@/lib/constants/business";
 import { capitalize, formatCurrency, formatDuration, formatShortDate, formatTimeRange } from "@/lib/format";
 import { addMinutesToTime, durationInMinutes } from "@/lib/time";
 import { appointmentSchema, type AppointmentInput } from "@/lib/validations/appointment";
 import { dateField, timeField } from "@/lib/validations/fields";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import type { Appointment, AppointmentStatus, HomeVisitAddress, ISODate, Service, TimeString } from "@/types";
-import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getClientName, getListPrice, suggestStartTime } from "./appointment-utils";
+import type { Appointment, AppointmentStatus, HomeVisitAddress, ISODate, Service, ServiceMode, TimeString } from "@/types";
+import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getClientName, getListPrice, getPlace, suggestStartTime } from "./appointment-utils";
 import { HomeVisitFields } from "./home-visit-fields";
 
 export interface AppointmentDefaults {
@@ -105,6 +105,7 @@ function AppointmentForm({
       status: appointment?.status ?? "confirmed",
       notes: appointment?.notes ?? "",
       homeVisit: appointment?.homeVisit ?? null,
+      isVirtual: appointment?.isVirtual ?? false,
       professionalId: appointment?.professionalId ?? defaults?.professionalId ?? "",
     };
   });
@@ -124,16 +125,23 @@ function AppointmentForm({
   const selectableServices = services.filter((s) => (s.isActive && offered(s)) || s.id === values.serviceId);
   const selectedService = services.find((s) => s.id === values.serviceId);
 
-  /** Cambia entre local y domicilio; el precio sigue al de lista si no se editó a mano. */
-  const applyPlace = (current: FormValues, service: Service | undefined, homeVisit: HomeVisitAddress | null): FormValues => {
+  /** Cambia el lugar (local, domicilio o virtual); el precio sigue al de lista si no se editó a mano. */
+  const applyPlace = (current: FormValues, service: Service | undefined, place: ServiceMode): FormValues => {
+    const homeVisit = place === "home" ? (current.homeVisit ?? newHomeVisit()) : null;
     const previousList = service ? getListPrice(service, Boolean(current.homeVisit)) : null;
     const keepsListPrice = previousList !== null && Number(current.price) === previousList;
     return {
       ...current,
       homeVisit,
+      isVirtual: place === "virtual",
       price: service && keepsListPrice ? getListPrice(service, Boolean(homeVisit)) : current.price,
     };
   };
+  // Las modalidades del servicio (y la de la cita, si se editó una que ya no admite).
+  const place = getPlace(values);
+  const placeOptions = selectedService
+    ? SERVICE_MODES.filter((mode) => selectedService.modes.includes(mode.value) || mode.value === place)
+    : [];
   const newHomeVisit = (): HomeVisitAddress => ({
     ...EMPTY_HOME_VISIT,
     address: clientsById.get(values.clientId)?.address ?? "",
@@ -270,12 +278,14 @@ function AppointmentForm({
               const service = services.find((s) => s.id === serviceId);
               setValues((current) => {
                 // El lugar se ajusta a lo que admite el nuevo servicio.
-                const homeVisit =
-                  service?.location === "business" ? null : service?.location === "home" ? (current.homeVisit ?? newHomeVisit()) : current.homeVisit;
+                const currentPlace = getPlace(current);
+                const nextPlace = !service || service.modes.includes(currentPlace) ? currentPlace : service.modes[0];
+                const homeVisit = nextPlace === "home" ? (current.homeVisit ?? newHomeVisit()) : null;
                 return {
                   ...current,
                   serviceId,
                   homeVisit,
+                  isVirtual: nextPlace === "virtual",
                   durationMinutes: service?.durationMinutes ?? current.durationMinutes,
                   price: service ? getListPrice(service, Boolean(homeVisit)) : current.price,
                 };
@@ -296,23 +306,34 @@ function AppointmentForm({
         )}
       </FormField>
 
-      {selectedService && selectedService.location !== "business" && (
+      {selectedService && (placeOptions.length > 1 || place !== "business") && (
         <div className="grid gap-4 rounded-xl border bg-muted/30 p-3">
-          <FormField label="Lugar">
+          <FormField
+            label="Lugar"
+            error={errors.isVirtual}
+            hint={
+              values.isVirtual
+                ? professional?.meetingUrl
+                  ? `Por videollamada: ${professional.meetingUrl}`
+                  : "Por videollamada. Este profesional aún no tiene enlace: agrégalo en Profesionales → Editar."
+                : undefined
+            }
+          >
             {(field) => (
               <Select
-                value={values.homeVisit ? "home" : "business"}
-                disabled={selectedService.location === "home"}
-                onValueChange={(place) =>
-                  setValues((current) => applyPlace(current, selectedService, place === "home" ? newHomeVisit() : null))
-                }
+                value={place}
+                disabled={placeOptions.length === 1}
+                onValueChange={(next) => setValues((current) => applyPlace(current, selectedService, next as ServiceMode))}
               >
                 <SelectTrigger {...field} className="w-full sm:w-60">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="business">En el local</SelectItem>
-                  <SelectItem value="home">A domicilio</SelectItem>
+                  {placeOptions.map((mode) => (
+                    <SelectItem key={mode.value} value={mode.value}>
+                      {mode.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}

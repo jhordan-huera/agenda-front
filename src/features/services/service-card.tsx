@@ -1,4 +1,4 @@
-import { Clock, Home, MoreHorizontal, Pencil, Power, Trash2 } from "lucide-react";
+import { Clock, MoreHorizontal, Pencil, Power, Trash2 } from "lucide-react";
 import { ActiveBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,9 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrency, formatDuration, isPriceVisible } from "@/lib/format";
+import { describeServiceModes } from "@/lib/constants/business";
+import { formatCurrency, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/types";
+import { MODE_ICONS } from "./mode-icons";
 
 interface ServiceCardProps {
   service: Service;
@@ -21,6 +23,7 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service, onEdit, onToggleActive, onDelete }: ServiceCardProps) {
+  const ModeIcon = MODE_ICONS[service.modes.find((mode) => mode !== "business") ?? "business"];
   return (
     <Card className={cn("gap-4 px-5 py-5 transition-shadow hover:shadow-md", !service.isActive && "bg-muted/40")}>
       <div className="flex items-start justify-between gap-3">
@@ -56,17 +59,19 @@ export function ServiceCard({ service, onEdit, onToggleActive, onDelete }: Servi
           <span className="inline-flex items-center gap-1.5">
             <Clock className="size-4" aria-hidden /> {formatDuration(service.durationMinutes)}
           </span>
-          {service.location !== "business" && (
+          {(service.modes.length > 1 || service.modes[0] !== "business") && (
             <span className="inline-flex items-center gap-1.5 text-primary">
-              <Home className="size-4" aria-hidden />
-              {service.location === "home" ? "A domicilio" : "Local o domicilio"}
-              {service.homeVisitFee > 0 && ` · +${formatCurrency(service.homeVisitFee)}`}
+              <ModeIcon className="size-4" aria-hidden />
+              {describeServiceModes(service.modes)}
+              {service.modes.includes("home") && service.homeVisitFee > 0 && ` · +${formatCurrency(service.homeVisitFee)}`}
             </span>
           )}
         </span>
         <span className="text-right">
-          <span className="block text-xl font-semibold tabular-nums">{formatCurrency(service.price)}</span>
-          {!isPriceVisible(service) && <span className="block text-xs text-muted-foreground">Oculto a los clientes</span>}
+          <span className="block text-xl font-semibold tabular-nums">
+            {service.price === 0 && service.showPrice ? "Gratis" : formatCurrency(service.price)}
+          </span>
+          {!service.showPrice && <span className="block text-xs text-muted-foreground">Oculto a los clientes</span>}
         </span>
       </div>
     </Card>
