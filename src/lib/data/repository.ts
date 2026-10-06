@@ -46,6 +46,7 @@ import type {
   BusinessRole,
   BusinessStatus,
   Client,
+  ClientActivity,
   ClinicalNote,
   ClinicalProfile,
   ClinicalAttachment,
@@ -160,6 +161,8 @@ export interface ClinicalRecordRepository {
 export interface ClientRepository {
   list(businessId: string): Promise<Client[]>;
   getById(businessId: string, clientId: string): Promise<Client | null>;
+  /** Resumen de las citas de cada cliente, calculado en la API (sin descargar el historial). */
+  activity(businessId: string): Promise<ClientActivity[]>;
   create(businessId: string, input: ClientInput): Promise<Client>;
   update(businessId: string, clientId: string, input: ClientInput): Promise<Client>;
   /** Elimina el cliente y su historial de citas. */
@@ -182,6 +185,7 @@ export interface AppointmentFilters {
 
 export interface AppointmentRepository {
   list(businessId: string, filters?: AppointmentFilters): Promise<Appointment[]>;
+  getById(businessId: string, appointmentId: string): Promise<Appointment | null>;
   /** Falla con `conflict` si se solapa con otra cita activa y con `plan_limit` si se superó el plan. */
   create(businessId: string, input: AppointmentInput): Promise<Appointment>;
   update(businessId: string, appointmentId: string, input: AppointmentInput): Promise<Appointment>;

@@ -31,7 +31,7 @@ import { DURATION_OPTIONS } from "@/lib/constants/business";
 import { capitalize, formatCurrency, formatDuration, formatShortDate, formatTimeRange } from "@/lib/format";
 import { addMinutesToTime, durationInMinutes } from "@/lib/time";
 import { appointmentSchema, type AppointmentInput } from "@/lib/validations/appointment";
-import { timeField } from "@/lib/validations/fields";
+import { dateField, timeField } from "@/lib/validations/fields";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { Appointment, AppointmentStatus, HomeVisitAddress, ISODate, Service, TimeString } from "@/types";
 import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getClientName, getListPrice, suggestStartTime } from "./appointment-utils";
@@ -80,7 +80,6 @@ function AppointmentForm({
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
   const { clients, services, clientsById, isPending } = useLookups();
-  const { data: appointments = [] } = useAppointments();
   const { data: schedules = [] } = useSchedules();
   const { data: blockedTimes = [] } = useBlockedTimes();
   const saveAppointment = useSaveAppointment();
@@ -130,6 +129,10 @@ function AppointmentForm({
     setErrors((current) => clearHomeVisitErrors(current, patch));
   };
   const durationOptions = [...new Set([...DURATION_OPTIONS, values.durationMinutes])].sort((a, b) => a - b);
+
+  // Para ver solapamientos sólo hacen falta las citas de ese día (no toda la agenda).
+  const dayToCheck = dateField.safeParse(values.date).success ? values.date : now.date;
+  const { data: appointments = [] } = useAppointments({ from: dayToCheck, to: dayToCheck }, { keepPrevious: true });
 
   // Comprobaciones en vivo: solapamiento (bloquea), fuera de horario y bloqueos (avisos).
   const timeWindow =

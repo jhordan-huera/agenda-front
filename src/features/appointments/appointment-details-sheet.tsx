@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ClinicalNoteDialog } from "@/features/clinical/clinical-note-dialog";
 import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
-import { useAppointments, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
+import { useAppointment, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
@@ -46,8 +46,8 @@ interface AppointmentDetailsSheetProps {
 }
 
 export function AppointmentDetailsSheet({ appointmentId, open, onOpenChange, onEdit }: AppointmentDetailsSheetProps) {
-  const { data: appointments } = useAppointments();
-  const appointment = appointments?.find((a) => a.id === appointmentId);
+  // Sólo esa cita: sale de la agenda ya cargada o se pide sola, sin descargar todas.
+  const { data: appointment } = useAppointment(appointmentId);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

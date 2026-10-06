@@ -167,16 +167,40 @@ export interface ClientRetention {
   returningClients: number;
 }
 
-export function getClientRetention(allAppointments: Appointment[], range: DateRange): ClientRetention {
-  const firstVisit = new Map<string, ISODate>();
+/**
+ * `firstVisits`: la primera cita no cancelada de cada cliente (la calcula la API con todo el
+ * historial; aquí sólo llegan las citas del periodo).
+ */
+export function getClientRetention(
+  appointmentsInRange: Appointment[],
+  firstVisits: ReadonlyMap<string, ISODate | null>,
+  range: DateRange,
+): ClientRetention {
   const activeInRange = new Set<string>();
-  for (const appointment of allAppointments) {
+  for (const appointment of appointmentsInRange) {
     if (appointment.status === "cancelled") continue;
-    const first = firstVisit.get(appointment.clientId);
-    if (!first || appointment.date < first) firstVisit.set(appointment.clientId, appointment.date);
     if (appointment.date >= range.from && appointment.date <= range.to) activeInRange.add(appointment.clientId);
   }
   let newClients = 0;
-  for (const clientId of activeInRange) if (firstVisit.get(clientId)! >= range.from) newClients++;
+  for (const clientId of activeInRange) {
+    const first = firstVisits.get(clientId);
+    if (!first || first >= range.from) newClients++;
+  }
   return { newClients, returningClients: activeInRange.size - newClients };
+}
+
+/**
+ * Citas que necesitan los reportes: el periodo elegido más la semana y el mes en curso (los
+ * ingresos de "Hoy", "Esta semana" y "Este mes"). Nunca el historial completo.
+ */
+export function getReportFetchRange(today: ISODate, days: ReportPeriod): DateRange {
+  const period = getPeriodRange(today, days);
+  const weekStart = startOfWeekISO(today);
+  const monthStart = `${today.slice(0, 7)}-01`;
+  const monthEnd = addDaysISO(`${addDaysISO(monthStart, 32).slice(0, 7)}-01`, -1);
+  const weekEnd = addDaysISO(weekStart, 6);
+  return {
+    from: [period.from, weekStart, monthStart].sort()[0],
+    to: [period.to, weekEnd, monthEnd].sort().at(-1)!,
+  };
 }

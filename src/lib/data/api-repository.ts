@@ -13,6 +13,7 @@ import type {
   Business,
   BusinessCategoryInfo,
   Client,
+  ClientActivity,
   ClinicalNote,
   ClinicalProfile,
   ClinicalAttachment,
@@ -81,6 +82,7 @@ export const apiRepository: DataRepository = {
   clients: {
     list: (businessId) => api.get<Client[]>(`${business(businessId)}/clients`),
     getById: (businessId, clientId) => api.get<Client | null>(`${business(businessId)}/clients/${id(clientId)}`),
+    activity: (businessId) => api.get<ClientActivity[]>(`${business(businessId)}/clients/activity`),
     create: (businessId, input) => api.post<Client>(`${business(businessId)}/clients`, input),
     update: (businessId, clientId, input) => api.put<Client>(`${business(businessId)}/clients/${id(clientId)}`, input),
     remove: (businessId, clientId) => api.delete(`${business(businessId)}/clients/${id(clientId)}`),
@@ -123,6 +125,8 @@ export const apiRepository: DataRepository = {
   },
 
   appointments: {
+    getById: (businessId, appointmentId) =>
+      api.get<Appointment | null>(`${business(businessId)}/appointments/${id(appointmentId)}`),
     list: (businessId, filters = {}) =>
       api.get<Appointment[]>(`${business(businessId)}/appointments`, {
         from: filters.from,

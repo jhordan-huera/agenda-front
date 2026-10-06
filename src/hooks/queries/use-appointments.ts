@@ -18,6 +18,30 @@ export function useAppointments(filters: AppointmentFilters = {}, options: { kee
   });
 }
 
+/**
+ * Una cita por su id: sale al momento de la agenda ya cargada (si está) y se pide a la API sólo
+ * si no está, sin descargar todas las citas.
+ */
+export function useAppointment(appointmentId: string | null | undefined) {
+  const businessId = useBusinessId();
+  const findCached = useCachedAppointment();
+  return useQuery({
+    queryKey: queryKeys.appointment(businessId, appointmentId ?? ""),
+    queryFn: () => data.appointments.getById(businessId, appointmentId!),
+    enabled: Boolean(appointmentId),
+    placeholderData: () => (appointmentId ? findCached(appointmentId) : undefined),
+  });
+}
+
+/** Resumen de las citas de cada cliente (totales, última y próxima cita), calculado en la API. */
+export function useClientActivity() {
+  const businessId = useBusinessId();
+  return useQuery({
+    queryKey: queryKeys.clientActivity(businessId),
+    queryFn: () => data.clients.activity(businessId),
+  });
+}
+
 function useInvalidateAppointments() {
   const businessId = useBusinessId();
   const queryClient = useQueryClient();
@@ -31,8 +55,13 @@ function useCachedAppointment() {
   const businessId = useBusinessId();
   const queryClient = useQueryClient();
   return (id: string): Appointment | undefined => {
-    for (const [, list] of queryClient.getQueriesData<unknown>({ queryKey: queryKeys.appointments(businessId) })) {
-      const found = Array.isArray(list) ? (list as Appointment[]).find((appointment) => appointment.id === id) : undefined;
+    for (const [, cached] of queryClient.getQueriesData<unknown>({ queryKey: queryKeys.appointments(businessId) })) {
+      // Listas de la agenda o una cita suelta (useAppointment).
+      const found = Array.isArray(cached)
+        ? (cached as Appointment[]).find((appointment) => appointment?.id === id)
+        : (cached as Appointment | null | undefined)?.id === id
+          ? (cached as Appointment)
+          : undefined;
       if (found) return found;
     }
     return undefined;

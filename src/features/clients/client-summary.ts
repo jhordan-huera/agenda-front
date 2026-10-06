@@ -1,6 +1,6 @@
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
 import { isPast, type ZonedNow } from "@/lib/time";
-import type { Appointment } from "@/types";
+import type { Appointment, ClientActivity } from "@/types";
 
 export interface ClientSummary {
   lastAppointment?: Appointment;
@@ -41,6 +41,29 @@ export function summarizeByClient(appointments: Appointment[], now: ZonedNow): M
   return summaries;
 }
 
+/** El resumen que calcula la API (useClientActivity), en el formato de la lista de clientes. */
+export function summariesFromActivity(activity: ClientActivity[]): Map<string, ClientSummary> {
+  return new Map(
+    activity.map((row) => [
+      row.clientId,
+      {
+        totalAppointments: row.totalAppointments,
+        completed: row.completed,
+        cancelled: row.cancelled,
+        noShow: row.noShow,
+        totalSpent: row.totalSpent,
+        lastAppointment: row.lastAppointment ?? undefined,
+        nextAppointment: row.nextAppointment ?? undefined,
+      },
+    ]),
+  );
+}
+
 export function getClientSummary(summaries: Map<string, ClientSummary>, clientId: string): ClientSummary {
   return summaries.get(clientId) ?? EMPTY_SUMMARY;
+}
+
+/** Todas sus citas, también las canceladas (al eliminar un cliente se borran todas). */
+export function countAppointments(summary: ClientSummary): number {
+  return summary.totalAppointments + summary.cancelled;
 }

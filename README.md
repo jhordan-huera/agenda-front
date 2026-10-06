@@ -248,6 +248,14 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
 - Onboarding en 6 pasos, agenda día/semana/mes, clientes (con buscador en "Nueva cita"),
   servicios, horarios partidos, bloqueos, página pública de reservas sin registro, reportes y configuración.
 
+## Rendimiento
+
+El panel nunca descarga el historial completo de citas: Inicio pide desde el inicio del mes (o de
+la semana) en adelante; Reportes, el periodo elegido más la semana y el mes en curso; "Nueva cita",
+sólo las citas del día elegido (para avisar de solapamientos); el detalle, sólo esa cita
+(`useAppointment`). La última y la próxima cita de cada cliente, y su primera visita (Reportes →
+clientes nuevos y recurrentes), las calcula la API (`useClientActivity`).
+
 ## Arquitectura
 
 - **Capa de datos.** Los componentes nunca llaman a `fetch`: usan hooks (`src/hooks/queries`) que

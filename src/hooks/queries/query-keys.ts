@@ -20,6 +20,9 @@ export const queryKeys = {
   clinicalTemplate: (businessId: string, templateId: string) => ["clinical-templates", businessId, "one", templateId] as const,
   services: (businessId: string) => ["services", businessId] as const,
   appointments: (businessId: string) => ["appointments", businessId] as const,
+  appointment: (businessId: string, appointmentId: string) => ["appointments", businessId, "one", appointmentId] as const,
+  /** Bajo "appointments": se recarga cuando cambia cualquier cita. */
+  clientActivity: (businessId: string) => ["appointments", businessId, "client-activity"] as const,
   appointmentList: (businessId: string, filters: AppointmentFilters) =>
     ["appointments", businessId, filters] as const,
   schedules: (businessId: string) => ["schedules", businessId] as const,

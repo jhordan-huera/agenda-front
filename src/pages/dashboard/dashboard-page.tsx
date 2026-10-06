@@ -29,7 +29,7 @@ import { useBlockedTimes, useSchedules } from "@/hooks/queries/use-schedule";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { getErrorMessage } from "@/lib/data";
 import { capitalize, formatCurrency, formatDate, plural } from "@/lib/format";
-import { timeToMinutes } from "@/lib/time";
+import { startOfWeekISO, timeToMinutes } from "@/lib/time";
 import type { Appointment } from "@/types";
 
 const PENDING_LIMIT = 4;
@@ -45,7 +45,11 @@ export default function DashboardPage() {
   const { data: user } = useCurrentUser();
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
-  const appointmentsQuery = useAppointments();
+  // Sólo lo que usa Inicio: desde el inicio del mes (o de la semana, si empezó el mes anterior)
+  // en adelante. Nunca el historial completo.
+  const monthStart = `${now.date.slice(0, 7)}-01`;
+  const weekStart = startOfWeekISO(now.date);
+  const appointmentsQuery = useAppointments({ from: weekStart < monthStart ? weekStart : monthStart });
   const schedulesQuery = useSchedules();
   const blockedQuery = useBlockedTimes();
   const { clients, clientsById, servicesById, isPending: lookupsPending } = useLookups();

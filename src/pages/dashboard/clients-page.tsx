@@ -11,11 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePermissions } from "@/features/auth/use-permissions";
 import { ClientCards } from "@/features/clients/client-cards";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
-import { getClientSummary, summarizeByClient } from "@/features/clients/client-summary";
+import { countAppointments, getClientSummary, summariesFromActivity } from "@/features/clients/client-summary";
 import { ClientsTable } from "@/features/clients/clients-table";
 import { DeleteClientDialog } from "@/features/clients/delete-client-dialog";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
-import { useAppointments } from "@/hooks/queries/use-appointments";
+import { useClientActivity } from "@/hooks/queries/use-appointments";
 import { useClients } from "@/hooks/queries/use-clients";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { normalizeSearch } from "@/lib/format";
@@ -56,7 +56,7 @@ export default function ClientsPage() {
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
   const clientsQuery = useClients();
-  const { data: appointments = [] } = useAppointments();
+  const activity = useClientActivity();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ClientFilter>("all");
   const [formState, setFormState] = useState<{ open: boolean; client?: Client }>({ open: false });
@@ -64,7 +64,8 @@ export default function ClientsPage() {
   const [view, setView] = useState<ClientView>(readView);
   const { can } = usePermissions();
 
-  const summaries = useMemo(() => summarizeByClient(appointments, now), [appointments, now]);
+  // Última y próxima cita de cada cliente: las calcula la API (no se descarga el historial).
+  const summaries = useMemo(() => summariesFromActivity(activity.data ?? []), [activity.data]);
   const clients = clientsQuery.data ?? [];
 
   const filtered = clients.filter((client) => {
@@ -212,7 +213,7 @@ export default function ClientsPage() {
       />
       <DeleteClientDialog
         client={deleting}
-        appointmentCount={deleting ? appointments.filter((a) => a.clientId === deleting.id).length : 0}
+        appointmentCount={deleting ? countAppointments(getClientSummary(summaries, deleting.id)) : 0}
         onOpenChange={(open) => !open && setDeleting(null)}
       />
     </div>

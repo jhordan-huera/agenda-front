@@ -14,6 +14,7 @@ import { RankedBars } from "@/features/reports/ranked-bars";
 import {
   filterByRange,
   getClientRetention,
+  getReportFetchRange,
   getPeriodRange,
   getRevenueSnapshot,
   getStatusBreakdown,
@@ -25,7 +26,7 @@ import {
   type ReportPeriod,
 } from "@/features/reports/report-stats";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
-import { useAppointments } from "@/hooks/queries/use-appointments";
+import { useAppointments, useClientActivity } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
@@ -45,14 +46,17 @@ export default function ReportsPage() {
 function ReportsPageContent() {
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
-  const appointmentsQuery = useAppointments();
-  const { servicesById, isPending: lookupsPending } = useLookups();
   const [period, setPeriod] = useState<ReportPeriod>(30);
+  const fetchRange = getReportFetchRange(now.date, period);
+  const appointmentsQuery = useAppointments(fetchRange, { keepPrevious: true });
+  const activityQuery = useClientActivity();
+  const { servicesById, isPending: lookupsPending } = useLookups();
   const currency = business?.currency;
 
   const report = useMemo(() => {
     const range = getPeriodRange(now.date, period);
     const all = appointmentsQuery.data ?? [];
+    const firstVisits = new Map((activityQuery.data ?? []).map((row) => [row.clientId, row.firstVisit]));
     const inRange = filterByRange(all, range);
     const summary = summarize(inRange);
     const groupedByWeek = period === 90;
@@ -64,12 +68,12 @@ function ReportsPageContent() {
       statuses: getStatusBreakdown(summary),
       topServices: getTopServices(inRange, servicesById),
       revenue: getRevenueSnapshot(all, now.date),
-      retention: getClientRetention(all, range),
+      retention: getClientRetention(inRange, firstVisits, range),
     };
-  }, [appointmentsQuery.data, servicesById, now.date, period]);
+  }, [appointmentsQuery.data, activityQuery.data, servicesById, now.date, period]);
 
   const { summary } = report;
-  const loading = appointmentsQuery.isPending || lookupsPending;
+  const loading = appointmentsQuery.isPending || activityQuery.isPending || lookupsPending;
 
   return (
     <div className="space-y-6">
