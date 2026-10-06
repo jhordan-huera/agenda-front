@@ -40,18 +40,62 @@ async function request<T>(path: string, params: Record<string, string>, signal?:
   return (await response.json()) as T;
 }
 
-export async function searchAddress(query: string, countryCode?: string, signal?: AbortSignal): Promise<GeocodeResult[]> {
+/** Recuadro de unos 30 km alrededor de un punto: da prioridad a lo cercano sin excluir lo demás. */
+function viewboxAround({ lat, lng }: GeoPoint): Record<string, string> {
+  const d = 0.15;
+  return { viewbox: [lng - d, lat + d, lng + d, lat - d].map((n) => n.toFixed(5)).join(",") };
+}
+
+export async function searchAddress(
+  query: string,
+  countryCode?: string,
+  signal?: AbortSignal,
+  /** Prioriza los resultados cerca de este punto (p. ej. lo que muestra el mapa). */
+  near?: GeoPoint,
+  /** Con `near`: sólo resultados de esa zona. */
+  onlyNear = false,
+): Promise<GeocodeResult[]> {
   const places = await request<NominatimPlace[]>(
     "search",
-    { q: query, limit: "5", ...(countryCode ? { countrycodes: countryCode } : {}) },
+    {
+      q: query,
+      limit: "8",
+      ...(countryCode ? { countrycodes: countryCode } : {}),
+      ...(near ? viewboxAround(near) : {}),
+      ...(near && onlyNear ? { bounded: "1" } : {}),
+    },
     signal,
   );
-  return places.map((place) => ({
-    lat: Number(place.lat),
-    lng: Number(place.lon),
-    label: shortLabel(place),
-    isArea: place.category === "boundary",
-  }));
+  // Una calle larga llega en varios tramos con el mismo nombre: se muestra una vez.
+  const seen = new Set<string>();
+  return places
+    .map((place) => ({
+      lat: Number(place.lat),
+      lng: Number(place.lon),
+      label: shortLabel(place),
+      isArea: place.category === "boundary",
+    }))
+    .filter((result) => !seen.has(result.label) && seen.add(result.label))
+    .slice(0, 5);
+}
+
+/**
+ * Como searchAddress, pero tolera una parte mal escrita: si "Av. 10 de Agosto, Cotacahi" no da nada,
+ * busca "Av. 10 de Agosto" en la zona de `near` (sin ella saldrían calles con ese nombre de todo el
+ * país). `skipped` es la parte que se dejó fuera (null si no hizo falta).
+ */
+export async function searchAddressLeniently(
+  query: string,
+  countryCode?: string,
+  near?: GeoPoint,
+): Promise<{ results: GeocodeResult[]; skipped: string | null }> {
+  const results = await searchAddress(query, countryCode, undefined, near);
+  const parts = query.split(",").map((part) => part.trim()).filter(Boolean);
+  if (results.length > 0 || parts.length < 2 || !near) return { results, skipped: null };
+  // El servidor público de Nominatim admite una petición por segundo.
+  await new Promise((resolve) => setTimeout(resolve, 1100));
+  const relaxed = await searchAddress(parts.slice(0, -1).join(", "), countryCode, undefined, near, true);
+  return { results: relaxed, skipped: relaxed.length > 0 ? parts.at(-1)! : null };
 }
 
 /** Dirección aproximada de un punto del mapa (para rellenar el campo de dirección). */

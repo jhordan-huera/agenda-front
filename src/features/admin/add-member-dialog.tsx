@@ -22,11 +22,14 @@ const EMPTY: AdminMemberInput = { firstName: "", lastName: "", email: "", role: 
 export function AddMemberDialog({
   businessId,
   businessName,
+  allowProfessionalRole = true,
   open,
   onOpenChange,
 }: {
   businessId: string;
   businessName: string;
+  /** El rol Profesional sólo existe con varias agendas (plan Business). */
+  allowProfessionalRole?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -34,13 +37,30 @@ export function AddMemberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         {/* Se monta de nuevo en cada apertura: el formulario empieza vacío. */}
-        {open && <AddMemberForm businessId={businessId} businessName={businessName} onDone={() => onOpenChange(false)} />}
+        {open && (
+          <AddMemberForm
+            businessId={businessId}
+            businessName={businessName}
+            roles={ASSIGNABLE_ROLES.filter((role) => allowProfessionalRole || role !== "professional")}
+            onDone={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
-function AddMemberForm({ businessId, businessName, onDone }: { businessId: string; businessName: string; onDone: () => void }) {
+function AddMemberForm({
+  businessId,
+  businessName,
+  roles,
+  onDone,
+}: {
+  businessId: string;
+  businessName: string;
+  roles: BusinessRole[];
+  onDone: () => void;
+}) {
   const addMember = useAddBusinessMember();
   const [values, setValues] = useState<AdminMemberInput>(EMPTY);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -93,7 +113,7 @@ function AddMemberForm({ businessId, businessName, onDone }: { businessId: strin
               <SelectValue />
             </SelectTrigger>
             <SelectContent position="popper">
-              {ASSIGNABLE_ROLES.map((role) => (
+              {roles.map((role) => (
                 <SelectItem key={role} value={role}>
                   {ROLE_LABELS[role]}
                 </SelectItem>

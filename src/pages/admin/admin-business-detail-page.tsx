@@ -418,6 +418,7 @@ export default function AdminBusinessDetailPage() {
       <AddMemberDialog
         businessId={business.id}
         businessName={business.name}
+        allowProfessionalRole={plan.multipleAgendas}
         open={addMemberOpen}
         onOpenChange={setAddMemberOpen}
       />

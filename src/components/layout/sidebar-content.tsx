@@ -3,6 +3,7 @@ import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/features/auth/use-permissions";
 import { InstallAppButton } from "@/features/install/install-app";
+import { useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { NAV_ITEMS } from "./nav-items";
@@ -13,6 +14,7 @@ import { UserMenu } from "./user-menu";
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { data: business } = useCurrentBusiness();
   const { role, can } = usePermissions();
+  const multiAgenda = useMultiAgendaAccess();
   const signOut = useSignOut();
 
   return (
@@ -25,7 +27,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <SidebarNav
         label="Panel"
-        items={NAV_ITEMS.filter((item) => !item.permission || can(item.permission))}
+        items={NAV_ITEMS.filter((item) => (!item.permission || can(item.permission)) && (!item.multiAgenda || multiAgenda))}
         onNavigate={onNavigate}
       />
 
