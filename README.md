@@ -39,6 +39,15 @@ Páginas públicas de reserva: `/book/jhordan` y `/book/estudio-bella`.
 
 Otros scripts: `npm run build` (typecheck + build de producción), `npm run preview`, `npm run lint` (oxlint), `npm run typecheck`.
 
+## Analítica
+
+Visitas por página con Vercel Web Analytics (`src/app/page-analytics.tsx`, sin cookies): se ven en
+Vercel → agenda-front → Analytics. Sólo se activa en la web publicada (no en local). Antes de enviar
+cada visita se cambian los identificadores de la ruta por `[id]` y se quitan los parámetros de la URL,
+así a Vercel no llega a qué cliente o negocio se entró. El plan Hobby incluye 50.000 visitas al mes
+(entre todos los proyectos); al pasarlas, Vercel deja de contar hasta el ciclo siguiente, la web sigue
+igual. `vercel.json` excluye `/_vercel/` de la reescritura a `index.html`.
+
 ## Stack
 
 React 19 · TypeScript · Vite · React Router 8 · Tailwind CSS v4 · shadcn/ui (Radix) · Lucide ·
