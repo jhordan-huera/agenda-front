@@ -1,6 +1,8 @@
 export type DataErrorCode =
   | "not_found"
   | "conflict"
+  /** Reserva pública: esa persona ya tiene el máximo de citas de ese día. */
+  | "daily_limit"
   | "validation"
   | "unauthorized"
   | "forbidden"

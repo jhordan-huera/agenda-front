@@ -232,6 +232,10 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   onboarding, el panel y el panel de plataforma (`useInstallableApp`); la portada y la página de
   reservas no enlazan el manifiesto ni descargan la app. Sin conexión, la app espera en la pantalla
   de carga con un aviso y sigue sola cuando vuelve (no manda al login).
+- **Sin reservas dobles**: nunca dos citas a la misma hora (lo garantiza la base). Cada negocio elige
+  en Configuración → Agenda cuántas citas puede reservar una misma persona (por su cédula) el mismo
+  día desde su página (1 por defecto, hasta 3 o sin límite). La página de reservas oculta al momento
+  la hora que se acaba de reservar o que otra persona tomó (aunque la CDN aún no lo refleje).
 - **Código QR de la página de reservas**: en Configuración → Negocio, junto al enlace público,
   "Código QR" lo muestra y lo descarga como PNG listo para imprimir (con "Reserva tu cita", el
   nombre del negocio y el enlace escrito) o como SVG. Se genera en el navegador con `uqr`.

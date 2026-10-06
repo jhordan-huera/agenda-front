@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_MAX_CLIENT_BOOKINGS_PER_DAY } from "@/lib/constants/business";
 import { emailField, optionalEmailField, optionalText, phoneField, requiredText } from "./fields";
 
 /** Categoría del negocio: la API comprueba que exista en la base de datos y esté activa. */
@@ -59,6 +60,13 @@ export const bookingSettingsSchema = z.object({
     .min(0, "No puede ser negativo")
     .max(168, "Máximo 168 horas"),
   cancellationPolicy: optionalText(500),
+  // Con valor por defecto: los negocios guardados antes no lo traen.
+  maxClientBookingsPerDay: z.coerce
+    .number<string | number>()
+    .int()
+    .min(0, "No puede ser negativo")
+    .max(10, "Máximo 10 citas por día")
+    .default(DEFAULT_MAX_CLIENT_BOOKINGS_PER_DAY),
 });
 
 const hexColorField = z

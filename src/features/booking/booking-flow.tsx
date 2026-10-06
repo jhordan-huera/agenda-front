@@ -1,14 +1,14 @@
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCreateBooking } from "@/hooks/queries/use-public-booking";
 import { getMinNoticeHours } from "@/lib/availability";
 import { DataError, getErrorMessage } from "@/lib/data";
 import { capitalize, formatLongDate, plural } from "@/lib/format";
-import { addDaysISO } from "@/lib/time";
+import { addDaysISO, addMinutesToTime } from "@/lib/time";
 import type { PublicBookingInput } from "@/lib/validations/booking";
-import type { BookingConfirmation, ISODate, PublicBusinessProfile } from "@/types";
+import type { BookingConfirmation, BusySlot, ISODate, PublicBusinessProfile } from "@/types";
 import { BookingCalendar } from "./booking-calendar";
 import { BookingSteps, type BookingStep } from "./booking-steps";
 import { BookingSuccess } from "./booking-success";
@@ -40,10 +40,25 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
   const [contact, setContact] = useState<ContactValues>(EMPTY_CONTACT);
   const [pendingInput, setPendingInput] = useState<PublicBookingInput | null>(null);
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
+  /**
+   * Horas que este navegador ya sabe ocupadas aunque la página aún no lo refleje (la página de
+   * reservas se guarda unos segundos en la CDN): la que se acaba de reservar y la que se ocupó.
+   */
+  const [takenSlots, setTakenSlots] = useState<BusySlot[]>([]);
+  const markTaken = (slot: BusySlot) => setTakenSlots((current) => [...current, slot]);
+  const effectiveProfile = useMemo(
+    () => (takenSlots.length ? { ...profile, busySlots: [...profile.busySlots, ...takenSlots] } : profile),
+    [profile, takenSlots],
+  );
 
   const { business, professional, services } = profile;
   const service = services.find((s) => s.id === serviceId);
-  const { today, availableDates, date, slots, time } = useBookingAvailability(profile, service, requestedDate, requestedTime);
+  const { today, availableDates, date, slots, time } = useBookingAvailability(
+    effectiveProfile,
+    service,
+    requestedDate,
+    requestedTime,
+  );
   // Si el servicio deja de estar disponible, se vuelve al primer paso.
   const currentStep: BookingStep = service ? step : "service";
   const atHome = service?.location === "home" || (currentStep === "confirm" && Boolean(pendingInput?.homeVisit));
@@ -61,13 +76,28 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
 
   const submit = async (input: PublicBookingInput) => {
     try {
-      setConfirmation(await createBooking.mutateAsync(input));
+      const booked = await createBooking.mutateAsync(input);
+      markTaken({ date: booked.date, startTime: booked.startTime, endTime: booked.endTime });
+      setConfirmation(booked);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
-      toast.error(getErrorMessage(error));
-      if (error instanceof DataError && error.code === "conflict") {
+      if (error instanceof DataError && error.code === "conflict" && service) {
+        // Alguien la reservó antes: se oculta al momento para no volver a elegirla.
+        markTaken({
+          date: input.date,
+          startTime: input.startTime,
+          endTime: addMinutesToTime(input.startTime, service.durationMinutes),
+        });
+        toast.error(getErrorMessage(error));
         setRequestedTime(null);
         setStep("datetime");
+      } else if (error instanceof DataError && error.code === "daily_limit") {
+        // Ya tiene el máximo de citas ese día: puede elegir otro día.
+        toast.error(getErrorMessage(error), { duration: 10_000 });
+        setRequestedTime(null);
+        setStep("datetime");
+      } else {
+        toast.error(getErrorMessage(error));
       }
     }
   };

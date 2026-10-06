@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
-import { SLOT_INTERVAL_OPTIONS } from "@/lib/constants/business";
+import { DEFAULT_MAX_CLIENT_BOOKINGS_PER_DAY, SLOT_INTERVAL_OPTIONS } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
 import { formatDuration } from "@/lib/format";
 import { bookingSettingsSchema } from "@/lib/validations/business";
@@ -22,7 +22,16 @@ const toFormValues = (settings: BookingSettings) => ({
   allowCancellations: settings.allowCancellations,
   cancellationNoticeHours: String(settings.cancellationNoticeHours),
   cancellationPolicy: settings.cancellationPolicy,
+  maxClientBookingsPerDay: String(settings.maxClientBookingsPerDay ?? DEFAULT_MAX_CLIENT_BOOKINGS_PER_DAY),
 });
+
+/** Citas por día por persona desde la página pública ("0" = sin límite). */
+const CLIENT_DAILY_OPTIONS = [
+  { value: "1", label: "1 cita por día (recomendado)" },
+  { value: "2", label: "Hasta 2 citas por día" },
+  { value: "3", label: "Hasta 3 citas por día" },
+  { value: "0", label: "Sin límite" },
+];
 
 export function BookingSettingsForm({ business }: { business: Business }) {
   const updateBusiness = useUpdateBusiness();
@@ -118,6 +127,26 @@ export function BookingSettingsForm({ business }: { business: Business }) {
           )}
         </FormField>
       </div>
+      <FormField
+        label="Citas por persona desde tu página"
+        error={errors.maxClientBookingsPerDay}
+        hint="Cuántas citas puede reservar una misma persona (por su cédula) el mismo día. Evita reservas repetidas por error; desde tu panel puedes agendarle las que quieras."
+      >
+        {(field) => (
+          <Select value={values.maxClientBookingsPerDay} onValueChange={(value) => setField("maxClientBookingsPerDay", value)}>
+            <SelectTrigger {...field} className="w-full sm:w-72">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              {CLIENT_DAILY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </FormField>
       <SwitchField
         label="Permitir cancelaciones"
         description="Muestra tu política al reservar y en los emails de confirmación."
