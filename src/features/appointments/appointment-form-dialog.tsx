@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ClientCombobox } from "@/features/clients/client-combobox";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
 import { ProfessionalSelect } from "@/features/professionals/professional-select";
-import { defaultAgendaId, useAgendas } from "@/features/professionals/use-agendas";
+import { defaultAgendaId, meetingUrlPlace, useAgendas, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments, useSaveAppointment } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
@@ -89,6 +89,7 @@ function AppointmentForm({
   const saveAppointment = useSaveAppointment();
   const showError = useErrorToast();
   const agendas = useAgendas();
+  const multiAgenda = useMultiAgendaAccess();
   // `name`: lo escrito en el buscador cuando el cliente aún no existe.
   const [newClient, setNewClient] = useState({ open: false, name: "" });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -315,7 +316,7 @@ function AppointmentForm({
               values.isVirtual
                 ? professional?.meetingUrl
                   ? `Por videollamada: ${professional.meetingUrl}`
-                  : "Por videollamada. Este profesional aún no tiene enlace: agrégalo en Profesionales → Editar."
+                  : `Por videollamada. Aún no hay enlace: agrégalo en ${meetingUrlPlace(multiAgenda)}.`
                 : undefined
             }
           >

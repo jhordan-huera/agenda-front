@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
 import { useSession } from "@/features/auth/use-session";
-import { useAgendas } from "@/features/professionals/use-agendas";
+import { useAgendas, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness, usePlanUsage } from "@/hooks/queries/use-account";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { useRemoveMember, useSetClinicalAccess, useTeam, useUpdateMemberRole } from "@/hooks/queries/use-team";
@@ -29,6 +29,8 @@ export function TeamSettings() {
   const { session } = useSession();
   const team = useTeam();
   const agendas = useAgendas();
+  // Cuenta individual (Free y Pro): sin rol Profesional ni agendas por persona.
+  const multiAgenda = useMultiAgendaAccess();
   const usage = usePlanUsage();
   const updateRole = useUpdateMemberRole();
   const setClinicalAccess = useSetClinicalAccess();
@@ -104,9 +106,10 @@ export function TeamSettings() {
                         {member.userId === session?.userId && <span className="text-muted-foreground"> (tú)</span>}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">{member.email}</p>
-                      {agenda ? (
+                      {multiAgenda && agenda ? (
                         <p className="truncate text-xs text-muted-foreground">Agenda: {agenda.displayName}</p>
                       ) : (
+                        multiAgenda &&
                         member.role === "professional" && (
                           <p className="text-xs font-medium text-amber-700">
                             Sin agenda: asígnasela en{" "}
@@ -143,7 +146,7 @@ export function TeamSettings() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent position="popper">
-                            {ASSIGNABLE_ROLES.map((role) => (
+                            {ASSIGNABLE_ROLES.filter((role) => role !== "professional" || multiAgenda || member.role === role).map((role) => (
                               <SelectItem key={role} value={role}>
                                 {ROLE_LABELS[role]}
                               </SelectItem>
@@ -197,6 +200,7 @@ export function TeamSettings() {
         <AddMemberDialog
           businessId={session.businessId}
           businessName={session.support?.businessName ?? ""}
+          allowProfessionalRole={multiAgenda !== false}
           open={addOpen}
           onOpenChange={setAddOpen}
         />

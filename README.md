@@ -188,6 +188,9 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   bloqueos por profesional, calendario con filtro y una columna por profesional en la vista Día,
   "¿Con quién?" en la página de reservas (o "el primero disponible"), llegada del paciente en el
   detalle de la cita y reportes por profesional (citas, asistencia, cobrado y ocupación).
+  **Free y Pro son cuentas individuales** (`multipleAgendas` en `plans.ts`): sin la sección
+  Profesionales ni el rol Profesional; la especialidad y el enlace de videollamada de su única agenda
+  se editan en Configuración → Perfil ("Tu agenda en la página de reservas").
   `useAgendas()` dice qué agendas puede elegir el usuario y si hay varias (si hay una sola, la
   interfaz es la de siempre).
 - **Límites por plan** (Free: 20 citas/mes, 50 clientes, 1 usuario; Pro: 3 usuarios; ambos 1 agenda;
@@ -244,6 +247,8 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   OpenStreetMap; gratis, sin clave de API ni límite de visitas, uso comercial permitido). Se carga
   bajo demanda sólo en las pantallas con mapa. La búsqueda de direcciones usa Nominatim (gratis,
   sin clave, pero con poco tráfico permitido: en producción conviene un proveedor de geocodificación).
+  Nominatim no corrige faltas: si "calle, ciudad" no da nada, se busca sólo la calle en la zona que
+  muestra el mapa y se avisa de la parte que no se encontró (`searchAddressLeniently`).
 - **Anticipación mínima para reservas online**: la elige cada profesional en Configuración → Agenda,
   de 0 a 720 horas (24 al crear el negocio; 0 = hasta justo antes de la cita). La página pública y
   la API usan ese valor (también se valida en el backend). El profesional, desde su panel, puede

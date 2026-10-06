@@ -1,5 +1,7 @@
 import { useSession } from "@/features/auth/use-session";
+import { useSubscription } from "@/hooks/queries/use-account";
 import { useProfessionals } from "@/hooks/queries/use-professionals";
+import { getPlan } from "@/lib/constants/plans";
 import { isAgendaScoped } from "@/lib/permissions";
 import type { Professional } from "@/types";
 
@@ -28,6 +30,22 @@ export function useAgendas() {
     byId: (id: string | null | undefined): Professional | undefined => all.find((professional) => professional.id === id),
   };
 }
+
+/**
+ * ¿Trabaja el negocio con varias agendas (sección Profesionales, rol Profesional)? Sólo el plan
+ * Business; Free y Pro son cuentas individuales. También un negocio que ya tiene varias (p. ej. tras
+ * bajar de plan), para que pueda ordenarlas. undefined mientras carga.
+ */
+export function useMultiAgendaAccess(): boolean | undefined {
+  const subscription = useSubscription();
+  const professionals = useProfessionals();
+  if (!subscription.data || !professionals.data) return undefined;
+  return getPlan(subscription.data.plan).multipleAgendas || professionals.data.length > 1;
+}
+
+/** Dónde se pone el enlace de videollamada: en cada profesional o, en una cuenta individual, en el perfil. */
+export const meetingUrlPlace = (multiAgenda: boolean | undefined) =>
+  multiAgenda ? "Profesionales → Editar" : "Configuración → Perfil";
 
 /** La agenda con la que empieza un formulario o un filtro: la propia o la primera. */
 export function defaultAgendaId(agendas: ReturnType<typeof useAgendas>): string {

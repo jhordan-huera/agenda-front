@@ -22,6 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfessionalDot } from "@/features/professionals/professional-select";
 import { ProfessionalFormDialog } from "@/features/professionals/professional-form-dialog";
+import { useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { PlanLimitContact } from "@/features/support/plan-limit-contact";
 import { useCurrentBusiness, usePlanUsage, useUpdateBusiness } from "@/hooks/queries/use-account";
 import { useDeleteProfessional, useProfessionals, useSaveProfessional } from "@/hooks/queries/use-professionals";
@@ -35,9 +36,41 @@ import type { Professional, ProfessionalScope } from "@/types";
 export default function ProfessionalsPage() {
   return (
     <RequirePermission permission="professionals.manage">
-      <ProfessionalsPageContent />
+      <MultiAgendaOnly />
     </RequirePermission>
   );
+}
+
+/** Free y Pro son cuentas individuales: su única agenda se edita en Configuración → Perfil. */
+function MultiAgendaOnly() {
+  const multiAgenda = useMultiAgendaAccess();
+  if (multiAgenda === undefined) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 3 }, (_, i) => (
+          <Skeleton key={i} className="h-44 rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+  if (!multiAgenda) {
+    return (
+      <>
+        <PageTitle title="Profesionales" />
+        <EmptyState
+          icon={Contact}
+          title="Tu cuenta tiene una sola agenda"
+          description="Tu especialidad y tu enlace de videollamada se editan en tu perfil. Para trabajar con varios profesionales, cada uno con su agenda, escríbenos."
+          action={
+            <Button asChild variant="outline">
+              <Link to="/dashboard/settings?tab=perfil">Ir a mi perfil</Link>
+            </Button>
+          }
+        />
+      </>
+    );
+  }
+  return <ProfessionalsPageContent />;
 }
 
 function ProfessionalsPageContent() {

@@ -12,6 +12,7 @@ import { BusinessSettingsForm } from "@/features/settings/business-settings-form
 import { ClinicalSettingsCard } from "@/features/settings/clinical-settings-card";
 import { EmailOutbox } from "@/features/settings/email-outbox";
 import { NotificationSettingsForm, WhatsAppNoticeSettingsForm } from "@/features/settings/notification-settings-form";
+import { OwnAgendaCard } from "@/features/settings/own-agenda-card";
 import { ProfileSettingsForm } from "@/features/settings/profile-settings-form";
 import { SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { TeamSettings } from "@/features/settings/team-settings";
@@ -71,7 +72,10 @@ export default function SettingsPage() {
             ) : userQuery.isError || !userQuery.data ? (
               <ErrorState onRetry={() => userQuery.refetch()} />
             ) : (
-              <ProfileSettingsForm user={userQuery.data} />
+              <>
+                <ProfileSettingsForm user={userQuery.data} />
+                <OwnAgendaCard />
+              </>
             )}
           </TabsContent>
           <TabsContent value="negocio" className="grid max-w-3xl gap-6">

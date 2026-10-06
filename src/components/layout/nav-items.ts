@@ -24,6 +24,8 @@ export interface NavItem {
   end?: boolean;
   /** Permiso necesario para ver la sección. */
   permission?: Permission;
+  /** Sólo en negocios con varias agendas (plan Business). */
+  multiAgenda?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -31,7 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard/calendar", label: "Agenda", icon: CalendarDays },
   { to: "/dashboard/clients", label: "Clientes", icon: Users },
   { to: "/dashboard/services", label: "Servicios", icon: ConciergeBell, permission: "services.manage" },
-  { to: "/dashboard/professionals", label: "Profesionales", icon: Contact, permission: "professionals.manage" },
+  { to: "/dashboard/professionals", label: "Profesionales", icon: Contact, permission: "professionals.manage", multiAgenda: true },
   { to: "/dashboard/schedule", label: "Horarios", icon: Clock, permission: "schedule.manage" },
   { to: "/dashboard/reports", label: "Reportes", icon: BarChart3, permission: "reports.view" },
   { to: "/dashboard/settings", label: "Configuración", icon: Settings },

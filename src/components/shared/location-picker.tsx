@@ -4,7 +4,7 @@ import { CheckCircle2, Loader2, LocateFixed, MapPin, Minus, Plus, Search } from 
 import { useEffect, useEffectEvent, useRef, useState, type KeyboardEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { reverseGeocode, searchAddress, type GeocodeResult, type GeoPoint } from "@/lib/geocoding";
+import { reverseGeocode, searchAddress, searchAddressLeniently, type GeocodeResult, type GeoPoint } from "@/lib/geocoding";
 import { cn } from "@/lib/utils";
 import { BASE_MAP_OPTIONS, canShowMap, collapseAttribution, createPinElement } from "./map-base";
 
@@ -54,6 +54,8 @@ export default function LocationPicker({
   const [mapSupported] = useState(canShowMap);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GeocodeResult[] | null>(null);
+  // Parte de la búsqueda que no se encontró y se dejó fuera (p. ej. la ciudad mal escrita).
+  const [skipped, setSkipped] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [locating, setLocating] = useState(false);
   const reverseRequest = useRef<AbortController | null>(null);
@@ -144,10 +146,14 @@ export default function LocationPicker({
     const text = query.trim();
     if (text.length < 3) return;
     setSearching(true);
+    const center = mapRef.current?.getCenter();
     try {
-      setResults(await searchAddress(text, countryCode));
+      const found = await searchAddressLeniently(text, countryCode, center ? { lat: center.lat, lng: center.lng } : undefined);
+      setResults(found.results);
+      setSkipped(found.skipped);
     } catch {
       setResults([]);
+      setSkipped(null);
       toast.error("No pudimos buscar la dirección. Marca el punto directamente en el mapa.");
     } finally {
       setSearching(false);
@@ -226,24 +232,32 @@ export default function LocationPicker({
           >
             {results.length === 0 ? (
               <li className="px-3 py-2.5 text-muted-foreground">
-                Sin resultados. Prueba con otra referencia o marca el punto en el mapa.
+                Sin resultados. Revisa cómo está escrito (sobre todo la ciudad), prueba con otra referencia o marca el
+                punto en el mapa.
               </li>
             ) : (
-              results.map((result) => (
-                <li key={`${result.lat},${result.lng}`}>
-                  <button
-                    type="button"
-                    className="flex w-full items-start gap-2 px-3 py-2.5 text-left outline-none hover:bg-muted focus-visible:bg-muted"
-                    onClick={() => {
-                      setResults(null);
-                      pick(result, { fly: true });
-                    }}
-                  >
-                    <MapPin className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                    {result.label}
-                  </button>
-                </li>
-              ))
+              <>
+                {skipped && (
+                  <li className="px-3 py-2 text-xs text-muted-foreground">
+                    No encontramos «{skipped}»: te mostramos lo más parecido. Revisa cómo está escrito.
+                  </li>
+                )}
+                {results.map((result) => (
+                  <li key={`${result.lat},${result.lng}`}>
+                    <button
+                      type="button"
+                      className="flex w-full items-start gap-2 px-3 py-2.5 text-left outline-none hover:bg-muted focus-visible:bg-muted"
+                      onClick={() => {
+                        setResults(null);
+                        pick(result, { fly: true });
+                      }}
+                    >
+                      <MapPin className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                      {result.label}
+                    </button>
+                  </li>
+                ))}
+              </>
             )}
           </ul>
         )}

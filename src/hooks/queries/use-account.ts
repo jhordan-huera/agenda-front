@@ -21,7 +21,9 @@ export function useUpdateProfile() {
     mutationFn: (input: ProfileInput) => data.users.update(session!.userId, input),
     onSuccess: (user) => {
       queryClient.setQueryData(queryKeys.user(user.id), user);
-      queryClient.invalidateQueries({ queryKey: ["professional"] });
+      // Su nombre y su foto son los de su agenda: también cambian en la lista de profesionales y en la página pública.
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
+      queryClient.invalidateQueries({ queryKey: ["public-profile"] });
     },
   });
 }

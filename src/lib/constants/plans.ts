@@ -16,6 +16,11 @@ export interface Plan {
   customClinicalTemplates: boolean;
   /** Subir archivos (radiografías, exámenes, fotos) a la historia clínica. */
   clinicalAttachments: boolean;
+  /**
+   * Varios profesionales, cada uno con su agenda (sección Profesionales y rol Profesional). Sin esto la
+   * cuenta es individual: una sola agenda, que se edita en Configuración → Perfil.
+   */
+  multipleAgendas: boolean;
 }
 
 export const PLANS: Plan[] = [
@@ -32,6 +37,7 @@ export const PLANS: Plan[] = [
     limits: { appointmentsPerMonth: 20, clients: 50, users: 1, professionals: 1 },
     customClinicalTemplates: false,
     clinicalAttachments: false,
+    multipleAgendas: false,
   },
   {
     id: "pro",
@@ -45,6 +51,7 @@ export const PLANS: Plan[] = [
     limits: { appointmentsPerMonth: null, clients: null, users: 3, professionals: 1 },
     customClinicalTemplates: true,
     clinicalAttachments: true,
+    multipleAgendas: false,
   },
   {
     id: "business",
@@ -60,6 +67,7 @@ export const PLANS: Plan[] = [
     limits: { appointmentsPerMonth: null, clients: null, users: null, professionals: null },
     customClinicalTemplates: true,
     clinicalAttachments: true,
+    multipleAgendas: true,
   },
 ];
 

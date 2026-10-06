@@ -30,7 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ClinicalNoteDialog } from "@/features/clinical/clinical-note-dialog";
 import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
 import { ProfessionalDot } from "@/features/professionals/professional-select";
-import { useAgendas } from "@/features/professionals/use-agendas";
+import { meetingUrlPlace, useAgendas, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointment, useSetAppointmentArrival, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
@@ -85,6 +85,7 @@ function AppointmentDetails({
   const setArrival = useSetAppointmentArrival();
   const showError = useErrorToast();
   const agendas = useAgendas();
+  const multiAgenda = useMultiAgendaAccess();
   const professional = agendas.byId(appointment.professionalId);
   // La llegada se marca en citas que aún no se atendieron.
   const canMarkArrival = appointment.status === "pending" || appointment.status === "confirmed";
@@ -192,7 +193,7 @@ function AppointmentDetails({
                 </Button>
               ) : (
                 <span className="mt-1 block text-xs text-muted-foreground">
-                  Sin enlace: agrégalo en Profesionales → Editar para que llegue en la confirmación.
+                  Sin enlace: agrégalo en {meetingUrlPlace(multiAgenda)} para que llegue en la confirmación.
                 </span>
               )}
             </DetailRow>

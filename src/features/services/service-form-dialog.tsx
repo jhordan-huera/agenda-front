@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { meetingUrlPlace, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useSaveService } from "@/hooks/queries/use-services";
 import { SERVICE_MODES } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
@@ -67,6 +68,7 @@ function initialPriceDisplay(service?: Service): PriceDisplay {
 
 function ServiceForm({ service, onDone }: { service?: Service; onDone: () => void }) {
   const saveService = useSaveService();
+  const multiAgenda = useMultiAgendaAccess();
   const [values, setValues] = useState({
     name: service?.name ?? "",
     description: service?.description ?? "",
@@ -234,8 +236,9 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
         ) : (
           <p className="text-xs text-muted-foreground">
             {values.modes.length > 1
-              ? `Con varias, el cliente elige al reservar.${values.modes.includes("virtual") ? " Lo virtual usa el enlace de cada profesional." : ""}`
+              ? "Con varias, el cliente elige al reservar."
               : SERVICE_MODES.find((mode) => mode.value === values.modes[0])?.description}
+            {values.modes.includes("virtual") && ` El enlace de la videollamada se pone en ${meetingUrlPlace(multiAgenda)}.`}
           </p>
         )}
       </fieldset>
