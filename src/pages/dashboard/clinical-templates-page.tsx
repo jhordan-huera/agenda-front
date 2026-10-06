@@ -24,6 +24,7 @@ import { getErrorMessage } from "@/lib/data";
 import { plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ClinicalTemplate } from "@/types";
+import { PlanLimitContact } from "@/features/support/plan-limit-contact";
 
 const countFields = (template: ClinicalTemplate) =>
   plural(template.fields.filter((field) => field.type !== "section").length, "campo", "campos");
@@ -178,10 +179,8 @@ export default function ClinicalTemplatesPage() {
             <p className="flex items-start gap-2 rounded-lg border border-highlight bg-highlight/40 px-3 py-2 text-sm">
               <Lock className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
               <span>
-                Con los planes Pro y Business puedes crear formatos propios o adaptar los de la plataforma a tu manera de trabajar.{" "}
-                <Link to="/dashboard/settings?tab=suscripcion" className="font-semibold text-ink underline underline-offset-4">
-                  Ver planes
-                </Link>
+                También puedes crear formatos propios o adaptar los de la plataforma a tu manera de trabajar. Para
+                activarlo, escríbenos a <PlanLimitContact />.
               </span>
             </p>
           )}

@@ -3,6 +3,7 @@ import { FormField } from "@/components/shared/form-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAgendas } from "@/features/professionals/use-agendas";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
 import { DEFAULT_MAX_CLIENT_BOOKINGS_PER_DAY, SLOT_INTERVAL_OPTIONS } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
@@ -23,6 +24,7 @@ const toFormValues = (settings: BookingSettings) => ({
   cancellationNoticeHours: String(settings.cancellationNoticeHours),
   cancellationPolicy: settings.cancellationPolicy,
   maxClientBookingsPerDay: String(settings.maxClientBookingsPerDay ?? DEFAULT_MAX_CLIENT_BOOKINGS_PER_DAY),
+  chooseProfessional: settings.chooseProfessional ?? true,
 });
 
 /** Citas por día por persona desde la página pública ("0" = sin límite). */
@@ -34,6 +36,7 @@ const CLIENT_DAILY_OPTIONS = [
 ];
 
 export function BookingSettingsForm({ business }: { business: Business }) {
+  const agendas = useAgendas();
   const updateBusiness = useUpdateBusiness();
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(toFormValues(business.bookingSettings));
 
@@ -147,6 +150,14 @@ export function BookingSettingsForm({ business }: { business: Business }) {
           </Select>
         )}
       </FormField>
+      {agendas.multiple && (
+        <SwitchField
+          label="El paciente elige con quién atenderse"
+          description="En tu página de reservas, después del servicio, elige un profesional o «el primero disponible». Si lo desactivas, la cita va al primer profesional libre a esa hora."
+          checked={values.chooseProfessional}
+          onCheckedChange={(checked) => setField("chooseProfessional", checked)}
+        />
+      )}
       <SwitchField
         label="Permitir cancelaciones"
         description="Muestra tu política al reservar y en los emails de confirmación."

@@ -25,6 +25,7 @@ import type {
   ProfileInput,
 } from "@/lib/validations/business";
 import type { ClientInput } from "@/lib/validations/client";
+import type { ProfessionalInput } from "@/lib/validations/professional";
 import type { BlockedTimeInput, ScheduleDayInput } from "@/lib/validations/schedule";
 import type { ServiceInput } from "@/lib/validations/service";
 import type {
@@ -55,12 +56,12 @@ import type {
   ClinicalTemplate,
   EmailNotification,
   ISODate,
-  PlanChangeRequest,
   PlanId,
   PlanUsage,
   PlatformSettings,
   PlatformStats,
   Professional,
+  ProfessionalScope,
   PublicBusinessProfile,
   PublicClientLookup,
   Schedule,
@@ -100,6 +101,8 @@ export interface UpdateBusinessInput extends Partial<BusinessProfileInput> {
   clinicalRecordsEnabled?: boolean;
   /** null: vuelve a los colores de Agenda360. */
   brandColors?: BrandColors | null;
+  /** Qué pacientes ve quien tiene el rol Profesional. */
+  professionalScope?: ProfessionalScope;
 }
 
 export interface BusinessRepository {
@@ -108,7 +111,18 @@ export interface BusinessRepository {
   create(input: CreateBusinessInput): Promise<Business>;
   update(businessId: string, input: UpdateBusinessInput): Promise<Business>;
   isSlugAvailable(slug: string, excludeBusinessId?: string): Promise<boolean>;
-  getProfessional(businessId: string): Promise<Professional | null>;
+}
+
+/**
+ * Profesionales (agendas). Los ve todo el equipo; los gestionan el propietario y los administradores.
+ * Cuántos pueden estar activos lo fija el plan (`plan_limit`).
+ */
+export interface ProfessionalRepository {
+  list(businessId: string): Promise<Professional[]>;
+  create(businessId: string, input: ProfessionalInput): Promise<Professional>;
+  update(businessId: string, professionalId: string, input: ProfessionalInput): Promise<Professional>;
+  /** Sólo sin citas (`conflict`): con historial, se desactiva. */
+  remove(businessId: string, professionalId: string): Promise<void>;
 }
 
 export interface TeamRepository {
@@ -121,12 +135,8 @@ export interface TeamRepository {
 
 export interface SubscriptionRepository {
   get(businessId: string): Promise<Subscription | null>;
+  /** Uso frente a los límites (los planes y precios no se muestran al negocio: los gestiona la plataforma). */
   getUsage(businessId: string): Promise<PlanUsage>;
-  /** Solicitud de cambio pendiente del negocio (o null). */
-  getPendingRequest(businessId: string): Promise<PlanChangeRequest | null>;
-  /** El propietario pide otro plan; el super admin la aprueba o rechaza. */
-  requestPlanChange(businessId: string, plan: PlanId): Promise<PlanChangeRequest>;
-  cancelPlanRequest(businessId: string): Promise<void>;
 }
 
 /**
@@ -192,11 +202,14 @@ export interface AppointmentRepository {
   updateStatus(businessId: string, appointmentId: string, status: AppointmentStatus): Promise<Appointment>;
   /** Registra en la actividad que se abrió WhatsApp con el aviso de un cambio de la cita. */
   logWhatsAppNotice(businessId: string, appointmentId: string, kind: WhatsAppNoticeKind): Promise<void>;
+  /** Llegada del paciente (o quitarla): sólo en citas pendientes o confirmadas. */
+  setArrival(businessId: string, appointmentId: string, arrived: boolean): Promise<Appointment>;
 }
 
 export interface ScheduleRepository {
   list(businessId: string): Promise<Schedule[]>;
-  saveWeek(businessId: string, days: ScheduleDayInput[]): Promise<Schedule[]>;
+  /** El horario semanal de un profesional; devuelve el suyo. */
+  saveWeek(businessId: string, professionalId: string, days: ScheduleDayInput[]): Promise<Schedule[]>;
 }
 
 export interface BlockedTimeRepository {
@@ -280,6 +293,8 @@ export interface PlatformAdminRepository {
   /** Suspender bloquea el panel y la página pública del negocio; reactivar lo devuelve a la normalidad. */
   setBusinessStatus(businessId: string, status: BusinessStatus): Promise<Business>;
   changeBusinessPlan(businessId: string, plan: PlanId): Promise<Subscription>;
+  /** Agendas contratadas por un negocio Business (null: sin tope). */
+  setMaxProfessionals(businessId: string, maxProfessionals: number | null): Promise<Subscription>;
   /** Para siempre: sus datos, sus archivos y las cuentas de su equipo. Hay que escribir su nombre. */
   deleteBusiness(businessId: string, input: BusinessDeletionInput): Promise<void>;
   listCategories(): Promise<AdminBusinessCategory[]>;
@@ -311,6 +326,7 @@ export interface PlatformAdminRepository {
 export interface DataRepository {
   users: UserRepository;
   businesses: BusinessRepository;
+  professionals: ProfessionalRepository;
   team: TeamRepository;
   subscriptions: SubscriptionRepository;
   clients: ClientRepository;

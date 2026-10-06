@@ -21,7 +21,9 @@ import {
 } from "@/features/calendar/calendar-utils";
 import { MonthView } from "@/features/calendar/month-view";
 import { StatusLegend } from "@/features/calendar/status-legend";
-import { TimeGridView } from "@/features/calendar/time-grid-view";
+import { TimeGridView, type GridColumn } from "@/features/calendar/time-grid-view";
+import { ALL_AGENDAS, ProfessionalSelect } from "@/features/professionals/professional-select";
+import { useAgendas } from "@/features/professionals/use-agendas";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments } from "@/hooks/queries/use-appointments";
@@ -47,27 +49,51 @@ export default function CalendarPage() {
   const dateParam = searchParams.get("date") ?? "";
   const view = isCalendarView(viewParam) ? viewParam : defaultView;
   const date = dateField.safeParse(dateParam).success ? dateParam : now.date;
-  const navigate = (next: { view?: CalendarView; date?: string }) =>
-    setSearchParams({ view: next.view ?? view, date: next.date ?? date }, { replace: true });
+  // Con varias agendas: ?agenda=<id> muestra la de un profesional; sin él, todas.
+  const agendas = useAgendas();
+  const agendaParam = searchParams.get("agenda");
+  const agenda = agendas.multiple && agendas.selectable.some((p) => p.id === agendaParam) ? agendaParam! : ALL_AGENDAS;
+  const navigate = (next: { view?: CalendarView; date?: string; agenda?: string }) => {
+    const nextAgenda = next.agenda ?? agenda;
+    setSearchParams(
+      { view: next.view ?? view, date: next.date ?? date, ...(nextAgenda !== ALL_AGENDAS && { agenda: nextAgenda }) },
+      { replace: true },
+    );
+  };
 
   const days = getVisibleDays(view, date);
   const appointmentsQuery = useAppointments({ from: days[0], to: days.at(-1) }, { keepPrevious: true });
-  const { data: schedules = [] } = useSchedules();
+  const { data: allSchedules = [] } = useSchedules();
   const { data: blockedTimes = [] } = useBlockedTimes();
   const { clientsById, servicesById } = useLookups();
   const dialogs = useAppointmentDialogs();
 
   const appointments = (appointmentsQuery.data ?? []).filter(
-    (appointment) => showCancelled || appointment.status !== "cancelled",
+    (appointment) =>
+      (showCancelled || appointment.status !== "cancelled") && (agenda === ALL_AGENDAS || appointment.professionalId === agenda),
   );
+  const schedules = agenda === ALL_AGENDAS ? allSchedules : allSchedules.filter((s) => s.professionalId === agenda);
   const { startHour, endHour } = getHourRange(schedules, appointments);
+  const professionalsById = new Map(agendas.all.map((p) => [p.id, p]));
+  // Columnas: con un profesional elegido, sus días; con todas las agendas en la vista Día, una por profesional
+  // (también las inactivas que tengan citas ese día).
+  const columns: GridColumn[] | undefined =
+    agenda !== ALL_AGENDAS
+      ? days.map((day) => ({ key: day, day, professionalId: agenda }))
+      : view === "day" && agendas.multiple
+        ? agendas.all
+            .filter((p) => p.isActive || appointments.some((a) => a.professionalId === p.id))
+            .map((p) => ({ key: p.id, day: date, professionalId: p.id, heading: p }))
+        : undefined;
 
   return (
     <div className="space-y-5">
       <PageTitle title="Agenda" />
       <PageHeader
         title="Agenda"
-        description="Gestiona tus citas por día, semana o mes."
+        description={
+          agendas.multiple ? "Las citas de todos los profesionales, por día, semana o mes." : "Gestiona tus citas por día, semana o mes."
+        }
         actions={
           <>
             {can("schedule.manage") && (
@@ -75,7 +101,15 @@ export default function CalendarPage() {
                 <CalendarOff /> Bloquear horario
               </Button>
             )}
-            <Button size="lg" onClick={() => dialogs.openCreate({ date: view === "day" ? date : undefined })}>
+            <Button
+              size="lg"
+              onClick={() =>
+                dialogs.openCreate({
+                  date: view === "day" ? date : undefined,
+                  professionalId: agenda !== ALL_AGENDAS ? agenda : undefined,
+                })
+              }
+            >
               <Plus /> Nueva cita
             </Button>
           </>
@@ -124,6 +158,16 @@ export default function CalendarPage() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {agendas.multiple && (
+          <ProfessionalSelect
+            aria-label="Profesional"
+            className="sm:w-72"
+            professionals={agendas.selectable}
+            value={agenda}
+            onValueChange={(value) => navigate({ agenda: value })}
+            allLabel="Todos los profesionales"
+          />
+        )}
         <StatusLegend />
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <Switch checked={showCancelled} onCheckedChange={setShowCancelled} size="sm" />
@@ -158,7 +202,7 @@ export default function CalendarPage() {
               month={date.slice(0, 7)}
               today={now.date}
               appointments={appointments}
-              blockedTimes={blockedTimes}
+              blockedTimes={blockedTimes.filter((block) => block.professionalId === null || block.professionalId === agenda)}
               clientsById={clientsById}
               onDayClick={(day) => navigate({ view: "day", date: day })}
               onAppointmentClick={dialogs.openDetails}
@@ -170,12 +214,16 @@ export default function CalendarPage() {
               appointments={appointments}
               blockedTimes={blockedTimes}
               schedules={schedules}
+              columns={columns}
+              professionalsById={agendas.multiple ? professionalsById : undefined}
               now={now}
               startHour={startHour}
               endHour={endHour}
               clientsById={clientsById}
               servicesById={servicesById}
-              onSlotClick={(day, startTime) => dialogs.openCreate({ date: day, startTime })}
+              onSlotClick={(day, startTime, professionalId) =>
+                dialogs.openCreate({ date: day, startTime, professionalId: professionalId ?? (agenda !== ALL_AGENDAS ? agenda : undefined) })
+              }
               onAppointmentClick={dialogs.openDetails}
             />
           )}
@@ -183,7 +231,12 @@ export default function CalendarPage() {
       )}
 
       {dialogs.dialogs}
-      <BlockedTimeFormDialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen} defaultDate={date} />
+      <BlockedTimeFormDialog
+        open={blockDialogOpen}
+        onOpenChange={setBlockDialogOpen}
+        defaultDate={date}
+        defaultProfessionalId={agenda !== ALL_AGENDAS ? agenda : null}
+      />
     </div>
   );
 }

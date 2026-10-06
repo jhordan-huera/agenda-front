@@ -43,9 +43,10 @@ import { useCategories } from "@/hooks/queries/use-categories";
 import { TIMEZONES } from "@/lib/constants/business";
 import { PLANS, getPlan } from "@/lib/constants/plans";
 import { getErrorMessage } from "@/lib/data";
-import { formatCurrency, formatDateTime, formatNumericDate } from "@/lib/format";
+import { formatDateTime, formatNumericDate } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import type { PlanId } from "@/types";
+import { MaxProfessionalsField } from "@/features/admin/max-professionals-field";
 
 export default function AdminBusinessDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
@@ -155,10 +156,11 @@ export default function AdminBusinessDetailPage() {
             <CardHeader>
               <CardTitle>Suscripción y uso</CardTitle>
               <CardDescription>
-                {formatCurrency(plan.price)}/mes
+                Plan {plan.name}
                 {subscription?.currentPeriodEnd
                   ? ` · Renueva el ${formatNumericDate(subscription.currentPeriodEnd.slice(0, 10))}`
                   : " · Sin fecha de renovación"}
+                . El negocio no ve planes ni precios.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 sm:grid-cols-2">
@@ -171,17 +173,26 @@ export default function AdminBusinessDetailPage() {
                   <SelectContent position="popper">
                     {PLANS.map((option) => (
                       <SelectItem key={option.id} value={option.id}>
-                        {option.name} · {formatCurrency(option.price)}/mes
+                        {option.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">Simulado y sin cobro hasta integrar pagos.</p>
+                <p className="text-xs text-muted-foreground">El cobro lo acuerdas tú con el negocio.</p>
+                {plan.id === "business" && (
+                  <MaxProfessionalsField
+                    key={subscription?.maxProfessionals ?? "sin-tope"}
+                    businessId={business.id}
+                    value={subscription?.maxProfessionals ?? null}
+                    active={usage.professionals}
+                  />
+                )}
               </div>
               <div className="grid gap-3">
                 <UsageMeter label="Citas este mes" used={usage.appointmentsThisMonth} limit={usage.limits.appointmentsPerMonth} />
                 <UsageMeter label="Clientes" used={usage.clients} limit={usage.limits.clients} />
                 <UsageMeter label="Usuarios" used={usage.users} limit={usage.limits.users} />
+                <UsageMeter label="Agendas" used={usage.professionals} limit={usage.limits.professionals} />
               </div>
             </CardContent>
           </Card>

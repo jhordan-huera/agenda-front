@@ -6,13 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminBusinesses } from "@/hooks/queries/use-admin";
 import { PLANS } from "@/lib/constants/plans";
-import { formatCurrency } from "@/lib/format";
 import type { PlanLimits } from "@/types";
 
 const LIMIT_ROWS: { key: keyof PlanLimits; label: string }[] = [
   { key: "appointmentsPerMonth", label: "Citas al mes" },
   { key: "clients", label: "Clientes" },
   { key: "users", label: "Usuarios" },
+  { key: "professionals", label: "Agendas" },
 ];
 
 export default function AdminPlansPage() {
@@ -23,7 +23,7 @@ export default function AdminPlansPage() {
       <PageTitle title="Planes" />
       <PageHeader
         title="Planes"
-        description="Precios, límites y negocios en cada plan. Los límites los aplica la API en cada operación."
+        description="Límites y negocios en cada plan. Los límites los aplica la API en cada operación; los precios los acuerdas con cada negocio."
       />
 
       {businesses.isError ? (
@@ -32,15 +32,11 @@ export default function AdminPlansPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           {PLANS.map((plan) => {
             const inPlan = (businesses.data ?? []).filter((row) => row.subscription?.plan === plan.id);
-            const paying = inPlan.filter((row) => row.business.status === "active" && row.subscription?.status === "active");
+            const agendas = inPlan.reduce((total, row) => total + row.usage.professionals, 0);
             return (
               <Card key={plan.id} className="gap-5 px-5">
                 <div>
                   <p className="text-lg font-bold">{plan.name}</p>
-                  <p className="mt-2 flex items-baseline gap-1">
-                    <span className="text-3xl font-semibold tracking-tight">{formatCurrency(plan.price)}</span>
-                    <span className="text-sm text-muted-foreground">/mes</span>
-                  </p>
                   <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
                 </div>
 
@@ -52,13 +48,9 @@ export default function AdminPlansPage() {
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-muted-foreground">Ingresos / mes</dt>
+                    <dt className="text-xs text-muted-foreground">Agendas activas</dt>
                     <dd className="text-lg font-semibold tabular-nums">
-                      {businesses.isPending ? (
-                        <Skeleton className="mt-1 h-6 w-16" />
-                      ) : (
-                        formatCurrency(Math.round(paying.length * plan.price * 100) / 100)
-                      )}
+                      {businesses.isPending ? <Skeleton className="mt-1 h-6 w-10" /> : agendas}
                     </dd>
                   </div>
                 </dl>
@@ -67,7 +59,9 @@ export default function AdminPlansPage() {
                   {LIMIT_ROWS.map(({ key, label }) => (
                     <div key={key} className="flex items-center justify-between px-3 py-2">
                       <dt className="text-muted-foreground">{label}</dt>
-                      <dd className="font-medium tabular-nums">{plan.limits[key] ?? "Ilimitado"}</dd>
+                      <dd className="font-medium tabular-nums">
+                        {plan.limits[key] ?? (key === "professionals" ? "Las contratadas" : "Ilimitado")}
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -86,8 +80,8 @@ export default function AdminPlansPage() {
       )}
 
       <p className="text-sm text-muted-foreground">
-        Los precios se editarán aquí cuando se integren los pagos: cada plan debe coincidir con su precio en el proveedor
-        (por ejemplo, Stripe). En PostgreSQL viven en la tabla <code className="font-mono text-xs">plans</code>.
+        Los negocios no ven los planes ni los precios: el plan y las agendas contratadas (Business) se cambian desde la
+        ficha de cada negocio.
       </p>
     </div>
   );

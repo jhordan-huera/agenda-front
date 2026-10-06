@@ -6,7 +6,8 @@ import type { ISODate, PublicBusiness, PublicProfessional, PublicService } from 
 
 interface BookingSummaryProps {
   business: PublicBusiness;
-  professional: PublicProfessional;
+  /** null: "el primero disponible" (aún no se sabe quién). */
+  professional: PublicProfessional | null;
   service?: PublicService;
   date: ISODate | null;
   time: string | null;
@@ -28,7 +29,7 @@ export function BookingSummary({ business, professional, service, date, time, at
             <dt className="sr-only">Servicio</dt>
             <dd className="font-semibold">{service.name}</dd>
             <dd className="text-sm text-muted-foreground">
-              {formatDuration(service.durationMinutes)} con {professional.displayName}
+              {formatDuration(service.durationMinutes)} con {professional?.displayName ?? "el primer profesional disponible"}
             </dd>
           </div>
           <div>

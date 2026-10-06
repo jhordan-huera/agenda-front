@@ -21,6 +21,8 @@ export interface Session {
   platformOwner: boolean;
   /** Puede ver historias clínicas (propietario, miembro autorizado o el super admin en modo soporte). */
   clinicalAccess: boolean;
+  /** Su agenda en el negocio, si atiende citas (null: no tiene; también en modo soporte). */
+  professionalId: string | null;
   /**
    * Sólo en el frontend: el super admin está gestionando un negocio ("Gestionar negocio").
    * Mientras tanto, businessId/role apuntan a ese negocio con permisos de propietario.

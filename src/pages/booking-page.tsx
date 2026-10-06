@@ -72,7 +72,7 @@ export default function BookingPage() {
     <BrandThemeProvider colors={profile.business.brandColors}>
       <div className="flex min-h-screen flex-col bg-muted">
         <PageTitle title={`Reservar con ${profile.business.name}`} />
-        <BookingHeader business={profile.business} professional={profile.professional} />
+        <BookingHeader business={profile.business} professionals={profile.professionals} />
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
           {profile.services.length === 0 ? (
             <EmptyState

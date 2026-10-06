@@ -4,10 +4,9 @@ import type { AppointmentFilters } from "@/lib/data";
 export const queryKeys = {
   user: (userId: string) => ["user", userId] as const,
   business: (businessId: string) => ["business", businessId] as const,
-  professional: (businessId: string) => ["professional", businessId] as const,
+  professionals: (businessId: string) => ["professionals", businessId] as const,
   subscription: (businessId: string) => ["subscription", businessId] as const,
   usage: (businessId: string) => ["usage", businessId] as const,
-  planRequest: (businessId: string) => ["plan-request", businessId] as const,
   team: (businessId: string) => ["team", businessId] as const,
   notifications: (businessId: string) => ["notifications", businessId] as const,
   auditLogs: (businessId: string) => ["audit-logs", businessId] as const,

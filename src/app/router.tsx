@@ -50,6 +50,7 @@ export const router = createBrowserRouter([
           { path: "clients/:id", lazy: lazyPage(() => import("@/pages/dashboard/client-detail-page")) },
           { path: "clients/:id/historia-clinica", lazy: lazyPage(() => import("@/pages/dashboard/clinical-print-page")) },
           { path: "services", lazy: lazyPage(() => import("@/pages/dashboard/services-page")) },
+          { path: "professionals", lazy: lazyPage(() => import("@/pages/dashboard/professionals-page")) },
           { path: "schedule", lazy: lazyPage(() => import("@/pages/dashboard/schedule-page")) },
           { path: "reports", lazy: lazyPage(() => import("@/pages/dashboard/reports-page")) },
           { path: "settings", lazy: lazyPage(() => import("@/pages/dashboard/settings-page")) },

@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAdminPlanRequests, useApprovePlanRequest, useRejectPlanRequest } from "@/hooks/queries/use-admin";
 import { getPlan } from "@/lib/constants/plans";
 import { getErrorMessage } from "@/lib/data";
-import { formatCurrency, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import type { AdminPlanRequest, PlanRequestStatus } from "@/types";
 
 const STATUS_LABELS: Record<Exclude<PlanRequestStatus, "pending">, string> = {
@@ -73,7 +73,7 @@ export function PlanRequestsCard({ businessId }: { businessId?: string }) {
                   <p className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                     {getPlan(request.currentPlan).name} <ArrowRight className="size-3" aria-label="a" />
                     <span className="font-medium text-foreground">
-                      {getPlan(request.requestedPlan).name} ({formatCurrency(getPlan(request.requestedPlan).price)}/mes)
+                      {getPlan(request.requestedPlan).name}
                     </span>
                     · {request.requestedByName} · {formatDateTime(request.createdAt)}
                   </p>

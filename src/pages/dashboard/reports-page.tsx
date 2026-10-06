@@ -7,6 +7,7 @@ import { RequirePermission } from "@/components/layout/require-permission";
 import { PageTitle } from "@/components/shared/page-title";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MetricStrip } from "@/features/dashboard/metric-strip";
 import { AppointmentsVolumeChart } from "@/features/reports/appointments-volume-chart";
@@ -16,6 +17,7 @@ import {
   getClientRetention,
   getReportFetchRange,
   getPeriodRange,
+  getProfessionalBreakdown,
   getRevenueSnapshot,
   getStatusBreakdown,
   getTopServices,
@@ -23,15 +25,20 @@ import {
   REPORT_PERIODS,
   share,
   summarize,
+  type ProfessionalReport,
   type ReportPeriod,
 } from "@/features/reports/report-stats";
+import { ALL_AGENDAS, ProfessionalDot, ProfessionalSelect } from "@/features/professionals/professional-select";
+import { useAgendas } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments, useClientActivity } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
+import { useBlockedTimes, useSchedules } from "@/hooks/queries/use-schedule";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { formatCurrency, formatNumericDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { Professional } from "@/types";
 
 const percent = (value: number) => `${Math.round(value * 100)} %`;
 
@@ -47,15 +54,22 @@ function ReportsPageContent() {
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
   const [period, setPeriod] = useState<ReportPeriod>(30);
+  // Con varias agendas: los reportes de un profesional o de todos (con la tabla por profesional).
+  const agendas = useAgendas();
+  const [agendaChoice, setAgendaChoice] = useState(ALL_AGENDAS);
+  const agenda = agendas.multiple && agendas.all.some((p) => p.id === agendaChoice) ? agendaChoice : ALL_AGENDAS;
   const fetchRange = getReportFetchRange(now.date, period);
   const appointmentsQuery = useAppointments(fetchRange, { keepPrevious: true });
   const activityQuery = useClientActivity();
+  const { data: schedules = [] } = useSchedules();
+  const { data: blockedTimes = [] } = useBlockedTimes();
   const { servicesById, isPending: lookupsPending } = useLookups();
   const currency = business?.currency;
 
   const report = useMemo(() => {
     const range = getPeriodRange(now.date, period);
-    const all = appointmentsQuery.data ?? [];
+    const everyone = appointmentsQuery.data ?? [];
+    const all = agenda === ALL_AGENDAS ? everyone : everyone.filter((a) => a.professionalId === agenda);
     const firstVisits = new Map((activityQuery.data ?? []).map((row) => [row.clientId, row.firstVisit]));
     const inRange = filterByRange(all, range);
     const summary = summarize(inRange);
@@ -69,8 +83,16 @@ function ReportsPageContent() {
       topServices: getTopServices(inRange, servicesById),
       revenue: getRevenueSnapshot(all, now.date),
       retention: getClientRetention(inRange, firstVisits, range),
+      // Las agendas activas y las que tuvieron citas en el periodo.
+      byProfessional: getProfessionalBreakdown(
+        inRange,
+        range,
+        agendas.all.filter((p) => p.isActive || inRange.some((a) => a.professionalId === p.id)).map((p) => p.id),
+        schedules,
+        blockedTimes,
+      ),
     };
-  }, [appointmentsQuery.data, activityQuery.data, servicesById, now.date, period]);
+  }, [appointmentsQuery.data, activityQuery.data, servicesById, now.date, period, agenda, agendas.all, schedules, blockedTimes]);
 
   const { summary } = report;
   const loading = appointmentsQuery.isPending || activityQuery.isPending || lookupsPending;
@@ -82,15 +104,27 @@ function ReportsPageContent() {
         title="Reportes"
         description={`Del ${formatNumericDate(report.range.from)} al ${formatNumericDate(report.range.to)}`}
         actions={
-          <Tabs value={String(period)} onValueChange={(value) => setPeriod(Number(value) as ReportPeriod)}>
-            <TabsList aria-label="Periodo">
-              {REPORT_PERIODS.map((days) => (
-                <TabsTrigger key={days} value={String(days)} className="px-3">
-                  {days} días
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <>
+            {agendas.multiple && (
+              <ProfessionalSelect
+                aria-label="Profesional"
+                className="w-64"
+                professionals={agendas.all}
+                value={agenda}
+                onValueChange={setAgendaChoice}
+                allLabel="Todos los profesionales"
+              />
+            )}
+            <Tabs value={String(period)} onValueChange={(value) => setPeriod(Number(value) as ReportPeriod)}>
+              <TabsList aria-label="Periodo">
+                {REPORT_PERIODS.map((days) => (
+                  <TabsTrigger key={days} value={String(days)} className="px-3">
+                    {days} días
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </>
         }
       />
 
@@ -171,6 +205,13 @@ function ReportsPageContent() {
           ) : (
             <>
               <AppointmentsVolumeChart data={report.volume} groupedByWeek={report.groupedByWeek} />
+              {agendas.multiple && agenda === ALL_AGENDAS && (
+                <ProfessionalBreakdownCard
+                  rows={report.byProfessional}
+                  professionalsById={new Map(agendas.all.map((p) => [p.id, p]))}
+                  currency={currency}
+                />
+              )}
               <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">
                 <Card>
                   <CardHeader>
@@ -247,3 +288,68 @@ function ReportsPageContent() {
     </div>
   );
 }
+
+/** Control del equipo: cuánto atendió cada profesional, cuántos no vinieron y qué tan llena estuvo su agenda. */
+function ProfessionalBreakdownCard({
+  rows,
+  professionalsById,
+  currency,
+}: {
+  rows: ProfessionalReport[];
+  professionalsById: Map<string, Professional>;
+  currency?: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Por profesional</CardTitle>
+        <CardDescription>
+          Citas del periodo de cada agenda. Ocupación: horas con citas sobre las horas de su horario (sin bloqueos).
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Profesional</TableHead>
+              <TableHead className="text-right">Citas</TableHead>
+              <TableHead className="text-right">Atendidas</TableHead>
+              <TableHead className="text-right">No asistió</TableHead>
+              <TableHead className="text-right">Canceladas</TableHead>
+              <TableHead className="text-right">Asistencia</TableHead>
+              <TableHead className="text-right">Cobrado</TableHead>
+              <TableHead className="text-right">Ocupación</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map(({ professionalId, summary, occupancy }) => {
+              const professional = professionalsById.get(professionalId);
+              return (
+                <TableRow key={professionalId}>
+                  <TableCell>
+                    <span className="flex items-center gap-2 font-medium">
+                      {professional && <ProfessionalDot color={professional.color} />}
+                      {professional?.displayName ?? "Profesional"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{summary.total - summary.byStatus.cancelled}</TableCell>
+                  <TableCell className="text-right tabular-nums">{summary.byStatus.completed}</TableCell>
+                  <TableCell className="text-right tabular-nums">{summary.byStatus.no_show}</TableCell>
+                  <TableCell className="text-right tabular-nums">{summary.byStatus.cancelled}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {summary.attendanceRate === null ? "—" : percent(summary.attendanceRate)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold tabular-nums">
+                    {formatCurrency(summary.completedRevenue, currency)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{occupancy === null ? "—" : percent(occupancy)}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+

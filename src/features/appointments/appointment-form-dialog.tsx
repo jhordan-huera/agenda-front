@@ -19,13 +19,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { ClientCombobox } from "@/features/clients/client-combobox";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
+import { ProfessionalSelect } from "@/features/professionals/professional-select";
+import { defaultAgendaId, useAgendas } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments, useSaveAppointment } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBlockedTimes, useSchedules } from "@/hooks/queries/use-schedule";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { useErrorToast } from "@/hooks/use-error-toast";
-import { findConflictingAppointment, findOverlappingBlock, isWithinWorkingHours } from "@/lib/availability";
+import { findConflictingAppointment, findOverlappingBlock, isWithinWorkingHours, offersService } from "@/lib/availability";
 import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG, BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
 import { DURATION_OPTIONS } from "@/lib/constants/business";
 import { capitalize, formatCurrency, formatDuration, formatShortDate, formatTimeRange } from "@/lib/format";
@@ -41,6 +43,8 @@ export interface AppointmentDefaults {
   date?: ISODate;
   startTime?: TimeString;
   clientId?: string;
+  /** Agenda propuesta (p. ej. la columna del calendario donde se hizo clic). */
+  professionalId?: string;
 }
 
 interface AppointmentFormDialogProps {
@@ -84,6 +88,7 @@ function AppointmentForm({
   const { data: blockedTimes = [] } = useBlockedTimes();
   const saveAppointment = useSaveAppointment();
   const showError = useErrorToast();
+  const agendas = useAgendas();
   // `name`: lo escrito en el buscador cuando el cliente aún no existe.
   const [newClient, setNewClient] = useState({ open: false, name: "" });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -100,14 +105,23 @@ function AppointmentForm({
       status: appointment?.status ?? "confirmed",
       notes: appointment?.notes ?? "",
       homeVisit: appointment?.homeVisit ?? null,
+      professionalId: appointment?.professionalId ?? defaults?.professionalId ?? "",
     };
   });
+  // Sin elegir todavía (los profesionales cargan aparte): la propia o la primera.
+  const professionalId = values.professionalId || defaultAgendaId(agendas);
+  const professional = agendas.byId(professionalId);
+  // Al editar una cita de una agenda ya inactiva, esa agenda sigue en la lista.
+  const professionalOptions =
+    professional && !agendas.selectable.some((p) => p.id === professional.id) ? [...agendas.selectable, professional] : agendas.selectable;
 
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
 
   const selectableClients = clients.filter((c) => c.isActive || c.id === values.clientId);
-  const selectableServices = services.filter((s) => s.isActive || s.id === values.serviceId);
+  // Con varias agendas, los servicios que atiende el profesional elegido (y el de la cita, si es otro).
+  const offered = (service: Service) => !professional || offersService(professional, service.id);
+  const selectableServices = services.filter((s) => (s.isActive && offered(s)) || s.id === values.serviceId);
   const selectedService = services.find((s) => s.id === values.serviceId);
 
   /** Cambia entre local y domicilio; el precio sigue al de lista si no se editó a mano. */
@@ -139,6 +153,7 @@ function AppointmentForm({
     values.date && timeField.safeParse(values.startTime).success
       ? {
           id: appointment?.id,
+          professionalId: professionalId || undefined,
           date: values.date,
           startTime: values.startTime,
           endTime: addMinutesToTime(values.startTime, values.durationMinutes),
@@ -151,12 +166,17 @@ function AppointmentForm({
   const conflictMessage = conflict
     ? `Se solapa con la cita de ${getClientName(clientsById, conflict.clientId)} (${formatTimeRange(conflict.startTime, conflict.endTime)}).`
     : undefined;
-  const outsideHours = timeWindow ? !isWithinWorkingHours(schedules, timeWindow) : false;
-  const block = timeWindow ? findOverlappingBlock(blockedTimes, timeWindow) : undefined;
+  // El horario y los bloqueos que cuentan son los de esa agenda (y los de todo el negocio).
+  const agendaSchedules = professionalId ? schedules.filter((s) => s.professionalId === professionalId) : schedules;
+  const agendaBlocks = professionalId
+    ? blockedTimes.filter((b) => b.professionalId === null || b.professionalId === professionalId)
+    : blockedTimes;
+  const outsideHours = timeWindow ? !isWithinWorkingHours(agendaSchedules, timeWindow) : false;
+  const block = timeWindow ? findOverlappingBlock(agendaBlocks, timeWindow) : undefined;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(appointmentSchema, values);
+    const result = validate(appointmentSchema, { ...values, professionalId });
     setErrors(result.errors);
     if (!result.success || conflict) return;
 
@@ -198,6 +218,23 @@ function AppointmentForm({
   return (
     <>
     <form onSubmit={handleSubmit} noValidate className="grid gap-4">
+      {professionalOptions.length > 1 && (
+        <FormField
+          label="Profesional"
+          error={errors.professionalId}
+          hint={selectedService && professional && !offered(selectedService) ? `${professional.displayName} no suele atender este servicio.` : undefined}
+        >
+          {(field) => (
+            <ProfessionalSelect
+              id={field.id}
+              professionals={professionalOptions}
+              value={professionalId}
+              onValueChange={(value) => set("professionalId", value)}
+            />
+          )}
+        </FormField>
+      )}
+
       <FormField label="Cliente" error={errors.clientId}>
         {(field) => (
           <div className="flex gap-2">

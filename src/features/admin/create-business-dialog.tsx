@@ -14,7 +14,7 @@ import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { TIMEZONES } from "@/lib/constants/business";
 import { PLANS } from "@/lib/constants/plans";
 import { getErrorMessage, type AdminCreateBusinessResult } from "@/lib/data";
-import { formatCurrency, slugify } from "@/lib/format";
+import { slugify } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { adminBusinessSchema } from "@/lib/validations/admin";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
@@ -277,7 +277,7 @@ function CreateBusinessForm({ onDone }: { onDone: () => void }) {
                 )}
               >
                 <span className="block text-sm font-medium">{plan.name}</span>
-                <span className="block text-xs text-muted-foreground">{formatCurrency(plan.price)}/mes</span>
+                <span className="block text-xs text-muted-foreground">{plan.description}</span>
               </button>
             );
           })}

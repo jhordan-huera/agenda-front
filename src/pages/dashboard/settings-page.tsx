@@ -14,7 +14,6 @@ import { EmailOutbox } from "@/features/settings/email-outbox";
 import { NotificationSettingsForm, WhatsAppNoticeSettingsForm } from "@/features/settings/notification-settings-form";
 import { ProfileSettingsForm } from "@/features/settings/profile-settings-form";
 import { SettingsSectionSkeleton } from "@/features/settings/settings-section";
-import { SubscriptionSettings } from "@/features/settings/subscription-settings";
 import { TeamSettings } from "@/features/settings/team-settings";
 import { useCurrentBusiness, useCurrentUser } from "@/hooks/queries/use-account";
 import type { Permission } from "@/lib/permissions";
@@ -27,7 +26,6 @@ const TABS: { value: string; label: string; permission?: Permission }[] = [
   { value: "colores", label: "Colores", permission: "business.manage" },
   { value: "notificaciones", label: "Notificaciones", permission: "business.manage" },
   { value: "equipo", label: "Equipo", permission: "team.manage" },
-  { value: "suscripcion", label: "Suscripción", permission: "billing.manage" },
   { value: "actividad", label: "Actividad", permission: "audit.view" },
 ];
 
@@ -53,7 +51,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageTitle title="Configuración" />
-      <PageHeader title="Configuración" description="Administra tu perfil, tu negocio, tu equipo y tu suscripción." />
+      <PageHeader title="Configuración" description="Administra tu perfil, tu negocio y tu equipo." />
 
       <Tabs value={tab} onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}>
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -101,9 +99,6 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="equipo" className="max-w-3xl">
             <TeamSettings />
-          </TabsContent>
-          <TabsContent value="suscripcion">
-            <SubscriptionSettings />
           </TabsContent>
           <TabsContent value="actividad" className="max-w-3xl">
             <ActivityLog />

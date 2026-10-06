@@ -5,14 +5,30 @@ import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { formatDate, formatTimeRange } from "@/lib/format";
 import { minutesToTime, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
-import type { Appointment, BlockedTime, Client, ISODate, Schedule, Service } from "@/types";
+import type { Appointment, BlockedTime, Client, ISODate, Professional, Schedule, Service } from "@/types";
 import { layoutDayEvents } from "./calendar-utils";
 
 const HOUR_HEIGHT = 56;
 const MIN_EVENT_HEIGHT = 22;
 
+/**
+ * Una columna de la rejilla: un día (de todas las agendas o de una) o, en la vista Día con varias
+ * agendas, la de un profesional (`heading`: su nombre en la cabecera en lugar de la fecha).
+ */
+export interface GridColumn {
+  key: string;
+  day: ISODate;
+  /** Sólo las citas, el horario y los bloqueos de esa agenda. Sin él: todas (y sólo los bloqueos de todo el negocio). */
+  professionalId?: string;
+  heading?: Pick<Professional, "displayName" | "color">;
+}
+
 interface TimeGridViewProps {
   days: ISODate[];
+  /** Por defecto, una columna por día con todas las agendas. */
+  columns?: GridColumn[];
+  /** Con varias agendas: el color de cada profesional en sus citas. */
+  professionalsById?: Map<string, Pick<Professional, "displayName" | "color">>;
   appointments: Appointment[];
   blockedTimes: BlockedTime[];
   schedules: Schedule[];
@@ -21,7 +37,7 @@ interface TimeGridViewProps {
   endHour: number;
   clientsById: Map<string, Client>;
   servicesById: Map<string, Service>;
-  onSlotClick: (date: ISODate, time: string) => void;
+  onSlotClick: (date: ISODate, time: string, professionalId?: string) => void;
   onAppointmentClick: (appointment: Appointment) => void;
 }
 
@@ -31,9 +47,10 @@ interface TimeGridViewProps {
  */
 export function TimeGridView(props: TimeGridViewProps) {
   const { days, now, startHour, endHour } = props;
+  const gridColumns: GridColumn[] = props.columns ?? days.map((day) => ({ key: day, day }));
   const scrollRef = useRef<HTMLDivElement>(null);
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
-  const columns = `3.5rem repeat(${days.length}, minmax(0, 1fr))`;
+  const columns = `3.5rem repeat(${gridColumns.length}, minmax(0, 1fr))`;
   const currentHour = days.includes(now.date) ? Math.floor(now.minutes / 60) : null;
 
   // Si hoy es visible, la vista arranca desplazada cerca de la hora actual.
@@ -46,13 +63,21 @@ export function TimeGridView(props: TimeGridViewProps) {
 
   return (
     <div ref={scrollRef} className="max-h-[calc(100dvh-16rem)] min-h-96 overflow-auto rounded-xl border bg-background">
-      <div className={cn(days.length > 1 && "min-w-[760px]")}>
+      <div style={{ minWidth: gridColumns.length > 1 ? Math.max(760, 56 + gridColumns.length * 150) : undefined }}>
         <div className="sticky top-0 z-20 grid border-b bg-background" style={{ gridTemplateColumns: columns }}>
           <div />
-          {days.map((day) => {
+          {gridColumns.map(({ key, day, heading }) => {
             const isToday = day === now.date;
+            if (heading) {
+              return (
+                <div key={key} className="flex min-w-0 items-center justify-center gap-1.5 border-l px-2 py-3 text-sm font-semibold">
+                  <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: heading.color }} />
+                  <span className="truncate">{heading.displayName}</span>
+                </div>
+              );
+            }
             return (
-              <div key={day} className="border-l px-1 py-2 text-center">
+              <div key={key} className="border-l px-1 py-2 text-center">
                 <p className={cn("text-xs text-muted-foreground", isToday && "font-medium text-primary")}>
                   {formatDate(day, "EEE")}
                 </p>
@@ -85,8 +110,8 @@ export function TimeGridView(props: TimeGridViewProps) {
               </span>
             ))}
           </div>
-          {days.map((day) => (
-            <DayColumn key={day} day={day} {...props} />
+          {gridColumns.map((column) => (
+            <DayColumn key={column.key} column={column} {...props} />
           ))}
         </div>
       </div>
@@ -95,7 +120,8 @@ export function TimeGridView(props: TimeGridViewProps) {
 }
 
 function DayColumn({
-  day,
+  column,
+  professionalsById,
   appointments,
   blockedTimes,
   schedules,
@@ -106,20 +132,27 @@ function DayColumn({
   servicesById,
   onSlotClick,
   onAppointmentClick,
-}: TimeGridViewProps & { day: ISODate }) {
+}: TimeGridViewProps & { column: GridColumn }) {
+  const { day, professionalId } = column;
   const gridStart = startHour * 60;
   const gridEnd = endHour * 60;
   const toY = (minutes: number) => ((Math.min(Math.max(minutes, gridStart), gridEnd) - gridStart) / 60) * HOUR_HEIGHT;
 
-  const events = layoutDayEvents(appointments.filter((a) => a.date === day));
-  const blocks = blockedTimes.flatMap((block) =>
-    getBlockedRanges([block], day).map((range) => ({ ...range, reason: block.reason, id: block.id })),
+  const events = layoutDayEvents(
+    appointments.filter((a) => a.date === day && (!professionalId || a.professionalId === professionalId)),
   );
+  // Bloqueos: los de todo el negocio y, en la columna de una agenda, los suyos.
+  const blocks = blockedTimes
+    .filter((block) => block.professionalId === null || block.professionalId === professionalId)
+    .flatMap((block) => getBlockedRanges([block], day).map((range) => ({ ...range, reason: block.reason, id: block.id })));
+  // Horario de atención: el de la agenda o, con todas, el de cualquiera de ellas.
+  const agendaIds = professionalId ? [professionalId] : [...new Set(schedules.map((s) => s.professionalId))];
+  const workingRanges = agendaIds.flatMap((id) => getWorkingRanges(schedules.filter((s) => s.professionalId === id), day));
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const halfHours = Math.floor(((event.clientY - rect.top) / HOUR_HEIGHT) * 2);
-    onSlotClick(day, minutesToTime(Math.min(gridStart + halfHours * 30, gridEnd - 30)));
+    onSlotClick(day, minutesToTime(Math.min(gridStart + halfHours * 30, gridEnd - 30)), professionalId);
   };
 
   return (
@@ -128,9 +161,9 @@ function DayColumn({
       onClick={handleClick}
       title="Haz clic en un hueco para crear una cita"
     >
-      {getWorkingRanges(schedules, day).map((range) => (
+      {workingRanges.map((range, index) => (
         <div
-          key={range.start}
+          key={`${range.start}-${index}`}
           className="absolute inset-x-0 bg-background"
           style={{ top: toY(range.start), height: toY(range.end) - toY(range.start) }}
         />
@@ -157,6 +190,8 @@ function DayColumn({
         const clientName = clientsById.get(appointment.clientId)?.name ?? "Cliente";
         const serviceName = servicesById.get(appointment.serviceId)?.name ?? "";
         const status = APPOINTMENT_STATUS_CONFIG[appointment.status];
+        // Con todas las agendas en la misma columna, el color del profesional junto al nombre.
+        const professional = !professionalId ? professionalsById?.get(appointment.professionalId) : undefined;
         return (
           <button
             key={appointment.id}
@@ -165,7 +200,7 @@ function DayColumn({
               e.stopPropagation();
               onAppointmentClick(appointment);
             }}
-            aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : ""}`}
+            aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : ""}${professional ? `, con ${professional.displayName}` : ""}`}
             className={cn(
               "absolute z-[1] overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-xs leading-tight shadow-xs transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring",
               status.event,
@@ -178,6 +213,9 @@ function DayColumn({
             }}
           >
             <p className="flex items-center gap-1 truncate font-semibold">
+              {professional && (
+                <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: professional.color }} />
+              )}
               {appointment.homeVisit && <Home className="size-3 shrink-0" aria-hidden />}
               <span className="truncate">{clientName}</span>
             </p>

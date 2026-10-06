@@ -1,20 +1,31 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type BookingStep = "service" | "datetime" | "details" | "confirm";
+export type BookingStep = "service" | "professional" | "datetime" | "details" | "confirm";
 
-const STEPS: { value: BookingStep; label: string }[] = [
-  { value: "service", label: "Servicio" },
-  { value: "datetime", label: "Fecha y hora" },
-  { value: "details", label: "Tus datos" },
-  { value: "confirm", label: "Confirmar" },
-];
+const STEP_LABELS: Record<BookingStep, string> = {
+  service: "Servicio",
+  professional: "Profesional",
+  datetime: "Fecha y hora",
+  details: "Tus datos",
+  confirm: "Confirmar",
+};
 
 /**
  * Pasos de la reserva como pestañas de agenda sobre la hoja: la del paso actual es del mismo
  * papel que la hoja y se une a ella; las de pasos ya hechos permiten volver atrás.
  */
-export function BookingSteps({ current, onStepClick }: { current: BookingStep; onStepClick: (step: BookingStep) => void }) {
+export function BookingSteps({
+  steps,
+  current,
+  onStepClick,
+}: {
+  /** Los pasos de esta reserva ("Profesional" sólo con varias agendas). */
+  steps: BookingStep[];
+  current: BookingStep;
+  onStepClick: (step: BookingStep) => void;
+}) {
+  const STEPS = steps.map((value) => ({ value, label: STEP_LABELS[value] }));
   const currentIndex = STEPS.findIndex((step) => step.value === current);
 
   return (
