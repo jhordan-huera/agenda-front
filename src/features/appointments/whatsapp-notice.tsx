@@ -15,6 +15,7 @@ import { buildAppointmentNotice, getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, Business, Client, WhatsAppNoticeKind } from "@/types";
 import { getServiceName } from "./appointment-utils";
 import { WhatsAppNoticeContext } from "./whatsapp-notice-context";
+import { useProfessionals } from "@/hooks/queries/use-professionals";
 
 /** Por qué se propone el aviso, bajo el título. */
 const REASONS: Record<WhatsAppNoticeKind, string> = {
@@ -49,6 +50,7 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
   const businessId = useBusinessId();
   const { data: business } = useCurrentBusiness();
   const { clientsById, servicesById } = useLookups();
+  const { data: professionals = [] } = useProfessionals();
   const invalidateActivity = useInvalidateActivity();
   const [notice, setNotice] = useState<PendingNotice | null>(null);
 
@@ -70,6 +72,9 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
       date: appointment.date,
       startTime: appointment.startTime,
       bookingUrl: `${window.location.origin}/book/${business.slug}`,
+      virtual: appointment.isVirtual
+        ? { meetingUrl: professionals.find((p) => p.id === appointment.professionalId)?.meetingUrl || null }
+        : undefined,
     });
     setNotice({ appointment, kind, client, message });
   };

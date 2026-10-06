@@ -1,6 +1,6 @@
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
 import { isPast, minutesToTime, type ZonedNow } from "@/lib/time";
-import type { Appointment, Client, HomeVisitAddress, Service } from "@/types";
+import type { Appointment, Client, HomeVisitAddress, Service, ServiceMode } from "@/types";
 
 export function getClientName(clientsById: Map<string, Client>, clientId: string): string {
   return clientsById.get(clientId)?.name ?? "Cliente eliminado";
@@ -31,6 +31,11 @@ export function clearHomeVisitErrors(errors: Record<string, string>, patch: Part
   const next = { ...errors };
   for (const key of Object.keys(patch)) delete next[`homeVisit.${key === "lng" ? "lat" : key}`];
   return next;
+}
+
+/** Dónde es una cita: en el local, a domicilio o por videollamada. */
+export function getPlace(appointment: { homeVisit: HomeVisitAddress | null; isVirtual: boolean }): ServiceMode {
+  return appointment.isVirtual ? "virtual" : appointment.homeVisit ? "home" : "business";
 }
 
 /** Precio de lista de un servicio según el lugar: a domicilio se suma el recargo. */

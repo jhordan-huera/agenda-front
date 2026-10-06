@@ -1,8 +1,8 @@
-import { CalendarDays, Clock, MapPin, Pencil, ShieldCheck, User } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Pencil, ShieldCheck, User, Video } from "lucide-react";
 import type { ReactNode } from "react";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Button } from "@/components/ui/button";
-import { capitalize, formatCurrency, formatDuration, formatLongDate, formatTimeRange, isPriceVisible } from "@/lib/format";
+import { capitalize, formatCurrency, formatDuration, formatLongDate, formatPrice, formatTimeRange, isPriceVisible } from "@/lib/format";
 import { getListPrice } from "@/features/appointments/appointment-utils";
 import { describeHomeVisit, getPlaceMapsUrl } from "@/lib/maps";
 import { addMinutesToTime } from "@/lib/time";
@@ -50,7 +50,7 @@ export function ConfirmStep({
           {showPrice && (
             <>
               <span className="block font-semibold tabular-nums">
-                {formatCurrency(getListPrice(service, Boolean(input.homeVisit)), business.currency)}
+                {formatPrice(getListPrice(service, Boolean(input.homeVisit)), business.currency)}
               </span>
               {input.homeVisit && service.homeVisitFee > 0 && (
                 <span className="block text-muted-foreground">
@@ -60,9 +60,15 @@ export function ConfirmStep({
             </>
           )}
         </Row>
-        <Row icon={MapPin} label="Lugar">
-          {professional ? `${professional.displayName}, ${business.name}` : `${business.name} (con el primer profesional disponible)`}
-          {input.homeVisit ? (
+        <Row icon={input.isVirtual ? Video : MapPin} label="Lugar">
+          {input.isVirtual
+            ? `Videollamada con ${professional?.displayName ?? "el primer profesional disponible"}, ${business.name}`
+            : professional
+              ? `${professional.displayName}, ${business.name}`
+              : `${business.name} (con el primer profesional disponible)`}
+          {input.isVirtual ? (
+            <span className="block text-muted-foreground">Recibirás el enlace para entrar con la confirmación.</span>
+          ) : input.homeVisit ? (
             <a
               href={getPlaceMapsUrl(input.homeVisit)}
               target="_blank"

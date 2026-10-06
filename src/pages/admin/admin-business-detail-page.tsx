@@ -11,6 +11,7 @@ import {
   PlayCircle,
   Trash2,
   UserPlus,
+  UserRoundPlus,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -28,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AdminAuditList } from "@/features/admin/admin-audit-list";
 import { BusinessStatusBadge, PlanBadge } from "@/features/admin/business-badges";
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
+import { AddOwnerDialog } from "@/features/admin/add-owner-dialog";
 import { DeleteBusinessDialog } from "@/features/admin/delete-business-dialog";
 import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
 import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
@@ -59,6 +61,7 @@ export default function AdminBusinessDetailPage() {
   const { enterSupport } = useSession();
   const navigate = useNavigate();
   const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [addOwnerOpen, setAddOwnerOpen] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   // El plan elegido se conserva al cerrar para que el título no cambie durante la animación.
@@ -204,13 +207,25 @@ export default function AdminBusinessDetailPage() {
                 Personas con acceso al panel de este negocio. Sólo tú agregas miembros y pones sus contraseñas.
               </CardDescription>
               <CardAction>
-                <Button size="sm" onClick={() => setAddMemberOpen(true)}>
-                  <UserPlus /> Agregar
-                </Button>
+                {/* El propietario primero: en Free sólo cabe un usuario. */}
+                {owner ? (
+                  <Button size="sm" onClick={() => setAddMemberOpen(true)}>
+                    <UserPlus /> Agregar
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={() => setAddOwnerOpen(true)}>
+                    <UserRoundPlus /> Agregar propietario
+                  </Button>
+                )}
               </CardAction>
             </CardHeader>
             <CardContent>
-              <ul className="divide-y rounded-lg border">
+              {members.length === 0 && (
+                <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+                  Aún nadie entra a este negocio. Empieza por su propietario.
+                </p>
+              )}
+              <ul className={members.length ? "divide-y rounded-lg border" : "hidden"}>
                 {members.map((member) => {
                   const name = `${member.firstName} ${member.lastName}`;
                   return (
@@ -268,7 +283,14 @@ export default function AdminBusinessDetailPage() {
                   </Button>
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">Sin propietario.</p>
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Aún no tiene. Su página de reservas ya funciona; agrégalo cuando tengas sus datos.
+                  </p>
+                  <Button className="w-full" onClick={() => setAddOwnerOpen(true)}>
+                    <UserRoundPlus /> Agregar propietario
+                  </Button>
+                </>
               )}
             </CardContent>
           </Card>
@@ -399,6 +421,7 @@ export default function AdminBusinessDetailPage() {
         open={addMemberOpen}
         onOpenChange={setAddMemberOpen}
       />
+      <AddOwnerDialog businessId={business.id} businessName={business.name} open={addOwnerOpen} onOpenChange={setAddOwnerOpen} />
     </div>
   );
 }

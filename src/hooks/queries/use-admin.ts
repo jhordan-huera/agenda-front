@@ -3,6 +3,7 @@ import { data, type AdminAuditFilters } from "@/lib/data";
 import type {
   AdminBusinessInput,
   AdminMemberInput,
+  BusinessOwnerInput,
   BusinessCategoryInput,
   PlatformAdminInput,
   PlatformSettingsInput,
@@ -141,6 +142,11 @@ export const useAddPlatformAdmin = () => useAdminMutation((input: PlatformAdminI
 export const useAddBusinessMember = () =>
   useAdminMutation(({ businessId, input }: { businessId: string; input: AdminMemberInput }) =>
     data.admin.addBusinessMember(businessId, input),
+  );
+
+export const useAssignBusinessOwner = () =>
+  useAdminMutation(({ businessId, input }: { businessId: string; input: BusinessOwnerInput }) =>
+    data.admin.assignBusinessOwner(businessId, input),
   );
 
 export function useUpdatePlatformSettings() {

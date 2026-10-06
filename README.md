@@ -138,10 +138,12 @@ Hay dos caminos, y el super admin decide cuáles están abiertos:
    negocio, con plan Free. Se puede cerrar desde `/admin/settings` → "Registro público abierto";
    con el registro cerrado, `/register` muestra un aviso y el backend rechaza las altas.
    **En producción está cerrado**: las contraseñas las pone siempre el super admin.
-2. **Alta por el super admin** (`/admin/businesses` → "Nuevo negocio"): crea el negocio, su
-   propietario (cuenta nueva con contraseña temporal, o una existente sin negocio) y el plan.
-   El negocio nace con horario y un servicio sugerido, y el propietario recibe un email con sus
-   datos de acceso y el enlace de su página de reservas.
+2. **Alta por el super admin** (`/admin/businesses` → "Nuevo negocio"): datos del negocio con su
+   descripción, sus servicios (nombre, minutos y precio; se propone el del tipo de negocio), su
+   horario semanal (varios intervalos por día) y el plan. **Sin propietario**: su página de
+   reservas funciona desde ya y la cuenta se agrega después en la ficha del negocio ("Agregar
+   propietario": cuenta nueva, o una existente sin negocio, con la contraseña que elige el super
+   admin). Le llega un email con su acceso; si el negocio tiene una sola agenda, pasa a ser la suya.
 
 Jerarquía de roles:
 
@@ -198,17 +200,16 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
 - **Horas de reserva según la duración del servicio**: un servicio de 1 h se ofrece a las
   08:00, 09:00, 10:00… (nunca a las 08:30); la reserva se rechaza en el backend si la hora no
   está en esa cuadrícula. Se puede cambiar a "cada X minutos" en Configuración → Agenda.
-- **Precio visible u oculto por servicio**: interruptor "Mostrar el precio a los clientes". Si está
-  apagado, o el precio es 0, la página pública y los emails al cliente no muestran ningún precio.
-  El profesional siempre ve y edita el precio real. Se respeta en la página pública y en los emails al cliente;
-  el profesional siempre ve y edita el precio real.
+- **El precio de cada servicio, a elección**: "Mostrar el precio", "Gratis" (precio 0; los clientes
+  ven «Gratis») o "No mostrar" (precio a consultar: ni precio ni «Gratis» en la página pública y en
+  los emails al cliente). El profesional siempre ve y edita el precio real.
 - **Historia clínica** (negocios de salud; se activa en Configuración → Negocio): pestaña en la
   ficha del cliente con antecedentes (cédula, alergias, enfermedades, medicación, consentimiento
   informado…) y evoluciones por consulta con el **formato de cada especialidad** (plantillas):
   atención médica (signos vitales, examen físico, diagnósticos CIE-10, receta, descargo de
   responsabilidad), psicología, odontología, nutrición con IMC automático, fisioterapia,
   fonoaudiología, medicina estética, evolución general y nota libre. Se propone el **formato de tu
-  negocio** (o el del servicio de la cita, si tiene uno); lo escrito en cada formato se
+  negocio**; lo escrito en cada formato se
   conserva al cambiar de uno a otro. Formulario y vista en `src/features/clinical/`
   (`clinical-field-input.tsx`, `clinical-note-content.tsx`).
   - **Odontograma** (se copia el último y se actualiza), **mapa del cuerpo** para lesiones o dolor
@@ -231,8 +232,12 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
 - **Ubicación del local**: en Configuración → Negocio se marca la puerta del local en un mapa. La
   página de reservas muestra el mapa con "Cómo llegar" (salvo en citas a domicilio), y la
   confirmación, la pantalla final y los emails llevan a ese punto exacto en Google Maps.
-- **Citas a domicilio**: cada servicio puede ser "en el local", "a domicilio" o ambos, con un
-  recargo opcional. Al reservar, el cliente marca su **ubicación exacta en un mapa** (toque, pin
+- **Modalidades: en el local, a domicilio y virtual**: cada servicio admite una o varias (con varias,
+  el cliente elige al reservar). Lo **virtual** es por videollamada con la sala fija de cada
+  profesional (Profesionales → Editar → "Enlace de videollamada": Meet, Zoom o Teams, con https://):
+  el enlace llega en la confirmación, en los emails y en el aviso por WhatsApp; en la agenda la
+  cita lleva un icono de cámara y el detalle, "Entrar a la videollamada".
+- **Citas a domicilio**: con un recargo opcional por servicio. Al reservar, el cliente marca su **ubicación exacta en un mapa** (toque, pin
   arrastrable, "Usar mi ubicación" o buscador de direcciones) y añade una referencia. En la agenda
   la cita lleva un icono de casa y el botón "Cómo llegar" (Google Maps).
 - **Mapas**: mapa vectorial con MapLibre GL y el estilo "Liberty" de OpenFreeMap (datos de

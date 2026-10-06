@@ -1,7 +1,7 @@
 import type { PublicBookingInput } from "@/lib/validations/booking";
 
 /** Datos del cliente y lugar de la cita: se conservan al volver del paso "Confirmar". */
-export type ContactValues = Pick<PublicBookingInput, "documentId" | "name" | "email" | "phone" | "notes" | "homeVisit"> & {
+export type ContactValues = Pick<PublicBookingInput, "documentId" | "name" | "email" | "phone" | "notes" | "homeVisit" | "isVirtual"> & {
   /** Cédula ya buscada (normalizada); "" mientras no se busque. */
   verifiedDocumentId: string;
   /** Si la cédula ya es de un cliente del negocio, su nombre para saludar ("María L."); si no, null. */
@@ -15,6 +15,7 @@ export const EMPTY_CONTACT: ContactValues = {
   phone: "",
   notes: "",
   homeVisit: null,
+  isVirtual: false,
   verifiedDocumentId: "",
   knownClientName: null,
 };

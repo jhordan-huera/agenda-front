@@ -1,5 +1,7 @@
-import { Clock, Home } from "lucide-react";
-import { formatCurrency, formatDuration, isPriceVisible } from "@/lib/format";
+import { Clock } from "lucide-react";
+import { MODE_ICONS } from "@/features/services/mode-icons";
+import { describeServiceModes } from "@/lib/constants/business";
+import { formatCurrency, formatDuration, formatPrice, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PublicService } from "@/types";
 
@@ -16,6 +18,7 @@ export function ServiceStep({ services, currency, selectedId, onSelect }: Servic
       {services.map((service) => {
         const selected = service.id === selectedId;
         const showPrice = isPriceVisible(service);
+        const ModeIcon = MODE_ICONS[service.modes.find((mode) => mode !== "business") ?? "business"];
         return (
           <button
             key={service.id}
@@ -37,18 +40,21 @@ export function ServiceStep({ services, currency, selectedId, onSelect }: Servic
                 <span className="inline-flex items-center gap-1.5">
                   <Clock className="size-4" aria-hidden /> {formatDuration(service.durationMinutes)}
                 </span>
-                {service.location !== "business" && (
+                {(service.modes.length > 1 || service.modes[0] !== "business") && (
                   <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-                    <Home className="size-4" aria-hidden />
-                    {service.location === "home" ? "A domicilio" : "En el local o a domicilio"}
-                    {service.homeVisitFee > 0 && showPrice && ` (+${formatCurrency(service.homeVisitFee, currency)})`}
+                    <ModeIcon className="size-4" aria-hidden />
+                    {describeServiceModes(service.modes)}
+                    {service.modes.includes("home") &&
+                      service.homeVisitFee > 0 &&
+                      showPrice &&
+                      ` (${service.modes.length > 1 ? "a domicilio " : ""}+${formatCurrency(service.homeVisitFee, currency)})`}
                   </span>
                 )}
               </span>
             </span>
             {showPrice && (
               <span className="shrink-0 text-xl font-extrabold tracking-[-0.02em] tabular-nums">
-                {formatCurrency(service.price, currency)}
+                {formatPrice(service.price, currency)}
               </span>
             )}
           </button>

@@ -1,6 +1,6 @@
-import { Mail, Navigation } from "lucide-react";
+import { Mail, Navigation, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { capitalize, formatCurrency, formatLongDate } from "@/lib/format";
+import { capitalize, formatLongDate, formatPrice } from "@/lib/format";
 import { describeHomeVisit, getDirectionsUrl, hasMapPoint } from "@/lib/maps";
 import type { BookingConfirmation, PublicBusiness } from "@/types";
 
@@ -14,13 +14,17 @@ interface BookingSuccessProps {
 export function BookingSuccess({ confirmation, business, onBookAnother }: BookingSuccessProps) {
   const currency = business.currency;
   // En el local: dirección y botón "Cómo llegar" (al punto exacto si el negocio lo marcó).
-  const atBusiness = !confirmation.homeVisit && (Boolean(business.address) || hasMapPoint(business));
+  const atBusiness =
+    !confirmation.homeVisit && !confirmation.isVirtual && (Boolean(business.address) || hasMapPoint(business));
   const rows = [
     { label: "Servicio", value: confirmation.serviceName },
     { label: "Profesional", value: confirmation.professionalName },
     ...(confirmation.homeVisit ? [{ label: "A domicilio", value: describeHomeVisit(confirmation.homeVisit) }] : []),
+    ...(confirmation.isVirtual
+      ? [{ label: "Lugar", value: confirmation.meetingUrl ? "Videollamada" : "Videollamada (te enviaremos el enlace)" }]
+      : []),
     ...(atBusiness && business.address ? [{ label: "Lugar", value: business.address }] : []),
-    ...(confirmation.showPrice ? [{ label: "Precio", value: formatCurrency(confirmation.price, currency) }] : []),
+    ...(confirmation.showPrice ? [{ label: "Precio", value: formatPrice(confirmation.price, currency) }] : []),
   ];
 
   return (
@@ -54,6 +58,13 @@ export function BookingSuccess({ confirmation, business, onBookAnother }: Bookin
       )}
 
       <div className="mt-7 flex flex-col gap-2 sm:flex-row">
+        {confirmation.meetingUrl && (
+          <Button asChild size="lg" className="h-11 px-5">
+            <a href={confirmation.meetingUrl} target="_blank" rel="noreferrer">
+              <Video /> Enlace de la videollamada
+            </a>
+          </Button>
+        )}
         {atBusiness && (
           <Button asChild size="lg" className="h-11 px-5">
             <a href={getDirectionsUrl(business)} target="_blank" rel="noreferrer">

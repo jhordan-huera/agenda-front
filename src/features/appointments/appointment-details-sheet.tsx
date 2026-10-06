@@ -12,6 +12,7 @@ import {
   Pencil,
   Phone,
   Tag,
+  Video,
   Wallet,
   XCircle,
 } from "lucide-react";
@@ -177,6 +178,22 @@ function AppointmentDetails({
               </Button>
               {appointment.homeVisit.lat === null && (
                 <span className="mt-1 block text-xs text-muted-foreground">Sin punto en el mapa: se busca por la dirección.</span>
+              )}
+            </DetailRow>
+          )}
+          {appointment.isVirtual && (
+            <DetailRow icon={Video} label="Lugar">
+              <span className="block font-medium">Virtual (videollamada)</span>
+              {professional?.meetingUrl ? (
+                <Button asChild size="sm" variant="outline" className="mt-2">
+                  <a href={professional.meetingUrl} target="_blank" rel="noreferrer">
+                    <Video /> Entrar a la videollamada
+                  </a>
+                </Button>
+              ) : (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Sin enlace: agrégalo en Profesionales → Editar para que llegue en la confirmación.
+                </span>
               )}
             </DetailRow>
           )}

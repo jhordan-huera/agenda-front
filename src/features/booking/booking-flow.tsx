@@ -2,13 +2,14 @@ import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { getPlace } from "@/features/appointments/appointment-utils";
 import { useCreateBooking } from "@/hooks/queries/use-public-booking";
 import { getMinNoticeHours, offersService } from "@/lib/availability";
 import { DataError, getErrorMessage } from "@/lib/data";
 import { capitalize, formatLongDate, plural } from "@/lib/format";
 import { addDaysISO, addMinutesToTime } from "@/lib/time";
 import type { PublicBookingInput } from "@/lib/validations/booking";
-import type { BookingConfirmation, BusySlot, ISODate, PublicBusinessProfile, PublicService } from "@/types";
+import type { BookingConfirmation, BusySlot, ISODate, PublicBusinessProfile, PublicService, ServiceMode } from "@/types";
 import { BookingCalendar } from "./booking-calendar";
 import { BookingSteps, type BookingStep } from "./booking-steps";
 import { BookingSuccess } from "./booking-success";
@@ -86,9 +87,16 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
       : asksProfessional && !professionalChoice && step !== "service"
         ? "professional"
         : step;
-  const atHome = service?.location === "home" || (currentStep === "confirm" && Boolean(pendingInput?.homeVisit));
-  // El local sólo interesa si el cliente va a ir: no en citas a domicilio ni si todo es a domicilio.
-  const showLocation = !atHome && services.some((s) => s.location !== "home");
+  // Dónde será la cita: la única modalidad del servicio o, al confirmar, la que eligió el cliente.
+  const place: ServiceMode | null = !service
+    ? null
+    : currentStep === "confirm" && pendingInput
+      ? getPlace(pendingInput)
+      : service.modes.length === 1
+        ? service.modes[0]
+        : null;
+  // El local sólo interesa si el cliente va a ir: no en citas a domicilio o virtuales, ni si nada se atiende en el local.
+  const showLocation = (place === null || place === "business") && services.some((s) => s.modes.includes("business"));
 
   const reset = () => {
     setConfirmation(null);
@@ -285,7 +293,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
           service={service}
           date={date}
           time={time}
-          atHome={atHome}
+          place={place}
         />
         {showLocation && <BusinessLocationCard business={business} />}
         <WhatsAppHelp business={business} />

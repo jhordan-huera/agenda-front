@@ -1,4 +1,4 @@
-import { CalendarPlus, Home } from "lucide-react";
+import { CalendarPlus, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,11 @@ export function NextUp({ appointment, client, serviceName, business, now, onOpen
           {appointment.homeVisit && (
             <span className="inline-flex items-center gap-1 text-sm font-semibold text-ink">
               <Home className="size-4" aria-hidden /> A domicilio
+            </span>
+          )}
+          {appointment.isVirtual && (
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-ink">
+              <Video className="size-4" aria-hidden /> Virtual
             </span>
           )}
           {appointment.source === "booking_page" && <span className="text-sm text-muted-foreground">Reserva online</span>}

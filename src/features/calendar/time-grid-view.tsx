@@ -1,4 +1,4 @@
-import { Home } from "lucide-react";
+import { Home, Video } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { getBlockedRanges, getWorkingRanges } from "@/lib/availability";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
@@ -200,7 +200,7 @@ function DayColumn({
               e.stopPropagation();
               onAppointmentClick(appointment);
             }}
-            aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : ""}${professional ? `, con ${professional.displayName}` : ""}`}
+            aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : appointment.isVirtual ? ", virtual" : ""}${professional ? `, con ${professional.displayName}` : ""}`}
             className={cn(
               "absolute z-[1] overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-xs leading-tight shadow-xs transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring",
               status.event,
@@ -217,6 +217,7 @@ function DayColumn({
                 <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: professional.color }} />
               )}
               {appointment.homeVisit && <Home className="size-3 shrink-0" aria-hidden />}
+              {appointment.isVirtual && <Video className="size-3 shrink-0" aria-hidden />}
               <span className="truncate">{clientName}</span>
             </p>
             {height >= 36 && <p className="truncate opacity-80">{formatTimeRange(appointment.startTime, appointment.endTime)}</p>}
