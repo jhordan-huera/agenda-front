@@ -138,10 +138,12 @@ Hay dos caminos, y el super admin decide cuáles están abiertos:
    negocio, con plan Free. Se puede cerrar desde `/admin/settings` → "Registro público abierto";
    con el registro cerrado, `/register` muestra un aviso y el backend rechaza las altas.
    **En producción está cerrado**: las contraseñas las pone siempre el super admin.
-2. **Alta por el super admin** (`/admin/businesses` → "Nuevo negocio"): crea el negocio, su
-   propietario (cuenta nueva con contraseña temporal, o una existente sin negocio) y el plan.
-   El negocio nace con horario y un servicio sugerido, y el propietario recibe un email con sus
-   datos de acceso y el enlace de su página de reservas.
+2. **Alta por el super admin** (`/admin/businesses` → "Nuevo negocio"): datos del negocio con su
+   descripción, sus servicios (nombre, minutos y precio; se propone el del tipo de negocio), su
+   horario semanal (varios intervalos por día) y el plan. **Sin propietario**: su página de
+   reservas funciona desde ya y la cuenta se agrega después en la ficha del negocio ("Agregar
+   propietario": cuenta nueva, o una existente sin negocio, con la contraseña que elige el super
+   admin). Le llega un email con su acceso; si el negocio tiene una sola agenda, pasa a ser la suya.
 
 Jerarquía de roles:
 

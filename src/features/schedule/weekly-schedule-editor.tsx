@@ -79,6 +79,7 @@ export function WeeklyScheduleEditor({ value, onChange, errors = {} }: WeeklySch
                     />
                     {day.intervals.length > 1 && (
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         aria-label="Quitar intervalo"
@@ -93,6 +94,7 @@ export function WeeklyScheduleEditor({ value, onChange, errors = {} }: WeeklySch
                 ))}
                 <div className="flex flex-wrap items-center gap-1">
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     className="text-primary hover:text-primary"
@@ -104,7 +106,7 @@ export function WeeklyScheduleEditor({ value, onChange, errors = {} }: WeeklySch
                   </Button>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => copyToActiveDays(day)}>
+                      <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={() => copyToActiveDays(day)}>
                         <Copy /> Aplicar a todos
                       </Button>
                     </TooltipTrigger>

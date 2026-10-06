@@ -204,6 +204,8 @@ export const apiRepository: DataRepository = {
     addPlatformAdmin: (input) => api.post<PlatformAdmin>("/admin/platform-admins", input),
     addBusinessMember: (businessId, input) =>
       api.post<TeamMember>(`/admin/businesses/${id(businessId)}/members`, input),
+    assignBusinessOwner: (businessId, input) =>
+      api.post<TeamMember>(`/admin/businesses/${id(businessId)}/owner`, input),
     listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),
     listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),

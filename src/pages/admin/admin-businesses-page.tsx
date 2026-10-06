@@ -151,7 +151,7 @@ export default function AdminBusinessesPage() {
                     <p className="truncate text-xs text-muted-foreground">/book/{business.slug}</p>
                   </TableCell>
                   <TableCell className="hidden max-w-56 md:table-cell">
-                    <p className="truncate">{owner?.name ?? "—"}</p>
+                    <p className={owner ? "truncate" : "truncate text-muted-foreground"}>{owner?.name ?? "Sin propietario"}</p>
                     <p className="truncate text-xs text-muted-foreground">{owner?.email}</p>
                   </TableCell>
                   <TableCell>{subscription && <PlanBadge plan={subscription.plan} />}</TableCell>

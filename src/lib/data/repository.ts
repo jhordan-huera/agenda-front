@@ -1,6 +1,7 @@
 import type {
   AdminBusinessInput,
   AdminMemberInput,
+  BusinessOwnerInput,
   BusinessCategoryInput,
   BusinessDeletionInput,
   PlanRejectionInput,
@@ -263,11 +264,9 @@ export interface PlatformRepository {
   listCategories(): Promise<BusinessCategoryInfo[]>;
 }
 
+/** El negocio recién creado, aún sin propietario (se agrega con assignBusinessOwner). */
 export interface AdminCreateBusinessResult {
   business: Business;
-  ownerEmail: string;
-  /** true si el email ya tenía cuenta (se le asignó el negocio y la contraseña elegida). */
-  existingAccount: boolean;
 }
 
 /** "admin": acciones del super admin · "security": sesiones (con IP y navegador) · "all": todo. */
@@ -317,6 +316,11 @@ export interface PlatformAdminRepository {
   addPlatformAdmin(input: PlatformAdminInput): Promise<PlatformAdmin>;
   /** Crea un miembro del equipo de un negocio con la contraseña que elige el super admin. */
   addBusinessMember(businessId: string, input: AdminMemberInput): Promise<TeamMember>;
+  /**
+   * Propietario de un negocio que aún no lo tiene (cuenta nueva o una existente sin negocio); le
+   * llega un email con su acceso. Con una sola agenda sin usuario, esa pasa a ser la suya.
+   */
+  assignBusinessOwner(businessId: string, input: BusinessOwnerInput): Promise<TeamMember>;
   listAuditLogs(filters: AdminAuditFilters): Promise<AuditLogPage<AdminAuditLog>>;
   /** Todos los emails de la plataforma (bandeja de salida global). */
   listEmails(): Promise<EmailNotification[]>;
