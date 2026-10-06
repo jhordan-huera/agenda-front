@@ -15,7 +15,7 @@ import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
 import { SignupsChart } from "@/features/admin/signups-chart";
 import { useAdminBusinesses, useAdminStats } from "@/hooks/queries/use-admin";
 import { PLANS } from "@/lib/constants/plans";
-import { formatCurrency, formatNumericDate, plural } from "@/lib/format";
+import { formatNumericDate, plural } from "@/lib/format";
 
 export default function AdminOverviewPage() {
   const stats = useAdminStats();
@@ -44,17 +44,12 @@ export default function AdminOverviewPage() {
       ) : (
         <MetricStrip
           loading={loading}
-          className="md:grid-cols-5 2xl:grid-cols-5"
+          className="md:grid-cols-4 2xl:grid-cols-4"
           metrics={[
             {
               label: "Negocios activos",
               value: data?.businesses.active,
               hint: data && `${plural(data.businesses.suspended, "suspendido", "suspendidos")}, ${data.businesses.total} en total`,
-            },
-            {
-              label: "Ingresos recurrentes",
-              value: data && formatCurrency(data.monthlyRecurringRevenue),
-              hint: "Suscripciones de pago activas (MRR)",
             },
             { label: "Usuarios", value: data?.users, hint: "Propietarios y equipos" },
             { label: "Citas este mes", value: data?.appointmentsThisMonth, hint: "No canceladas, en todos los negocios" },

@@ -9,7 +9,16 @@ import type { Schedule } from "@/types";
 import { toWeekInputs, validateWeek } from "./schedule-utils";
 import { WeeklyScheduleEditor } from "./weekly-schedule-editor";
 
-export function WeeklyScheduleCard({ schedules }: { schedules: Schedule[] }) {
+interface WeeklyScheduleCardProps {
+  professionalId: string;
+  /** Su nombre, si el negocio tiene varias agendas. */
+  professionalName?: string;
+  /** El horario de ese profesional. */
+  schedules: Schedule[];
+}
+
+/** Horario semanal de una agenda. Al cambiar de profesional, la página lo vuelve a montar (key). */
+export function WeeklyScheduleCard({ professionalId, professionalName, schedules }: WeeklyScheduleCardProps) {
   const saveSchedules = useSaveSchedules();
   const saved = toWeekInputs(schedules);
   const [week, setWeek] = useState(saved);
@@ -24,7 +33,7 @@ export function WeeklyScheduleCard({ schedules }: { schedules: Schedule[] }) {
       return;
     }
     try {
-      await saveSchedules.mutateAsync(week);
+      await saveSchedules.mutateAsync({ professionalId, days: week });
       toast.success("Horario guardado");
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -34,7 +43,7 @@ export function WeeklyScheduleCard({ schedules }: { schedules: Schedule[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Horario semanal</CardTitle>
+        <CardTitle>{professionalName ? `Horario semanal de ${professionalName}` : "Horario semanal"}</CardTitle>
         <CardDescription>
           Activa los días que atiendes. Usa “Agregar intervalo” para horarios partidos (p. ej. 08:00–12:00 y 14:00–18:00).
         </CardDescription>

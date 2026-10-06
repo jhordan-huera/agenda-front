@@ -1,6 +1,9 @@
 import {
   CalendarDays,
   Clock,
+  DoorOpen,
+  Stethoscope,
+  Undo2,
   ExternalLink,
   FilePlus2,
   Home,
@@ -25,12 +28,14 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClinicalNoteDialog } from "@/features/clinical/clinical-note-dialog";
 import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
+import { ProfessionalDot } from "@/features/professionals/professional-select";
+import { useAgendas } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
-import { useAppointment, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
+import { useAppointment, useSetAppointmentArrival, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
-import { capitalize, formatCurrency, formatDuration, formatLongDate, formatTimeRange } from "@/lib/format";
+import { capitalize, formatClockTime, formatCurrency, formatDuration, formatLongDate, formatTimeRange } from "@/lib/format";
 import { durationInMinutes } from "@/lib/time";
 import { describeHomeVisit, getDirectionsUrl } from "@/lib/maps";
 import { cn } from "@/lib/utils";
@@ -76,7 +81,12 @@ function AppointmentDetails({
   const { clientsById, servicesById } = useLookups();
   const { data: business } = useCurrentBusiness();
   const updateStatus = useUpdateAppointmentStatus();
+  const setArrival = useSetAppointmentArrival();
   const showError = useErrorToast();
+  const agendas = useAgendas();
+  const professional = agendas.byId(appointment.professionalId);
+  // La llegada se marca en citas que aún no se atendieron.
+  const canMarkArrival = appointment.status === "pending" || appointment.status === "confirmed";
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const clinicalAccess = useClinicalAccess();
@@ -91,6 +101,16 @@ function AppointmentDetails({
           `Hola ${client.name.split(" ")[0]}, te escribimos de ${business.name} sobre tu cita de ${getServiceName(servicesById, appointment.serviceId)} el ${formatLongDate(appointment.date)} a las ${appointment.startTime}.`,
         )
       : null;
+
+  const toggleArrival = async () => {
+    const arrived = !appointment.arrivedAt;
+    try {
+      await setArrival.mutateAsync({ id: appointment.id, arrived });
+      toast.success(arrived ? `${clientName} llegó` : "Llegada quitada");
+    } catch (error) {
+      showError(error);
+    }
+  };
 
   const changeStatus = async (status: AppointmentStatus) => {
     try {
@@ -112,7 +132,14 @@ function AppointmentDetails({
             <SheetDescription>{getServiceName(servicesById, appointment.serviceId)}</SheetDescription>
           </div>
         </div>
-        <StatusBadge status={appointment.status} className="mt-2 w-fit" />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <StatusBadge status={appointment.status} className="w-fit" />
+          {appointment.arrivedAt && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-highlight/60 px-2 py-0.5 text-xs font-semibold text-ink">
+              <DoorOpen className="size-3.5" aria-hidden /> Llegó a las {formatClockTime(appointment.arrivedAt, business?.timezone)}
+            </span>
+          )}
+        </div>
       </SheetHeader>
 
       <div className="space-y-6 p-5">
@@ -124,6 +151,15 @@ function AppointmentDetails({
             {formatTimeRange(appointment.startTime, appointment.endTime)} ·{" "}
             {formatDuration(durationInMinutes(appointment.startTime, appointment.endTime))}
           </DetailRow>
+          {(agendas.multiple || (professional && agendas.all.length > 1)) && professional && (
+            <DetailRow icon={Stethoscope} label="Profesional">
+              <span className="inline-flex items-center gap-2">
+                <ProfessionalDot color={professional.color} />
+                {professional.displayName}
+                {!professional.isActive && <span className="text-muted-foreground">(inactivo)</span>}
+              </span>
+            </DetailRow>
+          )}
           <DetailRow icon={Wallet} label="Precio">
             {formatCurrency(appointment.price)}
           </DetailRow>
@@ -151,6 +187,25 @@ function AppointmentDetails({
             <p className="mb-1 text-xs font-medium text-muted-foreground">Notas</p>
             <p className="whitespace-pre-line">{appointment.notes}</p>
           </div>
+        )}
+
+        {(canMarkArrival || appointment.arrivedAt) && (
+          <Button
+            variant={appointment.arrivedAt ? "outline" : "default"}
+            className="w-full"
+            disabled={setArrival.isPending || (!canMarkArrival && Boolean(appointment.arrivedAt))}
+            onClick={toggleArrival}
+          >
+            {appointment.arrivedAt ? (
+              <>
+                <Undo2 /> Quitar la llegada
+              </>
+            ) : (
+              <>
+                <DoorOpen /> Marcar que llegó
+              </>
+            )}
+          </Button>
         )}
 
         <section aria-labelledby="status-heading" className="space-y-2">

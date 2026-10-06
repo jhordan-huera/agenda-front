@@ -45,6 +45,7 @@ import { getErrorMessage } from "@/lib/data";
 import { clinicalTemplateInputSchema } from "@/lib/validations/clinical";
 import { validate } from "@/lib/validations/validate";
 import type { ClinicalField, ClinicalTemplate } from "@/types";
+import { PlanLimitContact } from "@/features/support/plan-limit-contact";
 
 /** Crear (desde cero o duplicando uno de la plataforma) o editar un formato propio. */
 export default function ClinicalTemplateEditorPage() {
@@ -219,10 +220,8 @@ function TemplateEditor({
         <p className="flex items-start gap-2 rounded-lg border border-highlight bg-highlight/40 px-3 py-2 text-sm">
           <Lock className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden />
           <span>
-            Crear y adaptar formatos está en los planes Pro y Business.{" "}
-            <Link to="/dashboard/settings?tab=suscripcion" className="font-semibold text-ink underline underline-offset-4">
-              Ver planes
-            </Link>
+            Crear y adaptar formatos no está incluido en lo que tienes contratado. Para activarlo, escríbenos a{" "}
+            <PlanLimitContact />.
           </span>
         </p>
       )}

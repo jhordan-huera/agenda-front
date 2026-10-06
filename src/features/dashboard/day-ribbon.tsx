@@ -1,10 +1,9 @@
 import { useEffect, useRef } from "react";
-import { getWorkingRanges } from "@/lib/availability";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { minutesToTime, timeToMinutes, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Schedule } from "@/types";
-import { blocksOn, type MinuteSpan } from "./day-plan";
+import { blocksOn, workingRangesOn, type MinuteSpan } from "./day-plan";
 
 interface DayRibbonProps {
   bounds: MinuteSpan;
@@ -49,9 +48,9 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
     <div ref={scrollRef} className="-mx-1 overflow-x-auto px-1 pb-1">
       <div className="relative min-w-[34rem]">
         <div className="relative h-24 overflow-hidden rounded-xl bg-muted ring-1 ring-border">
-          {getWorkingRanges(schedules, now.date).map((range) => (
+          {workingRangesOn(schedules, now.date).map((range, index) => (
             <span
-              key={range.start}
+              key={`${range.start}-${index}`}
               aria-hidden
               className="absolute inset-y-0 bg-background"
               style={{ left: pct(range.start), width: width(range.start, range.end) }}

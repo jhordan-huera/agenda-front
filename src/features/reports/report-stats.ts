@@ -1,7 +1,8 @@
 import { APPOINTMENT_STATUSES, REVENUE_STATUSES } from "@/lib/constants/appointment-status";
 import { formatDate } from "@/lib/format";
-import { addDaysISO, eachDayISO, startOfWeekISO } from "@/lib/time";
-import type { Appointment, AppointmentStatus, ISODate, Service } from "@/types";
+import { getBlockedRanges, getWorkingRanges, type BlockedRange } from "@/lib/availability";
+import { addDaysISO, eachDayISO, startOfWeekISO, timeToMinutes } from "@/lib/time";
+import type { Appointment, AppointmentStatus, ISODate, Schedule, Service } from "@/types";
 
 /**
  * Cálculos de reportes: funciones puras sobre la lista de citas.
@@ -204,3 +205,45 @@ export function getReportFetchRange(today: ISODate, days: ReportPeriod): DateRan
     to: [period.to, weekEnd, monthEnd].sort().at(-1)!,
   };
 }
+
+export interface ProfessionalReport {
+  professionalId: string;
+  summary: ReportSummary;
+  /**
+   * Ocupación: minutos con citas (no canceladas) sobre los minutos de su horario en el periodo, sin
+   * los bloqueos. Con el horario actual (no el que tenía antes). null si no tiene horario.
+   */
+  occupancy: number | null;
+}
+
+/** Minutos de `range` tapados por los bloqueos (los bloqueos que se pisan cuentan una vez cada uno). */
+function blockedMinutes(range: { start: number; end: number }, blocked: { start: number; end: number }[]): number {
+  return blocked.reduce((sum, block) => sum + Math.max(0, Math.min(range.end, block.end) - Math.max(range.start, block.start)), 0);
+}
+
+/** Reporte de cada agenda en el periodo: citas por estado, ingresos y ocupación de su horario. */
+export function getProfessionalBreakdown(
+  appointmentsInRange: Appointment[],
+  range: DateRange,
+  professionalIds: string[],
+  schedules: Schedule[],
+  blockedTimes: BlockedRange[],
+): ProfessionalReport[] {
+  return professionalIds.map((professionalId) => {
+    const own = appointmentsInRange.filter((appointment) => appointment.professionalId === professionalId);
+    const ownSchedules = schedules.filter((schedule) => schedule.professionalId === professionalId);
+    const ownBlocks = blockedTimes.filter((block) => block.professionalId === null || block.professionalId === professionalId);
+    let available = 0;
+    for (const day of eachDayISO(range.from, range.to)) {
+      const blocked = getBlockedRanges(ownBlocks, day);
+      for (const working of getWorkingRanges(ownSchedules, day)) {
+        available += Math.max(0, working.end - working.start - blockedMinutes(working, blocked));
+      }
+    }
+    const booked = own
+      .filter((appointment) => appointment.status !== "cancelled")
+      .reduce((sum, appointment) => sum + timeToMinutes(appointment.endTime) - timeToMinutes(appointment.startTime), 0);
+    return { professionalId, summary: summarize(own), occupancy: available > 0 ? Math.min(1, booked / available) : null };
+  });
+}
+

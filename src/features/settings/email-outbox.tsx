@@ -17,6 +17,8 @@ const TYPE_LABELS: Record<EmailType, string> = {
   platform_admin_added: "Alta de super admin",
   booking_created: "Reserva",
   booking_received: "Nueva reserva",
+  professional_new_appointment: "Cita nueva (al profesional)",
+  professional_daily_agenda: "Agenda del día (al profesional)",
   appointment_confirmed: "Confirmación",
   appointment_updated: "Modificación",
   appointment_cancelled: "Cancelación",

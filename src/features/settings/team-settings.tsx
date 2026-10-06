@@ -1,5 +1,6 @@
 import { Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ErrorState } from "@/components/shared/error-state";
@@ -13,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
 import { useSession } from "@/features/auth/use-session";
+import { useAgendas } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness, usePlanUsage } from "@/hooks/queries/use-account";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { useRemoveMember, useSetClinicalAccess, useTeam, useUpdateMemberRole } from "@/hooks/queries/use-team";
@@ -26,6 +28,7 @@ type AssignableRole = Exclude<BusinessRole, "owner">;
 export function TeamSettings() {
   const { session } = useSession();
   const team = useTeam();
+  const agendas = useAgendas();
   const usage = usePlanUsage();
   const updateRole = useUpdateMemberRole();
   const setClinicalAccess = useSetClinicalAccess();
@@ -91,6 +94,7 @@ export function TeamSettings() {
               {team.data.map((member) => {
                 const name = `${member.firstName} ${member.lastName}`;
                 const isOwner = member.role === "owner";
+                const agenda = agendas.all.find((professional) => professional.userId === member.userId);
                 return (
                   <li key={member.userId} className="flex flex-wrap items-center gap-3 px-4 py-3">
                     <UserAvatar name={name} src={member.avatarUrl} />
@@ -100,6 +104,19 @@ export function TeamSettings() {
                         {member.userId === session?.userId && <span className="text-muted-foreground"> (tú)</span>}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+                      {agenda ? (
+                        <p className="truncate text-xs text-muted-foreground">Agenda: {agenda.displayName}</p>
+                      ) : (
+                        member.role === "professional" && (
+                          <p className="text-xs font-medium text-amber-700">
+                            Sin agenda: asígnasela en{" "}
+                            <Link to="/dashboard/professionals" className="underline underline-offset-2">
+                              Profesionales
+                            </Link>
+                            .
+                          </p>
+                        )
+                      )}
                     </div>
                     {isOwner ? (
                       <Badge variant="secondary">{ROLE_LABELS.owner}</Badge>
@@ -145,15 +162,13 @@ export function TeamSettings() {
           )}
           <p className="mt-3 text-xs text-muted-foreground">
             {atLimit
-              ? "Alcanzaste el límite de usuarios de tu plan. Actualízalo en la pestaña Suscripción para sumar más personas."
+              ? "Llegaste al límite de usuarios de lo que tienes contratado. Para sumar más personas, escribe a soporte: "
               : "Para agregar a alguien a tu equipo o cambiar una contraseña, escribe a soporte: "}
-            {!atLimit && (
-              <SupportContact
-                email={supportEmail}
-                phone={platform.data?.supportPhone}
-                message={`Hola, necesito ayuda con el equipo de ${business?.name ?? "mi negocio"} en ${APP_NAME}.`}
-              />
-            )}
+            <SupportContact
+              email={supportEmail}
+              phone={platform.data?.supportPhone}
+              message={`Hola, necesito ayuda con el equipo de ${business?.name ?? "mi negocio"} en ${APP_NAME}.`}
+            />
           </p>
         </CardContent>
       </Card>

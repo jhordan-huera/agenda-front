@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ALL_AGENDAS, ProfessionalSelect } from "@/features/professionals/professional-select";
+import { useAgendas } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useCreateBlockedTime } from "@/hooks/queries/use-schedule";
 import { useBusinessNow } from "@/hooks/use-business-now";
@@ -25,9 +27,11 @@ interface BlockedTimeFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultDate?: ISODate;
+  /** Agenda propuesta (con varias, se puede cambiar o elegir todo el negocio). */
+  defaultProfessionalId?: string | null;
 }
 
-export function BlockedTimeFormDialog({ open, onOpenChange, defaultDate }: BlockedTimeFormDialogProps) {
+export function BlockedTimeFormDialog({ open, onOpenChange, defaultDate, defaultProfessionalId }: BlockedTimeFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
@@ -37,17 +41,33 @@ export function BlockedTimeFormDialog({ open, onOpenChange, defaultDate }: Block
             El tiempo bloqueado no aparecerá como disponible en tu página de reservas.
           </DialogDescription>
         </DialogHeader>
-        <BlockedTimeForm defaultDate={defaultDate} onDone={() => onOpenChange(false)} />
+        <BlockedTimeForm
+          defaultDate={defaultDate}
+          defaultProfessionalId={defaultProfessionalId}
+          onDone={() => onOpenChange(false)}
+        />
       </DialogContent>
     </Dialog>
   );
 }
 
-function BlockedTimeForm({ defaultDate, onDone }: { defaultDate?: ISODate; onDone: () => void }) {
+function BlockedTimeForm({
+  defaultDate,
+  defaultProfessionalId,
+  onDone,
+}: {
+  defaultDate?: ISODate;
+  defaultProfessionalId?: string | null;
+  onDone: () => void;
+}) {
   const { data: business } = useCurrentBusiness();
   const today = useBusinessNow(business?.timezone).date;
   const createBlockedTime = useCreateBlockedTime();
+  const agendas = useAgendas();
+  // Una sola agenda: el bloqueo es de todo el negocio. El rol Profesional sólo bloquea la suya.
+  const fixedProfessionalId = agendas.scoped ? agendas.ownProfessionalId : agendas.multiple ? undefined : null;
   const [values, setValues] = useState<BlockedTimeInput>({
+    professionalId: fixedProfessionalId !== undefined ? fixedProfessionalId : (defaultProfessionalId ?? null),
     reason: "",
     allDay: true,
     startDate: defaultDate ?? today,
@@ -77,6 +97,19 @@ function BlockedTimeForm({ defaultDate, onDone }: { defaultDate?: ISODate; onDon
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-4">
+      {fixedProfessionalId === undefined && (
+        <FormField label="Aplica a" error={errors.professionalId}>
+          {(control) => (
+            <ProfessionalSelect
+              id={control.id}
+              professionals={agendas.selectable}
+              value={values.professionalId ?? ALL_AGENDAS}
+              onValueChange={(value) => set("professionalId", value === ALL_AGENDAS ? null : value)}
+              allLabel="Todo el negocio (feriado, cierre)"
+            />
+          )}
+        </FormField>
+      )}
       <FormField label="Motivo" error={errors.reason}>
         {(field) => (
           <Input

@@ -5,7 +5,9 @@ import { getPlaceMapsUrl } from "@/lib/maps";
 import { getBusinessWhatsAppUrl } from "@/lib/whatsapp";
 import type { PublicBusiness, PublicProfessional } from "@/types";
 
-export function BookingHeader({ business, professional }: { business: PublicBusiness; professional: PublicProfessional }) {
+/** Con varias agendas, los nombres de los profesionales (o cuántos son, si son muchos). */
+export function BookingHeader({ business, professionals }: { business: PublicBusiness; professionals: PublicProfessional[] }) {
+  const [professional] = professionals;
   const whatsAppUrl = getBusinessWhatsAppUrl(business);
 
   return (
@@ -17,10 +19,20 @@ export function BookingHeader({ business, professional }: { business: PublicBusi
           )}
           <div className="min-w-0">
             <h1 className="text-3xl leading-tight font-extrabold tracking-[-0.02em] sm:text-4xl">{business.name}</h1>
-            <p className="mt-1 flex flex-wrap gap-x-2">
-              <span className="font-semibold">{professional.displayName}</span>
-              {professional.title && <span className="text-muted-foreground">{professional.title}</span>}
-            </p>
+            {professionals.length === 1 ? (
+              <p className="mt-1 flex flex-wrap gap-x-2">
+                <span className="font-semibold">{professional.displayName}</span>
+                {professional.title && <span className="text-muted-foreground">{professional.title}</span>}
+              </p>
+            ) : (
+              professional && (
+                <p className="mt-1 font-semibold">
+                  {professionals.length <= 3
+                    ? professionals.map((p) => p.displayName).join(" · ")
+                    : `${professionals.length} profesionales`}
+                </p>
+              )
+            )}
             {business.description && <p className="mt-3 max-w-2xl leading-relaxed text-foreground/85">{business.description}</p>}
             {(business.address || business.phone) && (
               <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">

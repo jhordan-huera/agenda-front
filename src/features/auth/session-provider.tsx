@@ -114,6 +114,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             businessStatus: "active",
             // En modo soporte el super admin tiene el acceso del propietario, también a la historia clínica.
             clinicalAccess: true,
+            professionalId: null,
             support: { businessName: support.name },
           }
         : session,

@@ -96,6 +96,16 @@ export function useSaveAppointment() {
   });
 }
 
+/** Llegada del paciente: recepción la marca al verlo en la sala de espera. */
+export function useSetAppointmentArrival() {
+  const businessId = useBusinessId();
+  const invalidate = useInvalidateAppointments();
+  return useMutation({
+    mutationFn: ({ id, arrived }: { id: string; arrived: boolean }) => data.appointments.setArrival(businessId, id, arrived),
+    onSuccess: () => invalidate(),
+  });
+}
+
 export function useUpdateAppointmentStatus() {
   const businessId = useBusinessId();
   const invalidate = useInvalidateAppointments();

@@ -18,6 +18,7 @@ export const AUDIT_TYPE_LABELS: Record<AuditEntityType, string> = {
   service: "Servicios",
   schedule: "Horarios",
   blocked_time: "Bloqueos",
+  professional: "Profesionales",
   business: "Negocio",
   team: "Equipo",
   subscription: "Suscripción",

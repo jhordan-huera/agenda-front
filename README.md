@@ -23,7 +23,8 @@ con los datos demo). Se trabaja en la rama `dev` y se publica fusionando en `mai
 despliega `main` (ver "Ramas" en el README de agenda-backend).
 
 Con los datos demo (`npm run dev:local` o `npm run db:seed` en la API), todas las cuentas usan la contraseña
-`demo1234`:
+`demo1234` (varias agendas: `ricardo@demo.com`, `valeria@demo.com` con el rol Profesional y
+`elena@demo.com` en recepción, en Clínica Dental Sonrisa):
 
 | Cuenta | Negocio | Rol | Para probar |
 | --- | --- | --- | --- |
@@ -178,11 +179,18 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
 
 ## Funcionalidades
 
-- **Multi-tenant con roles** (owner / admin / staff) en `business_users`. Los permisos están en
-  `src/lib/permissions.ts` y se aplican en la interfaz **y** en la API.
-- **Límites por plan** (Free: 20 citas/mes, 50 clientes, 1 usuario; Pro: 3 usuarios; Business:
-  ilimitado). Los aplica la API; al alcanzarlos se ofrece "Actualizar a PRO". El cambio de plan
-  aún no tiene cobro (pagos pendientes).
+- **Multi-tenant con roles** (Propietario, Administrador, Recepción y Profesional) en
+  `business_users`. Los permisos están en `src/lib/permissions.ts` y se aplican en la interfaz **y**
+  en la API; el rol Profesional sólo ve su propia agenda (la API se la filtra).
+- **Varias agendas** (plan Business): página Profesionales (`features/professionals`), horario y
+  bloqueos por profesional, calendario con filtro y una columna por profesional en la vista Día,
+  "¿Con quién?" en la página de reservas (o "el primero disponible"), llegada del paciente en el
+  detalle de la cita y reportes por profesional (citas, asistencia, cobrado y ocupación).
+  `useAgendas()` dice qué agendas puede elegir el usuario y si hay varias (si hay una sola, la
+  interfaz es la de siempre).
+- **Límites por plan** (Free: 20 citas/mes, 50 clientes, 1 usuario; Pro: 3 usuarios; ambos 1 agenda;
+  Business: ilimitado y las agendas contratadas). Los aplica la API. Los planes y precios no se
+  muestran a los negocios: al llegar a un límite se invita a escribir a soporte.
 - **Emails** (registro, recuperación, invitación, reserva, confirmación, modificación,
   cancelación, recordatorio): plantillas en `src/lib/email/templates.ts`. La API los envía por
   Gmail y quedan en la bandeja de salida de Configuración → Notificaciones.

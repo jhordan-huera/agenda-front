@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusinessId, useSession } from "@/features/auth/use-session";
 import { data, type UpdateBusinessInput } from "@/lib/data";
 import type { ProfileInput } from "@/lib/validations/business";
-import type { PlanId } from "@/types";
 import { queryKeys } from "./query-keys";
 
 export function useCurrentUser() {
@@ -48,14 +47,6 @@ export function useUpdateBusiness() {
   });
 }
 
-export function useProfessional() {
-  const businessId = useBusinessId();
-  return useQuery({
-    queryKey: queryKeys.professional(businessId),
-    queryFn: () => data.businesses.getProfessional(businessId),
-  });
-}
-
 export function useSubscription() {
   const businessId = useBusinessId();
   return useQuery({
@@ -73,30 +64,4 @@ export function usePlanUsage() {
   });
 }
 
-export function usePendingPlanRequest() {
-  const businessId = useBusinessId();
-  return useQuery({
-    queryKey: queryKeys.planRequest(businessId),
-    queryFn: () => data.subscriptions.getPendingRequest(businessId),
-  });
-}
 
-/** Solicitar o cancelar un cambio de plan: se recarga la solicitud y la auditoría. */
-function usePlanRequestMutation<TVariables>(mutationFn: (businessId: string, variables: TVariables) => Promise<unknown>) {
-  const businessId = useBusinessId();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (variables: TVariables) => mutationFn(businessId, variables),
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.planRequest(businessId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.auditLogs(businessId) }),
-      ]),
-  });
-}
-
-export const useRequestPlanChange = () =>
-  usePlanRequestMutation((businessId, plan: PlanId) => data.subscriptions.requestPlanChange(businessId, plan));
-
-export const useCancelPlanRequest = () =>
-  usePlanRequestMutation<void>((businessId) => data.subscriptions.cancelPlanRequest(businessId));

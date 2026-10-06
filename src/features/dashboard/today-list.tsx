@@ -1,10 +1,10 @@
-import { ChevronRight, Home } from "lucide-react";
+import { ChevronRight, DoorOpen, Home } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { plural } from "@/lib/format";
 import { timeToMinutes, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
-import type { Appointment } from "@/types";
+import type { Appointment, Professional } from "@/types";
 
 interface TodayListProps {
   appointments: Appointment[];
@@ -16,10 +16,22 @@ interface TodayListProps {
   onOpen: (appointment: Appointment) => void;
   onConfirm: (appointment: Appointment) => void;
   confirmingId: string | null;
+  /** Con varias agendas: de quién es cada cita. */
+  professionalOf?: (appointment: Appointment) => Pick<Professional, "displayName" | "color"> | undefined;
 }
 
 /** Lo que queda de hoy, en filas cortas; lo ya atendido se pliega para no ocupar la vista. */
-export function TodayList({ appointments, now, nextId, clientName, serviceName, onOpen, onConfirm, confirmingId }: TodayListProps) {
+export function TodayList({
+  appointments,
+  now,
+  nextId,
+  clientName,
+  serviceName,
+  onOpen,
+  onConfirm,
+  confirmingId,
+  professionalOf,
+}: TodayListProps) {
   const done = appointments.filter((a) => timeToMinutes(a.endTime) <= now.minutes);
   const later = appointments.filter((a) => timeToMinutes(a.endTime) > now.minutes && a.id !== nextId);
 
@@ -32,10 +44,24 @@ export function TodayList({ appointments, now, nextId, clientName, serviceName, 
       >
         <span className="w-14 shrink-0 text-lg font-bold text-ink tabular-nums">{appointment.startTime}</span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold">{clientName(appointment.clientId)}</span>
+          <span className="flex items-center gap-2 truncate font-semibold">
+            <span className="truncate">{clientName(appointment.clientId)}</span>
+            {appointment.arrivedAt && appointment.status !== "completed" && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-highlight/60 px-2 py-0.5 text-xs text-ink">
+                <DoorOpen className="size-3" aria-hidden /> Llegó
+              </span>
+            )}
+          </span>
           <span className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
             {appointment.homeVisit && <Home className="size-3.5 shrink-0 text-ink" aria-label="A domicilio" />}
             {serviceName(appointment.serviceId)}, hasta las {appointment.endTime}
+            {professionalOf?.(appointment) && (
+              <>
+                {" · "}
+                <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: professionalOf(appointment)!.color }} />
+                <span className="truncate">{professionalOf(appointment)!.displayName}</span>
+              </>
+            )}
           </span>
         </span>
         <StatusBadge status={appointment.status} className="hidden sm:inline-flex" />

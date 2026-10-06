@@ -6,7 +6,6 @@ import { InstallAppButton } from "@/features/install/install-app";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { NAV_ITEMS } from "./nav-items";
-import { PlanStatus } from "./plan-status";
 import { SidebarNav } from "./sidebar-nav";
 import { useSignOut } from "./use-sign-out";
 import { UserMenu } from "./user-menu";
@@ -43,7 +42,6 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </a>
         )}
         <InstallAppButton />
-        <PlanStatus onNavigate={onNavigate} />
         <UserMenu onNavigate={onNavigate} />
         <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={signOut}>
           <LogOut /> Cerrar sesión

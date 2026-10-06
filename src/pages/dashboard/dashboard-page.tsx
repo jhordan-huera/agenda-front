@@ -22,6 +22,7 @@ import { TodayList } from "@/features/dashboard/today-list";
 import { WeekBars } from "@/features/dashboard/week-bars";
 import { InstallAppCard } from "@/features/install/install-app";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
+import { useAgendas } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness, useCurrentUser } from "@/hooks/queries/use-account";
 import { useAppointments, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
@@ -58,6 +59,7 @@ export default function DashboardPage() {
   const [quickDialog, setQuickDialog] = useState<QuickDialog>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const { can } = usePermissions();
+  const agendas = useAgendas();
 
   const appointments = useMemo(() => appointmentsQuery.data ?? [], [appointmentsQuery.data]);
   const metrics = useMemo(() => getDashboardMetrics(appointments, clients, now), [appointments, clients, now]);
@@ -169,7 +171,8 @@ export default function DashboardPage() {
                 now={now}
                 appointments={today}
                 schedules={schedules}
-                blockedTimes={blockedTimes}
+                // Con varias agendas, en la franja del día sólo los bloqueos de todo el negocio.
+                blockedTimes={agendas.multiple ? blockedTimes.filter((block) => block.professionalId === null) : blockedTimes}
                 nextId={next?.date === now.date ? next.id : null}
                 clientName={clientName}
                 onOpen={dialogs.openDetails}
@@ -188,6 +191,7 @@ export default function DashboardPage() {
 
           {!loading && (
             <TodayList
+              professionalOf={agendas.multiple ? (appointment) => agendas.byId(appointment.professionalId) : undefined}
               appointments={today}
               now={now}
               nextId={next?.date === now.date ? next.id : null}

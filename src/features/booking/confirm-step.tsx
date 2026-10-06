@@ -11,7 +11,8 @@ import type { PublicBusiness, PublicProfessional, PublicService } from "@/types"
 
 interface ConfirmStepProps {
   business: PublicBusiness;
-  professional: PublicProfessional;
+  /** null: "el primero disponible" (se sabe quién al reservar). */
+  professional: PublicProfessional | null;
   service: PublicService;
   input: PublicBookingInput;
   /** Nombre para saludar si la cédula ya era de un cliente del negocio. */
@@ -60,7 +61,7 @@ export function ConfirmStep({
           )}
         </Row>
         <Row icon={MapPin} label="Lugar">
-          {professional.displayName}, {business.name}
+          {professional ? `${professional.displayName}, ${business.name}` : `${business.name} (con el primer profesional disponible)`}
           {input.homeVisit ? (
             <a
               href={getPlaceMapsUrl(input.homeVisit)}

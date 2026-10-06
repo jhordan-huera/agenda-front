@@ -1,6 +1,5 @@
 import { FileImage, FileText, Lock, Paperclip, Upload } from "lucide-react";
 import { useRef, useState } from "react";
-import { Link } from "react-router";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { getErrorMessage } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
 import { CLINICAL_ATTACHMENT_MAX_BYTES } from "@/lib/validations/clinical";
 import type { ClinicalAttachment, ClinicalRecord } from "@/types";
+import { PlanLimitContact } from "@/features/support/plan-limit-contact";
 
 const ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.pdf,image/jpeg,image/png,image/webp,image/heic,application/pdf";
 
@@ -119,10 +119,8 @@ export function ClinicalAttachmentsCard({ clientId, record }: { clientId: string
             <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
             {record.attachmentAccess === "upgrade" ? (
               <span>
-                Subir archivos está en los planes Pro y Business.{" "}
-                <Link to="/dashboard/settings?tab=suscripcion" className="font-medium text-primary hover:underline">
-                  Ver planes
-                </Link>
+                Subir archivos no está incluido en lo que tienes contratado. Para activarlo, escríbenos a{" "}
+                <PlanLimitContact />.
               </span>
             ) : (
               <span>El almacenamiento de archivos aún no está configurado. Escribe a soporte.</span>

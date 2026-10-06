@@ -21,7 +21,6 @@ import type {
   ClinicalRecord,
   ClinicalTemplate,
   EmailNotification,
-  PlanChangeRequest,
   PlanUsage,
   PlatformSettings,
   PlatformStats,
@@ -58,7 +57,14 @@ export const apiRepository: DataRepository = {
     isSlugAvailable: async (slug, excludeBusinessId) =>
       (await api.get<{ available: boolean }>("/businesses/slug-availability", { slug, exclude: excludeBusinessId }))
         .available,
-    getProfessional: (businessId) => api.get<Professional | null>(`${business(businessId)}/professional`),
+  },
+
+  professionals: {
+    list: (businessId) => api.get<Professional[]>(`${business(businessId)}/professionals`),
+    create: (businessId, input) => api.post<Professional>(`${business(businessId)}/professionals`, input),
+    update: (businessId, professionalId, input) =>
+      api.put<Professional>(`${business(businessId)}/professionals/${id(professionalId)}`, input),
+    remove: (businessId, professionalId) => api.delete(`${business(businessId)}/professionals/${id(professionalId)}`),
   },
 
   team: {
@@ -72,11 +78,6 @@ export const apiRepository: DataRepository = {
   subscriptions: {
     get: (businessId) => api.get<Subscription | null>(`${business(businessId)}/subscription`),
     getUsage: (businessId) => api.get<PlanUsage>(`${business(businessId)}/subscription/usage`),
-    getPendingRequest: (businessId) =>
-      api.get<PlanChangeRequest | null>(`${business(businessId)}/subscription/request`),
-    requestPlanChange: (businessId, plan) =>
-      api.post<PlanChangeRequest>(`${business(businessId)}/subscription/request`, { plan }),
-    cancelPlanRequest: (businessId) => api.delete(`${business(businessId)}/subscription/request`),
   },
 
   clients: {
@@ -140,11 +141,14 @@ export const apiRepository: DataRepository = {
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, { status }),
     logWhatsAppNotice: (businessId, appointmentId, kind) =>
       api.post<void>(`${business(businessId)}/appointments/${id(appointmentId)}/whatsapp-notice`, { kind }),
+    setArrival: (businessId, appointmentId, arrived) =>
+      api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/arrival`, { arrived }),
   },
 
   schedules: {
     list: (businessId) => api.get<Schedule[]>(`${business(businessId)}/schedules`),
-    saveWeek: (businessId, days) => api.put<Schedule[]>(`${business(businessId)}/schedules`, days),
+    saveWeek: (businessId, professionalId, days) =>
+      api.put<Schedule[]>(`${business(businessId)}/professionals/${id(professionalId)}/schedule`, days),
   },
 
   blockedTimes: {
@@ -183,6 +187,8 @@ export const apiRepository: DataRepository = {
       api.patch<Business>(`/admin/businesses/${id(businessId)}/status`, { status }),
     changeBusinessPlan: (businessId, plan) =>
       api.put<Subscription>(`/admin/businesses/${id(businessId)}/plan`, { plan }),
+    setMaxProfessionals: (businessId, maxProfessionals) =>
+      api.put<Subscription>(`/admin/businesses/${id(businessId)}/max-professionals`, { maxProfessionals }),
     deleteBusiness: (businessId, input) => api.delete(`/admin/businesses/${id(businessId)}`, input),
     listCategories: () => api.get<AdminBusinessCategory[]>("/admin/categories"),
     createCategory: (input) => api.post<BusinessCategoryInfo>("/admin/categories", input),

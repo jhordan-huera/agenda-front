@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 const LINKS = [
   { href: "#caracteristicas", label: "Qué hace" },
   { href: "#como-funciona", label: "Cómo empezar" },
-  { href: "#precios", label: "Precios" },
 ];
 
 export function LandingNavbar() {

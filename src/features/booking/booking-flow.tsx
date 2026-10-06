@@ -3,12 +3,12 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCreateBooking } from "@/hooks/queries/use-public-booking";
-import { getMinNoticeHours } from "@/lib/availability";
+import { getMinNoticeHours, offersService } from "@/lib/availability";
 import { DataError, getErrorMessage } from "@/lib/data";
 import { capitalize, formatLongDate, plural } from "@/lib/format";
 import { addDaysISO, addMinutesToTime } from "@/lib/time";
 import type { PublicBookingInput } from "@/lib/validations/booking";
-import type { BookingConfirmation, BusySlot, ISODate, PublicBusinessProfile } from "@/types";
+import type { BookingConfirmation, BusySlot, ISODate, PublicBusinessProfile, PublicService } from "@/types";
 import { BookingCalendar } from "./booking-calendar";
 import { BookingSteps, type BookingStep } from "./booking-steps";
 import { BookingSuccess } from "./booking-success";
@@ -16,6 +16,7 @@ import { BookingSummary } from "./booking-summary";
 import { BusinessLocationCard } from "./business-location-card";
 import { ConfirmStep } from "./confirm-step";
 import { EMPTY_CONTACT, type ContactValues } from "./contact";
+import { ProfessionalStep } from "./professional-step";
 import { DetailsStep } from "./details-step";
 import { ServiceStep } from "./service-step";
 import { TimeSlots } from "./time-slots";
@@ -25,6 +26,7 @@ import { WhatsAppHelp } from "./whatsapp-help";
 
 const STEP_COPY: Record<BookingStep, { title: string; description: string }> = {
   service: { title: "¿Qué servicio necesitas?", description: "Elige el servicio que quieres reservar." },
+  professional: { title: "¿Con quién quieres atenderte?", description: "Elige un profesional o el primero disponible." },
   datetime: { title: "Elige fecha y hora", description: "Sólo se muestran los horarios disponibles." },
   details: { title: "Tus datos", description: "Los necesitamos para confirmar tu cita." },
   confirm: { title: "Confirma tu reserva", description: "Revisa que todo esté correcto antes de reservar." },
@@ -35,6 +37,8 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
   const createBooking = useCreateBooking(slug, getCaptchaToken);
   const [step, setStep] = useState<BookingStep>("service");
   const [serviceId, setServiceId] = useState<string | null>(null);
+  /** Id del profesional, ANY_PROFESSIONAL ("el primero disponible") o null si aún no se eligió. */
+  const [professionalChoice, setProfessionalChoice] = useState<string | null>(null);
   const [requestedDate, setRequestedDate] = useState<ISODate | null>(null);
   const [requestedTime, setRequestedTime] = useState<string | null>(null);
   const [contact, setContact] = useState<ContactValues>(EMPTY_CONTACT);
@@ -51,16 +55,37 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
     [profile, takenSlots],
   );
 
-  const { business, professional, services } = profile;
+  const { business, services } = profile;
   const service = services.find((s) => s.id === serviceId);
+  // Quiénes atienden el servicio y si se le pregunta al paciente con quién (el negocio puede no hacerlo).
+  const eligibleFor = (target: PublicService | undefined) =>
+    target ? profile.professionals.filter((professional) => offersService(professional, target.id)) : [];
+  const asksProfessionalFor = (target: PublicService | undefined) =>
+    business.bookingSettings.chooseProfessional !== false && eligibleFor(target).length > 1;
+  const eligible = eligibleFor(service);
+  const asksProfessional = asksProfessionalFor(service);
+  const chosen = asksProfessional ? eligible.find((professional) => professional.id === professionalChoice) : undefined;
+  // La agenda que se muestra: la elegida, la única que atiende el servicio o ninguna ("el primero disponible").
+  const shownProfessional = chosen ?? (eligible.length === 1 ? eligible[0] : profile.professionals.length === 1 ? profile.professionals[0] : null);
+  const agendaIds = chosen ? [chosen.id] : eligible.map((professional) => professional.id);
   const { today, availableDates, date, slots, time } = useBookingAvailability(
     effectiveProfile,
     service,
+    agendaIds,
     requestedDate,
     requestedTime,
   );
-  // Si el servicio deja de estar disponible, se vuelve al primer paso.
-  const currentStep: BookingStep = service ? step : "service";
+  const steps: BookingStep[] = asksProfessional
+    ? ["service", "professional", "datetime", "details", "confirm"]
+    : ["service", "datetime", "details", "confirm"];
+  // Si el servicio deja de estar disponible, se vuelve al primer paso; sin elegir profesional, a ese paso.
+  const currentStep: BookingStep = !service
+    ? "service"
+    : step === "professional" && !asksProfessional
+      ? "datetime"
+      : asksProfessional && !professionalChoice && step !== "service"
+        ? "professional"
+        : step;
   const atHome = service?.location === "home" || (currentStep === "confirm" && Boolean(pendingInput?.homeVisit));
   // El local sólo interesa si el cliente va a ir: no en citas a domicilio ni si todo es a domicilio.
   const showLocation = !atHome && services.some((s) => s.location !== "home");
@@ -68,6 +93,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
   const reset = () => {
     setConfirmation(null);
     setServiceId(null);
+    setProfessionalChoice(null);
     setRequestedDate(null);
     setRequestedTime(null);
     setPendingInput(null);
@@ -76,18 +102,21 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
 
   const submit = async (input: PublicBookingInput) => {
     try {
-      const booked = await createBooking.mutateAsync(input);
-      markTaken({ date: booked.date, startTime: booked.startTime, endTime: booked.endTime });
+      const booked = await createBooking.mutateAsync({ ...input, professionalId: chosen?.id ?? null });
+      markTaken({ date: booked.date, startTime: booked.startTime, endTime: booked.endTime, professionalId: booked.professionalId });
       setConfirmation(booked);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       if (error instanceof DataError && error.code === "conflict" && service) {
-        // Alguien la reservó antes: se oculta al momento para no volver a elegirla.
-        markTaken({
-          date: input.date,
-          startTime: input.startTime,
-          endTime: addMinutesToTime(input.startTime, service.durationMinutes),
-        });
+        // Alguien la reservó antes: se oculta al momento (en las agendas que se ofrecían) para no volver a elegirla.
+        for (const professionalId of agendaIds) {
+          markTaken({
+            date: input.date,
+            startTime: input.startTime,
+            endTime: addMinutesToTime(input.startTime, service.durationMinutes),
+            professionalId,
+          });
+        }
         toast.error(getErrorMessage(error));
         setRequestedTime(null);
         setStep("datetime");
@@ -121,7 +150,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
       <div>
-        <BookingSteps current={currentStep} onStepClick={setStep} />
+        <BookingSteps steps={steps} current={currentStep} onStepClick={setStep} />
         <section className="space-y-6 rounded-2xl border bg-background p-4 sm:p-7" aria-labelledby="booking-step-title">
           <div className="space-y-1">
             <h2 id="booking-step-title" className="text-2xl font-extrabold tracking-[-0.02em]">
@@ -137,11 +166,33 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
               selectedId={serviceId}
               onSelect={(selected) => {
                 setServiceId(selected.id);
+                // Si el profesional elegido no atiende el nuevo servicio, se vuelve a preguntar.
+                if (!eligibleFor(selected).some((professional) => professional.id === professionalChoice)) {
+                  setProfessionalChoice(null);
+                }
                 setRequestedDate(null);
                 setRequestedTime(null);
-                setStep("datetime");
+                setStep(asksProfessionalFor(selected) ? "professional" : "datetime");
               }}
             />
+          )}
+
+          {currentStep === "professional" && service && (
+            <>
+              <ProfessionalStep
+                professionals={eligible}
+                selectedId={professionalChoice}
+                onSelect={(choice) => {
+                  setProfessionalChoice(choice);
+                  setRequestedDate(null);
+                  setRequestedTime(null);
+                  setStep("datetime");
+                }}
+              />
+              <Button variant="ghost" onClick={() => setStep("service")}>
+                <ArrowLeft /> Cambiar servicio
+              </Button>
+            </>
           )}
 
           {currentStep === "datetime" && service && (
@@ -171,8 +222,8 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
                 </div>
               )}
               <div className="flex justify-between gap-3 border-t pt-4">
-                <Button variant="ghost" onClick={() => setStep("service")}>
-                  <ArrowLeft /> Cambiar servicio
+                <Button variant="ghost" onClick={() => setStep(asksProfessional ? "professional" : "service")}>
+                  <ArrowLeft /> {asksProfessional ? "Cambiar profesional" : "Cambiar servicio"}
                 </Button>
                 <Button size="lg" disabled={!date || !time} onClick={() => setStep("details")}>
                   Continuar
@@ -184,7 +235,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
           {currentStep === "confirm" && service && pendingInput && time && (
             <ConfirmStep
               business={business}
-              professional={professional}
+              professional={shownProfessional}
               service={service}
               input={pendingInput}
               knownClientName={contact.knownClientName}
@@ -230,7 +281,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
       <aside className="space-y-6 lg:sticky lg:top-6 lg:mt-11">
         <BookingSummary
           business={business}
-          professional={professional}
+          professional={shownProfessional}
           service={service}
           date={date}
           time={time}

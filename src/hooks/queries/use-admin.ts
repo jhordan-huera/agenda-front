@@ -93,6 +93,11 @@ export const useChangeBusinessPlan = () =>
     data.admin.changeBusinessPlan(businessId, plan),
   );
 
+export const useSetMaxProfessionals = () =>
+  useAdminMutation(({ businessId, maxProfessionals }: { businessId: string; maxProfessionals: number | null }) =>
+    data.admin.setMaxProfessionals(businessId, maxProfessionals),
+  );
+
 /**
  * Sin esperar a recargar el panel: la ficha del negocio eliminado mostraría "no encontrado"
  * antes de que la página salga de ella.
