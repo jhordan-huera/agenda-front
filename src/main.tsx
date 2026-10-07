@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router/dom";
 import { PageAnalytics } from "@/app/page-analytics";
 import { AppProviders } from "@/app/providers";
 import { router } from "@/app/router";
+import { ProductionDbBanner } from "@/components/layout/production-db-banner";
 import "./index.css";
 // Guarda el aviso de "se puede instalar" aunque llegue antes de que se monte el panel.
 import "@/features/install/install-prompt";
@@ -21,6 +22,7 @@ createRoot(document.getElementById("root")!).render(
     <AppProviders>
       <RouterProvider router={router} />
       <PageAnalytics />
+      {import.meta.env.DEV && <ProductionDbBanner />}
     </AppProviders>
   </StrictMode>,
 );
