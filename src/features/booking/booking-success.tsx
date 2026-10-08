@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { capitalize, formatLongDate, formatPrice } from "@/lib/format";
 import { BankTransferCard } from "@/features/payments/bank-transfer-card";
 import { describeHomeVisit, getDirectionsUrl, hasMapPoint } from "@/lib/maps";
+import { cn } from "@/lib/utils";
 import { getReceiptWhatsAppUrl } from "@/lib/whatsapp";
 import type { BookingConfirmation, PublicBusiness } from "@/types";
 
@@ -16,7 +17,7 @@ interface BookingSuccessProps {
 
 /**
  * La cita queda apuntada: la hora reservada se marca con el resaltador. Si la agenda cobra por
- * transferencia, debajo van los datos para pagar y el envío del comprobante.
+ * transferencia, al lado (debajo en el móvil) van los datos para pagar y el envío del comprobante.
  */
 export function BookingSuccess({ confirmation, business, clientName, onBookAnother }: BookingSuccessProps) {
   const currency = business.currency;
@@ -37,7 +38,8 @@ export function BookingSuccess({ confirmation, business, clientName, onBookAnoth
   const { payment } = confirmation;
 
   return (
-    <div className="mx-auto grid max-w-xl gap-4">
+    // Con pago por transferencia, en pantallas anchas los datos van a la derecha, a la misma altura.
+    <div className={cn("mx-auto grid gap-4", payment ? "max-w-5xl items-start lg:grid-cols-2" : "max-w-xl")}>
       <div className="rounded-2xl border bg-background p-6 sm:p-9" role="status">
         <h2 className="text-3xl font-extrabold tracking-[-0.02em]">¡Cita reservada correctamente!</h2>
         <p className="mt-2 text-muted-foreground">
