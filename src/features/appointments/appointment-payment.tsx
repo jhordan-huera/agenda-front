@@ -7,6 +7,7 @@ import { meetingUrlPlace, useMultiAgendaAccess } from "@/features/professionals/
 import { openPaymentReceipt, useAppointmentReceipts, useSetAppointmentPaid } from "@/hooks/queries/use-appointments";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { formatDateTime, formatLongDate } from "@/lib/format";
+import { RECEIPT_RETENTION_MONTHS } from "@/lib/validations/payment";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, Business, Client, Professional } from "@/types";
 import { paymentLinkOf } from "./appointment-utils";
@@ -97,6 +98,11 @@ export function AppointmentPayment({
             </li>
           ))}
           {receipts.isPending && <li className="text-xs text-muted-foreground">Cargando comprobantes…</li>}
+          {receipts.data?.length === 0 && (
+            <li className="text-xs text-muted-foreground">
+              El comprobante ya se borró: se guardan {RECEIPT_RETENTION_MONTHS} meses después de la cita.
+            </li>
+          )}
         </ul>
       )}
 

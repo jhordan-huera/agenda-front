@@ -244,7 +244,9 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   (`features/professionals/bank-account-fields.tsx`; en Free y Pro, en Configuración → Perfil).
   Al reservar un servicio con precio, la pantalla final muestra los datos y el monto
   (`features/payments/bank-transfer-card.tsx`) para copiarlos, subir el comprobante (foto o PDF,
-  10 MB, directo a Supabase Storage con URL firmada) o mandarlo por WhatsApp. El enlace privado
+  10 MB, directo a Supabase Storage con URL firmada; las fotos se reducen antes en el navegador,
+  `prepareReceipt` en `lib/upload.ts`) o mandarlo por WhatsApp. Los comprobantes se borran 3 meses
+  después de la cita (cron del backend). El enlace privado
   `/pago/:token` (`pages/payment-page.tsx`, sin sesión) llega en el email de la reserva y en el aviso
   de confirmación por WhatsApp. En la ficha de la cita (`appointment-payment.tsx`): ver los
   comprobantes, "Marcar como pagada", copiar o enviar el enlace de pago; la agenda marca

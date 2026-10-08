@@ -58,3 +58,21 @@ export async function shrinkImage(file: File, maxSize: number): Promise<Blob> {
   if (!fallback) throw new Error("No pudimos procesar la imagen.");
   return fallback;
 }
+
+/** Lado mayor de las fotos de comprobantes: se leen bien y pesan unos 150–300 KB. */
+const RECEIPT_MAX_SIZE = 2000;
+
+/**
+ * Comprobante listo para subir: las fotos se reducen y pasan a WebP (una foto de 3 MB queda en
+ * unos 200 KB); los PDF van tal cual. Si reducirla no ahorra nada, o el navegador no puede leerla
+ * (p. ej. HEIC fuera de Safari), se sube la original.
+ */
+export async function prepareReceipt(file: File): Promise<{ body: Blob; contentType: string; fileName: string }> {
+  const contentType = fileContentType(file);
+  const original = { body: file as Blob, contentType, fileName: file.name };
+  if (!contentType.startsWith("image/")) return original;
+  const image = await shrinkImage(file, RECEIPT_MAX_SIZE).catch(() => null);
+  if (!image || image.size >= file.size) return original;
+  const extension = image.type === "image/webp" ? "webp" : image.type === "image/png" ? "png" : "jpg";
+  return { body: image, contentType: image.type, fileName: `${file.name.replace(/\.[^.]+$/, "") || "comprobante"}.${extension}` };
+}

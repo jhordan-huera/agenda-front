@@ -126,6 +126,9 @@ export function BankTransferCard({
   );
 }
 
+/** Foto que se acepta elegir (se reduce antes de subirla). */
+const MAX_PHOTO_BYTES = 30 * 1024 * 1024;
+
 /** Sube la foto o el PDF del comprobante, con progreso; al terminar, el negocio recibe un aviso. */
 function ReceiptUploadButton({ token, sent }: { token: string; sent: number }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -139,12 +142,14 @@ function ReceiptUploadButton({ token, sent }: { token: string; sent: number }) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (!(RECEIPT_TYPES as readonly string[]).includes(fileContentType(file))) {
+    const type = fileContentType(file);
+    if (!(RECEIPT_TYPES as readonly string[]).includes(type)) {
       toast.error("Sube una foto (JPG, PNG, WebP, HEIC) o un PDF.");
       return;
     }
-    if (file.size > RECEIPT_MAX_BYTES) {
-      toast.error("El archivo supera los 10 MB.");
+    // Las fotos se reducen antes de subirlas: se aceptan más grandes que un PDF.
+    if (file.size > (type === "application/pdf" ? RECEIPT_MAX_BYTES : MAX_PHOTO_BYTES)) {
+      toast.error(type === "application/pdf" ? "El PDF supera los 10 MB." : "La foto pesa demasiado. Prueba con otra.");
       return;
     }
     setProgress(0);
