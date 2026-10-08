@@ -95,7 +95,9 @@ export function useSaveAppointment() {
       ) {
         offerWhatsApp(saved, "rescheduled");
       }
-      return invalidate();
+      // Sin esperar la recarga: con red lenta (móvil) el formulario seguía abierto unos segundos y
+      // la agenda recargada ya traía la cita nueva, que se "solapaba" consigo misma.
+      void invalidate();
     },
   });
 }

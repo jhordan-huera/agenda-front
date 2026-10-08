@@ -308,7 +308,7 @@ function ProfessionalBreakdownCard({
         </CardDescription>
       </CardHeader>
       {/* En el móvil y la tablet, una tarjeta por profesional; la tabla (ocho columnas) desde lg. */}
-      <CardContent className="grid gap-3 sm:grid-cols-2 lg:hidden">
+      <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">
         {rows.map(({ professionalId, summary, occupancy }) => {
           const professional = professionalsById.get(professionalId);
           const stats = [

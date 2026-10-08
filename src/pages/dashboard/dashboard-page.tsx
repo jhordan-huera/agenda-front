@@ -134,7 +134,7 @@ export default function DashboardPage() {
 
       <PlanLimitBanner />
 
-      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-12">
+      <div className="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-12">
         <div className="min-w-0 space-y-8">
           {loading ? (
             <Skeleton className="h-44 rounded-2xl" />
@@ -204,7 +204,7 @@ export default function DashboardPage() {
           )}
 
           {/* La semana y el mes, en la columna principal: se leen después del día. */}
-          <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_14rem] sm:items-end">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,1fr)_14rem] sm:items-end">
             <WeekBars appointments={appointments} now={now} />
             <dl className="grid grid-cols-2 gap-4 rounded-xl bg-muted p-4 sm:grid-cols-1">
               <div>
@@ -219,7 +219,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <aside className="grid content-start gap-10 md:grid-cols-2 xl:grid-cols-1">
+        <aside className="grid grid-cols-1 content-start gap-10 md:grid-cols-2 xl:grid-cols-1">
           {loading ? (
             <Skeleton className="h-48" />
           ) : (

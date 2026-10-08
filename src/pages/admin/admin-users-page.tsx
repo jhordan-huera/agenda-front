@@ -118,7 +118,7 @@ export default function AdminUsersPage() {
       ) : (
         <>
           {/* En el móvil, una tarjeta por usuario (con su negocio y su rol); desde md, la tabla. */}
-          <ul className="grid gap-3 md:hidden">
+          <ul className="grid grid-cols-1 gap-3 md:hidden">
             {rows.map((row) => {
               const { user } = row;
               const name = getFullName(user);

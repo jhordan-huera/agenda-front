@@ -122,7 +122,7 @@ export default function AdminBusinessesPage() {
       ) : (
         <>
           {/* En el móvil, una tarjeta por negocio con todos sus datos; desde md, la tabla. */}
-          <ul className="grid gap-3 md:hidden">
+          <ul className="grid grid-cols-1 gap-3 md:hidden">
             {rows.map(({ business, owner, subscription, usage }) => (
               <li key={business.id}>
                 <Link

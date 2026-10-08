@@ -48,7 +48,7 @@ export default function AdminCategoriesPage() {
       ) : (
         <>
           {/* En el móvil, una tarjeta por categoría (con sus botones a la vista); desde md, la tabla. */}
-          <ul className="grid gap-3 md:hidden">
+          <ul className="grid grid-cols-1 gap-3 md:hidden">
             {categories.data.map((category) => (
               <li
                 key={category.id}
