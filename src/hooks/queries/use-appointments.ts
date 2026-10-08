@@ -106,6 +106,41 @@ export function useSetAppointmentArrival() {
   });
 }
 
+/** Marca la cita como pagada (o lo deshace). */
+export function useSetAppointmentPaid() {
+  const businessId = useBusinessId();
+  const invalidate = useInvalidateAppointments();
+  return useMutation({
+    mutationFn: ({ id, paid }: { id: string; paid: boolean }) => data.appointments.setPaid(businessId, id, paid),
+    onSuccess: () => invalidate(),
+  });
+}
+
+/** Comprobantes de pago que envió el paciente (sólo si la cita tiene alguno). */
+export function useAppointmentReceipts(appointment: Pick<Appointment, "id" | "receiptAt"> | null | undefined) {
+  const businessId = useBusinessId();
+  return useQuery({
+    queryKey: queryKeys.receipts(businessId, appointment?.id ?? ""),
+    queryFn: () => data.appointments.listReceipts(businessId, appointment!.id),
+    enabled: Boolean(appointment?.receiptAt),
+  });
+}
+
+/** Abre un comprobante (URL firmada de unos minutos) en otra pestaña. */
+export async function openPaymentReceipt(businessId: string, receiptId: string): Promise<void> {
+  // La pestaña se abre antes de esperar a la API: si no, el navegador la bloquea como emergente.
+  const tab = window.open("about:blank", "_blank");
+  if (tab) tab.opener = null;
+  try {
+    const { url } = await data.appointments.getReceiptUrl(businessId, receiptId);
+    if (tab) tab.location.href = url;
+    else window.location.href = url;
+  } catch (error) {
+    tab?.close();
+    throw error;
+  }
+}
+
 export function useUpdateAppointmentStatus() {
   const businessId = useBusinessId();
   const invalidate = useInvalidateAppointments();

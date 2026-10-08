@@ -13,9 +13,13 @@ interface FormState {
  * Orquesta el formulario de cita y el panel de detalle para cualquier pantalla.
  * Devuelve las acciones y el JSX de los diálogos para renderizarlo una vez.
  */
-export function useAppointmentDialogs() {
+/** `initialDetailsId`: cita cuya ficha se abre al entrar (p. ej. el enlace de un email). */
+export function useAppointmentDialogs(initialDetailsId?: string | null) {
   const [form, setForm] = useState<FormState>({ open: false });
-  const [details, setDetails] = useState<{ id: string | null; open: boolean }>({ id: null, open: false });
+  const [details, setDetails] = useState<{ id: string | null; open: boolean }>(() => ({
+    id: initialDetailsId ?? null,
+    open: Boolean(initialDetailsId),
+  }));
 
   const openCreate = (defaults?: AppointmentDefaults) => setForm({ open: true, defaults });
   const openEdit = (appointment: Appointment) => {

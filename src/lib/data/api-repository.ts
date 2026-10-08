@@ -8,6 +8,10 @@ import type {
   AdminUserSummary,
   Appointment,
   AuditLogPage,
+  ImageUpload,
+  PaymentReceipt,
+  PaymentReceiptUpload,
+  PublicPayment,
   BlockedTime,
   BookingConfirmation,
   Business,
@@ -143,6 +147,12 @@ export const apiRepository: DataRepository = {
       api.post<void>(`${business(businessId)}/appointments/${id(appointmentId)}/whatsapp-notice`, { kind }),
     setArrival: (businessId, appointmentId, arrived) =>
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/arrival`, { arrived }),
+    setPaid: (businessId, appointmentId, paid) =>
+      api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/payment`, { paid }),
+    listReceipts: (businessId, appointmentId) =>
+      api.get<PaymentReceipt[]>(`${business(businessId)}/appointments/${id(appointmentId)}/receipts`),
+    getReceiptUrl: (businessId, receiptId) =>
+      api.get<{ url: string }>(`${business(businessId)}/payment-receipts/${id(receiptId)}/url`),
   },
 
   schedules: {
@@ -171,6 +181,14 @@ export const apiRepository: DataRepository = {
       api.post<PublicClientLookup>(`/public/businesses/${id(slug)}/clients/lookup`, { documentId, captchaToken }),
     book: (slug, input, captchaToken) =>
       api.post<BookingConfirmation>(`/public/businesses/${id(slug)}/bookings`, { ...input, captchaToken }),
+    getPayment: (token) => api.get<PublicPayment>(`/public/payments/${id(token)}`),
+    requestReceiptUpload: (token, input) => api.post<PaymentReceiptUpload>(`/public/payments/${id(token)}/receipts`, input),
+    completeReceiptUpload: (token, receiptId) =>
+      api.post<PaymentReceipt>(`/public/payments/${id(token)}/receipts/${id(receiptId)}/complete`),
+  },
+
+  images: {
+    requestUpload: (input) => api.post<ImageUpload>("/images", input),
   },
 
   platform: {

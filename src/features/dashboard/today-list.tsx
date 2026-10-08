@@ -1,6 +1,7 @@
 import { ChevronRight, DoorOpen, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { ReceiptBadge } from "@/features/appointments/receipt-badge";
 import { plural } from "@/lib/format";
 import { timeToMinutes, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ export function TodayList({
                 <DoorOpen className="size-3" aria-hidden /> Llegó
               </span>
             )}
+            <ReceiptBadge appointment={appointment} />
           </span>
           <span className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
             {appointment.homeVisit && <Home className="size-3.5 shrink-0 text-ink" aria-label="A domicilio" />}

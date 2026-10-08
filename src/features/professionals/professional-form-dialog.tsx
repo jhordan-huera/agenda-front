@@ -17,6 +17,7 @@ import { useErrorToast } from "@/hooks/use-error-toast";
 import { getInitials } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import { BankAccountFields } from "./bank-account-fields";
 import { PROFESSIONAL_COLORS } from "./colors";
 import { professionalSchema, type ProfessionalInput } from "@/lib/validations/professional";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
@@ -62,6 +63,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
     color: professional?.color ?? PROFESSIONAL_COLORS.find((color) => !usedColors.has(color)) ?? PROFESSIONAL_COLORS[0],
     email: professional?.email ?? "",
     meetingUrl: professional?.meetingUrl ?? "",
+    bankAccount: professional?.bankAccount ?? null,
     userId: professional?.userId ?? null,
     allServices: professional?.allServices ?? true,
     serviceIds: professional?.serviceIds ?? [],
@@ -110,6 +112,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
       <ImageUploadField
+        target="professional"
         label="Foto"
         value={values.avatarUrl}
         onChange={(avatarUrl) => set("avatarUrl", avatarUrl)}
@@ -221,6 +224,12 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
           />
         )}
       </FormField>
+      <BankAccountFields
+        value={values.bankAccount}
+        onChange={(bankAccount) => set("bankAccount", bankAccount)}
+        errors={errors}
+        defaultHolder={values.displayName}
+      />
       <div className="grid gap-2">
         <SwitchRow
           title="Avisarle de cada cita nueva"

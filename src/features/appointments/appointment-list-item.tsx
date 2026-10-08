@@ -1,6 +1,7 @@
 import { StatusBadge } from "@/components/shared/status-badge";
 import { capitalize, formatShortDate } from "@/lib/format";
 import type { Appointment } from "@/types";
+import { ReceiptBadge } from "./receipt-badge";
 
 interface AppointmentListItemProps {
   appointment: Appointment;
@@ -29,6 +30,7 @@ export function AppointmentListItem({ appointment, title, subtitle, showDate, on
           <p className="truncate font-semibold">{title}</p>
           <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
         </div>
+        <ReceiptBadge appointment={appointment} />
         <StatusBadge status={appointment.status} />
       </button>
     </li>

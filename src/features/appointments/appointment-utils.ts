@@ -42,3 +42,7 @@ export function getPlace(appointment: { homeVisit: HomeVisitAddress | null; isVi
 export function getListPrice(service: Pick<Service, "price" | "homeVisitFee">, atHome: boolean): number {
   return service.price + (atHome ? service.homeVisitFee : 0);
 }
+
+/** Enlace privado de pago de la cita (datos para transferir y subida del comprobante). */
+export const paymentLinkOf = (appointment: Pick<Appointment, "paymentToken">) =>
+  `${window.location.origin}/pago/${appointment.paymentToken}`;

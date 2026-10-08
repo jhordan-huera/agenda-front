@@ -66,7 +66,8 @@ export default function CalendarPage() {
   const { data: allSchedules = [] } = useSchedules();
   const { data: blockedTimes = [] } = useBlockedTimes();
   const { clientsById, servicesById } = useLookups();
-  const dialogs = useAppointmentDialogs();
+  // ?appointment=<id> (enlace del email "Comprobante de pago"): abre la ficha de esa cita.
+  const dialogs = useAppointmentDialogs(searchParams.get("appointment"));
 
   const appointments = (appointmentsQuery.data ?? []).filter(
     (appointment) =>

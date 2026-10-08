@@ -45,6 +45,7 @@ export function ProfileSettingsForm({ user }: { user: User }) {
       onDiscard={() => reset()}
     >
       <ImageUploadField
+        target="avatar"
         label="Foto"
         value={values.avatarUrl}
         onChange={(avatarUrl) => setField("avatarUrl", avatarUrl)}

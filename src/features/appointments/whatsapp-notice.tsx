@@ -13,7 +13,7 @@ import { DEFAULT_NOTIFICATION_SETTINGS } from "@/lib/constants/business";
 import { data } from "@/lib/data";
 import { buildAppointmentNotice, getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, Business, Client, WhatsAppNoticeKind } from "@/types";
-import { getServiceName } from "./appointment-utils";
+import { getServiceName, paymentLinkOf } from "./appointment-utils";
 import { WhatsAppNoticeContext } from "./whatsapp-notice-context";
 import { useProfessionals } from "@/hooks/queries/use-professionals";
 
@@ -65,6 +65,7 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
       toast.message(`${client.name} no tiene un teléfono válido: no se le puede avisar por WhatsApp.`);
       return;
     }
+    const professional = professionals.find((p) => p.id === appointment.professionalId);
     const message = buildAppointmentNotice(kind, {
       clientName: client.name,
       businessName: business.name,
@@ -72,9 +73,8 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
       date: appointment.date,
       startTime: appointment.startTime,
       bookingUrl: `${window.location.origin}/book/${business.slug}`,
-      virtual: appointment.isVirtual
-        ? { meetingUrl: professionals.find((p) => p.id === appointment.professionalId)?.meetingUrl || null }
-        : undefined,
+      virtual: appointment.isVirtual ? { meetingUrl: professional?.meetingUrl || null } : undefined,
+      paymentUrl: professional?.bankAccount && appointment.price > 0 && !appointment.paidAt ? paymentLinkOf(appointment) : undefined,
     });
     setNotice({ appointment, kind, client, message });
   };

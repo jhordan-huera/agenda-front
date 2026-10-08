@@ -26,6 +26,8 @@ import type {
   ProfileInput,
 } from "@/lib/validations/business";
 import type { ClientInput } from "@/lib/validations/client";
+import type { ImageUploadInput } from "@/lib/validations/images";
+import type { ReceiptInput } from "@/lib/validations/payment";
 import type { ProfessionalInput } from "@/lib/validations/professional";
 import type { BlockedTimeInput, ScheduleDayInput } from "@/lib/validations/schedule";
 import type { ServiceInput } from "@/lib/validations/service";
@@ -38,6 +40,10 @@ import type {
   AdminUserSummary,
   Appointment,
   AppointmentStatus,
+  ImageUpload,
+  PaymentReceipt,
+  PaymentReceiptUpload,
+  PublicPayment,
   AuditEntityType,
   AuditLogPage,
   BlockedTime,
@@ -205,6 +211,12 @@ export interface AppointmentRepository {
   logWhatsAppNotice(businessId: string, appointmentId: string, kind: WhatsAppNoticeKind): Promise<void>;
   /** Llegada del paciente (o quitarla): sólo en citas pendientes o confirmadas. */
   setArrival(businessId: string, appointmentId: string, arrived: boolean): Promise<Appointment>;
+  /** Marca la cita como pagada (o lo deshace). */
+  setPaid(businessId: string, appointmentId: string, paid: boolean): Promise<Appointment>;
+  /** Comprobantes de pago que envió el paciente, del más antiguo al más reciente. */
+  listReceipts(businessId: string, appointmentId: string): Promise<PaymentReceipt[]>;
+  /** URL de unos minutos para ver el comprobante. */
+  getReceiptUrl(businessId: string, receiptId: string): Promise<{ url: string }>;
 }
 
 export interface ScheduleRepository {
@@ -255,6 +267,16 @@ export interface PublicBookingRepository {
   lookupClient(slug: string, documentId: string, captchaToken?: string): Promise<PublicClientLookup>;
   /** Revalida la disponibilidad y el plan, crea/reutiliza el cliente (por email), crea la cita y envía emails. */
   book(slug: string, input: PublicBookingInput, captchaToken?: string): Promise<BookingConfirmation>;
+  /** Enlace de pago de una cita (/pago/:token): datos para transferir y comprobantes enviados. */
+  getPayment(token: string): Promise<PublicPayment>;
+  requestReceiptUpload(token: string, input: ReceiptInput): Promise<PaymentReceiptUpload>;
+  /** Tras subir el archivo: la API comprueba que llegó y avisa al negocio. */
+  completeReceiptUpload(token: string, receiptId: string): Promise<PaymentReceipt>;
+}
+
+/** Logos y fotos: URL firmada para subir la imagen al almacenamiento y su dirección pública. */
+export interface ImageRepository {
+  requestUpload(input: ImageUploadInput): Promise<ImageUpload>;
 }
 
 /** Configuración pública de la plataforma (p. ej. si el registro está abierto). Sin sesión. */
@@ -342,6 +364,7 @@ export interface DataRepository {
   notifications: NotificationRepository;
   auditLogs: AuditLogRepository;
   publicBooking: PublicBookingRepository;
+  images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;
 }
