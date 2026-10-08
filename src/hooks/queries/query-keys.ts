@@ -24,9 +24,13 @@ export const queryKeys = {
   clientActivity: (businessId: string) => ["appointments", businessId, "client-activity"] as const,
   appointmentList: (businessId: string, filters: AppointmentFilters) =>
     ["appointments", businessId, filters] as const,
+  /** Bajo "appointments": un comprobante nuevo llega con la cita recargada. */
+  receipts: (businessId: string, appointmentId: string) => ["appointments", businessId, "receipts", appointmentId] as const,
   schedules: (businessId: string) => ["schedules", businessId] as const,
   blockedTimes: (businessId: string) => ["blocked-times", businessId] as const,
   publicProfile: (slug: string) => ["public-profile", slug] as const,
+  /** Enlace de pago de una cita (/pago/:token). */
+  publicPayment: (token: string) => ["public-payment", token] as const,
   platformSettings: ["platform-settings"] as const,
   /** Verificación en dos pasos de la propia cuenta. */
   twoFactor: ["two-factor"] as const,

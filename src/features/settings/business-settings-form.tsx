@@ -71,6 +71,7 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
       onDiscard={() => reset()}
     >
       <ImageUploadField
+        target="logo"
         label="Logo"
         shape="square"
         value={values.logoUrl}

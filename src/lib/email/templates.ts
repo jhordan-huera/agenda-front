@@ -1,7 +1,8 @@
 import { APP_NAME } from "@/lib/constants/app";
+import { BANK_ACCOUNT_TYPE_LABELS } from "@/lib/constants/business";
 import { capitalize, formatLongDate, formatPrice, formatTimeRange } from "@/lib/format";
 import { describeHomeVisit, getDirectionsUrl, getPlaceMapsUrl, hasMapPoint } from "@/lib/maps";
-import type { HomeVisitAddress, ISODate } from "@/types";
+import type { BankAccount, HomeVisitAddress, ISODate } from "@/types";
 import { composeEmail, type EmailBlock, type EmailContent, type EmailMessage } from "./layout";
 
 /**
@@ -35,6 +36,8 @@ export interface AppointmentEmailData {
   /** Por videollamada, con el enlace del profesional (null: aún no lo configuró). */
   isVirtual: boolean;
   meetingUrl: string | null;
+  /** Pago por transferencia: datos de la cuenta y enlace para subir el comprobante (null: no aplica). */
+  payment: { bankAccount: BankAccount; url: string } | null;
 }
 
 /* ------------------------------------------------------------------ Piezas -- */
@@ -94,6 +97,25 @@ function appointmentDetails(data: AppointmentEmailData, title = "Tu cita"): Emai
     }
   }
   return { kind: "details", title, rows };
+}
+
+/** Datos para transferir y el botón para enviar el comprobante. */
+function payment(data: AppointmentEmailData): EmailBlock[] {
+  if (!data.payment) return [];
+  const { bankAccount: account, url } = data.payment;
+  const rows: Extract<EmailBlock, { kind: "details" }>["rows"] = [
+    { label: "Banco", value: account.bank },
+    { label: "Tipo de cuenta", value: BANK_ACCOUNT_TYPE_LABELS[account.accountType] },
+    { label: "Número de cuenta", value: account.number, mono: true },
+    { label: "Titular", value: account.holder },
+  ];
+  if (account.holderId) rows.push({ label: "Cédula / RUC", value: account.holderId, mono: true });
+  if (data.showPrice) rows.push({ label: "Monto", value: formatPrice(data.price, data.currency) });
+  return [
+    { kind: "details", title: "Pago por transferencia", rows },
+    { kind: "button", label: "Enviar el comprobante", url },
+    { kind: "note", text: "Cuando transfieras, sube ahí la foto o el PDF del comprobante (o envíalo por WhatsApp al negocio)." },
+  ];
 }
 
 const policy = (data: AppointmentEmailData): EmailBlock[] =>
@@ -304,6 +326,7 @@ export const emailTemplates = {
       blocks: [
         { kind: "text", text: `Tu cita en ${data.businessName} ha sido reservada. Te avisaremos cuando quede confirmada.` },
         appointmentDetails(data),
+        ...payment(data),
         ...policy(data),
       ],
     }),
@@ -318,6 +341,20 @@ export const emailTemplates = {
         // El negocio siempre ve el precio real, aunque no se muestre a los clientes.
         appointmentDetails({ ...data, showPrice: true }, "La reserva"),
         { kind: "text", text: "Entra a tu agenda para confirmarla." },
+      ],
+    }),
+
+  /** Al negocio: el paciente subió el comprobante de la transferencia desde su enlace de pago. */
+  paymentReceiptReceived: (data: AppointmentEmailData & { agendaUrl: string }): EmailContent =>
+    platformEmail({
+      subject: `Comprobante de pago: ${data.clientName} · ${capitalize(formatLongDate(data.date))} ${data.startTime}`,
+      preheader: `${data.clientName} envió el comprobante de ${data.serviceName}.`,
+      title: "Recibiste un comprobante de pago",
+      blocks: [
+        { kind: "text", text: `${data.clientName} envió el comprobante de la transferencia de su cita.` },
+        appointmentDetails({ ...data, showPrice: true }, "La cita"),
+        { kind: "button", label: "Ver el comprobante", url: data.agendaUrl },
+        { kind: "note", text: "Comprueba que el dinero llegó a tu cuenta y marca la cita como pagada." },
       ],
     }),
 
@@ -387,7 +424,12 @@ export const emailTemplates = {
       preheader: `Te esperamos el ${formatLongDate(data.date)} a las ${data.startTime}.`,
       title: "Tu cita está confirmada",
       greeting: `Hola ${data.clientName}:`,
-      blocks: [{ kind: "text", text: `Tu cita en ${data.businessName} está confirmada.` }, appointmentDetails(data), ...policy(data)],
+      blocks: [
+        { kind: "text", text: `Tu cita en ${data.businessName} está confirmada.` },
+        appointmentDetails(data),
+        ...payment(data),
+        ...policy(data),
+      ],
     }),
 
   appointmentUpdated: (data: AppointmentEmailData): EmailContent =>

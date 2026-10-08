@@ -13,9 +13,15 @@ export function BookingHeader({ business, professionals }: { business: PublicBus
   return (
     <header className="border-b bg-background">
       <div className="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-7 sm:flex-row sm:items-end sm:justify-between sm:py-10">
-        <div className="flex min-w-0 items-start gap-4">
+        {/* En el móvil el logo va encima del nombre: así el texto usa todo el ancho. */}
+        <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:gap-5">
           {business.logoUrl && (
-            <img src={business.logoUrl} alt={`Logo de ${business.name}`} className="size-14 shrink-0 rounded-xl border object-cover" />
+            // Entero (sin recortar): misma altura y el ancho que pida su forma, cuadrado o alargado.
+            <img
+              src={business.logoUrl}
+              alt={`Logo de ${business.name}`}
+              className="h-16 w-auto max-w-48 shrink-0 rounded-2xl border bg-white object-contain p-1.5 sm:h-20 sm:max-w-60"
+            />
           )}
           <div className="min-w-0">
             <h1 className="text-3xl leading-tight font-extrabold tracking-[-0.02em] sm:text-4xl">{business.name}</h1>

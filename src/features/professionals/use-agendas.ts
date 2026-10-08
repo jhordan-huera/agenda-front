@@ -43,7 +43,10 @@ export function useMultiAgendaAccess(): boolean | undefined {
   return getPlan(subscription.data.plan).multipleAgendas || professionals.data.length > 1;
 }
 
-/** Dónde se pone el enlace de videollamada: en cada profesional o, en una cuenta individual, en el perfil. */
+/**
+ * Dónde se ponen el enlace de videollamada y los datos bancarios: en cada profesional o, en una
+ * cuenta individual, en el perfil.
+ */
 export const meetingUrlPlace = (multiAgenda: boolean | undefined) =>
   multiAgenda ? "Profesionales → Editar" : "Configuración → Perfil";
 

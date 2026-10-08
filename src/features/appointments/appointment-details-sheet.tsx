@@ -42,6 +42,7 @@ import { describeHomeVisit, getDirectionsUrl } from "@/lib/maps";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, AppointmentStatus } from "@/types";
+import { AppointmentPayment } from "./appointment-payment";
 import { getClientName, getServiceName } from "./appointment-utils";
 
 interface AppointmentDetailsSheetProps {
@@ -225,6 +226,14 @@ function AppointmentDetails({
             )}
           </Button>
         )}
+
+        <AppointmentPayment
+          appointment={appointment}
+          professional={professional}
+          client={client}
+          business={business}
+          serviceName={getServiceName(servicesById, appointment.serviceId)}
+        />
 
         <section aria-labelledby="status-heading" className="space-y-2">
           <h3 id="status-heading" className="text-sm font-semibold text-muted-foreground">

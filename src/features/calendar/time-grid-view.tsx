@@ -1,5 +1,6 @@
 import { Home, Video } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { toast } from "sonner";
 import { getBlockedRanges, getWorkingRanges } from "@/lib/availability";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { formatDate, formatTimeRange } from "@/lib/format";
@@ -7,6 +8,7 @@ import { minutesToTime, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Client, ISODate, Professional, Schedule, Service } from "@/types";
 import { layoutDayEvents } from "./calendar-utils";
+import { useAppointmentDrag, type DropTarget } from "./use-appointment-drag";
 
 const HOUR_HEIGHT = 56;
 const MIN_EVENT_HEIGHT = 22;
@@ -39,7 +41,15 @@ interface TimeGridViewProps {
   servicesById: Map<string, Service>;
   onSlotClick: (date: ISODate, time: string, professionalId?: string) => void;
   onAppointmentClick: (appointment: Appointment) => void;
+  /** Arrastrar citas: cuáles se pueden mover, por qué no se pueden soltar en un sitio y qué hacer al soltarlas. */
+  move?: {
+    canMove: (appointment: Appointment) => boolean;
+    check: (appointment: Appointment, target: Omit<DropTarget, "problem" | "columnKey">) => string | null;
+    onMove: (appointment: Appointment, target: DropTarget) => void;
+  };
 }
+
+type DragProps = Pick<ReturnType<typeof useAppointmentDrag>, "dragging" | "startDrag" | "isClickSuppressed">;
 
 /**
  * Vista de rejilla horaria: un día (vista Día) o siete (vista Semana).
@@ -49,7 +59,19 @@ export function TimeGridView(props: TimeGridViewProps) {
   const { days, now, startHour, endHour } = props;
   const gridColumns: GridColumn[] = props.columns ?? days.map((day) => ({ key: day, day }));
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
+  const drag = useAppointmentDrag({
+    scrollRef,
+    bodyRef,
+    columns: gridColumns,
+    startHour,
+    endHour,
+    hourHeight: HOUR_HEIGHT,
+    checkDrop: (appointment, target) => props.move?.check(appointment, target) ?? null,
+    onDrop: (appointment, target) => props.move?.onMove(appointment, target),
+    onRejected: (problem) => toast.error(problem),
+  });
   const columns = `3.5rem repeat(${gridColumns.length}, minmax(0, 1fr))`;
   const currentHour = days.includes(now.date) ? Math.floor(now.minutes / 60) : null;
 
@@ -94,7 +116,7 @@ export function TimeGridView(props: TimeGridViewProps) {
           })}
         </div>
 
-        <div className="relative grid" style={{ gridTemplateColumns: columns, height: hours.length * HOUR_HEIGHT }}>
+        <div ref={bodyRef} className="relative grid" style={{ gridTemplateColumns: columns, height: hours.length * HOUR_HEIGHT }}>
           <div className="relative" aria-hidden>
             {hours.map((hour, i) => (
               <span
@@ -111,7 +133,14 @@ export function TimeGridView(props: TimeGridViewProps) {
             ))}
           </div>
           {gridColumns.map((column) => (
-            <DayColumn key={column.key} column={column} {...props} />
+            <DayColumn
+              key={column.key}
+              column={column}
+              {...props}
+              dragging={drag.dragging}
+              startDrag={drag.startDrag}
+              isClickSuppressed={drag.isClickSuppressed}
+            />
           ))}
         </div>
       </div>
@@ -132,7 +161,11 @@ function DayColumn({
   servicesById,
   onSlotClick,
   onAppointmentClick,
-}: TimeGridViewProps & { column: GridColumn }) {
+  move,
+  dragging,
+  startDrag,
+  isClickSuppressed,
+}: TimeGridViewProps & DragProps & { column: GridColumn }) {
   const { day, professionalId } = column;
   const gridStart = startHour * 60;
   const gridEnd = endHour * 60;
@@ -150,6 +183,8 @@ function DayColumn({
   const workingRanges = agendaIds.flatMap((id) => getWorkingRanges(schedules.filter((s) => s.professionalId === id), day));
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
+    // El clic que llega al soltar una cita arrastrada no crea otra.
+    if (isClickSuppressed()) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const halfHours = Math.floor(((event.clientY - rect.top) / HOUR_HEIGHT) * 2);
     onSlotClick(day, minutesToTime(Math.min(gridStart + halfHours * 30, gridEnd - 30)), professionalId);
@@ -192,18 +227,24 @@ function DayColumn({
         const status = APPOINTMENT_STATUS_CONFIG[appointment.status];
         // Con todas las agendas en la misma columna, el color del profesional junto al nombre.
         const professional = !professionalId ? professionalsById?.get(appointment.professionalId) : undefined;
+        const movable = move?.canMove(appointment) ?? false;
         return (
           <button
             key={appointment.id}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              onAppointmentClick(appointment);
+              if (!isClickSuppressed()) onAppointmentClick(appointment);
             }}
+            // Arrastrar: con el ratón, al moverla; en el móvil, manteniendo el dedo encima.
+            onPointerDown={movable ? (e) => startDrag(e, appointment) : undefined}
+            onContextMenu={movable ? (e) => e.preventDefault() : undefined}
             aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : appointment.isVirtual ? ", virtual" : ""}${professional ? `, con ${professional.displayName}` : ""}`}
             className={cn(
               "absolute z-[1] overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-xs leading-tight shadow-xs transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring",
               status.event,
+              movable && "cursor-grab select-none [-webkit-touch-callout:none] active:cursor-grabbing",
+              dragging?.appointmentId === appointment.id && "opacity-40",
             )}
             style={{
               top: top + 1,
@@ -226,11 +267,33 @@ function DayColumn({
         );
       })}
 
+      {dragging?.target?.columnKey === column.key && <DropGhost target={dragging.target} toY={toY} />}
+
       {day === now.date && now.minutes >= gridStart && now.minutes <= gridEnd && (
         <div className="pointer-events-none absolute inset-x-0 z-[2] h-0.5 bg-ink" style={{ top: toY(now.minutes) }}>
           <span className="absolute -top-1 -left-1 size-2.5 rounded-full bg-ink" />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Dónde caería la cita al soltarla: la nueva hora o, en rojo, por qué no se puede. */
+function DropGhost({ target, toY }: { target: DropTarget; toY: (minutes: number) => number }) {
+  const top = toY(target.start);
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute inset-x-0.5 z-[3] rounded-md border-2 border-dashed px-1.5 py-0.5 text-xs leading-tight font-semibold shadow-md",
+        target.problem ? "border-destructive bg-destructive/10 text-destructive" : "border-primary bg-primary/10 text-primary",
+      )}
+      style={{ top: top + 1, height: Math.max(toY(target.end) - top, MIN_EVENT_HEIGHT) - 2 }}
+      role="status"
+    >
+      <p className="truncate">
+        {formatDate(target.date, "EEE d")} · {formatTimeRange(minutesToTime(target.start), minutesToTime(target.end))}
+      </p>
+      {target.problem && <p className="truncate font-medium">{target.problem}</p>}
     </div>
   );
 }

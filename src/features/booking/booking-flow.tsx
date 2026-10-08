@@ -140,7 +140,14 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
   };
 
   if (confirmation) {
-    return <BookingSuccess confirmation={confirmation} business={business} onBookAnother={reset} />;
+    return (
+      <BookingSuccess
+        confirmation={confirmation}
+        business={business}
+        clientName={contact.knownClientName ?? contact.name}
+        onBookAnother={reset}
+      />
+    );
   }
 
   const minNotice = getMinNoticeHours(business.bookingSettings);

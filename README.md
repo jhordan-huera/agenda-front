@@ -240,6 +240,29 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   profesional (Profesionales → Editar → "Enlace de videollamada": Meet, Zoom o Teams, con https://):
   el enlace llega en la confirmación, en los emails y en el aviso por WhatsApp; en la agenda la
   cita lleva un icono de cámara y el detalle, "Entrar a la videollamada".
+- **Mover citas arrastrándolas** (vistas Día y Semana, `features/calendar/use-appointment-drag.ts`):
+  con el ratón o, en el móvil, manteniendo el dedo medio segundo. La sombra muestra dónde caerá
+  (cada 15 min) y, en rojo, por qué no se puede (hora pasada, ocupada, profesional inactivo o que no
+  atiende el servicio); en la vista Día con varias agendas se puede pasar a otro profesional. Sólo
+  citas pendientes o confirmadas. La agenda la muestra al momento en su sitio nuevo y la guarda a
+  los 5 s (`useMoveAppointment`): "Deshacer" antes no avisa al paciente; después llegan el email de
+  cambio y el aviso de WhatsApp, como al editarla.
+- **Pago por transferencia**: cada agenda puede tener datos bancarios
+  (`features/professionals/bank-account-fields.tsx`; en Free y Pro, en Configuración → Perfil).
+  Al reservar un servicio con precio, la pantalla final muestra los datos y el monto
+  (`features/payments/bank-transfer-card.tsx`) para copiarlos, subir el comprobante (foto o PDF,
+  10 MB, directo a Supabase Storage con URL firmada; las fotos se reducen antes en el navegador,
+  `prepareReceipt` en `lib/upload.ts`) o mandarlo por WhatsApp. Uno por cita: enviado, en su lugar sale
+  «Comprobante enviado» en verde (y, si se equivocó de archivo, el enlace a WhatsApp). Los
+  comprobantes se borran 3 meses después de la cita (cron del backend). El enlace privado
+  `/pago/:token` (`pages/payment-page.tsx`, sin sesión) llega en el email de la reserva y en el aviso
+  de confirmación por WhatsApp. En la ficha de la cita (`appointment-payment.tsx`): ver los
+  comprobantes, "Marcar como pagada", copiar o enviar el enlace de pago; la agenda marca
+  "Comprobante" en las citas por revisar y `?appointment=<id>` en el calendario abre su ficha
+  (enlace del email al negocio).
+- **Logos y fotos**: `ImageUploadField` reduce la imagen en el navegador (WebP, 512–800 px) y la sube
+  al bucket público `imagenes` de Supabase Storage (`hooks/queries/use-images.ts`, `lib/upload.ts`);
+  el formulario guarda su dirección pública, no la imagen.
 - **Citas a domicilio**: con un recargo opcional por servicio. Al reservar, el cliente marca su **ubicación exacta en un mapa** (toque, pin
   arrastrable, "Usar mi ubicación" o buscador de direcciones) y añade una referencia. En la agenda
   la cita lleva un icono de casa y el botón "Cómo llegar" (Google Maps).
@@ -310,8 +333,8 @@ En Vercel, como proyecto Vite (build `npm run build`, salida `dist/`). `vercel.j
 reescritura SPA para que las rutas profundas (`/dashboard/...`, `/book/...`) funcionen y las
 cabeceras de seguridad: la política de contenido (CSP) sólo deja cargar código de este dominio y
 de Cloudflare (CAPTCHA de la página de reservas), conectarse a los mapas (OpenFreeMap), al
-buscador de direcciones (Nominatim) y a Supabase (los archivos de la historia clínica se suben
-directo desde el navegador), y nadie puede mostrar la web dentro de otra (clickjacking).
+buscador de direcciones (Nominatim) y a Supabase (los archivos de la historia clínica, los
+comprobantes de pago y las imágenes se suben directo desde el navegador), y nadie puede mostrar la web dentro de otra (clickjacking).
 Si se añade un servicio externo nuevo, hay que permitirlo ahí.
 
 El CAPTCHA (Cloudflare Turnstile) lo activa la API: con sus claves configuradas, el perfil público

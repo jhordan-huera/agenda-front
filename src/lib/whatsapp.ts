@@ -42,6 +42,24 @@ export function getBusinessWhatsAppUrl(business: Pick<Business, "name" | "phone"
     : null;
 }
 
+/**
+ * El paciente avisa al negocio de su transferencia; la foto del comprobante la adjunta él en
+ * WhatsApp (un enlace wa.me no puede llevar archivos).
+ */
+export function getReceiptWhatsAppUrl(
+  business: Pick<Business, "phone" | "timezone">,
+  appointment: { clientName: string; serviceName: string; date: ISODate; startTime: string },
+): string | null {
+  if (!business.phone) return null;
+  const who = appointment.clientName ? `, soy ${appointment.clientName}` : "";
+  const when = `el ${formatDate(appointment.date, "EEEE d 'de' MMMM")} a las ${appointment.startTime}`;
+  return getWhatsAppUrl(
+    business.phone,
+    business.timezone,
+    `Hola${who}. Te envío el comprobante de la transferencia de mi cita de ${appointment.serviceName} ${when}.`,
+  );
+}
+
 /** Aviso que corresponde a un cambio de estado (pasar a "Pendiente" no tiene aviso). */
 export function noticeForStatus(status: AppointmentStatus): WhatsAppNoticeKind | null {
   return status === "pending" ? null : status;
@@ -57,6 +75,8 @@ export interface AppointmentNoticeData {
   bookingUrl: string;
   /** Cita por videollamada: su enlace (null: el profesional aún no lo configuró). */
   virtual?: { meetingUrl: string | null };
+  /** Enlace de pago (la agenda cobra por transferencia y la cita aún no está pagada). */
+  paymentUrl?: string;
 }
 
 /** Mensaje de WhatsApp al cliente según el cambio de su cita; el profesional lo revisa antes de enviarlo. */
@@ -69,15 +89,16 @@ export function buildAppointmentNotice(kind: WhatsAppNoticeKind, data: Appointme
       ? ` Es por videollamada: ${data.virtual.meetingUrl}`
       : " Es por videollamada: te enviaremos el enlace antes de la cita."
     : "";
+  const payment = data.paymentUrl ? ` Para pagar por transferencia y enviarnos el comprobante: ${data.paymentUrl}` : "";
   switch (kind) {
     case "confirmed":
       return data.virtual
-        ? `${hello}, te confirmamos tu cita de ${data.serviceName} ${when} con ${data.businessName}.${videoCall}`
-        : `${hello}, te confirmamos tu cita de ${data.serviceName} ${when} con ${data.businessName}. ¡Te esperamos!`;
+        ? `${hello}, te confirmamos tu cita de ${data.serviceName} ${when} con ${data.businessName}.${videoCall}${payment}`
+        : `${hello}, te confirmamos tu cita de ${data.serviceName} ${when} con ${data.businessName}. ¡Te esperamos!${payment}`;
     case "cancelled":
       return `${hello}, tu cita de ${data.serviceName} ${when} con ${data.businessName} quedó cancelada. Si quieres agendar otra, puedes hacerlo aquí: ${data.bookingUrl}`;
     case "rescheduled":
-      return `${hello}, cambiamos tu cita de ${data.serviceName} con ${data.businessName}: ahora es ${when}.${videoCall} Si no te queda bien, respóndenos por aquí.`;
+      return `${hello}, cambiamos tu cita de ${data.serviceName} con ${data.businessName}: ahora es ${when}.${videoCall} Si no te queda bien, respóndenos por aquí.${payment}`;
     case "completed":
       return `${hello}, gracias por tu visita a ${data.businessName}. Cuando quieras volver, puedes reservar aquí: ${data.bookingUrl}`;
     case "no_show":

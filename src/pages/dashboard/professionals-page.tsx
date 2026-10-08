@@ -88,7 +88,7 @@ function ProfessionalsPageContent() {
   const atLimit = limit !== null && active >= limit;
 
   const toggleActive = async (professional: Professional) => {
-    const { displayName, title, avatarUrl, color, email, meetingUrl, userId, allServices, serviceIds, notifyNewAppointments, dailyAgenda } =
+    const { displayName, title, avatarUrl, color, email, meetingUrl, bankAccount, userId, allServices, serviceIds, notifyNewAppointments, dailyAgenda } =
       professional;
     try {
       await save.mutateAsync({
@@ -100,6 +100,7 @@ function ProfessionalsPageContent() {
           color,
           email,
           meetingUrl,
+          bankAccount,
           userId,
           allServices,
           serviceIds,

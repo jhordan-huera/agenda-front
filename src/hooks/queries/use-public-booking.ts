@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { data } from "@/lib/data";
 import type { PublicBookingInput } from "@/lib/validations/booking";
+import type { ReceiptInput } from "@/lib/validations/payment";
+import { prepareReceipt, uploadToStorage } from "@/lib/upload";
 import { queryKeys } from "./query-keys";
 
 export function usePublicProfile(slug: string) {
@@ -26,5 +28,33 @@ export function useCreateBooking(slug: string, getCaptchaToken: GetCaptchaToken)
 export function useLookupClient(slug: string, getCaptchaToken: GetCaptchaToken) {
   return useMutation({
     mutationFn: async (documentId: string) => data.publicBooking.lookupClient(slug, documentId, await getCaptchaToken()),
+  });
+}
+
+/** Enlace de pago de una cita (/pago/:token). */
+export function usePublicPayment(token: string) {
+  return useQuery({
+    queryKey: queryKeys.publicPayment(token),
+    queryFn: () => data.publicBooking.getPayment(token),
+    retry: false,
+  });
+}
+
+/**
+ * El paciente sube el comprobante: se reduce si es una foto, se pide la URL firmada, el navegador
+ * envía el archivo directo al almacenamiento (con progreso) y la API confirma que llegó y avisa al negocio.
+ */
+export function useUploadReceipt(token: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ file, onProgress }: { file: File; onProgress?: (percent: number) => void }) => {
+      // Las fotos se reducen antes de subirlas: así el almacenamiento dura mucho más.
+      const { body, contentType, fileName } = await prepareReceipt(file);
+      const input = { fileName, contentType, sizeBytes: body.size } as ReceiptInput;
+      const { receipt, upload } = await data.publicBooking.requestReceiptUpload(token, input);
+      await uploadToStorage(upload, body, { contentType, onProgress });
+      return data.publicBooking.completeReceiptUpload(token, receipt.id);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.publicPayment(token) }),
   });
 }

@@ -19,6 +19,7 @@ const TYPE_LABELS: Record<EmailType, string> = {
   booking_received: "Nueva reserva",
   professional_new_appointment: "Cita nueva (al profesional)",
   professional_daily_agenda: "Agenda del día (al profesional)",
+  payment_receipt_received: "Comprobante de pago recibido (al negocio)",
   appointment_confirmed: "Confirmación",
   appointment_updated: "Modificación",
   appointment_cancelled: "Cancelación",

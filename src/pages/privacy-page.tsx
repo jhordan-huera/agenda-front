@@ -195,8 +195,11 @@ export default function PrivacyPage() {
                 Al eliminar un negocio se borran de forma definitiva sus datos, sus archivos y las cuentas de su equipo.
               </li>
               <li>
-                Registro de actividad: los inicios y cierres de sesión, 90 días; las acciones en el panel, 1 año; los accesos
+                Registro de actividad: los inicios y cierres de sesión, 90 días; las acciones en el panel, 5 meses; los accesos
                 y cambios en las historias clínicas, 5 años. Después se borran automáticamente.
+              </li>
+              <li>
+                Comprobantes de pago que sube el paciente: 3 meses después de la cita. La cita y si está pagada se conservan.
               </li>
               <li>
                 El negocio decide cuánto tiempo conserva las historias clínicas de sus pacientes, según la normativa de salud

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusinessId } from "@/features/auth/use-session";
 import { data } from "@/lib/data";
+import { fileContentType, uploadToStorage } from "@/lib/upload";
 import type {
   ClinicalAddendumInput,
   ClinicalAttachmentInput,
@@ -113,22 +114,10 @@ export const useUploadClinicalAttachment = (clientId: string) =>
   useClinicalMutation(
     clientId,
     async (businessId, { file, description, onProgress }: { file: File; description: string; onProgress?: (percent: number) => void }) => {
-      // Algunos navegadores no informan el tipo de HEIC o PDF: se deduce de la extensión.
-      const byExtension: Record<string, string> = { heic: "image/heic", pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg" };
-      const contentType = file.type || byExtension[file.name.split(".").pop()?.toLowerCase() ?? ""] || "";
+      const contentType = fileContentType(file);
       const input = { fileName: file.name, contentType, sizeBytes: file.size, description } as ClinicalAttachmentInput;
       const { attachment, upload } = await data.clinicalRecords.requestAttachmentUpload(businessId, clientId, input);
-      await new Promise<void>((resolve, reject) => {
-        const request = new XMLHttpRequest();
-        request.open(upload.method, upload.url);
-        for (const [name, value] of Object.entries(upload.headers)) request.setRequestHeader(name, value);
-        // Con el tipo deducido, se envía el mismo que se declaró.
-        if (!file.type) request.overrideMimeType(contentType);
-        request.upload.onprogress = (event) => event.lengthComputable && onProgress?.(Math.round((event.loaded / event.total) * 100));
-        request.onload = () => (request.status < 300 ? resolve() : reject(new Error("No se pudo subir el archivo. Inténtalo de nuevo.")));
-        request.onerror = () => reject(new Error("Se perdió la conexión al subir el archivo."));
-        request.send(file);
-      });
+      await uploadToStorage(upload, file, { contentType, onProgress });
       return data.clinicalRecords.completeAttachmentUpload(businessId, attachment.id);
     },
   );
