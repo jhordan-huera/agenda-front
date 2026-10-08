@@ -18,6 +18,7 @@ import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useClientActivity } from "@/hooks/queries/use-appointments";
 import { useClients } from "@/hooks/queries/use-clients";
 import { useBusinessNow } from "@/hooks/use-business-now";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { normalizeSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/types";
@@ -62,6 +63,7 @@ export default function ClientsPage() {
   const [formState, setFormState] = useState<{ open: boolean; client?: Client }>({ open: false });
   const [deleting, setDeleting] = useState<Client | null>(null);
   const [view, setView] = useState<ClientView>(readView);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const { can } = usePermissions();
 
   // Última y próxima cita de cada cliente: las calcula la API (no se descarga el historial).
@@ -101,7 +103,7 @@ export default function ClientsPage() {
       />
 
       {clientsQuery.isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-60 rounded-xl" />
           ))}
@@ -145,7 +147,8 @@ export default function ClientsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <div role="group" aria-label="Vista" className="inline-flex h-9 shrink-0 self-start rounded-md border bg-background p-0.5">
+            {/* En el móvil siempre tarjetas: la lista (tabla) sólo se ofrece en pantallas anchas. */}
+            <div role="group" aria-label="Vista" className="hidden h-9 shrink-0 self-start rounded-md border bg-background p-0.5 md:inline-flex">
               {(
                 [
                   { value: "cards", label: "Tarjetas", icon: LayoutGrid },
@@ -186,7 +189,7 @@ export default function ClientsPage() {
                 </Button>
               }
             />
-          ) : view === "cards" ? (
+          ) : view === "cards" || !isDesktop ? (
             <ClientCards
               clients={filtered}
               summaries={summaries}

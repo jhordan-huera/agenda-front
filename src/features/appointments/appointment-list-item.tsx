@@ -27,7 +27,8 @@ export function AppointmentListItem({ appointment, title, subtitle, showDate, on
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{title}</p>
+          {/* En el móvil el título puede ocupar dos líneas (con el estado al lado, una sola lo cortaba). */}
+          <p className="font-semibold max-sm:line-clamp-2 sm:truncate">{title}</p>
           <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <ReceiptBadge appointment={appointment} />

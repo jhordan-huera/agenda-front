@@ -260,7 +260,11 @@ export function OdontogramInput({ value, onChange }: { value: OdontogramValue; o
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">Toca una pieza para marcar sus hallazgos.</p>
+        <p className="text-xs text-muted-foreground">
+          Toca una pieza para marcar sus hallazgos.
+          {/* En el móvil el odontograma no cabe entero (las piezas quedarían muy pequeñas para tocarlas). */}
+          <span className="sm:hidden"> Desliza de lado para ver todas las piezas.</span>
+        </p>
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <input type="checkbox" checked={showPrimary} onChange={(e) => setShowPrimary(e.target.checked)} />
           Mostrar piezas temporales

@@ -168,8 +168,10 @@ function AppointmentForm({
           endTime: addMinutesToTime(values.startTime, values.durationMinutes),
         }
       : null;
+  // Mientras se guarda (o ya guardada), la agenda recargada trae esta misma cita: no es un solape.
+  const saving = saveAppointment.isPending || saveAppointment.isSuccess;
   const conflict =
-    timeWindow && BLOCKING_STATUSES.has(values.status)
+    timeWindow && BLOCKING_STATUSES.has(values.status) && !saving
       ? findConflictingAppointment(timeWindow, appointments)
       : undefined;
   const conflictMessage = conflict
@@ -187,14 +189,13 @@ function AppointmentForm({
     event.preventDefault();
     const result = validate(appointmentSchema, { ...values, professionalId });
     setErrors(result.errors);
-    if (!result.success || conflict) return;
+    if (!result.success || conflict || saving) return;
 
     try {
-      await saveAppointment.mutateAsync({ id: appointment?.id, input: result.data });
+      const saved = await saveAppointment.mutateAsync({ id: appointment?.id, input: result.data });
+      // La fecha y la hora guardadas (no las del formulario, que pudo cambiarse mientras tanto).
       toast.success(appointment ? "Cita actualizada" : "Cita creada", {
-        description: timeWindow
-          ? `${capitalize(formatShortDate(values.date))} · ${formatTimeRange(timeWindow.startTime, timeWindow.endTime)}`
-          : undefined,
+        description: `${capitalize(formatShortDate(saved.date))} · ${formatTimeRange(saved.startTime, saved.endTime)}`,
       });
       onDone();
     } catch (error) {
@@ -454,7 +455,7 @@ function AppointmentForm({
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <SubmitButton loading={saveAppointment.isPending} disabled={Boolean(conflict)}>
+        <SubmitButton loading={saving} disabled={Boolean(conflict)}>
           {appointment ? "Guardar cambios" : "Crear cita"}
         </SubmitButton>
       </DialogFooter>

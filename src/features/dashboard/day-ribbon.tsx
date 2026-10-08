@@ -32,8 +32,8 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
 
   const centered = useRef(false);
 
-  // Si la franja no cabe (móvil), se abre centrada en la hora actual (sólo la primera vez:
-  // después no se mueve sola mientras la persona la desliza).
+  // Si la franja no cabe, se abre centrada en la hora actual (sólo la primera vez: después no se
+  // mueve sola mientras la persona la desliza).
   useEffect(() => {
     const element = scrollRef.current;
     if (centered.current || !element || nowRatio === null) return;
@@ -44,9 +44,10 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
   }, [nowRatio]);
 
   return (
-    // En pantallas estrechas la franja se desliza de lado en vez de apretar las citas.
+    // En el móvil la franja cabe entera (las citas, sólo con su color; el detalle va en la lista de
+    // abajo). En pantallas algo más anchas que no lleguen a su ancho mínimo, se desliza de lado.
     <div ref={scrollRef} className="-mx-1 overflow-x-auto px-1 pb-1">
-      <div className="relative min-w-[34rem]">
+      <div className="relative sm:min-w-[34rem]">
         <div className="relative h-24 overflow-hidden rounded-xl bg-muted ring-1 ring-border">
           {workingRangesOn(schedules, now.date).map((range, index) => (
             <span
@@ -81,15 +82,15 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
                 onClick={() => onOpen(appointment)}
                 aria-label={`${appointment.startTime}, ${clientName(appointment.clientId)}, ${APPOINTMENT_STATUS_CONFIG[appointment.status].label}`}
                 className={cn(
-                  "absolute inset-y-2.5 z-[2] overflow-hidden rounded-md border-l-[3px] px-2 py-1.5 text-left text-xs transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                  "absolute inset-y-2.5 z-[2] overflow-hidden rounded-md border-l-[3px] text-left text-xs transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-2 sm:py-1.5",
                   APPOINTMENT_STATUS_CONFIG[appointment.status].event,
                   past && "opacity-60",
                   appointment.id === nextId && "ring-2 ring-highlight ring-offset-1",
                 )}
                 style={{ left: `calc(${pct(start)} + 2px)`, width: `calc(${width(start, end)} - 4px)` }}
               >
-                <span className="block font-bold tabular-nums">{appointment.startTime}</span>
-                <span className="block truncate font-semibold">{clientName(appointment.clientId)}</span>
+                <span className="hidden font-bold tabular-nums sm:block">{appointment.startTime}</span>
+                <span className="hidden truncate font-semibold sm:block">{clientName(appointment.clientId)}</span>
               </button>
             );
           })}
@@ -100,20 +101,24 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
           )}
         </div>
         <div aria-hidden className="relative mt-1.5 h-4">
-          {/* Junto a la etiqueta de "ahora" se omiten las horas que quedarían encima. */}
-          {hours.filter((minutes) => !nowVisible || Math.abs(minutes - now.minutes) > span / 24).map((minutes) => (
-            <span
-              key={minutes}
-              className={cn(
-                "absolute text-[11px] text-muted-foreground tabular-nums",
-                // La primera y la última hora se alinean hacia dentro para no salirse de la franja.
-                minutes === bounds.start ? "translate-x-0" : minutes === bounds.end ? "-translate-x-full" : "-translate-x-1/2",
-              )}
-              style={{ left: pct(minutes) }}
-            >
-              {minutesToTime(minutes)}
-            </span>
-          ))}
+          {/* Junto a la etiqueta de "ahora" se omiten las horas que quedarían encima; en el móvil, una sí y otra no. */}
+          {hours
+            .map((minutes, index) => ({ minutes, index }))
+            .filter(({ minutes }) => !nowVisible || Math.abs(minutes - now.minutes) > span / 24)
+            .map(({ minutes, index }) => (
+              <span
+                key={minutes}
+                className={cn(
+                  "absolute text-[11px] text-muted-foreground tabular-nums",
+                  index % 2 === 1 && minutes !== bounds.end && "max-sm:hidden",
+                  // La primera y la última hora se alinean hacia dentro para no salirse de la franja.
+                  minutes === bounds.start ? "translate-x-0" : minutes === bounds.end ? "-translate-x-full" : "-translate-x-1/2",
+                )}
+                style={{ left: pct(minutes) }}
+              >
+                {minutesToTime(minutes)}
+              </span>
+            ))}
           {nowVisible && (
             <span
               className="absolute -translate-x-1/2 rounded bg-ink px-1 text-[11px] font-bold text-white tabular-nums"

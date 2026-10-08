@@ -85,7 +85,8 @@ export function ClientCombobox({ clients, value, onChange, onCreate, className, 
             className,
           )}
         >
-          <span className={cn("truncate", !selected && "text-muted-foreground")}>
+          {/* contain: inline-size: un nombre largo se corta con "…" sin ensanchar el formulario. */}
+          <span className={cn("min-w-0 flex-1 truncate [contain:inline-size]", !selected && "text-muted-foreground")}>
             {selected?.name ?? "Selecciona un cliente"}
           </span>
           <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
