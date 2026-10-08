@@ -19,6 +19,7 @@ import {
   shiftDate,
   type CalendarView,
 } from "@/features/calendar/calendar-utils";
+import { AgendaListView } from "@/features/calendar/agenda-list-view";
 import { MonthView } from "@/features/calendar/month-view";
 import { StatusLegend } from "@/features/calendar/status-legend";
 import { TimeGridView, type GridColumn } from "@/features/calendar/time-grid-view";
@@ -30,6 +31,7 @@ import { useAppointments, useMoveAppointment } from "@/hooks/queries/use-appoint
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBlockedTimes, useSchedules } from "@/hooks/queries/use-schedule";
 import { useBusinessNow } from "@/hooks/use-business-now";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { offersService } from "@/lib/availability";
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
 import { formatDate } from "@/lib/format";
@@ -40,10 +42,9 @@ export default function CalendarPage() {
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
   const [searchParams, setSearchParams] = useSearchParams();
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   // Vista por defecto: semana en escritorio, día en móvil.
-  const [defaultView] = useState<CalendarView>(() =>
-    window.matchMedia("(min-width: 768px)").matches ? "week" : "day",
-  );
+  const [defaultView] = useState<CalendarView>(isDesktop ? "week" : "day");
   const [showCancelled, setShowCancelled] = useState(true);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const { can } = usePermissions();
@@ -125,6 +126,8 @@ export default function CalendarPage() {
             .filter((p) => p.isActive || appointments.some((a) => a.professionalId === p.id))
             .map((p) => ({ key: p.id, day: date, professionalId: p.id, heading: p }))
         : undefined;
+  // En el móvil la rejilla de varias columnas no cabe: la semana y el día con todas las agendas van en tarjetas.
+  const asCards = !isDesktop && (view === "week" || (view === "day" && columns !== undefined && columns.length > 1));
 
   return (
     <div className="space-y-5">
@@ -247,6 +250,29 @@ export default function CalendarPage() {
               onDayClick={(day) => navigate({ view: "day", date: day })}
               onAppointmentClick={dialogs.openDetails}
             />
+          ) : asCards ? (
+            <>
+              {view === "day" && (
+                <p className="text-sm text-muted-foreground">
+                  Elige un profesional para ver su horario por horas{move ? " y mover citas arrastrándolas" : ""}.
+                </p>
+              )}
+              <AgendaListView
+                days={days}
+                appointments={appointments}
+                blockedTimes={
+                  agenda === ALL_AGENDAS
+                    ? blockedTimes
+                    : blockedTimes.filter((block) => block.professionalId === null || block.professionalId === agenda)
+                }
+                professionalsById={agendas.multiple && agenda === ALL_AGENDAS ? professionalsById : undefined}
+                today={now.date}
+                clientsById={clientsById}
+                servicesById={servicesById}
+                onAppointmentClick={dialogs.openDetails}
+                onDayClick={(day) => navigate({ view: "day", date: day })}
+              />
+            </>
           ) : (
             <TimeGridView
               key={`${view}-${days[0]}`}

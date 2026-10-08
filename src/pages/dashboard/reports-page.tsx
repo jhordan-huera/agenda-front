@@ -307,7 +307,43 @@ function ProfessionalBreakdownCard({
           Citas del periodo de cada agenda. Ocupación: horas con citas sobre las horas de su horario (sin bloqueos).
         </CardDescription>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
+      {/* En el móvil y la tablet, una tarjeta por profesional; la tabla (ocho columnas) desde lg. */}
+      <CardContent className="grid gap-3 sm:grid-cols-2 lg:hidden">
+        {rows.map(({ professionalId, summary, occupancy }) => {
+          const professional = professionalsById.get(professionalId);
+          const stats = [
+            { label: "Citas", value: summary.total - summary.byStatus.cancelled },
+            { label: "Atendidas", value: summary.byStatus.completed },
+            { label: "No asistió", value: summary.byStatus.no_show },
+            { label: "Canceladas", value: summary.byStatus.cancelled },
+            { label: "Asistencia", value: summary.attendanceRate === null ? "—" : percent(summary.attendanceRate) },
+            { label: "Ocupación", value: occupancy === null ? "—" : percent(occupancy) },
+          ];
+          return (
+            <div key={professionalId} className="rounded-lg border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2 font-medium">
+                  {professional && <ProfessionalDot color={professional.color} />}
+                  <span className="truncate">{professional?.displayName ?? "Profesional"}</span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="block text-xs text-muted-foreground">Cobrado</span>
+                  <span className="font-semibold tabular-nums">{formatCurrency(summary.completedRevenue, currency)}</span>
+                </span>
+              </div>
+              <dl className="mt-3 grid grid-cols-3 gap-x-3 gap-y-2 border-t pt-3">
+                {stats.map((stat) => (
+                  <div key={stat.label}>
+                    <dt className="text-xs text-muted-foreground">{stat.label}</dt>
+                    <dd className="font-semibold tabular-nums">{stat.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          );
+        })}
+      </CardContent>
+      <CardContent className="hidden overflow-x-auto lg:block">
         <Table>
           <TableHeader>
             <TableRow>

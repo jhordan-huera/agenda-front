@@ -123,7 +123,7 @@ export default function ClientDetailPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Próximas citas</CardTitle>
@@ -155,37 +155,54 @@ export default function ClientDetailPage() {
             {history.length === 0 ? (
               <p className="px-4 pb-8 text-center text-sm text-muted-foreground">Todavía no hay citas en el historial.</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="pl-4">Fecha</TableHead>
-                    <TableHead>Servicio</TableHead>
-                    <TableHead className="hidden sm:table-cell">Precio</TableHead>
-                    <TableHead className="pr-4">Estado</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* En el móvil, tarjetas como las de "Próximas citas"; desde sm, la tabla. */}
+                <ul className="px-1 pb-3 sm:hidden">
                   {history.map((appointment) => (
-                    <TableRow
+                    <AppointmentListItem
                       key={appointment.id}
-                      className="cursor-pointer"
-                      onClick={() => dialogs.openDetails(appointment)}
-                    >
-                      <TableCell className="pl-4 whitespace-nowrap">
-                        {capitalize(formatShortDate(appointment.date))}{" "}
-                        <span className="text-muted-foreground">{appointment.startTime}</span>
-                      </TableCell>
-                      <TableCell className="max-w-40 truncate">
-                        {getServiceName(servicesById, appointment.serviceId)}
-                      </TableCell>
-                      <TableCell className="hidden tabular-nums sm:table-cell">{formatCurrency(appointment.price)}</TableCell>
-                      <TableCell className="pr-4">
-                        <StatusBadge status={appointment.status} />
-                      </TableCell>
-                    </TableRow>
+                      appointment={appointment}
+                      title={getServiceName(servicesById, appointment.serviceId)}
+                      subtitle={formatCurrency(appointment.price)}
+                      showDate
+                      onClick={dialogs.openDetails}
+                    />
                   ))}
-                </TableBody>
-              </Table>
+                </ul>
+                <div className="hidden sm:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableHead className="pl-4">Fecha</TableHead>
+                        <TableHead>Servicio</TableHead>
+                        <TableHead className="hidden sm:table-cell">Precio</TableHead>
+                        <TableHead className="pr-4">Estado</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {history.map((appointment) => (
+                        <TableRow
+                          key={appointment.id}
+                          className="cursor-pointer"
+                          onClick={() => dialogs.openDetails(appointment)}
+                        >
+                          <TableCell className="pl-4 whitespace-nowrap">
+                            {capitalize(formatShortDate(appointment.date))}{" "}
+                            <span className="text-muted-foreground">{appointment.startTime}</span>
+                          </TableCell>
+                          <TableCell className="max-w-40 truncate">
+                            {getServiceName(servicesById, appointment.serviceId)}
+                          </TableCell>
+                          <TableCell className="hidden tabular-nums sm:table-cell">{formatCurrency(appointment.price)}</TableCell>
+                          <TableCell className="pr-4">
+                            <StatusBadge status={appointment.status} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </Card>
         </div>

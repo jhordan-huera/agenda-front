@@ -40,7 +40,7 @@ export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumeP
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>Todas las citas del periodo. Pasa el cursor por una barra para ver el desglose.</CardDescription>
+        <CardDescription>Todas las citas del periodo. Toca o pasa el cursor por una barra para ver el desglose.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="h-64" role="img" aria-label={`${title}: gráfico de columnas`}>
@@ -64,7 +64,23 @@ export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumeP
         <details className="text-sm">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Ver como tabla</summary>
           <div className="mt-2 max-h-64 overflow-auto rounded-lg border">
-            <table className="w-full text-left text-xs">
+            {/* En el móvil, una fila por día con sus números debajo (las cuatro columnas no caben). */}
+            <ul className="divide-y text-xs sm:hidden">
+              {data.map((point) => (
+                <li key={point.key} className="px-3 py-2">
+                  <p className="flex justify-between gap-3">
+                    <span>{capitalize(point.fullLabel)}</span>
+                    <span className="shrink-0 font-semibold tabular-nums">
+                      {point.total} cita{point.total === 1 ? "" : "s"}
+                    </span>
+                  </p>
+                  <p className="text-muted-foreground tabular-nums">
+                    {point.byStatus.completed} completadas · {point.byStatus.cancelled} canceladas
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <table className="hidden w-full text-left text-xs sm:table">
               <thead className="sticky top-0 bg-muted">
                 <tr>
                   <th className="px-3 py-2 font-medium">{groupedByWeek ? "Semana" : "Día"}</th>

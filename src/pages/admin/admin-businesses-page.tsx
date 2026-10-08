@@ -120,62 +120,112 @@ export default function AdminBusinessesPage() {
           }
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="pl-4">Negocio</TableHead>
-                <TableHead className="hidden md:table-cell">Propietario</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead className="hidden lg:table-cell">Citas del mes</TableHead>
-                <TableHead className="hidden lg:table-cell">Usuarios</TableHead>
-                <TableHead className="hidden xl:table-cell">Alta</TableHead>
-                <TableHead className="pr-4">Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map(({ business, owner, subscription, usage }) => (
-                <TableRow
-                  key={business.id}
-                  className="cursor-pointer"
-                  onClick={() => navigate(`/admin/businesses/${business.id}`)}
+        <>
+          {/* En el móvil, una tarjeta por negocio con todos sus datos; desde md, la tabla. */}
+          <ul className="grid gap-3 md:hidden">
+            {rows.map(({ business, owner, subscription, usage }) => (
+              <li key={business.id}>
+                <Link
+                  to={`/admin/businesses/${business.id}`}
+                  className="block space-y-3 rounded-xl border bg-background p-4 transition-colors outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
-                  <TableCell className="pl-4">
-                    <Link
-                      to={`/admin/businesses/${business.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="block max-w-56 truncate font-medium hover:underline"
-                    >
-                      {business.name}
-                    </Link>
-                    <p className="truncate text-xs text-muted-foreground">/book/{business.slug}</p>
-                  </TableCell>
-                  <TableCell className="hidden max-w-56 md:table-cell">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold break-words">{business.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">/book/{business.slug}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                      {subscription && <PlanBadge plan={subscription.plan} />}
+                      <BusinessStatusBadge status={business.status} />
+                    </div>
+                  </div>
+                  <div className="text-sm">
                     <p className={owner ? "truncate" : "truncate text-muted-foreground"}>{owner?.name ?? "Sin propietario"}</p>
-                    <p className="truncate text-xs text-muted-foreground">{owner?.email}</p>
-                  </TableCell>
-                  <TableCell>{subscription && <PlanBadge plan={subscription.plan} />}</TableCell>
-                  <TableCell className="hidden tabular-nums lg:table-cell">
-                    {usage.appointmentsThisMonth}
-                    {usage.limits.appointmentsPerMonth !== null && (
-                      <span className="text-muted-foreground"> / {usage.limits.appointmentsPerMonth}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden tabular-nums lg:table-cell">
-                    {usage.users}
-                    {usage.limits.users !== null && <span className="text-muted-foreground"> / {usage.limits.users}</span>}
-                  </TableCell>
-                  <TableCell className="hidden whitespace-nowrap xl:table-cell">
-                    {formatNumericDate(business.createdAt.slice(0, 10))}
-                  </TableCell>
-                  <TableCell className="pr-4">
-                    <BusinessStatusBadge status={business.status} />
-                  </TableCell>
+                    {owner?.email && <p className="truncate text-xs text-muted-foreground">{owner.email}</p>}
+                  </div>
+                  <dl className="grid grid-cols-3 gap-2 border-t pt-3 text-sm">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Citas del mes</dt>
+                      <dd className="font-medium tabular-nums">
+                        {usage.appointmentsThisMonth}
+                        {usage.limits.appointmentsPerMonth !== null && (
+                          <span className="text-muted-foreground"> / {usage.limits.appointmentsPerMonth}</span>
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Usuarios</dt>
+                      <dd className="font-medium tabular-nums">
+                        {usage.users}
+                        {usage.limits.users !== null && <span className="text-muted-foreground"> / {usage.limits.users}</span>}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Alta</dt>
+                      <dd className="font-medium tabular-nums">{formatNumericDate(business.createdAt.slice(0, 10))}</dd>
+                    </div>
+                  </dl>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-hidden rounded-xl border bg-background md:block">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="pl-4">Negocio</TableHead>
+                  <TableHead className="hidden md:table-cell">Propietario</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead className="hidden lg:table-cell">Citas del mes</TableHead>
+                  <TableHead className="hidden lg:table-cell">Usuarios</TableHead>
+                  <TableHead className="hidden xl:table-cell">Alta</TableHead>
+                  <TableHead className="pr-4">Estado</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {rows.map(({ business, owner, subscription, usage }) => (
+                  <TableRow
+                    key={business.id}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/admin/businesses/${business.id}`)}
+                  >
+                    <TableCell className="pl-4">
+                      <Link
+                        to={`/admin/businesses/${business.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="block max-w-56 truncate font-medium hover:underline"
+                      >
+                        {business.name}
+                      </Link>
+                      <p className="truncate text-xs text-muted-foreground">/book/{business.slug}</p>
+                    </TableCell>
+                    <TableCell className="hidden max-w-56 md:table-cell">
+                      <p className={owner ? "truncate" : "truncate text-muted-foreground"}>{owner?.name ?? "Sin propietario"}</p>
+                      <p className="truncate text-xs text-muted-foreground">{owner?.email}</p>
+                    </TableCell>
+                    <TableCell>{subscription && <PlanBadge plan={subscription.plan} />}</TableCell>
+                    <TableCell className="hidden tabular-nums lg:table-cell">
+                      {usage.appointmentsThisMonth}
+                      {usage.limits.appointmentsPerMonth !== null && (
+                        <span className="text-muted-foreground"> / {usage.limits.appointmentsPerMonth}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden tabular-nums lg:table-cell">
+                      {usage.users}
+                      {usage.limits.users !== null && <span className="text-muted-foreground"> / {usage.limits.users}</span>}
+                    </TableCell>
+                    <TableCell className="hidden whitespace-nowrap xl:table-cell">
+                      {formatNumericDate(business.createdAt.slice(0, 10))}
+                    </TableCell>
+                    <TableCell className="pr-4">
+                      <BusinessStatusBadge status={business.status} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       <CreateBusinessDialog open={creating} onOpenChange={setCreating} />

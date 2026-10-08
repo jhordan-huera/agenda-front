@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { computeBmi, describeBmi, describeClinicalValue, visibleNoteFields } from "@/lib/clinical-templates";
 import { cn } from "@/lib/utils";
 import type { BodyMapMark, ClinicalField, ClinicalListRow, ClinicalNoteData, OdontogramValue } from "@/types";
@@ -8,39 +9,56 @@ import { QuestionnaireView } from "./questionnaire";
 /** Valores cortos (números, escalas, sí/no…): van en una cuadrícula para ocupar menos. */
 const COMPACT_TYPES = new Set<ClinicalField["type"]>(["number", "scale", "boolean", "date", "bmi", "select"]);
 
+function CellValue({ value }: { value: ClinicalListRow[string] }) {
+  if (value === null || value === undefined || value === "") return <span className="text-muted-foreground">—</span>;
+  return <>{String(value)}</>;
+}
+
 function ListValue({ field, rows }: { field: Extract<ClinicalField, { type: "list" }>; rows: ClinicalListRow[] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border print:overflow-visible">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-muted/50 text-xs text-muted-foreground">
-          <tr>
-            {field.columns.map((column) => (
-              <th key={column.id} scope="col" className="px-2.5 py-1.5 font-medium">
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y">
-          {rows.map((row, index) => (
-            <tr key={index}>
-              {field.columns.map((column) => {
-                const value = row[column.id];
-                return (
-                  <td key={column.id} className="px-2.5 py-1.5 align-top">
-                    {value === null || value === undefined || value === "" ? (
-                      <span className="text-muted-foreground">—</span>
-                    ) : (
-                      String(value)
-                    )}
-                  </td>
-                );
-              })}
+    <>
+      {/* En el móvil, una tarjetita por fila (las columnas no caben); desde sm y al imprimir, la tabla. */}
+      <ul className="grid gap-1.5 sm:hidden print:hidden">
+        {rows.map((row, index) => (
+          <li key={index} className="rounded-lg border px-2.5 py-2">
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5">
+              {field.columns.map((column) => (
+                <Fragment key={column.id}>
+                  <dt className="text-xs leading-5 text-muted-foreground">{column.label}</dt>
+                  <dd>
+                    <CellValue value={row[column.id]} />
+                  </dd>
+                </Fragment>
+              ))}
+            </dl>
+          </li>
+        ))}
+      </ul>
+      <div className="hidden overflow-x-auto rounded-lg border sm:block print:block print:overflow-visible">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-muted/50 text-xs text-muted-foreground">
+            <tr>
+              {field.columns.map((column) => (
+                <th key={column.id} scope="col" className="px-2.5 py-1.5 font-medium">
+                  {column.label}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="divide-y">
+            {rows.map((row, index) => (
+              <tr key={index}>
+                {field.columns.map((column) => (
+                  <td key={column.id} className="px-2.5 py-1.5 align-top">
+                    <CellValue value={row[column.id]} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 

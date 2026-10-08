@@ -1,5 +1,5 @@
 import { Pencil, Plus, Stethoscope, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { createElement, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ErrorState } from "@/components/shared/error-state";
@@ -46,75 +46,64 @@ export default function AdminCategoriesPage() {
       ) : categories.isPending ? (
         <Skeleton className="h-96" />
       ) : (
-        <Card className="overflow-hidden py-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="pl-4">Categoría</TableHead>
-                <TableHead>Negocios</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="w-24 pr-4">
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.data.map((category) => {
-                const Icon = getCategoryIcon(category.icon);
-                return (
+        <>
+          {/* En el móvil, una tarjeta por categoría (con sus botones a la vista); desde md, la tabla. */}
+          <ul className="grid gap-3 md:hidden">
+            {categories.data.map((category) => (
+              <li
+                key={category.id}
+                className={cn("space-y-3 rounded-xl border bg-background p-4", !category.isActive && "text-muted-foreground")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <CategoryName category={category} />
+                  <CategoryActions
+                    category={category}
+                    onEdit={() => setEditing({ open: true, category })}
+                    onDelete={() => setDeleting(category)}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
+                  {plural(category.businessCount, "negocio", "negocios")}
+                  <CategoryStatus active={category.isActive} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <Card className="hidden overflow-hidden py-0 md:flex">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="pl-4">Categoría</TableHead>
+                  <TableHead>Negocios</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="w-24 pr-4">
+                    <span className="sr-only">Acciones</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {categories.data.map((category) => (
                   <TableRow key={category.id} className={cn(!category.isActive && "text-muted-foreground")}>
                     <TableCell className="pl-4">
-                      <div className="flex items-center gap-3">
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
-                          <Icon className="size-4" aria-hidden />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="flex items-center gap-1.5 font-medium">
-                            {category.name}
-                            {category.isHealth && (
-                              <Stethoscope className="size-3.5 text-primary" aria-label="Negocio de salud" />
-                            )}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{category.id}</p>
-                        </div>
-                      </div>
+                      <CategoryName category={category} />
                     </TableCell>
                     <TableCell>{plural(category.businessCount, "negocio", "negocios")}</TableCell>
                     <TableCell>
-                      {category.isActive ? (
-                        <Badge className="bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 ring-inset">Activa</Badge>
-                      ) : (
-                        <Badge variant="secondary">Inactiva</Badge>
-                      )}
+                      <CategoryStatus active={category.isActive} />
                     </TableCell>
                     <TableCell className="pr-4">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Editar ${category.name}`}
-                          onClick={() => setEditing({ open: true, category })}
-                        >
-                          <Pencil />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Eliminar ${category.name}`}
-                          disabled={category.businessCount > 0}
-                          title={category.businessCount > 0 ? "En uso: desactívala en lugar de eliminarla" : undefined}
-                          onClick={() => setDeleting(category)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
+                      <CategoryActions
+                        category={category}
+                        onEdit={() => setEditing({ open: true, category })}
+                        onDelete={() => setDeleting(category)}
+                      />
                     </TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </>
       )}
 
       <CategoryFormDialog
@@ -140,6 +129,59 @@ export default function AdminCategoriesPage() {
           }
         }}
       />
+    </div>
+  );
+}
+
+function CategoryName({ category }: { category: AdminBusinessCategory }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
+        {createElement(getCategoryIcon(category.icon), { className: "size-4", "aria-hidden": true })}
+      </span>
+      <div className="min-w-0">
+        <p className="flex items-center gap-1.5 font-medium">
+          {category.name}
+          {category.isHealth && <Stethoscope className="size-3.5 text-primary" aria-label="Negocio de salud" />}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">{category.id}</p>
+      </div>
+    </div>
+  );
+}
+
+function CategoryStatus({ active }: { active: boolean }) {
+  return active ? (
+    <Badge className="bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 ring-inset">Activa</Badge>
+  ) : (
+    <Badge variant="secondary">Inactiva</Badge>
+  );
+}
+
+function CategoryActions({
+  category,
+  onEdit,
+  onDelete,
+}: {
+  category: AdminBusinessCategory;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex shrink-0 justify-end gap-1">
+      <Button variant="ghost" size="icon-sm" aria-label={`Editar ${category.name}`} onClick={onEdit}>
+        <Pencil />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`Eliminar ${category.name}`}
+        disabled={category.businessCount > 0}
+        title={category.businessCount > 0 ? "En uso: desactívala en lugar de eliminarla" : undefined}
+        onClick={onDelete}
+      >
+        <Trash2 />
+      </Button>
     </div>
   );
 }

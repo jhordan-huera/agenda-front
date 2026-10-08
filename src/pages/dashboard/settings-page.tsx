@@ -55,7 +55,15 @@ export default function SettingsPage() {
       <PageHeader title="Configuración" description="Administra tu perfil, tu negocio y tu equipo." />
 
       <Tabs value={tab} onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}>
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        {/* En el móvil las pestañas no caben en una fila: van en cuadrícula, todas a la vista. */}
+        <TabsList className="grid w-full grid-cols-3 gap-1 group-data-horizontal/tabs:h-auto sm:hidden">
+          {tabs.map((option) => (
+            <TabsTrigger key={option.value} value={option.value} className="h-9 px-1">
+              {option.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <div className="hidden overflow-x-auto sm:block">
           <TabsList variant="folder">
             {tabs.map((option) => (
               <TabsTrigger key={option.value} value={option.value} className="px-3">

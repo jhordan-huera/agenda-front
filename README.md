@@ -241,12 +241,20 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   el enlace llega en la confirmación, en los emails y en el aviso por WhatsApp; en la agenda la
   cita lleva un icono de cámara y el detalle, "Entrar a la videollamada".
 - **Mover citas arrastrándolas** (vistas Día y Semana, `features/calendar/use-appointment-drag.ts`):
-  con el ratón o, en el móvil, manteniendo el dedo medio segundo. La sombra muestra dónde caerá
+  con el ratón o, en el móvil (en el Día de un profesional), manteniendo el dedo medio segundo. La sombra muestra dónde caerá
   (cada 15 min) y, en rojo, por qué no se puede (hora pasada, ocupada, profesional inactivo o que no
   atiende el servicio); en la vista Día con varias agendas se puede pasar a otro profesional. Sólo
   citas pendientes o confirmadas. La agenda la muestra al momento en su sitio nuevo y la guarda a
   los 5 s (`useMoveAppointment`): "Deshacer" antes no avisa al paciente; después llegan el email de
   cambio y el aviso de WhatsApp, como al editarla.
+- **Móvil en tarjetas** (menos de 768 px, `hooks/use-media-query.ts`): la Semana de la agenda y el
+  Día con todos los profesionales se ven como tarjetas agrupadas por día
+  (`features/calendar/agenda-list-view.tsx`); el Día de un profesional sigue en la rejilla por horas
+  (huecos libres y arrastrar). También van en tarjetas Clientes (sin el botón "Lista"), el historial
+  de la ficha del cliente, Reportes ("Por profesional" y "Ver como tabla"), Negocios, Usuarios y
+  Categorías del admin, y los procedimientos y diagnósticos de la historia clínica. Las pestañas de
+  Configuración van en cuadrícula y "Tu día" cabe entero (sin deslizar). En pantallas anchas, las
+  tablas y la rejilla de siempre; al imprimir, siempre las tablas.
 - **Pago por transferencia**: cada agenda puede tener datos bancarios
   (`features/professionals/bank-account-fields.tsx`; en Free y Pro, en Configuración → Perfil).
   Al reservar un servicio con precio, la pantalla final muestra los datos y el monto

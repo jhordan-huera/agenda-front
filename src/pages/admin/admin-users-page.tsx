@@ -116,88 +116,88 @@ export default function AdminUsersPage() {
       ) : rows.length === 0 ? (
         <EmptyState icon={Search} title="Sin resultados" description="No hay usuarios que coincidan con la búsqueda o el filtro." />
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="pl-4">Usuario</TableHead>
-                <TableHead className="hidden md:table-cell">Negocio y rol</TableHead>
-                <TableHead className="hidden lg:table-cell">Alta</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="w-12 pr-4">
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => {
-                const { user, memberships } = row;
-                const name = getFullName(user);
-                return (
-                  <TableRow key={user.id}>
-                    <TableCell className="pl-4">
-                      <div className="flex items-center gap-3">
-                        <UserAvatar name={name} src={user.avatarUrl} size="sm" className="size-8" />
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">{name}</p>
-                          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+        <>
+          {/* En el móvil, una tarjeta por usuario (con su negocio y su rol); desde md, la tabla. */}
+          <ul className="grid gap-3 md:hidden">
+            {rows.map((row) => {
+              const { user } = row;
+              const name = getFullName(user);
+              return (
+                <li key={user.id} className="space-y-3 rounded-xl border bg-background p-4">
+                  <div className="flex items-start gap-3">
+                    <UserAvatar name={name} src={user.avatarUrl} size="sm" className="size-9" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                    <UserActions
+                      row={row}
+                      onPassword={() => setPassword.request({ id: user.id, name, email: user.email })}
+                      onToggle={() => setToggleDialog({ open: true, row })}
+                    />
+                  </div>
+                  <div className="space-y-0.5 text-sm">
+                    <UserBusinesses row={row} />
+                  </div>
+                  <div className="flex items-center justify-between gap-3 border-t pt-3 text-xs text-muted-foreground">
+                    <span>Alta {formatNumericDate(user.createdAt.slice(0, 10))}</span>
+                    <UserStatusBadge active={user.isActive} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="hidden overflow-hidden rounded-xl border bg-background md:block">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="pl-4">Usuario</TableHead>
+                  <TableHead>Negocio y rol</TableHead>
+                  <TableHead className="hidden lg:table-cell">Alta</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="w-12 pr-4">
+                    <span className="sr-only">Acciones</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => {
+                  const { user } = row;
+                  const name = getFullName(user);
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell className="pl-4">
+                        <div className="flex items-center gap-3">
+                          <UserAvatar name={name} src={user.avatarUrl} size="sm" className="size-8" />
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{name}</p>
+                            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {user.platformRole ? (
-                        <Badge>
-                          <ShieldCheck /> Super admin
-                        </Badge>
-                      ) : memberships.length === 0 ? (
-                        <span className="text-muted-foreground">Sin negocio</span>
-                      ) : (
-                        memberships.map((m) => (
-                          <p key={m.businessId} className="truncate">
-                            <Link to={`/admin/businesses/${m.businessId}`} className="hover:underline">
-                              {m.businessName}
-                            </Link>{" "}
-                            <span className="text-muted-foreground">· {ROLE_LABELS[m.role]}</span>
-                          </p>
-                        ))
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden whitespace-nowrap lg:table-cell">
-                      {formatNumericDate(user.createdAt.slice(0, 10))}
-                    </TableCell>
-                    <TableCell>
-                      <UserStatusBadge active={user.isActive} />
-                    </TableCell>
-                    <TableCell className="pr-4">
-                      {!user.platformRole && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm" aria-label={`Acciones para ${name}`}>
-                              <MoreHorizontal />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onSelect={() => setPassword.request({ id: user.id, name, email: user.email })}>
-                              <KeyRound /> Cambiar contraseña
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant={user.isActive ? "destructive" : "default"}
-                              onSelect={() => setToggleDialog({ open: true, row })}
-                            >
-                              {user.isActive ? <UserX /> : <UserCheck />}
-                              {user.isActive ? "Desactivar acceso" : "Reactivar acceso"}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                      </TableCell>
+                      <TableCell>
+                        <UserBusinesses row={row} />
+                      </TableCell>
+                      <TableCell className="hidden whitespace-nowrap lg:table-cell">
+                        {formatNumericDate(user.createdAt.slice(0, 10))}
+                      </TableCell>
+                      <TableCell>
+                        <UserStatusBadge active={user.isActive} />
+                      </TableCell>
+                      <TableCell className="pr-4">
+                        <UserActions
+                          row={row}
+                          onPassword={() => setPassword.request({ id: user.id, name, email: user.email })}
+                          onToggle={() => setToggleDialog({ open: true, row })}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {setPassword.dialog}
@@ -228,5 +228,48 @@ export default function AdminUsersPage() {
         }}
       />
     </div>
+  );
+}
+
+/** Negocios de la cuenta con su rol (o "Super admin" / "Sin negocio"). */
+function UserBusinesses({ row: { user, memberships } }: { row: AdminUserSummary }) {
+  if (user.platformRole) {
+    return (
+      <Badge>
+        <ShieldCheck /> Super admin
+      </Badge>
+    );
+  }
+  if (memberships.length === 0) return <span className="text-muted-foreground">Sin negocio</span>;
+  return memberships.map((m) => (
+    <p key={m.businessId} className="truncate">
+      <Link to={`/admin/businesses/${m.businessId}`} className="hover:underline">
+        {m.businessName}
+      </Link>{" "}
+      <span className="text-muted-foreground">· {ROLE_LABELS[m.role]}</span>
+    </p>
+  ));
+}
+
+function UserActions({ row: { user }, onPassword, onToggle }: { row: AdminUserSummary; onPassword: () => void; onToggle: () => void }) {
+  if (user.platformRole) return null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon-sm" aria-label={`Acciones para ${getFullName(user)}`}>
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem onSelect={onPassword}>
+          <KeyRound /> Cambiar contraseña
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant={user.isActive ? "destructive" : "default"} onSelect={onToggle}>
+          {user.isActive ? <UserX /> : <UserCheck />}
+          {user.isActive ? "Desactivar acceso" : "Reactivar acceso"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
