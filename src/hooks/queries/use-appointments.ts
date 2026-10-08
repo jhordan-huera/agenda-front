@@ -1,6 +1,9 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { appointmentToInput } from "@/features/appointments/appointment-utils";
 import { useOfferWhatsAppNotice } from "@/features/appointments/whatsapp-notice-context";
 import { useBusinessId } from "@/features/auth/use-session";
+import { useErrorToast } from "@/hooks/use-error-toast";
 import { data, type AppointmentFilters } from "@/lib/data";
 import type { AppointmentInput } from "@/lib/validations/appointment";
 import { noticeForStatus } from "@/lib/whatsapp";
@@ -74,11 +77,12 @@ export function useSaveAppointment() {
   const findCached = useCachedAppointment();
   const offerWhatsApp = useOfferWhatsAppNotice();
   return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: AppointmentInput }) =>
+    // `previous`: la cita antes del cambio, si la caché ya muestra la nueva (citas movidas en la agenda).
+    mutationFn: ({ id, input }: { id?: string; input: AppointmentInput; previous?: Appointment }) =>
       id
         ? data.appointments.update(businessId, id, input)
         : data.appointments.create(businessId, input),
-    onMutate: ({ id }) => ({ previous: id ? findCached(id) : undefined }),
+    onMutate: ({ id, previous }) => ({ previous: previous ?? (id ? findCached(id) : undefined) }),
     onSuccess: (saved, _variables, context) => {
       // Al editar: si cambió el estado, el aviso de ese estado; si cambió la fecha, la hora o el
       // servicio, el de "reprogramada".
@@ -94,6 +98,55 @@ export function useSaveAppointment() {
       return invalidate();
     },
   });
+}
+
+/** Segundos para deshacer una cita movida en la agenda, antes de guardarla. */
+const UNDO_MS = 5000;
+
+/** La caché con una cita cambiada: en las listas de la agenda y en la cita suelta. */
+function replaceAppointment(cached: unknown, appointment: Appointment): unknown {
+  if (Array.isArray(cached)) {
+    return cached.map((item) => (item?.id === appointment.id && "startTime" in item ? appointment : item));
+  }
+  const single = cached as Partial<Appointment> | null | undefined;
+  return single?.id === appointment.id && "startTime" in single ? appointment : cached;
+}
+
+/**
+ * Mover una cita arrastrándola: la agenda la muestra al momento en su nuevo sitio, pero se guarda
+ * pasados unos segundos. Así "Deshacer" no llega a avisar al paciente (ni le envía dos emails).
+ */
+export function useMoveAppointment() {
+  const businessId = useBusinessId();
+  const queryClient = useQueryClient();
+  const save = useSaveAppointment();
+  const showError = useErrorToast();
+  const show = (appointment: Appointment) =>
+    queryClient.setQueriesData({ queryKey: queryKeys.appointments(businessId) }, (cached: unknown) =>
+      replaceAppointment(cached, appointment),
+    );
+  return async (appointment: Appointment, moved: Appointment, message: string) => {
+    // Que una recarga en curso no la devuelva a su sitio mientras tanto.
+    await queryClient.cancelQueries({ queryKey: queryKeys.appointments(businessId) });
+    show(moved);
+    const timer = setTimeout(() => {
+      save.mutateAsync({ id: appointment.id, input: appointmentToInput(moved), previous: appointment }).catch((error: unknown) => {
+        show(appointment);
+        void queryClient.invalidateQueries({ queryKey: queryKeys.appointments(businessId) });
+        showError(error);
+      });
+    }, UNDO_MS);
+    toast.success(message, {
+      duration: UNDO_MS,
+      action: {
+        label: "Deshacer",
+        onClick: () => {
+          clearTimeout(timer);
+          show(appointment);
+        },
+      },
+    });
+  };
 }
 
 /** Llegada del paciente: recepción la marca al verlo en la sala de espera. */

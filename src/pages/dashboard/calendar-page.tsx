@@ -1,5 +1,5 @@
 import { CalendarCheck, CalendarOff, ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { useSearchParams } from "react-router";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -26,10 +26,14 @@ import { ALL_AGENDAS, ProfessionalSelect } from "@/features/professionals/profes
 import { useAgendas } from "@/features/professionals/use-agendas";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
-import { useAppointments } from "@/hooks/queries/use-appointments";
+import { useAppointments, useMoveAppointment } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBlockedTimes, useSchedules } from "@/hooks/queries/use-schedule";
 import { useBusinessNow } from "@/hooks/use-business-now";
+import { offersService } from "@/lib/availability";
+import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
+import { formatDate } from "@/lib/format";
+import { minutesToTime, timeToMinutes } from "@/lib/time";
 import { dateField } from "@/lib/validations/fields";
 
 export default function CalendarPage() {
@@ -76,6 +80,41 @@ export default function CalendarPage() {
   const schedules = agenda === ALL_AGENDAS ? allSchedules : allSchedules.filter((s) => s.professionalId === agenda);
   const { startHour, endHour } = getHourRange(schedules, appointments);
   const professionalsById = new Map(agendas.all.map((p) => [p.id, p]));
+  // Arrastrar citas pendientes o confirmadas a otra hora, otro día o (vista Día) otro profesional.
+  const moveAppointment = useMoveAppointment();
+  const move: ComponentProps<typeof TimeGridView>["move"] = can("appointments.manage")
+    ? {
+        canMove: (appointment) => appointment.status === "pending" || appointment.status === "confirmed",
+        check: (appointment, target) => {
+          if (target.date < now.date || (target.date === now.date && target.start < now.minutes)) return "Esa hora ya pasó";
+          const professional = professionalsById.get(target.professionalId);
+          if (!professional?.isActive) return `${professional?.displayName ?? "Ese profesional"} está inactivo`;
+          if (!offersService(professional, appointment.serviceId)) {
+            return `${professional.displayName} no atiende ${servicesById.get(appointment.serviceId)?.name ?? "este servicio"}`;
+          }
+          const busy = (appointmentsQuery.data ?? []).some(
+            (other) =>
+              other.id !== appointment.id &&
+              other.date === target.date &&
+              other.professionalId === target.professionalId &&
+              BLOCKING_STATUSES.has(other.status) &&
+              timeToMinutes(other.startTime) < target.end &&
+              target.start < timeToMinutes(other.endTime),
+          );
+          return busy ? "Esa hora ya está ocupada" : null;
+        },
+        onMove: (appointment, target) => {
+          const startTime = minutesToTime(target.start);
+          const moved = { ...appointment, date: target.date, startTime, endTime: minutesToTime(target.end), professionalId: target.professionalId };
+          const otherAgenda = target.professionalId !== appointment.professionalId ? professionalsById.get(target.professionalId) : undefined;
+          void moveAppointment(
+            appointment,
+            moved,
+            `Cita movida al ${formatDate(target.date, "EEEE d 'de' MMMM")} a las ${startTime}${otherAgenda ? ` con ${otherAgenda.displayName}` : ""}`,
+          );
+        },
+      }
+    : undefined;
   // Columnas: con un profesional elegido, sus días; con todas las agendas en la vista Día, una por profesional
   // (también las inactivas que tengan citas ese día).
   const columns: GridColumn[] | undefined =
@@ -226,6 +265,7 @@ export default function CalendarPage() {
                 dialogs.openCreate({ date: day, startTime, professionalId: professionalId ?? (agenda !== ALL_AGENDAS ? agenda : undefined) })
               }
               onAppointmentClick={dialogs.openDetails}
+              move={move}
             />
           )}
         </>

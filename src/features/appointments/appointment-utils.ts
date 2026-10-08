@@ -1,5 +1,6 @@
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
-import { isPast, minutesToTime, type ZonedNow } from "@/lib/time";
+import { durationInMinutes, isPast, minutesToTime, type ZonedNow } from "@/lib/time";
+import type { AppointmentInput } from "@/lib/validations/appointment";
 import type { Appointment, Client, HomeVisitAddress, Service, ServiceMode } from "@/types";
 
 export function getClientName(clientsById: Map<string, Client>, clientId: string): string {
@@ -46,3 +47,20 @@ export function getListPrice(service: Pick<Service, "price" | "homeVisitFee">, a
 /** Enlace privado de pago de la cita (datos para transferir y subida del comprobante). */
 export const paymentLinkOf = (appointment: Pick<Appointment, "paymentToken">) =>
   `${window.location.origin}/pago/${appointment.paymentToken}`;
+
+/** Los datos de una cita tal como los pide la API al guardarla (p. ej. al moverla en la agenda). */
+export function appointmentToInput(appointment: Appointment): AppointmentInput {
+  return {
+    clientId: appointment.clientId,
+    serviceId: appointment.serviceId,
+    date: appointment.date,
+    startTime: appointment.startTime,
+    durationMinutes: durationInMinutes(appointment.startTime, appointment.endTime),
+    price: appointment.price,
+    status: appointment.status,
+    notes: appointment.notes,
+    homeVisit: appointment.homeVisit,
+    isVirtual: appointment.isVirtual,
+    professionalId: appointment.professionalId,
+  };
+}

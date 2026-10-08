@@ -240,6 +240,13 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   profesional (Profesionales → Editar → "Enlace de videollamada": Meet, Zoom o Teams, con https://):
   el enlace llega en la confirmación, en los emails y en el aviso por WhatsApp; en la agenda la
   cita lleva un icono de cámara y el detalle, "Entrar a la videollamada".
+- **Mover citas arrastrándolas** (vistas Día y Semana, `features/calendar/use-appointment-drag.ts`):
+  con el ratón o, en el móvil, manteniendo el dedo medio segundo. La sombra muestra dónde caerá
+  (cada 15 min) y, en rojo, por qué no se puede (hora pasada, ocupada, profesional inactivo o que no
+  atiende el servicio); en la vista Día con varias agendas se puede pasar a otro profesional. Sólo
+  citas pendientes o confirmadas. La agenda la muestra al momento en su sitio nuevo y la guarda a
+  los 5 s (`useMoveAppointment`): "Deshacer" antes no avisa al paciente; después llegan el email de
+  cambio y el aviso de WhatsApp, como al editarla.
 - **Pago por transferencia**: cada agenda puede tener datos bancarios
   (`features/professionals/bank-account-fields.tsx`; en Free y Pro, en Configuración → Perfil).
   Al reservar un servicio con precio, la pantalla final muestra los datos y el monto
