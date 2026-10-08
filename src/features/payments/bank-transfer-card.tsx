@@ -1,4 +1,4 @@
-import { Check, CircleCheck, Copy, FileUp, Landmark, Loader2 } from "lucide-react";
+import { CircleCheck, Copy, FileUp, Landmark, Loader2 } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
@@ -23,7 +23,7 @@ interface BankTransferCardProps {
   receiptsEnabled: boolean;
   /** Enlace al WhatsApp del negocio con el mensaje escrito (null: el negocio no tiene teléfono). */
   whatsappUrl: string | null;
-  /** Comprobantes que ya envió. */
+  /** Comprobantes que ya envió (uno basta: después ya no se sube otro). */
   receiptsSent?: number;
   /** El negocio ya marcó la cita como pagada. */
   paid?: boolean;
@@ -43,6 +43,9 @@ export function BankTransferCard({
   receiptsSent = 0,
   paid = false,
 }: BankTransferCardProps) {
+  // Un comprobante por cita: enviado (ahora o antes), ya no se sube otro.
+  const [sentHere, setSentHere] = useState(false);
+  const sent = sentHere || receiptsSent > 0;
   const rows = [
     { label: "Banco", value: bankAccount.bank },
     { label: "Tipo de cuenta", value: BANK_ACCOUNT_TYPE_LABELS[bankAccount.accountType] },
@@ -99,16 +102,26 @@ export function BankTransferCard({
       </Button>
 
       {paid ? (
-        <p className="mt-5 flex items-center gap-2 rounded-lg bg-muted p-3 text-sm font-medium">
-          <CircleCheck className="size-4 shrink-0 text-primary" aria-hidden /> El negocio ya confirmó tu pago. ¡Gracias!
-        </p>
+        <SuccessNote title="Pago confirmado" text="El negocio ya confirmó tu pago. ¡Gracias!" />
+      ) : sent ? (
+        <div className="grid gap-2">
+          <SuccessNote title="Comprobante enviado" text="El negocio lo revisará y confirmará tu pago." />
+          {whatsappUrl && (
+            <p className="text-xs text-muted-foreground">
+              ¿Te equivocaste de archivo?{" "}
+              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="font-semibold text-ink underline underline-offset-4">
+                Escríbele al negocio por WhatsApp
+              </a>
+            </p>
+          )}
+        </div>
       ) : (
         <div className="mt-5 grid gap-3">
           <p className="text-sm text-muted-foreground">
             Cuando transfieras, envía el comprobante para que el negocio confirme tu pago.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
-            {receiptsEnabled && <ReceiptUploadButton token={token} sent={receiptsSent} />}
+            {receiptsEnabled && <ReceiptUploadButton token={token} onSent={() => setSentHere(true)} />}
             {whatsappUrl && (
               <Button asChild variant="outline" className="h-11 px-5">
                 <a href={whatsappUrl} target="_blank" rel="noreferrer">
@@ -129,14 +142,24 @@ export function BankTransferCard({
 /** Foto que se acepta elegir (se reduce antes de subirla). */
 const MAX_PHOTO_BYTES = 30 * 1024 * 1024;
 
+/** Aviso en verde: el comprobante se envió o el pago ya está confirmado. */
+function SuccessNote({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="mt-5 flex items-start gap-3 rounded-lg bg-emerald-50 p-3 text-emerald-900" role="status">
+      <CircleCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" aria-hidden />
+      <p className="text-sm">
+        <span className="block font-semibold">{title}</span>
+        {text}
+      </p>
+    </div>
+  );
+}
+
 /** Sube la foto o el PDF del comprobante, con progreso; al terminar, el negocio recibe un aviso. */
-function ReceiptUploadButton({ token, sent }: { token: string; sent: number }) {
+function ReceiptUploadButton({ token, onSent }: { token: string; onSent: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = useUploadReceipt(token);
   const [progress, setProgress] = useState(0);
-  // Lo enviado en esta visita (la página de pago, además, recarga la lista).
-  const [uploaded, setUploaded] = useState(0);
-  const total = Math.max(sent, uploaded);
 
   const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -155,8 +178,8 @@ function ReceiptUploadButton({ token, sent }: { token: string; sent: number }) {
     setProgress(0);
     try {
       await upload.mutateAsync({ file, onProgress: setProgress });
-      setUploaded((count) => Math.max(count, sent) + 1);
       toast.success("Comprobante enviado", { description: "El negocio lo revisará y confirmará tu pago." });
+      onSent();
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
@@ -167,15 +190,9 @@ function ReceiptUploadButton({ token, sent }: { token: string; sent: number }) {
       <input ref={inputRef} type="file" accept="image/*,application/pdf" className="sr-only" tabIndex={-1} onChange={handleFile} />
       <Button type="button" className="h-11 px-5" disabled={upload.isPending} onClick={() => inputRef.current?.click()}>
         {upload.isPending ? <Loader2 className="animate-spin" aria-hidden /> : <FileUp aria-hidden />}
-        {upload.isPending ? "Enviando…" : total > 0 ? "Enviar otro comprobante" : "Subir comprobante"}
+        {upload.isPending ? "Enviando…" : "Subir comprobante"}
       </Button>
       {upload.isPending && <Progress value={progress} aria-label="Progreso de la subida" />}
-      {!upload.isPending && total > 0 && (
-        <p className="flex items-center gap-1.5 text-sm font-medium" role="status">
-          <Check className="size-4 text-primary" aria-hidden />
-          {total === 1 ? "Comprobante enviado" : `${total} comprobantes enviados`}
-        </p>
-      )}
     </div>
   );
 }
