@@ -24,12 +24,14 @@ export const EMPTY_CONTACT: ContactValues = {
   homeVisit: null,
   isVirtual: false,
   lastHomeVisit: null,
-  remember: true,
+  // Desmarcada: en un equipo compartido (recepción, el celular de un familiar) sus datos no quedan
+  // para el siguiente. Si ya los había guardado, sigue marcada.
+  remember: false,
   fromSaved: false,
 };
 
 /** Los datos de partida: los que el paciente guardó en este navegador, si los hay. */
 export function initialContact(): ContactValues {
   const saved = loadSavedContact();
-  return saved ? { ...EMPTY_CONTACT, ...saved, fromSaved: true } : EMPTY_CONTACT;
+  return saved ? { ...EMPTY_CONTACT, ...saved, remember: true, fromSaved: true } : EMPTY_CONTACT;
 }
