@@ -27,10 +27,15 @@ const REASONS: Record<AppointmentNoticeKind, string> = {
   no_show: "El cliente no asistió.",
 };
 
+/** Dónde es la cita, como la compara la API: en el local, virtual o a domicilio (con la dirección). */
+const placeOf = (appointment: Appointment) =>
+  appointment.isVirtual ? "virtual" : appointment.homeVisit ? `home:${appointment.homeVisit.address}` : "business";
+
 /**
- * ¿Le llega además un email automático? Lo mismo que decide la API al guardar la cita: el de
- * cancelación, el de confirmación al pasar a "Confirmada" y el de cambio si cambió la fecha, la
- * hora o el servicio (con los emails activados en Configuración).
+ * ¿Le llega además un email automático? Lo mismo que decide la API al guardar la cita
+ * (notifyAppointmentChange): el de cancelación; el de "restablecida" si estaba cancelada; el de
+ * cambio si cambió la fecha, la hora, el servicio, el profesional o el lugar; y el de confirmación
+ * al pasar a "Confirmada" (con los emails activados en Configuración).
  */
 function sendsEmail(notice: PendingNotice, business: Business): boolean {
   const { kind, appointment, previous } = notice;
@@ -38,9 +43,14 @@ function sendsEmail(notice: PendingNotice, business: Business): boolean {
   const settings = { ...DEFAULT_NOTIFICATION_SETTINGS, ...business.notificationSettings };
   if (kind === "cancelled") return settings.cancellations;
   if (kind === "completed" || kind === "no_show" || !settings.confirmations) return false;
-  if (!previous) return kind === "confirmed" || kind === "rescheduled";
+  if (!previous) return kind === "confirmed" || kind === "rescheduled" || kind === "pending";
+  if (previous.status === "cancelled") return true;
   const rescheduled =
-    previous.date !== appointment.date || previous.startTime !== appointment.startTime || previous.serviceId !== appointment.serviceId;
+    previous.date !== appointment.date ||
+    previous.startTime !== appointment.startTime ||
+    previous.serviceId !== appointment.serviceId ||
+    previous.professionalId !== appointment.professionalId ||
+    placeOf(previous) !== placeOf(appointment);
   return rescheduled || (appointment.status === "confirmed" && previous.status !== "confirmed");
 }
 
