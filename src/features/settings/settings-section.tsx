@@ -11,6 +11,8 @@ interface SettingsSectionProps {
   /** Hay cambios sin guardar: habilita "Guardar cambios" y "Descartar". */
   dirty: boolean;
   saving: boolean;
+  /** Se está subiendo una imagen: "Guardar" espera a que termine (si no, la imagen se perdería). */
+  uploading?: boolean;
   onSubmit: () => void | Promise<void>;
   onDiscard: () => void;
 }
@@ -22,12 +24,13 @@ export function SettingsSection({
   children,
   dirty,
   saving,
+  uploading = false,
   onSubmit,
   onDiscard,
 }: SettingsSectionProps) {
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (dirty && !saving) void onSubmit();
+    if (dirty && !saving && !uploading) void onSubmit();
   };
 
   return (
@@ -45,10 +48,14 @@ export function SettingsSection({
               Tienes cambios sin guardar
             </p>
           )}
-          <Button type="button" variant="ghost" disabled={!dirty || saving} onClick={onDiscard}>
+          <Button type="button" variant="ghost" disabled={!dirty || saving || uploading} onClick={onDiscard}>
             Descartar
           </Button>
-          <SubmitButton disabled={!dirty} loading={saving} loadingText="Guardando…">
+          <SubmitButton
+            disabled={!dirty}
+            loading={saving || uploading}
+            loadingText={uploading ? "Subiendo imagen…" : "Guardando…"}
+          >
             Guardar cambios
           </SubmitButton>
         </CardFooter>

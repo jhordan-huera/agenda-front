@@ -15,7 +15,7 @@ import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
 import { SignupsChart } from "@/features/admin/signups-chart";
 import { useAdminBusinesses, useAdminStats } from "@/hooks/queries/use-admin";
 import { PLANS } from "@/lib/constants/plans";
-import { formatNumericDate, plural } from "@/lib/format";
+import { formatNumericDate, plural, toZonedDate } from "@/lib/format";
 
 export default function AdminOverviewPage() {
   const stats = useAdminStats();
@@ -121,7 +121,7 @@ export default function AdminOverviewPage() {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{business.name}</span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {owner?.name ?? "Sin propietario"} · Alta {formatNumericDate(business.createdAt.slice(0, 10))}
+                        {owner?.name ?? "Sin propietario"} · Alta {formatNumericDate(toZonedDate(business.createdAt))}
                       </span>
                     </span>
                     {subscription && <PlanBadge plan={subscription.plan} />}

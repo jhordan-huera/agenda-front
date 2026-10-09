@@ -9,10 +9,12 @@ import { AuditEntry } from "./audit-entry";
 interface AuditFeedProps<T extends AuditLog> {
   feed: UseInfiniteQueryResult<InfiniteData<AuditLogPage<T>>>;
   showBusiness?: boolean;
+  /** Zona horaria de las fechas (la del negocio; sin ella, la de la plataforma). */
+  timezone?: string;
 }
 
 /** Lista de la auditoría con "Cargar más". */
-export function AuditFeed<T extends AuditLog>({ feed, showBusiness }: AuditFeedProps<T>) {
+export function AuditFeed<T extends AuditLog>({ feed, showBusiness, timezone }: AuditFeedProps<T>) {
   if (feed.isPending) return <Skeleton className="h-72" />;
   if (feed.isError) return <ErrorState onRetry={() => feed.refetch()} />;
 
@@ -30,7 +32,7 @@ export function AuditFeed<T extends AuditLog>({ feed, showBusiness }: AuditFeedP
     <div className="grid gap-3">
       <ol className="divide-y rounded-lg border">
         {entries.map((entry) => (
-          <AuditEntry key={entry.id} entry={entry} showBusiness={showBusiness} />
+          <AuditEntry key={entry.id} entry={entry} showBusiness={showBusiness} timezone={timezone} />
         ))}
       </ol>
       {feed.hasNextPage && (

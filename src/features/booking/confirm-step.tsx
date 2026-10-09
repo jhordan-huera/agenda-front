@@ -1,5 +1,5 @@
 import { CalendarDays, Clock, MapPin, Pencil, ShieldCheck, User, Video } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ReactNode, RefCallback } from "react";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Button } from "@/components/ui/button";
 import { capitalize, formatCurrency, formatDuration, formatLongDate, formatPrice, formatTimeRange, isPriceVisible } from "@/lib/format";
@@ -8,8 +8,12 @@ import { describeHomeVisit, getPlaceMapsUrl } from "@/lib/maps";
 import { addMinutesToTime } from "@/lib/time";
 import type { PublicBookingInput } from "@/lib/validations/booking";
 import type { PublicBusiness, PublicProfessional, PublicService } from "@/types";
+import { TimezoneNote } from "./timezone-note";
+import { CAPTCHA_BOX_CLASS } from "./use-captcha";
 
 interface ConfirmStepProps {
+  /** Caja del CAPTCHA (ver useCaptcha): junto al botón de reservar, para que se vea en el móvil. */
+  captchaRef: RefCallback<HTMLDivElement>;
   business: PublicBusiness;
   /** null: "el primero disponible" (se sabe quién al reservar). */
   professional: PublicProfessional | null;
@@ -24,6 +28,7 @@ interface ConfirmStepProps {
 
 /** Revisión final antes de reservar: todo lo que el cliente va a confirmar, en un vistazo. */
 export function ConfirmStep({
+  captchaRef,
   business,
   professional,
   service,
@@ -44,6 +49,7 @@ export function ConfirmStep({
           <p className="text-xl font-extrabold text-ink tabular-nums">
             {formatTimeRange(input.startTime, addMinutesToTime(input.startTime, service.durationMinutes))}
           </p>
+          <TimezoneNote timezone={business.timezone} date={input.date} time={input.startTime} className="mt-1" />
         </Row>
         <Row icon={Clock} label={showPrice ? "Duración y precio" : "Duración"}>
           {formatDuration(service.durationMinutes)}
@@ -105,13 +111,17 @@ export function ConfirmStep({
         </p>
       )}
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-        <Button variant="ghost" onClick={onEdit} disabled={submitting}>
-          <Pencil /> Editar mis datos
-        </Button>
-        <SubmitButton type="button" size="lg" className="h-11 px-6 text-sm" loading={submitting} loadingText="Reservando…" onClick={onConfirm}>
-          Confirmar reserva
-        </SubmitButton>
+      <div>
+        {/* CAPTCHA de la reserva, junto al botón: sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
+        <div ref={captchaRef} className={CAPTCHA_BOX_CLASS} />
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+          <Button variant="ghost" onClick={onEdit} disabled={submitting}>
+            <Pencil /> Editar mis datos
+          </Button>
+          <SubmitButton type="button" size="lg" className="h-11 px-6 text-sm" loading={submitting} loadingText="Reservando…" onClick={onConfirm}>
+            Confirmar reserva
+          </SubmitButton>
+        </div>
       </div>
       <p className="text-center text-xs text-muted-foreground sm:text-right">
         Al confirmar, {business.name} usará tus datos para gestionar tu cita, según nuestra{" "}
@@ -129,7 +139,8 @@ function Row({ icon: Icon, label, children }: { icon: typeof Clock; label: strin
   return (
     <div className="flex gap-3 px-4 py-3">
       <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-      <div>
+      {/* Un email o una nota largos sin espacios se parten en vez de ensanchar la página en el móvil. */}
+      <div className="min-w-0 [overflow-wrap:anywhere]">
         <dt className="sr-only">{label}</dt>
         <dd>{children}</dd>
       </div>

@@ -25,7 +25,7 @@ import { UserStatusBadge } from "@/features/admin/business-badges";
 import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
 import { useAdminUsers, useSetUserActive } from "@/hooks/queries/use-admin";
 import { getErrorMessage } from "@/lib/data";
-import { formatNumericDate, getFullName, normalizeSearch } from "@/lib/format";
+import { formatNumericDate, getFullName, normalizeSearch, toZonedDate } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import type { AdminUserSummary } from "@/types";
 
@@ -140,7 +140,7 @@ export default function AdminUsersPage() {
                     <UserBusinesses row={row} />
                   </div>
                   <div className="flex items-center justify-between gap-3 border-t pt-3 text-xs text-muted-foreground">
-                    <span>Alta {formatNumericDate(user.createdAt.slice(0, 10))}</span>
+                    <span>Alta {formatNumericDate(toZonedDate(user.createdAt))}</span>
                     <UserStatusBadge active={user.isActive} />
                   </div>
                 </li>
@@ -179,7 +179,7 @@ export default function AdminUsersPage() {
                         <UserBusinesses row={row} />
                       </TableCell>
                       <TableCell className="hidden whitespace-nowrap lg:table-cell">
-                        {formatNumericDate(user.createdAt.slice(0, 10))}
+                        {formatNumericDate(toZonedDate(user.createdAt))}
                       </TableCell>
                       <TableCell>
                         <UserStatusBadge active={user.isActive} />

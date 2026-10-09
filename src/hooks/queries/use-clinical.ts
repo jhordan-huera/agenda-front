@@ -50,13 +50,12 @@ function useTemplateMutation<TVariables>(mutationFn: (businessId: string, variab
   const invalidateActivity = useInvalidateActivity();
   return useMutation({
     mutationFn: (variables: TVariables) => mutationFn(businessId, variables),
-    // El negocio guarda cuál es su formato: también se recarga.
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.clinicalTemplates(businessId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.business(businessId) }),
-        invalidateActivity(),
-      ]),
+    // El negocio guarda cuál es su formato: también se recarga. Sin esperar: se sigue al responder la API.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.clinicalTemplates(businessId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.business(businessId) });
+      void invalidateActivity();
+    },
   });
 }
 
@@ -73,7 +72,10 @@ export const useSetClinicalTemplateActive = () =>
 export const useSetDefaultClinicalTemplate = () =>
   useTemplateMutation((businessId, id: string) => data.clinicalRecords.setDefaultTemplate(businessId, id));
 
-/** Tras escribir, se recarga la historia y la auditoría (que registra cada cambio). */
+/**
+ * Tras escribir, se recarga la historia y la auditoría (que registra cada cambio), sin esperar: el
+ * diálogo se cierra al responder la API.
+ */
 function useClinicalMutation<TVariables, TResult>(
   clientId: string,
   mutationFn: (businessId: string, variables: TVariables) => Promise<TResult>,
@@ -83,11 +85,10 @@ function useClinicalMutation<TVariables, TResult>(
   const invalidateActivity = useInvalidateActivity();
   return useMutation({
     mutationFn: (variables: TVariables) => mutationFn(businessId, variables),
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.clinicalRecord(businessId, clientId) }),
-        invalidateActivity(),
-      ]),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.clinicalRecord(businessId, clientId) });
+      void invalidateActivity();
+    },
   });
 }
 

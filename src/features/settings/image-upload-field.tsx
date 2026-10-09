@@ -21,13 +21,27 @@ interface ImageUploadFieldProps {
   fallback: ReactNode;
   shape?: "circle" | "square";
   error?: string;
+  /**
+   * Avisa cuando empieza y termina una subida: el formulario no debe guardarse mientras tanto (la
+   * foto aún no tiene dirección y se perdería; en el iPhone una HEIC tarda unos segundos).
+   */
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
 /**
  * Selector de imagen con vista previa. La imagen se sube al almacenamiento (Supabase Storage) al
  * elegirla y el formulario guarda su dirección; la anterior se borra al guardar el cambio.
  */
-export function ImageUploadField({ label, target, value, onChange, fallback, shape = "circle", error }: ImageUploadFieldProps) {
+export function ImageUploadField({
+  label,
+  target,
+  value,
+  onChange,
+  fallback,
+  shape = "circle",
+  error,
+  onUploadingChange,
+}: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [localError, setLocalError] = useState<string>();
   const upload = useUploadImage(target);
@@ -45,11 +59,14 @@ export function ImageUploadField({ label, target, value, onChange, fallback, sha
       setLocalError("La imagen pesa más de 20 MB. Prueba con otra.");
       return;
     }
+    onUploadingChange?.(true);
     try {
       onChange(await upload.mutateAsync(file));
       setLocalError(undefined);
     } catch (uploadError) {
       setLocalError(getErrorMessage(uploadError));
+    } finally {
+      onUploadingChange?.(false);
     }
   };
 

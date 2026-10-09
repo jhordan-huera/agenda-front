@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { SettingsSection } from "@/features/settings/settings-section";
 import { useSettingsForm } from "@/features/settings/use-settings-form";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useSaveClinicalProfile } from "@/hooks/queries/use-clinical";
 import { getErrorMessage } from "@/lib/data";
 import { formatDateTime, formatNumericDate } from "@/lib/format";
@@ -61,6 +62,7 @@ export function ClinicalProfileForm({
   profile: ClinicalProfile | null;
 }) {
   const saveProfile = useSaveClinicalProfile(clientId);
+  const timezone = useCurrentBusiness().data?.timezone;
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(toFormValues(profile, clientDocumentId));
 
   const submit = async () => {
@@ -80,7 +82,7 @@ export function ClinicalProfileForm({
       title="Antecedentes"
       description={
         profile
-          ? `Actualizado el ${formatDateTime(profile.updatedAt)} por ${profile.updatedByName}.`
+          ? `Actualizado el ${formatDateTime(profile.updatedAt, timezone)} por ${profile.updatedByName}.`
           : "Aún no se registraron antecedentes."
       }
       dirty={dirty}

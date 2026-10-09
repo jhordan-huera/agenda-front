@@ -15,6 +15,22 @@ export function toWeekInputs(schedules: Schedule[]): ScheduleDayInput[] {
   });
 }
 
+/**
+ * La semana como texto comparable, sin depender del orden de las claves ni de los intervalos (la
+ * API devuelve los intervalos ordenados y como {end, start}): para saber si hay cambios sin guardar.
+ */
+export function weekKey(days: ScheduleDayInput[]): string {
+  return JSON.stringify(
+    [...days]
+      .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+      .map((day) => [
+        day.dayOfWeek,
+        day.isActive,
+        day.intervals.map((interval) => [interval.start, interval.end]).sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1])),
+      ]),
+  );
+}
+
 /** Errores de validación indexados por día de la semana. */
 export function validateWeek(days: ScheduleDayInput[]): Record<number, string> {
   const errors: Record<number, string> = {};

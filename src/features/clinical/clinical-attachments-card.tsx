@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useBusinessId } from "@/features/auth/use-session";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { openClinicalAttachment, useUploadClinicalAttachment } from "@/hooks/queries/use-clinical";
 import { getErrorMessage } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
@@ -22,6 +23,7 @@ function formatSize(bytes: number): string {
 
 function AttachmentRow({ attachment }: { attachment: ClinicalAttachment }) {
   const businessId = useBusinessId();
+  const timezone = useCurrentBusiness().data?.timezone;
   const Icon = attachment.contentType === "application/pdf" ? FileText : FileImage;
   const open = async () => {
     try {
@@ -41,7 +43,7 @@ function AttachmentRow({ attachment }: { attachment: ClinicalAttachment }) {
         </p>
         {attachment.description && <p className="text-sm text-muted-foreground">{attachment.description}</p>}
         <p className="text-xs text-muted-foreground">
-          {formatSize(attachment.sizeBytes)} · {attachment.uploadedByName} · {formatDateTime(attachment.createdAt)}
+          {formatSize(attachment.sizeBytes)} · {attachment.uploadedByName} · {formatDateTime(attachment.createdAt, timezone)}
         </p>
       </div>
       <Button type="button" variant="outline" size="sm" onClick={open}>

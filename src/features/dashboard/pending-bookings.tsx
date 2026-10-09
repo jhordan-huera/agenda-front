@@ -10,7 +10,8 @@ interface PendingBookingsProps {
   serviceName: (id: string) => string;
   onOpen: (appointment: Appointment) => void;
   onConfirm: (appointment: Appointment) => void;
-  confirmingId: string | null;
+  /** Las que se están confirmando. */
+  confirmingIds: ReadonlySet<string>;
 }
 
 /** Citas por confirmar (sobre todo las que llegan de la página de reservas): se confirman aquí mismo. */
@@ -21,7 +22,7 @@ export function PendingBookings({
   serviceName,
   onOpen,
   onConfirm,
-  confirmingId,
+  confirmingIds,
 }: PendingBookingsProps) {
   return (
     <section aria-labelledby="pending-heading">
@@ -49,7 +50,7 @@ export function PendingBookings({
                   {appointment.source === "booking_page" && ", reserva online"}
                 </span>
               </button>
-              <Button size="sm" variant="outline" disabled={confirmingId === appointment.id} onClick={() => onConfirm(appointment)}>
+              <Button size="sm" variant="outline" disabled={confirmingIds.has(appointment.id)} onClick={() => onConfirm(appointment)}>
                 Confirmar
               </Button>
             </li>

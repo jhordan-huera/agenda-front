@@ -3,6 +3,7 @@ import { getListPrice } from "@/features/appointments/appointment-utils";
 import { capitalize, formatCurrency, formatDuration, formatLongDate, formatPrice, formatTimeRange, isPriceVisible } from "@/lib/format";
 import { addMinutesToTime } from "@/lib/time";
 import type { ISODate, PublicBusiness, PublicProfessional, PublicService, ServiceMode } from "@/types";
+import { TimezoneNote } from "./timezone-note";
 
 interface BookingSummaryProps {
   business: PublicBusiness;
@@ -20,7 +21,7 @@ export function BookingSummary({ business, professional, service, date, time, pl
   const showPrice = service ? isPriceVisible(service) : false;
   const atHome = place === "home";
   return (
-    <div className="rounded-xl border border-t-4 border-t-ink bg-background p-5">
+    <div className="min-w-0 rounded-xl border border-t-4 border-t-ink bg-background p-5 [overflow-wrap:anywhere]">
       <h2 className="font-bold">Tu reserva</h2>
       {!service ? (
         <p className="mt-2 text-muted-foreground">Elige un servicio para empezar.</p>
@@ -37,9 +38,12 @@ export function BookingSummary({ business, professional, service, date, time, pl
             <dt className="sr-only">Fecha y hora</dt>
             <dd className="text-sm text-muted-foreground">{date ? capitalize(formatLongDate(date)) : "Fecha por elegir"}</dd>
             {date && time ? (
-              <dd className="text-2xl font-extrabold tracking-[-0.02em] text-ink tabular-nums">
-                {formatTimeRange(time, addMinutesToTime(time, service.durationMinutes))}
-              </dd>
+              <>
+                <dd className="text-2xl font-extrabold tracking-[-0.02em] text-ink tabular-nums">
+                  {formatTimeRange(time, addMinutesToTime(time, service.durationMinutes))}
+                </dd>
+                <TimezoneNote as="dd" timezone={business.timezone} date={date} time={time} className="mt-1" />
+              </>
             ) : (
               date && <dd className="text-muted-foreground">Hora por elegir</dd>
             )}

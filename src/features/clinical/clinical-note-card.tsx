@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAddClinicalAddendum } from "@/hooks/queries/use-clinical";
 import { getErrorMessage } from "@/lib/data";
 import { capitalize, formatDateTime, formatLongDate } from "@/lib/format";
@@ -23,6 +24,8 @@ interface ClinicalNoteCardProps {
 
 export function ClinicalNoteCard({ note, template, ownTemplate = false, serviceName }: ClinicalNoteCardProps) {
   const addAddendum = useAddClinicalAddendum(note.clientId);
+  // Las horas, en la zona del negocio (no en la del navegador).
+  const timezone = useCurrentBusiness().data?.timezone;
   const [writing, setWriting] = useState(false);
   const [text, setText] = useState("");
 
@@ -52,7 +55,7 @@ export function ClinicalNoteCard({ note, template, ownTemplate = false, serviceN
           )}
         </div>
         <CardDescription>
-          {serviceName ? `${serviceName} · ` : ""}Registrada por {note.authorName} · {formatDateTime(note.createdAt)}
+          {serviceName ? `${serviceName} · ` : ""}Registrada por {note.authorName} · {formatDateTime(note.createdAt, timezone)}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
@@ -67,7 +70,7 @@ export function ClinicalNoteCard({ note, template, ownTemplate = false, serviceN
             {note.addenda.map((addendum) => (
               <li key={addendum.id} className="rounded-lg border-l-2 border-lilac-ink/50 bg-secondary/70 px-3 py-2 text-sm">
                 <p className="text-xs font-medium text-lilac-ink">
-                  Aclaración · {addendum.authorName} · {formatDateTime(addendum.createdAt)}
+                  Aclaración · {addendum.authorName} · {formatDateTime(addendum.createdAt, timezone)}
                 </p>
                 <p className="mt-0.5 whitespace-pre-line">{addendum.text}</p>
               </li>

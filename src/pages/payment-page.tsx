@@ -6,6 +6,7 @@ import { Logo } from "@/components/shared/logo";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TimezoneNote } from "@/features/booking/timezone-note";
 import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { BankTransferCard } from "@/features/payments/bank-transfer-card";
 import { usePublicPayment } from "@/hooks/queries/use-public-booking";
@@ -33,7 +34,10 @@ export default function PaymentPage() {
     );
   }
 
-  if (query.isError) {
+  const payment = query.data;
+  // Si falla una recarga en segundo plano (p. ej. al volver de la app del banco), se sigue mostrando
+  // la página con lo que ya había: el error sólo se muestra si no hay datos.
+  if (!payment) {
     const notFound = query.error instanceof DataError && query.error.code === "not_found";
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
@@ -53,7 +57,6 @@ export default function PaymentPage() {
     );
   }
 
-  const payment = query.data;
   const { business } = payment;
   const closed = payment.status === "cancelled" || payment.status === "no_show";
 
@@ -85,6 +88,7 @@ export default function PaymentPage() {
               {capitalize(formatLongDate(payment.date))} · {payment.startTime} a {payment.endTime}
             </p>
             <p className="text-sm text-muted-foreground">Con {payment.professionalName}</p>
+            <TimezoneNote timezone={business.timezone} date={payment.date} time={payment.startTime} className="mt-2" />
           </section>
 
           {closed ? (

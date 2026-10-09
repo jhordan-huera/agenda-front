@@ -3,7 +3,7 @@
 import { format } from "date-fns/format";
 import { es } from "date-fns/locale/es";
 import { DEFAULT_CURRENCY, DEFAULT_TIMEZONE } from "@/lib/constants/app";
-import { parseISODate } from "@/lib/time";
+import { getZonedNow, parseISODate } from "@/lib/time";
 import type { ISODate, Service, TimeString } from "@/types";
 
 export function formatCurrency(amount: number, currency: string = DEFAULT_CURRENCY): string {
@@ -42,6 +42,14 @@ export function formatShortDate(iso: ISODate): string {
 /** "30/09/2026" */
 export function formatNumericDate(iso: ISODate): string {
   return formatDate(iso, "dd/MM/yyyy");
+}
+
+/**
+ * El día (YYYY-MM-DD) de un instante en la zona horaria del negocio. `createdAt.slice(0, 10)` es el
+ * de UTC: en Ecuador, desde las 19:00 ya es el día siguiente.
+ */
+export function toZonedDate(iso: string, timezone: string = DEFAULT_TIMEZONE): ISODate {
+  return getZonedNow(timezone, new Date(iso)).date;
 }
 
 /** "4 oct 2026, 14:35" en la zona horaria del negocio (timestamps de auditoría y emails). */

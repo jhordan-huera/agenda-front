@@ -55,6 +55,8 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
   const save = useSaveProfessional();
   const showError = useErrorToast();
   const [errors, setErrors] = useState<FieldErrors>({});
+  // Subiendo la foto: "Guardar" espera (si no, se guardaba sin ella y la foto se perdía).
+  const [uploading, setUploading] = useState(false);
   const usedColors = new Set(professionals.map((p) => p.color));
   const [values, setValues] = useState<ProfessionalInput>(() => ({
     displayName: professional?.displayName ?? "",
@@ -74,9 +76,10 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
   const set = <K extends keyof ProfessionalInput>(key: K, value: ProfessionalInput[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
 
-  // Miembros del equipo que aún no tienen agenda (y el de este profesional).
+  // Miembros del equipo que aún no tienen agenda (y el elegido aquí: al guardar un profesional nuevo,
+  // la lista recargada ya lo trae con ese usuario y el selector se quedaba en blanco).
   const takenUserIds = new Set(professionals.filter((p) => p.id !== professional?.id && p.userId).map((p) => p.userId));
-  const members = team.filter((member) => !takenUserIds.has(member.userId));
+  const members = team.filter((member) => !takenUserIds.has(member.userId) || member.userId === values.userId);
   const activeServices = services.filter((service) => service.isActive || values.serviceIds.includes(service.id));
 
   const chooseMember = (userId: string) => {
@@ -95,6 +98,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    if (uploading || save.isPending) return;
     const result = validate(professionalSchema, values);
     setErrors(result.errors);
     if (!result.success) return;
@@ -116,6 +120,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
         label="Foto"
         value={values.avatarUrl}
         onChange={(avatarUrl) => set("avatarUrl", avatarUrl)}
+        onUploadingChange={setUploading}
         fallback={getInitials(values.displayName || "?")}
         error={errors.avatarUrl}
       />
@@ -257,7 +262,9 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <SubmitButton loading={save.isPending}>{professional ? "Guardar cambios" : "Agregar profesional"}</SubmitButton>
+        <SubmitButton loading={save.isPending || uploading} loadingText={uploading ? "Subiendo foto…" : undefined}>
+          {professional ? "Guardar cambios" : "Agregar profesional"}
+        </SubmitButton>
       </DialogFooter>
     </form>
   );

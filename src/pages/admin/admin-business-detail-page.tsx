@@ -45,7 +45,7 @@ import { useCategories } from "@/hooks/queries/use-categories";
 import { TIMEZONES } from "@/lib/constants/business";
 import { PLANS, getPlan } from "@/lib/constants/plans";
 import { getErrorMessage } from "@/lib/data";
-import { formatDateTime, formatNumericDate } from "@/lib/format";
+import { formatDateTime, formatNumericDate, toZonedDate } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import type { PlanId } from "@/types";
 import { MaxProfessionalsField } from "@/features/admin/max-professionals-field";
@@ -119,7 +119,7 @@ export default function AdminBusinessDetailPage() {
             <BusinessStatusBadge status={business.status} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {categoryLabel(business.category) || business.category} · Alta {formatNumericDate(business.createdAt.slice(0, 10))}
+            {categoryLabel(business.category) || business.category} · Alta {formatNumericDate(toZonedDate(business.createdAt))}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -161,7 +161,7 @@ export default function AdminBusinessDetailPage() {
               <CardDescription>
                 Plan {plan.name}
                 {subscription?.currentPeriodEnd
-                  ? ` · Renueva el ${formatNumericDate(subscription.currentPeriodEnd.slice(0, 10))}`
+                  ? ` · Renueva el ${formatNumericDate(toZonedDate(subscription.currentPeriodEnd))}`
                   : " · Sin fecha de renovación"}
                 . El negocio no ve planes ni precios.
               </CardDescription>

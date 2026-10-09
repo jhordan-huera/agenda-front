@@ -95,7 +95,9 @@ function ReportsPageContent() {
   }, [appointmentsQuery.data, activityQuery.data, servicesById, now.date, period, agenda, agendas.all, schedules, blockedTimes]);
 
   const { summary } = report;
-  const loading = appointmentsQuery.isPending || activityQuery.isPending || lookupsPending;
+  // Al cambiar de periodo se mantienen las citas del anterior mientras llegan las nuevas: sus cifras
+  // no son las del periodo elegido, así que se muestra cargando.
+  const loading = appointmentsQuery.isPending || appointmentsQuery.isPlaceholderData || activityQuery.isPending || lookupsPending;
 
   return (
     <div className="space-y-6">
@@ -151,7 +153,7 @@ function ReportsPageContent() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Cobrado en citas completadas:{" "}
                 <span className="font-semibold text-foreground tabular-nums">
-                  {formatCurrency(summary.completedRevenue, currency)}
+                  {loading ? "…" : formatCurrency(summary.completedRevenue, currency)}
                 </span>
               </p>
             </div>

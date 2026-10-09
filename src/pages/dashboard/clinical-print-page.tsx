@@ -135,7 +135,7 @@ export default function ClinicalPrintPage() {
                 )}
                 {note.addenda.map((addendum) => (
                   <p key={addendum.id} className="mt-2 text-xs">
-                    <span className="font-medium">Aclaración ({addendum.authorName}, {formatDateTime(addendum.createdAt)}):</span>{" "}
+                    <span className="font-medium">Aclaración ({addendum.authorName}, {formatDateTime(addendum.createdAt, business?.timezone)}):</span>{" "}
                     {addendum.text}
                   </p>
                 ))}
@@ -145,7 +145,7 @@ export default function ClinicalPrintPage() {
         </section>
 
         <footer className="border-t pt-4 text-xs text-muted-foreground">
-          Documento generado el {formatDateTime(generatedAt)}
+          Documento generado el {formatDateTime(generatedAt, business?.timezone)}
           {user && ` por ${getFullName(user)}`}. Contiene datos de salud confidenciales.
         </footer>
       </article>

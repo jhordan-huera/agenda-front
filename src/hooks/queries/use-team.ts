@@ -16,9 +16,10 @@ function useTeamMutation<TVariables, TResult>(mutationFn: (businessId: string, v
   const invalidateActivity = useInvalidateActivity();
   return useMutation({
     mutationFn: (variables: TVariables) => mutationFn(businessId, variables),
+    // Sin esperar las recargas: el diálogo se cierra al responder la API.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.team(businessId) });
-      return invalidateActivity();
+      void queryClient.invalidateQueries({ queryKey: queryKeys.team(businessId) });
+      void invalidateActivity();
     },
   });
 }

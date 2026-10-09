@@ -14,11 +14,13 @@ function cell(value: string): string {
 
 /**
  * Descarga la auditoría filtrada como CSV para Excel (separador ";" y BOM UTF-8, como lo espera
- * Excel en español). Devuelve cuántas filas exportó.
+ * Excel en español). Las fechas, en `timezone` (la del negocio; sin ella, la de la plataforma).
+ * Devuelve cuántas filas exportó.
  */
 export async function exportAuditCsv<T extends AuditLog>(
   fetchPage: (cursor: string | undefined) => Promise<AuditLogPage<T>>,
   fileName: string,
+  timezone?: string,
 ): Promise<number> {
   const rows: T[] = [];
   let cursor: string | undefined;
@@ -33,7 +35,7 @@ export async function exportAuditCsv<T extends AuditLog>(
   const lines = rows.slice(0, MAX_ROWS).map((row) => {
     const extra = row as Partial<AdminAuditLog>;
     return [
-      formatDateTime(row.createdAt),
+      formatDateTime(row.createdAt, timezone),
       row.actorName,
       row.summary,
       AUDIT_TYPE_LABELS[row.entityType] ?? row.entityType,

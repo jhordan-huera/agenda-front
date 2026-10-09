@@ -11,32 +11,44 @@ import { useInvalidateActivity } from "@/hooks/queries/use-invalidate-activity";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { DEFAULT_NOTIFICATION_SETTINGS } from "@/lib/constants/business";
 import { data } from "@/lib/data";
-import { buildAppointmentNotice, getWhatsAppUrl } from "@/lib/whatsapp";
-import type { Appointment, Business, Client, WhatsAppNoticeKind } from "@/types";
+import { buildAppointmentNotice, getWhatsAppUrl, type AppointmentNoticeKind } from "@/lib/whatsapp";
+import type { Appointment, Business, Client } from "@/types";
 import { getServiceName, paymentLinkOf } from "./appointment-utils";
 import { WhatsAppNoticeContext } from "./whatsapp-notice-context";
 import { useProfessionals } from "@/hooks/queries/use-professionals";
 
 /** Por qué se propone el aviso, bajo el título. */
-const REASONS: Record<WhatsAppNoticeKind, string> = {
+const REASONS: Record<AppointmentNoticeKind, string> = {
   confirmed: "La cita quedó confirmada.",
+  pending: "La cita cancelada vuelve a estar agendada, pendiente de confirmar.",
   cancelled: "La cita quedó cancelada.",
-  rescheduled: "La cita cambió de fecha u hora.",
+  rescheduled: "Cambió la fecha, la hora, el profesional o el lugar de la cita.",
   completed: "La cita quedó completada.",
   no_show: "El cliente no asistió.",
 };
 
-/** ¿Le llega además un email automático? (los de confirmación y cancelación, si están activados). */
-function sendsEmail(kind: WhatsAppNoticeKind, business: Business, client: Client): boolean {
-  if (!client.email) return false;
-  const settings = business.notificationSettings;
+/**
+ * ¿Le llega además un email automático? Lo mismo que decide la API al guardar la cita: el de
+ * cancelación, el de confirmación al pasar a "Confirmada" y el de cambio si cambió la fecha, la
+ * hora o el servicio (con los emails activados en Configuración).
+ */
+function sendsEmail(notice: PendingNotice, business: Business): boolean {
+  const { kind, appointment, previous } = notice;
+  if (!notice.client.email) return false;
+  const settings = { ...DEFAULT_NOTIFICATION_SETTINGS, ...business.notificationSettings };
   if (kind === "cancelled") return settings.cancellations;
-  return (kind === "confirmed" || kind === "rescheduled") && settings.confirmations;
+  if (kind === "completed" || kind === "no_show" || !settings.confirmations) return false;
+  if (!previous) return kind === "confirmed" || kind === "rescheduled";
+  const rescheduled =
+    previous.date !== appointment.date || previous.startTime !== appointment.startTime || previous.serviceId !== appointment.serviceId;
+  return rescheduled || (appointment.status === "confirmed" && previous.status !== "confirmed");
 }
 
 interface PendingNotice {
   appointment: Appointment;
-  kind: WhatsAppNoticeKind;
+  /** La cita antes del cambio (si se conoce). */
+  previous?: Appointment;
+  kind: AppointmentNoticeKind;
   client: Client;
   message: string;
 }
@@ -54,7 +66,7 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
   const invalidateActivity = useInvalidateActivity();
   const [notice, setNotice] = useState<PendingNotice | null>(null);
 
-  const offer = (appointment: Appointment, kind: WhatsAppNoticeKind | null) => {
+  const offer = (appointment: Appointment, kind: AppointmentNoticeKind | null, previous?: Appointment) => {
     if (!kind || !business) return;
     const settings = { ...DEFAULT_NOTIFICATION_SETTINGS, ...business.notificationSettings };
     const followUp = kind === "completed" || kind === "no_show";
@@ -73,10 +85,12 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
       date: appointment.date,
       startTime: appointment.startTime,
       bookingUrl: `${window.location.origin}/book/${business.slug}`,
+      professionalName: professionals.length > 1 ? professional?.displayName : undefined,
+      homeVisit: Boolean(appointment.homeVisit),
       virtual: appointment.isVirtual ? { meetingUrl: professional?.meetingUrl || null } : undefined,
       paymentUrl: professional?.bankAccount && appointment.price > 0 && !appointment.paidAt ? paymentLinkOf(appointment) : undefined,
     });
-    setNotice({ appointment, kind, client, message });
+    setNotice({ appointment, previous, kind, client, message });
   };
 
   const close = () => setNotice(null);
@@ -103,7 +117,7 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
                 <DialogTitle>Avísale a {firstName} por WhatsApp</DialogTitle>
                 <DialogDescription>
                   {REASONS[notice.kind]}{" "}
-                  {sendsEmail(notice.kind, business, notice.client) && "También le llega un email. "}
+                  {sendsEmail(notice, business) && "También le llega un email. "}
                   Revisa el mensaje y envíalo desde WhatsApp.
                 </DialogDescription>
               </DialogHeader>

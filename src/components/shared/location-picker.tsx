@@ -212,11 +212,12 @@ export default function LocationPicker({
       <div className="absolute inset-x-3 top-3 z-10">
         <div className="flex items-center gap-1 rounded-xl border bg-background/95 p-1 pl-3 shadow-lg backdrop-blur">
           <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          {/* 16 px en el móvil: con letra más pequeña, Safari de iOS hace zoom al enfocarlo. */}
           <input
             type="search"
             aria-label="Buscar dirección en el mapa"
             placeholder="Busca la calle, el barrio o un lugar cercano…"
-            className="h-9 min-w-0 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground"
+            className="h-9 min-w-0 flex-1 bg-transparent px-1 text-base outline-none placeholder:text-muted-foreground md:text-sm"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleSearchKey}

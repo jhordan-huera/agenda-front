@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useUploadReceipt } from "@/hooks/queries/use-public-booking";
 import { BANK_ACCOUNT_TYPE_LABELS } from "@/lib/constants/business";
-import { getErrorMessage } from "@/lib/data";
+import { DataError, getErrorMessage } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { fileContentType } from "@/lib/upload";
 import { RECEIPT_MAX_BYTES, RECEIPT_TYPES } from "@/lib/validations/payment";
@@ -160,6 +160,8 @@ function ReceiptUploadButton({ token, onSent }: { token: string; onSent: () => v
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = useUploadReceipt(token);
   const [progress, setProgress] = useState(0);
+  // Evita dos subidas a la vez (p. ej. "Reintentar" en el aviso mientras ya se envía otro archivo).
+  const sending = useRef(false);
 
   const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -175,13 +177,26 @@ function ReceiptUploadButton({ token, onSent }: { token: string; onSent: () => v
       toast.error(type === "application/pdf" ? "El PDF supera los 10 MB." : "La foto pesa demasiado. Prueba con otra.");
       return;
     }
+    await send(file);
+  };
+
+  const send = async (file: File) => {
+    if (sending.current) return;
+    sending.current = true;
     setProgress(0);
     try {
       await upload.mutateAsync({ file, onProgress: setProgress });
       toast.success("Comprobante enviado", { description: "El negocio lo revisará y confirmará tu pago." });
       onSent();
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      // Si la red falló (o la subida tardó demasiado), se puede reintentar con el mismo archivo.
+      const retry = error instanceof DataError && error.code === "network";
+      toast.error(getErrorMessage(error), {
+        duration: retry ? 15_000 : undefined,
+        action: retry ? { label: "Reintentar", onClick: () => void send(file) } : undefined,
+      });
+    } finally {
+      sending.current = false;
     }
   };
 

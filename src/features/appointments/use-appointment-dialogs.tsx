@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { settleAppointmentMove } from "@/hooks/queries/use-appointments";
 import type { Appointment } from "@/types";
 import { AppointmentDetailsSheet } from "./appointment-details-sheet";
 import { AppointmentFormDialog, type AppointmentDefaults } from "./appointment-form-dialog";
@@ -22,11 +23,17 @@ export function useAppointmentDialogs(initialDetailsId?: string | null) {
   }));
 
   const openCreate = (defaults?: AppointmentDefaults) => setForm({ open: true, defaults });
+  // Una cita recién movida en la agenda se guarda ya al abrirla: lo que se haga en su ficha o en el
+  // formulario parte de su nuevo sitio y el guardado diferido no lo pisa.
   const openEdit = (appointment: Appointment) => {
+    void settleAppointmentMove(appointment.id);
     setDetails((current) => ({ ...current, open: false }));
     setForm({ open: true, appointment });
   };
-  const openDetails = (appointment: Appointment) => setDetails({ id: appointment.id, open: true });
+  const openDetails = (appointment: Appointment) => {
+    void settleAppointmentMove(appointment.id);
+    setDetails({ id: appointment.id, open: true });
+  };
 
   const dialogs = (
     <>

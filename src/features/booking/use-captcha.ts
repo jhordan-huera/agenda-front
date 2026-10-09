@@ -1,4 +1,5 @@
 import { useCallback, useRef, type RefObject } from "react";
+import { DataError } from "@/lib/data";
 
 /**
  * CAPTCHA de la página de reservas (Cloudflare Turnstile), en modo "sólo si hace falta": casi
@@ -25,6 +26,16 @@ const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render
 const TOKEN_TIMEOUT_MS = 120_000;
 const FAILED_MESSAGE =
   "No pudimos comprobar que no eres un robot. Revisa tu conexión (o desactiva el bloqueador de anuncios) y recarga la página.";
+const TIMEOUT_MESSAGE = "Se acabó el tiempo para la verificación. Inténtalo de nuevo.";
+
+/** Errores con el mensaje para el paciente (getErrorMessage sólo muestra el de un DataError). */
+const captchaError = (message = FAILED_MESSAGE) => new DataError("captcha", message);
+
+/**
+ * Clases de la caja del CAPTCHA. Turnstile la rellena aunque no se vea nada, así que sólo toma
+ * espacio (y margen hasta el botón) cuando Cloudflare pide marcar la casilla.
+ */
+export const CAPTCHA_BOX_CLASS = "flex justify-center empty:hidden data-[interactive]:mb-4";
 
 let scriptPromise: Promise<TurnstileApi> | null = null;
 
@@ -33,11 +44,11 @@ function loadTurnstile(): Promise<TurnstileApi> {
   scriptPromise ??= new Promise<TurnstileApi>((resolve, reject) => {
     const script = document.createElement("script");
     script.src = SCRIPT_URL;
-    script.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error(FAILED_MESSAGE)));
+    script.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(captchaError()));
     script.onerror = () => {
       scriptPromise = null;
       script.remove();
-      reject(new Error(FAILED_MESSAGE));
+      reject(captchaError());
     };
     document.head.appendChild(script);
   });
@@ -73,16 +84,21 @@ export function useCaptcha(siteKey: string | null) {
       let widgetId: string | null = null;
       let removed = false;
       const ready = loadTurnstile().then((api) => {
-        if (removed) throw new Error(FAILED_MESSAGE);
+        if (removed) throw captchaError();
         widgetId = api.render(container, {
           sitekey: siteKey,
           execution: "execute",
           appearance: "interaction-only",
           language: "es",
           callback: (token: string) => settle(pending, { token }),
-          "error-callback": () => settle(pending, { error: new Error(FAILED_MESSAGE) }),
-          "timeout-callback": () =>
-            settle(pending, { error: new Error("Se acabó el tiempo para la verificación. Inténtalo de nuevo.") }),
+          "error-callback": () => settle(pending, { error: captchaError() }),
+          "timeout-callback": () => settle(pending, { error: captchaError(TIMEOUT_MESSAGE) }),
+          // Cloudflare pide marcar la casilla: la caja se marca (para darle espacio, ver CAPTCHA_BOX_CLASS)
+          // y se lleva a la vista (en el móvil podía quedar fuera de la pantalla).
+          "before-interactive-callback": () => {
+            container.dataset.interactive = "true";
+            setTimeout(() => container.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+          },
         });
         return { api, id: widgetId };
       });
@@ -101,11 +117,11 @@ export function useCaptcha(siteKey: string | null) {
   /** Un token nuevo para la próxima petición (undefined si no hay CAPTCHA). */
   const getToken = useCallback(async (): Promise<string | undefined> => {
     if (!siteKey) return undefined;
-    if (!widget.current) throw new Error(FAILED_MESSAGE);
+    if (!widget.current) throw captchaError();
     const { api, id } = await widget.current;
-    settle(pending, { error: new Error(FAILED_MESSAGE) });
+    settle(pending, { error: captchaError() });
     return new Promise<string>((resolve, reject) => {
-      const timer = setTimeout(() => settle(pending, { error: new Error(FAILED_MESSAGE) }), TOKEN_TIMEOUT_MS);
+      const timer = setTimeout(() => settle(pending, { error: captchaError(TIMEOUT_MESSAGE) }), TOKEN_TIMEOUT_MS);
       pending.current = {
         resolve: (token) => {
           clearTimeout(timer);

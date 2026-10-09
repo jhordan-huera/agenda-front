@@ -27,7 +27,7 @@ export function useSaveSchedules() {
         ...current.filter((schedule) => schedule.professionalId !== professionalId),
         ...saved,
       ]);
-      return invalidateActivity();
+      void invalidateActivity();
     },
   });
 }
@@ -46,9 +46,10 @@ export function useCreateBlockedTime() {
   const invalidateActivity = useInvalidateActivity();
   return useMutation({
     mutationFn: (input: BlockedTimeInput) => data.blockedTimes.create(businessId, input),
+    // Sin esperar las recargas: el diálogo se cierra al responder la API.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.blockedTimes(businessId) });
-      return invalidateActivity();
+      void queryClient.invalidateQueries({ queryKey: queryKeys.blockedTimes(businessId) });
+      void invalidateActivity();
     },
   });
 }
@@ -60,8 +61,8 @@ export function useDeleteBlockedTime() {
   return useMutation({
     mutationFn: (blockedTimeId: string) => data.blockedTimes.remove(businessId, blockedTimeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.blockedTimes(businessId) });
-      return invalidateActivity();
+      void queryClient.invalidateQueries({ queryKey: queryKeys.blockedTimes(businessId) });
+      void invalidateActivity();
     },
   });
 }

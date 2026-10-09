@@ -20,9 +20,10 @@ export function useSaveService() {
   return useMutation({
     mutationFn: ({ id, input }: { id?: string; input: ServiceInput }) =>
       id ? data.services.update(businessId, id, input) : data.services.create(businessId, input),
+    // Sin esperar las recargas: el diálogo se cierra al responder la API.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.services(businessId) });
-      return invalidateActivity();
+      void queryClient.invalidateQueries({ queryKey: queryKeys.services(businessId) });
+      void invalidateActivity();
     },
   });
 }
@@ -34,8 +35,8 @@ export function useDeleteService() {
   return useMutation({
     mutationFn: (serviceId: string) => data.services.remove(businessId, serviceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.services(businessId) });
-      return invalidateActivity();
+      void queryClient.invalidateQueries({ queryKey: queryKeys.services(businessId) });
+      void invalidateActivity();
     },
   });
 }

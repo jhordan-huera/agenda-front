@@ -45,7 +45,10 @@ export function useSaveProfessional() {
   return useMutation({
     mutationFn: ({ id, input }: { id?: string; input: ProfessionalInput }) =>
       id ? data.professionals.update(businessId, id, input) : data.professionals.create(businessId, input),
-    onSuccess: () => invalidate(),
+    // Sin esperar las recargas: el diálogo se cierra al responder la API.
+    onSuccess: () => {
+      void invalidate();
+    },
   });
 }
 
@@ -54,6 +57,8 @@ export function useDeleteProfessional() {
   const invalidate = useInvalidateProfessionals();
   return useMutation({
     mutationFn: (professionalId: string) => data.professionals.remove(businessId, professionalId),
-    onSuccess: () => invalidate(),
+    onSuccess: () => {
+      void invalidate();
+    },
   });
 }

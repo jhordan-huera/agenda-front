@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ export function ProfileSettingsForm({ user }: { user: User }) {
     avatarUrl: user.avatarUrl,
   };
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(saved);
+  const [uploading, setUploading] = useState(false);
 
   const submit = async () => {
     const result = validate(profileSchema, values);
@@ -41,6 +43,7 @@ export function ProfileSettingsForm({ user }: { user: User }) {
       description="Tus datos personales. Tu nombre y foto aparecen en tu página de reservas."
       dirty={dirty}
       saving={updateProfile.isPending}
+      uploading={uploading}
       onSubmit={submit}
       onDiscard={() => reset()}
     >
@@ -49,6 +52,7 @@ export function ProfileSettingsForm({ user }: { user: User }) {
         label="Foto"
         value={values.avatarUrl}
         onChange={(avatarUrl) => setField("avatarUrl", avatarUrl)}
+        onUploadingChange={setUploading}
         fallback={getInitials(`${values.firstName} ${values.lastName}`)}
       />
       <div className="grid gap-5 sm:grid-cols-2">

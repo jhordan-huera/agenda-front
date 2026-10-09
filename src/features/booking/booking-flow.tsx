@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getPlace } from "@/features/appointments/appointment-utils";
@@ -21,6 +21,7 @@ import { ProfessionalStep } from "./professional-step";
 import { DetailsStep } from "./details-step";
 import { ServiceStep } from "./service-step";
 import { TimeSlots } from "./time-slots";
+import { TimezoneNote } from "./timezone-note";
 import { useBookingAvailability } from "./use-booking-availability";
 import { useCaptcha } from "./use-captcha";
 import { WhatsAppHelp } from "./whatsapp-help";
@@ -44,6 +45,11 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
   const [requestedTime, setRequestedTime] = useState<string | null>(null);
   const [contact, setContact] = useState<ContactValues>(EMPTY_CONTACT);
   const [pendingInput, setPendingInput] = useState<PublicBookingInput | null>(null);
+  /**
+   * Reserva enviada cuya respuesta se perdió (se cortó la conexión): pudo quedar hecha. Se deja
+   * confirmarla otra vez aunque su hora ya figure ocupada; la API devuelve la cita que ya existe.
+   */
+  const [unconfirmedInput, setUnconfirmedInput] = useState<PublicBookingInput | null>(null);
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
   /**
    * Horas que este navegador ya sabe ocupadas aunque la página aún no lo refleje (la página de
@@ -87,6 +93,25 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
       : asksProfessional && !professionalChoice && step !== "service"
         ? "professional"
         : step;
+  // Mientras se reserva, o para reintentar tras perder la respuesta, se sigue mostrando la hora
+  // enviada aunque al recargar la disponibilidad ya figure ocupada (por esta misma reserva).
+  const holdsPendingTime =
+    currentStep === "confirm" && pendingInput !== null && (createBooking.isPending || unconfirmedInput === pendingInput);
+  const shownTime = time ?? (holdsPendingTime ? pendingInput.startTime : null);
+
+  // Al cambiar de paso, se sube al inicio del paso nuevo si quedó por encima de la pantalla (en el
+  // móvil, los botones para avanzar quedan abajo).
+  const stepRef = useRef<HTMLDivElement>(null);
+  const shownStep = useRef(currentStep);
+  useEffect(() => {
+    if (shownStep.current === currentStep) return;
+    shownStep.current = currentStep;
+    const element = stepRef.current;
+    if (!element || element.getBoundingClientRect().top >= 0) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    element.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  }, [currentStep]);
+
   // Dónde será la cita: la única modalidad del servicio o, al confirmar, la que eligió el cliente.
   const place: ServiceMode | null = !service
     ? null
@@ -105,6 +130,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
     setRequestedDate(null);
     setRequestedTime(null);
     setPendingInput(null);
+    setUnconfirmedInput(null);
     setStep("service");
   };
 
@@ -115,7 +141,16 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
       setConfirmation(booked);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
-      if (error instanceof DataError && error.code === "conflict" && service) {
+      const lostResponse = error instanceof DataError && error.code === "network";
+      setUnconfirmedInput(lostResponse ? input : null);
+      if (lostResponse) {
+        // La reserva pudo llegar aunque no llegara la respuesta: al reintentar, si ya quedó hecha,
+        // la API devuelve esa misma cita (no la duplica) y se muestra como reservada.
+        toast.error("No pudimos confirmar tu reserva", {
+          description: "Revisa tu conexión y vuelve a pulsar «Confirmar reserva». Si ya quedó hecha, verás la confirmación.",
+          duration: 15_000,
+        });
+      } else if (error instanceof DataError && error.code === "conflict" && service) {
         // Alguien la reservó antes: se oculta al momento (en las agendas que se ofrecían) para no volver a elegirla.
         for (const professionalId of agendaIds) {
           markTaken({
@@ -163,8 +198,8 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
       : STEP_COPY[currentStep];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
-      <div>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+      <div ref={stepRef} className="min-w-0 scroll-mt-4">
         <BookingSteps steps={steps} current={currentStep} onStepClick={setStep} />
         <section className="space-y-6 rounded-2xl border bg-background p-4 sm:p-7" aria-labelledby="booking-step-title">
           <div className="space-y-1">
@@ -230,9 +265,19 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
                       setRequestedTime(null);
                     }}
                   />
-                  <div>
+                  <div className="min-w-0">
                     {date && <p className="mb-3 text-sm font-medium">{capitalize(formatLongDate(date))}</p>}
-                    <TimeSlots slots={slots} selected={time} onSelect={setRequestedTime} />
+                    <TimezoneNote timezone={business.timezone} date={date} className="mb-3" />
+                    <TimeSlots
+                      slots={slots}
+                      selected={time}
+                      onSelect={(slot) => {
+                        // La hora se guarda con su día: si ese día se queda sin huecos, la hora deja de
+                        // valer en vez de pasar a otro día sin avisar.
+                        setRequestedDate(date);
+                        setRequestedTime(slot);
+                      }}
+                    />
                   </div>
                 </div>
               )}
@@ -247,8 +292,9 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
             </>
           )}
 
-          {currentStep === "confirm" && service && pendingInput && time && (
+          {currentStep === "confirm" && service && pendingInput && shownTime && (
             <ConfirmStep
+              captchaRef={captchaRef}
               business={business}
               professional={shownProfessional}
               service={service}
@@ -265,12 +311,13 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
               <DetailsStep
                 slug={slug}
                 getCaptchaToken={getCaptchaToken}
+                captchaRef={captchaRef}
                 selection={{ serviceId: service.id, date, startTime: time }}
                 service={service}
                 business={business}
-                initialValues={contact}
-                onContinue={(input, values) => {
-                  setContact(values);
+                contact={contact}
+                onContactChange={setContact}
+                onContinue={(input) => {
                   setPendingInput(input);
                   setStep("confirm");
                 }}
@@ -280,9 +327,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
               </Button>
             </>
           )}
-          {/* CAPTCHA: sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
-          <div ref={captchaRef} className="flex justify-center empty:hidden" />
-          {(currentStep === "details" || currentStep === "confirm") && !time && (
+          {(currentStep === "details" || currentStep === "confirm") && !shownTime && (
             <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm">
               <p className="text-muted-foreground">La hora elegida ya no está disponible.</p>
               <Button variant="outline" className="mt-3" onClick={() => setStep("datetime")}>
@@ -299,7 +344,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
           professional={shownProfessional}
           service={service}
           date={date}
-          time={time}
+          time={shownTime}
           place={place}
         />
         {showLocation && <BusinessLocationCard business={business} />}
