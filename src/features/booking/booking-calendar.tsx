@@ -19,6 +19,13 @@ interface BookingCalendarProps {
 /** Calendario mensual en el que sólo se pueden elegir días con horas libres. */
 export function BookingCalendar({ today, lastDate, availableDates, selected, onSelect }: BookingCalendarProps) {
   const [month, setMonth] = useState(() => startOfMonthISO(selected ?? today));
+  // Si la fecha elegida cambia sin tocar el calendario (p. ej. el día pedido ya pasó y se propone
+  // el primer día con huecos, en otro mes), se muestra su mes.
+  const [shownSelected, setShownSelected] = useState(selected);
+  if (selected !== shownSelected) {
+    setShownSelected(selected);
+    if (selected && startOfMonthISO(selected) !== month) setMonth(startOfMonthISO(selected));
+  }
   const firstMonth = startOfMonthISO(today);
   const lastMonth = startOfMonthISO(lastDate);
   const days = eachDayISO(startOfWeekISO(month), addDaysISO(startOfWeekISO(endOfMonthISO(month)), 6));

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useSaveSchedules } from "@/hooks/queries/use-schedule";
 import { getErrorMessage } from "@/lib/data";
 import type { Schedule } from "@/types";
-import { toWeekInputs, validateWeek } from "./schedule-utils";
+import { toWeekInputs, validateWeek, weekKey } from "./schedule-utils";
 import { WeeklyScheduleEditor } from "./weekly-schedule-editor";
 
 interface WeeklyScheduleCardProps {
@@ -23,7 +23,9 @@ export function WeeklyScheduleCard({ professionalId, professionalName, schedules
   const saved = toWeekInputs(schedules);
   const [week, setWeek] = useState(saved);
   const [errors, setErrors] = useState<Record<number, string>>({});
-  const dirty = JSON.stringify(week) !== JSON.stringify(saved);
+  // Comparado sin el orden de las claves ni de los intervalos: la API los devuelve ordenados (y como
+  // {end, start}), y "Guardar horario" seguía activo tras guardar un horario partido.
+  const dirty = weekKey(week) !== weekKey(saved);
 
   const save = async () => {
     const validation = validateWeek(week);
@@ -33,7 +35,8 @@ export function WeeklyScheduleCard({ professionalId, professionalName, schedules
       return;
     }
     try {
-      await saveSchedules.mutateAsync({ professionalId, days: week });
+      // Lo que quedó guardado (intervalos en orden), para que el editor lo muestre igual que al volver.
+      setWeek(toWeekInputs(await saveSchedules.mutateAsync({ professionalId, days: week })));
       toast.success("Horario guardado");
     } catch (error) {
       toast.error(getErrorMessage(error));

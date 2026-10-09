@@ -30,11 +30,11 @@ export function useSaveCategory() {
   return useMutation({
     mutationFn: ({ id, input }: { id?: string; input: BusinessCategoryInput }) =>
       id ? data.admin.updateCategory(id, input) : data.admin.createCategory(input),
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.categories }),
-      ]),
+    // Sin esperar las recargas: el diálogo se cierra al responder la API.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.categories });
+    },
   });
 }
 
@@ -42,11 +42,10 @@ export function useDeleteCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (categoryId: string) => data.admin.deleteCategory(categoryId),
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.categories }),
-      ]),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.categories });
+    },
   });
 }
 
@@ -73,12 +72,17 @@ export const useAdminEmails = () => useQuery({ queryKey: queryKeys.admin.emails,
 export const usePlatformSettings = () =>
   useQuery({ queryKey: queryKeys.platformSettings, queryFn: () => data.platform.getSettings() });
 
-/** Toda mutación de plataforma cambia métricas, listados y auditoría: se invalida el panel entero. */
+/**
+ * Toda mutación de plataforma cambia métricas, listados y auditoría: se invalida el panel entero, sin
+ * esperar la recarga (los diálogos se cierran al responder la API).
+ */
 function useAdminMutation<TVariables, TResult>(mutationFn: (variables: TVariables) => Promise<TResult>) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.admin.all }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+    },
   });
 }
 
@@ -155,7 +159,7 @@ export function useUpdatePlatformSettings() {
     mutationFn: (input: PlatformSettingsInput) => data.admin.updateSettings(input),
     onSuccess: (settings) => {
       queryClient.setQueryData(queryKeys.platformSettings, settings);
-      return queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
     },
   });
 }

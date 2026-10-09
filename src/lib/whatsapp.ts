@@ -1,7 +1,7 @@
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { TIMEZONES } from "@/lib/constants/business";
 import { formatDate } from "@/lib/format";
-import type { AppointmentStatus, Business, ISODate, WhatsAppNoticeKind } from "@/types";
+import type { Appointment, AppointmentStatus, Business, ISODate, WhatsAppNoticeKind } from "@/types";
 
 /**
  * Enlaces "click to chat" de WhatsApp (https://wa.me): abren la conversación con el
@@ -60,9 +60,42 @@ export function getReceiptWhatsAppUrl(
   );
 }
 
-/** Aviso que corresponde a un cambio de estado (pasar a "Pendiente" no tiene aviso). */
-export function noticeForStatus(status: AppointmentStatus): WhatsAppNoticeKind | null {
-  return status === "pending" ? null : status;
+/**
+ * Avisos que se proponen al cambiar una cita (todos quedan en la actividad); "pending" es el de una
+ * cita cancelada que vuelve a quedar pendiente.
+ */
+export type AppointmentNoticeKind = WhatsAppNoticeKind;
+
+/**
+ * Aviso que corresponde a un cambio de estado. Pasar a "Pendiente" sólo lo tiene si la cita estaba
+ * cancelada (vuelve a estar agendada); desde otro estado, no se avisa.
+ */
+export function noticeForStatus(status: AppointmentStatus, previous?: AppointmentStatus): AppointmentNoticeKind | null {
+  if (status === "pending") return previous === "cancelled" ? "pending" : null;
+  return status;
+}
+
+/** Lo que cambia de una cita al editarla o moverla, para elegir su aviso. */
+type NoticeAppointment = Pick<
+  Appointment,
+  "status" | "date" | "startTime" | "serviceId" | "professionalId" | "isVirtual" | "homeVisit"
+>;
+
+/**
+ * Aviso de una cita editada: el de su nuevo estado y, si el estado no lo tiene, el de "reprogramada"
+ * cuando cambió la fecha, la hora, el servicio, el profesional o el lugar (virtual o a domicilio).
+ */
+export function noticeForChange(previous: NoticeAppointment, saved: NoticeAppointment): AppointmentNoticeKind | null {
+  const statusNotice = previous.status !== saved.status ? noticeForStatus(saved.status, previous.status) : null;
+  if (statusNotice || saved.status === "cancelled") return statusNotice;
+  const changed =
+    previous.date !== saved.date ||
+    previous.startTime !== saved.startTime ||
+    previous.serviceId !== saved.serviceId ||
+    previous.professionalId !== saved.professionalId ||
+    previous.isVirtual !== saved.isVirtual ||
+    Boolean(previous.homeVisit) !== Boolean(saved.homeVisit);
+  return changed ? "rescheduled" : null;
 }
 
 export interface AppointmentNoticeData {
@@ -73,6 +106,10 @@ export interface AppointmentNoticeData {
   startTime: string;
   /** Página de reservas del negocio, para volver a agendar. */
   bookingUrl: string;
+  /** Con quién es la cita, si el negocio tiene varias agendas. */
+  professionalName?: string;
+  /** Cita a domicilio. */
+  homeVisit?: boolean;
   /** Cita por videollamada: su enlace (null: el profesional aún no lo configuró). */
   virtual?: { meetingUrl: string | null };
   /** Enlace de pago (la agenda cobra por transferencia y la cita aún no está pagada). */
@@ -80,10 +117,13 @@ export interface AppointmentNoticeData {
 }
 
 /** Mensaje de WhatsApp al cliente según el cambio de su cita; el profesional lo revisa antes de enviarlo. */
-export function buildAppointmentNotice(kind: WhatsAppNoticeKind, data: AppointmentNoticeData): string {
+export function buildAppointmentNotice(kind: AppointmentNoticeKind, data: AppointmentNoticeData): string {
   const name = data.clientName.trim().split(/\s+/)[0] ?? "";
   const hello = name ? `Hola ${name}` : "Hola";
   const when = `el ${formatDate(data.date, "EEEE d 'de' MMMM")} a las ${data.startTime}`;
+  // Al reprogramarla: también con quién y dónde, por si eso es lo que cambió.
+  const withWhom = data.professionalName ? ` con ${data.professionalName}` : "";
+  const atHome = data.homeVisit ? ", a domicilio" : "";
   const videoCall = data.virtual
     ? data.virtual.meetingUrl
       ? ` Es por videollamada: ${data.virtual.meetingUrl}`
@@ -98,7 +138,9 @@ export function buildAppointmentNotice(kind: WhatsAppNoticeKind, data: Appointme
     case "cancelled":
       return `${hello}, tu cita de ${data.serviceName} ${when} con ${data.businessName} quedó cancelada. Si quieres agendar otra, puedes hacerlo aquí: ${data.bookingUrl}`;
     case "rescheduled":
-      return `${hello}, cambiamos tu cita de ${data.serviceName} con ${data.businessName}: ahora es ${when}.${videoCall} Si no te queda bien, respóndenos por aquí.${payment}`;
+      return `${hello}, cambiamos tu cita de ${data.serviceName} con ${data.businessName}: ahora es ${when}${withWhom}${atHome}.${videoCall} Si no te queda bien, respóndenos por aquí.${payment}`;
+    case "pending":
+      return `${hello}, tu cita de ${data.serviceName} ${when} con ${data.businessName} vuelve a estar agendada; te escribiremos para confirmarla.${videoCall}${payment}`;
     case "completed":
       return `${hello}, gracias por tu visita a ${data.businessName}. Cuando quieras volver, puedes reservar aquí: ${data.bookingUrl}`;
     case "no_show":

@@ -15,7 +15,9 @@ import { exportAuditCsv } from "@/features/activity/export-audit";
 import { EmailOutboxCard } from "@/features/settings/email-outbox";
 import { useAdminAuditFeed, useAdminBusinesses, useAdminEmails } from "@/hooks/queries/use-admin";
 import { data, getErrorMessage, type AdminAuditFilters, type AdminAuditScope } from "@/lib/data";
+import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { plural } from "@/lib/format";
+import { getZonedNow } from "@/lib/time";
 import type { AuditEntityType } from "@/types";
 
 const SCOPES: { value: AdminAuditScope; label: string; description: string }[] = [
@@ -70,7 +72,7 @@ export default function AdminActivityPage() {
     try {
       const count = await exportAuditCsv(
         (cursor) => data.admin.listAuditLogs({ ...query, cursor, limit: 1000 }),
-        `auditoria-${scope}-${new Date().toISOString().slice(0, 10)}.csv`,
+        `auditoria-${scope}-${getZonedNow(DEFAULT_TIMEZONE).date}.csv`,
       );
       toast.success(count ? `Exportaste ${plural(count, "entrada", "entradas")}` : "No hay actividad con esos filtros");
     } catch (error) {

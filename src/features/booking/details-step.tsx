@@ -1,5 +1,5 @@
 import { Search, UserCheck, Video } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type Dispatch, type FormEvent, type RefCallback, type SetStateAction } from "react";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,46 +13,62 @@ import { getErrorMessage } from "@/lib/data";
 import { documentIdError, documentIdMaxLength, normalizeDocumentId, onlyDigits } from "@/lib/identity";
 import { formatCurrency, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { clientLookupSchema, newClientContactSchema, publicBookingSchema, type PublicBookingInput } from "@/lib/validations/booking";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { HomeVisitAddress, PublicBusiness, PublicService, ServiceMode } from "@/types";
 import type { ContactValues } from "./contact";
+import { CAPTCHA_BOX_CLASS } from "./use-captcha";
 
 interface DetailsStepProps {
   slug: string;
   /** Token del CAPTCHA para buscar la cédula (ver useCaptcha). */
   getCaptchaToken: () => Promise<string | undefined>;
+  /** Caja del CAPTCHA (ver useCaptcha): va junto al botón que lo pide, para que se vea en el móvil. */
+  captchaRef: RefCallback<HTMLDivElement>;
   selection: Pick<PublicBookingInput, "serviceId" | "date" | "startTime">;
   service: PublicService;
   business: PublicBusiness;
-  initialValues: ContactValues;
-  /** Devuelve la reserva y los datos del paso, que se conservan si el cliente vuelve atrás. */
-  onContinue: (input: PublicBookingInput, values: ContactValues) => void;
+  /**
+   * Datos del paso. Viven en el flujo y se guardan con cada cambio: no se pierden al volver atrás
+   * ni si la hora elegida deja de estar disponible (y el paso se desmonta).
+   */
+  contact: ContactValues;
+  onContactChange: Dispatch<SetStateAction<ContactValues>>;
+  /** Devuelve la reserva ya validada. */
+  onContinue: (input: PublicBookingInput) => void;
 }
 
-/** El lugar inicial: el que ya había elegido, si el servicio lo admite; si no, la primera modalidad del servicio. */
-function initialPlace(service: PublicService, current: ContactValues): Pick<ContactValues, "homeVisit" | "isVirtual"> {
-  const chosen = getPlace(current);
-  const place = service.modes.includes(chosen) ? chosen : service.modes[0];
-  return { homeVisit: place === "home" ? (current.homeVisit ?? EMPTY_HOME_VISIT) : null, isVirtual: place === "virtual" };
+/**
+ * El lugar según el servicio: el que ya había elegido, si el servicio lo admite; si no, la primera
+ * modalidad del servicio (el domicilio que deja de usarse se guarda para recuperarlo).
+ */
+function withServicePlace(service: PublicService, current: ContactValues): ContactValues {
+  if (service.modes.includes(getPlace(current))) return current;
+  const place = service.modes[0];
+  return {
+    ...current,
+    homeVisit: place === "home" ? (current.homeVisit ?? current.lastHomeVisit ?? EMPTY_HOME_VISIT) : null,
+    isVirtual: place === "virtual",
+    lastHomeVisit: current.homeVisit ?? current.lastHomeVisit,
+  };
 }
 
 export function DetailsStep({
   slug,
   getCaptchaToken,
+  captchaRef,
   selection,
   service,
   business,
-  initialValues,
+  contact,
+  onContactChange,
   onContinue,
 }: DetailsStepProps) {
   const lookup = useLookupClient(slug, getCaptchaToken);
-  const [values, setValues] = useState<ContactValues>(() => ({
-    ...initialValues,
-    ...initialPlace(service, initialValues),
-  }));
-  // Si el cliente cambia a "en el local" (o virtual) y vuelve, recupera lo que ya había marcado.
-  const [lastHomeVisit, setLastHomeVisit] = useState<HomeVisitAddress>(initialValues.homeVisit ?? EMPTY_HOME_VISIT);
+  const values = withServicePlace(service, contact);
+  const setValues = (update: (current: ContactValues) => ContactValues) =>
+    onContactChange((current) => update(withServicePlace(service, current)));
   const [errors, setErrors] = useState<FieldErrors>({});
   const set = (key: "documentId" | "name" | "email" | "phone" | "notes") => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
@@ -84,14 +100,24 @@ export function DetailsStep({
     setValues((current) => ({ ...current, homeVisit: { ...(current.homeVisit ?? EMPTY_HOME_VISIT), ...patch } }));
     setErrors((current) => clearHomeVisitErrors(current, patch));
   };
-  const choosePlace = (place: ServiceMode) => {
-    if (place !== "home" && values.homeVisit) setLastHomeVisit(values.homeVisit);
+  // Si el cliente cambia a "en el local" (o virtual) y vuelve, recupera lo que ya había marcado.
+  const choosePlace = (place: ServiceMode) =>
     setValues((current) => ({
       ...current,
-      homeVisit: place === "home" ? (current.homeVisit ?? lastHomeVisit) : null,
+      homeVisit: place === "home" ? (current.homeVisit ?? current.lastHomeVisit ?? EMPTY_HOME_VISIT) : null,
       isVirtual: place === "virtual",
+      lastHomeVisit: current.homeVisit ?? current.lastHomeVisit,
     }));
-  };
+  // Sin cédula ecuatoriana (p. ej. un extranjero) no puede reservar online: se le ofrece escribir al negocio.
+  const showNoCedulaHelp =
+    Boolean(errors.documentId) && documentIdError(normalizeDocumentId(values.documentId), business.timezone) !== null;
+  const noCedulaUrl = business.phone
+    ? getWhatsAppUrl(
+        business.phone,
+        business.timezone,
+        `Hola, quisiera agendar una cita en ${business.name}, pero no tengo cédula ecuatoriana.`,
+      )
+    : null;
   const placeOptions: Record<ServiceMode, { title: string; detail: string }> = {
     business: { title: `En ${business.name}`, detail: business.address || "En el local del negocio" },
     home: {
@@ -108,11 +134,11 @@ export function DetailsStep({
     event.preventDefault();
     if (!verified) return verifyDocument();
     // Un cliente registrado no vuelve a escribir sus datos: se usan los que ya tiene el negocio.
-    const contact = isKnownClient ? { name: "", email: "", phone: "" } : values;
-    const result = validate(publicBookingSchema, { ...selection, ...values, ...contact });
+    const contactFields = isKnownClient ? { name: "", email: "", phone: "" } : values;
+    const result = validate(publicBookingSchema, { ...selection, ...values, ...contactFields });
     const newClient = isKnownClient ? null : validate(newClientContactSchema, values);
     setErrors({ ...result.errors, ...newClient?.errors });
-    if (result.success && (!newClient || newClient.success)) onContinue(result.data, values);
+    if (result.success && (!newClient || newClient.success)) onContinue(result.data);
   };
 
   return (
@@ -142,6 +168,23 @@ export function DetailsStep({
           </div>
         )}
       </FormField>
+      {showNoCedulaHelp && (
+        <p className="-mt-2 text-xs text-muted-foreground">
+          ¿No tienes cédula ecuatoriana?{" "}
+          {noCedulaUrl ? (
+            <a
+              href={noCedulaUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-ink underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              Escríbenos por WhatsApp
+            </a>
+          ) : (
+            `Comunícate con ${business.name} para agendar tu cita.`
+          )}
+        </p>
+      )}
 
       {verified && (
         <p
@@ -163,9 +206,13 @@ export function DetailsStep({
       )}
 
       {!verified ? (
-        <Button type="submit" size="lg" className="h-11 text-sm" disabled={lookup.isPending}>
-          Continuar
-        </Button>
+        <div className="grid">
+          {/* CAPTCHA de la búsqueda, junto al botón: sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
+          <div ref={captchaRef} className={CAPTCHA_BOX_CLASS} />
+          <Button type="submit" size="lg" className="h-11 text-sm" disabled={lookup.isPending}>
+            Continuar
+          </Button>
+        </div>
       ) : (
         <>
           {service.modes.length > 1 && (

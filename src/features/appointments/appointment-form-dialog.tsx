@@ -93,6 +93,8 @@ function AppointmentForm({
   // `name`: lo escrito en el buscador cuando el cliente aún no existe.
   const [newClient, setNewClient] = useState({ open: false, name: "" });
   const [errors, setErrors] = useState<FieldErrors>({});
+  // El navegador no entiende lo escrito en el precio (p. ej. "12,50" en algunos teléfonos): su valor llega vacío.
+  const [priceUnreadable, setPriceUnreadable] = useState(false);
 
   const [values, setValues] = useState<FormValues>(() => {
     const date = appointment?.date ?? defaults?.date ?? now.date;
@@ -188,8 +190,10 @@ function AppointmentForm({
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const result = validate(appointmentSchema, { ...values, professionalId });
-    setErrors(result.errors);
-    if (!result.success || conflict || saving) return;
+    // Vacío o ilegible no es $0: se pide (el esquema rechaza el vacío con "Escribe el precio").
+    const priceError = priceUnreadable && values.price === "" ? "Escribe sólo números, p. ej. 25.50" : undefined;
+    setErrors(priceError ? { ...result.errors, price: priceError } : result.errors);
+    if (!result.success || priceError || conflict || saving) return;
 
     try {
       const saved = await saveAppointment.mutateAsync({ id: appointment?.id, input: result.data });
@@ -401,7 +405,10 @@ function AppointmentForm({
               step="0.01"
               className="pl-6"
               value={values.price}
-              onChange={(e) => set("price", e.target.value)}
+              onChange={(e) => {
+                set("price", e.target.value);
+                setPriceUnreadable(e.target.validity.badInput);
+              }}
             />
           </div>
         )}

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { businessCategorySchema, slugSchema } from "./business";
+import { businessCategorySchema, slugSchema, timezoneField } from "./business";
 import { emailField, moneyField, optionalEmailField, optionalText, passwordField, phoneField, requiredText } from "./fields";
 import { weeklyScheduleSchema } from "./schedule";
 import { teamInviteSchema } from "./team";
@@ -27,7 +27,7 @@ export const adminBusinessSchema = z.object({
   category: businessCategorySchema,
   slug: slugSchema,
   description: optionalText(400),
-  timezone: z.string().min(1, "Selecciona una zona horaria"),
+  timezone: timezoneField,
   phone: phoneField,
   email: optionalEmailField,
   address: optionalText(200),

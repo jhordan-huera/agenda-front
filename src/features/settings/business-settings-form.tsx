@@ -1,5 +1,5 @@
 import { Building2, X } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
     logoUrl: business.logoUrl,
   };
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(saved);
+  const [uploading, setUploading] = useState(false);
   const zone = getTimezoneInfo(values.timezone);
   const point = values.lat !== null && values.lng !== null ? { lat: values.lat, lng: values.lng } : null;
 
@@ -67,6 +68,7 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
       description="Información pública que ven tus clientes al reservar."
       dirty={dirty}
       saving={updateBusiness.isPending}
+      uploading={uploading}
       onSubmit={submit}
       onDiscard={() => reset()}
     >
@@ -76,6 +78,7 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
         shape="square"
         value={values.logoUrl}
         onChange={(logoUrl) => setField("logoUrl", logoUrl)}
+        onUploadingChange={setUploading}
         fallback={<Building2 className="size-6" aria-hidden />}
       />
       <div className="grid gap-5 sm:grid-cols-2">

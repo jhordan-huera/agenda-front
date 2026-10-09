@@ -14,7 +14,7 @@ import { BusinessStatusBadge, PlanBadge } from "@/features/admin/business-badges
 import { CreateBusinessDialog } from "@/features/admin/create-business-dialog";
 import { useAdminBusinesses } from "@/hooks/queries/use-admin";
 import { PLANS } from "@/lib/constants/plans";
-import { formatNumericDate, normalizeSearch } from "@/lib/format";
+import { formatNumericDate, normalizeSearch, toZonedDate } from "@/lib/format";
 import type { BusinessStatus, PlanId } from "@/types";
 
 
@@ -162,7 +162,7 @@ export default function AdminBusinessesPage() {
                     </div>
                     <div>
                       <dt className="text-xs text-muted-foreground">Alta</dt>
-                      <dd className="font-medium tabular-nums">{formatNumericDate(business.createdAt.slice(0, 10))}</dd>
+                      <dd className="font-medium tabular-nums">{formatNumericDate(toZonedDate(business.createdAt))}</dd>
                     </div>
                   </dl>
                 </Link>
@@ -215,7 +215,7 @@ export default function AdminBusinessesPage() {
                       {usage.limits.users !== null && <span className="text-muted-foreground"> / {usage.limits.users}</span>}
                     </TableCell>
                     <TableCell className="hidden whitespace-nowrap xl:table-cell">
-                      {formatNumericDate(business.createdAt.slice(0, 10))}
+                      {formatNumericDate(toZonedDate(business.createdAt))}
                     </TableCell>
                     <TableCell className="pr-4">
                       <BusinessStatusBadge status={business.status} />

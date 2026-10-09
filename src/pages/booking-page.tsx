@@ -38,7 +38,9 @@ export default function BookingPage() {
     );
   }
 
-  if (profileQuery.isError) {
+  // Si falla una recarga en segundo plano, se sigue mostrando la página (y la cita recién reservada,
+  // con los datos para pagar): el error sólo se muestra si no hay nada que enseñar.
+  if (profileQuery.isError && profileQuery.data === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <ErrorState className="w-full max-w-md" onRetry={() => profileQuery.refetch()} />

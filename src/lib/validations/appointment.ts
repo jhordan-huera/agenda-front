@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { dateField, homeVisitSchema, moneyField, optionalText, timeField } from "./fields";
+import { dateField, homeVisitSchema, optionalText, requiredMoneyField, timeField } from "./fields";
 
 export const appointmentStatusSchema = z.enum([
   "pending",
@@ -10,7 +10,7 @@ export const appointmentStatusSchema = z.enum([
 ]);
 
 /** El profesional abrió WhatsApp con el aviso de un cambio de la cita (queda en la actividad). */
-export const whatsAppNoticeSchema = z.enum(["confirmed", "cancelled", "rescheduled", "completed", "no_show"]);
+export const whatsAppNoticeSchema = z.enum(["confirmed", "cancelled", "rescheduled", "completed", "no_show", "pending"]);
 
 export const appointmentSchema = z
   .object({
@@ -19,7 +19,8 @@ export const appointmentSchema = z
     date: dateField,
     startTime: timeField,
     durationMinutes: z.coerce.number<string | number>().int().min(5, "Duración inválida"),
-    price: moneyField,
+    /** Vacío no es $0: hay que escribirlo (una cita gratis lleva 0). */
+    price: requiredMoneyField,
     status: appointmentStatusSchema,
     notes: optionalText(1000),
     /** null = en el local (o virtual). */

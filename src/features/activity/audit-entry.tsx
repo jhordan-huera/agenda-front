@@ -11,9 +11,18 @@ const FAILED_ACTIONS = new Set(["session.login_failed", "session.login_blocked",
 
 /**
  * Una entrada de la auditoría: qué, quién y cuándo, con los cambios desplegables. En la vista del
- * super admin, también el negocio y, en las sesiones, desde dónde (navegador e IP).
+ * super admin, también el negocio y, en las sesiones, desde dónde (navegador e IP). `timezone`: la
+ * del negocio (sin ella, la de la plataforma).
  */
-export function AuditEntry({ entry, showBusiness }: { entry: AuditLog | AdminAuditLog; showBusiness?: boolean }) {
+export function AuditEntry({
+  entry,
+  showBusiness,
+  timezone,
+}: {
+  entry: AuditLog | AdminAuditLog;
+  showBusiness?: boolean;
+  timezone?: string;
+}) {
   const [open, setOpen] = useState(false);
   const extra = "ip" in entry ? entry : null;
   const changes = entry.changes ?? [];
@@ -24,7 +33,7 @@ export function AuditEntry({ entry, showBusiness }: { entry: AuditLog | AdminAud
       <div className="min-w-0 flex-1">
         <p className={cn("text-sm", FAILED_ACTIONS.has(entry.action) && "font-medium text-destructive")}>{entry.summary}</p>
         <p className="text-xs text-muted-foreground">
-          {entry.actorName} · {formatDateTime(entry.createdAt)}
+          {entry.actorName} · {formatDateTime(entry.createdAt, timezone)}
           {showBusiness && extra?.businessName && entry.businessId && (
             <>
               {" · "}

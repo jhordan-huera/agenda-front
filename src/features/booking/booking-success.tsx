@@ -6,6 +6,7 @@ import { describeHomeVisit, getDirectionsUrl, hasMapPoint } from "@/lib/maps";
 import { cn } from "@/lib/utils";
 import { getReceiptWhatsAppUrl } from "@/lib/whatsapp";
 import type { BookingConfirmation, PublicBusiness } from "@/types";
+import { TimezoneNote } from "./timezone-note";
 
 interface BookingSuccessProps {
   confirmation: BookingConfirmation;
@@ -39,8 +40,8 @@ export function BookingSuccess({ confirmation, business, clientName, onBookAnoth
 
   return (
     // Con pago por transferencia, en pantallas anchas los datos van a la derecha, a la misma altura.
-    <div className={cn("mx-auto grid gap-4", payment ? "max-w-5xl items-start lg:grid-cols-2" : "max-w-xl")}>
-      <div className="rounded-2xl border bg-background p-6 sm:p-9" role="status">
+    <div className={cn("mx-auto grid grid-cols-1 gap-4", payment ? "max-w-5xl items-start lg:grid-cols-2" : "max-w-xl")}>
+      <div className="min-w-0 rounded-2xl border bg-background p-6 sm:p-9" role="status">
         <h2 className="text-3xl font-extrabold tracking-[-0.02em]">¡Cita reservada correctamente!</h2>
         <p className="mt-2 text-muted-foreground">
           Queda pendiente hasta que {confirmation.professionalName} la confirme.
@@ -53,19 +54,26 @@ export function BookingSuccess({ confirmation, business, clientName, onBookAnoth
             hasta las {confirmation.endTime}
           </span>
         </p>
+        <TimezoneNote
+          timezone={business.timezone}
+          date={confirmation.date}
+          time={confirmation.startTime}
+          className="mt-3 text-sm"
+        />
 
         <dl className="mt-7 divide-y border-y">
           {rows.map((row) => (
             <div key={row.label} className="flex justify-between gap-4 py-3">
               <dt className="text-muted-foreground">{row.label}</dt>
-              <dd className="text-right font-semibold">{row.value}</dd>
+              <dd className="min-w-0 text-right font-semibold [overflow-wrap:anywhere]">{row.value}</dd>
             </div>
           ))}
         </dl>
 
         {confirmation.emailSent && (
           <p className="mt-5 flex items-start gap-2 text-sm text-muted-foreground">
-            <Mail className="mt-0.5 size-4 shrink-0" aria-hidden /> Te enviamos un email de confirmación a {confirmation.clientEmail}
+            <Mail className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span className="min-w-0 [overflow-wrap:anywhere]">Te enviamos un email de confirmación a {confirmation.clientEmail}</span>
           </p>
         )}
 

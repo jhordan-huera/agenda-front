@@ -46,7 +46,7 @@ import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useClient } from "@/hooks/queries/use-clients";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBusinessNow } from "@/hooks/use-business-now";
-import { capitalize, formatCurrency, formatShortDate, formatTimeRange } from "@/lib/format";
+import { capitalize, formatCurrency, formatShortDate, formatTimeRange, toZonedDate } from "@/lib/format";
 import { isPast } from "@/lib/time";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 
@@ -299,7 +299,7 @@ export default function ClientDetailPage() {
               <ActiveBadge active={client.isActive} />
             </div>
             <p className="text-sm text-muted-foreground">
-              Cliente desde {formatShortDate(client.createdAt.slice(0, 10))}
+              Cliente desde {formatShortDate(toZonedDate(client.createdAt, business?.timezone))}
             </p>
           </div>
         </div>

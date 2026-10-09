@@ -10,6 +10,13 @@ import type { Client } from "@/types";
 export function ClientNotesCard({ client }: { client: Client }) {
   const saveClient = useSaveClient();
   const [notes, setNotes] = useState(client.notes);
+  // Si las notas guardadas cambian (p. ej. al editar el cliente desde su diálogo), el borrador
+  // vuelve a partir de ellas: si no, mostraba las de antes y "Guardar" las habría restaurado.
+  const [savedNotes, setSavedNotes] = useState(client.notes);
+  if (savedNotes !== client.notes) {
+    setSavedNotes(client.notes);
+    setNotes(client.notes);
+  }
   const changed = notes.trim() !== client.notes;
 
   const save = async () => {

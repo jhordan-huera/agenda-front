@@ -16,7 +16,10 @@ export function useEnableTwoFactor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (code: string) => authService.twoFactor.enable(code),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.twoFactor }),
+    // Sin esperar la recarga del estado: los códigos de recuperación se muestran al responder la API.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.twoFactor });
+    },
   });
 }
 
@@ -24,7 +27,9 @@ export function useDisableTwoFactor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: TwoFactorDisableInput) => authService.twoFactor.disable(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.twoFactor }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.twoFactor });
+    },
   });
 }
 
@@ -32,6 +37,8 @@ export function useRegenerateRecoveryCodes() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (code: string) => authService.twoFactor.regenerateRecoveryCodes(code),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.twoFactor }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.twoFactor });
+    },
   });
 }

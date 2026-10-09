@@ -57,7 +57,8 @@ export default function DashboardPage() {
   const updateStatus = useUpdateAppointmentStatus();
   const dialogs = useAppointmentDialogs();
   const [quickDialog, setQuickDialog] = useState<QuickDialog>(null);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  // Las que se están confirmando: se pueden confirmar varias a la vez (cada botón espera la suya).
+  const [confirmingIds, setConfirmingIds] = useState<ReadonlySet<string>>(() => new Set());
   const { can } = usePermissions();
   const agendas = useAgendas();
 
@@ -85,14 +86,18 @@ export default function DashboardPage() {
   const serviceName = (id: string) => getServiceName(servicesById, id);
 
   const confirm = async (appointment: Appointment) => {
-    setConfirmingId(appointment.id);
+    setConfirmingIds((current) => new Set(current).add(appointment.id));
     try {
       await updateStatus.mutateAsync({ id: appointment.id, status: "confirmed" });
       toast.success(`Cita de ${clientName(appointment.clientId)} confirmada`);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
-      setConfirmingId(null);
+      setConfirmingIds((current) => {
+        const next = new Set(current);
+        next.delete(appointment.id);
+        return next;
+      });
     }
   };
 
@@ -199,7 +204,7 @@ export default function DashboardPage() {
               serviceName={serviceName}
               onOpen={dialogs.openDetails}
               onConfirm={confirm}
-              confirmingId={confirmingId}
+              confirmingIds={confirmingIds}
             />
           )}
 
@@ -230,7 +235,7 @@ export default function DashboardPage() {
               serviceName={serviceName}
               onOpen={dialogs.openDetails}
               onConfirm={confirm}
-              confirmingId={confirmingId}
+              confirmingIds={confirmingIds}
             />
           )}
           {business ? <BookingLinkCard slug={business.slug} /> : <Skeleton className="h-40 rounded-xl" />}

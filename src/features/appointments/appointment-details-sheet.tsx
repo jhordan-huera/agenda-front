@@ -20,6 +20,7 @@ import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ErrorState } from "@/components/shared/error-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
@@ -54,7 +55,8 @@ interface AppointmentDetailsSheetProps {
 
 export function AppointmentDetailsSheet({ appointmentId, open, onOpenChange, onEdit }: AppointmentDetailsSheetProps) {
   // Sólo esa cita: sale de la agenda ya cargada o se pide sola, sin descargar todas.
-  const { data: appointment } = useAppointment(appointmentId);
+  const query = useAppointment(appointmentId);
+  const appointment = query.data;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -62,10 +64,24 @@ export function AppointmentDetailsSheet({ appointmentId, open, onOpenChange, onE
         {appointment ? (
           <AppointmentDetails appointment={appointment} onEdit={onEdit} />
         ) : (
-          <div className="space-y-4 p-4">
-            <SheetTitle className="sr-only">Detalle de la cita</SheetTitle>
-            <Skeleton className="h-8 w-2/3" />
-            <Skeleton className="h-40 w-full" />
+          <div className="space-y-4 p-4 pr-12">
+            <SheetTitle className={appointment === null ? undefined : "sr-only"}>
+              {appointment === null ? "Cita no encontrada" : "Detalle de la cita"}
+            </SheetTitle>
+            {appointment === null ? (
+              // Se eliminó (o el enlace es de otra agenda): la API responde sin cita.
+              <SheetDescription>Puede que se haya eliminado o que no sea de tu agenda.</SheetDescription>
+            ) : query.isError || query.isPaused ? (
+              <ErrorState
+                description={query.isPaused ? "No tienes conexión. Revísala e inténtalo de nuevo." : undefined}
+                onRetry={() => query.refetch()}
+              />
+            ) : (
+              <>
+                <Skeleton className="h-8 w-2/3" />
+                <Skeleton className="h-40 w-full" />
+              </>
+            )}
           </div>
         )}
       </SheetContent>

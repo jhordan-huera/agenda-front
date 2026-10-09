@@ -16,7 +16,8 @@ interface TodayListProps {
   serviceName: (id: string) => string;
   onOpen: (appointment: Appointment) => void;
   onConfirm: (appointment: Appointment) => void;
-  confirmingId: string | null;
+  /** Las que se están confirmando. */
+  confirmingIds: ReadonlySet<string>;
   /** Con varias agendas: de quién es cada cita. */
   professionalOf?: (appointment: Appointment) => Pick<Professional, "displayName" | "color"> | undefined;
 }
@@ -30,7 +31,7 @@ export function TodayList({
   serviceName,
   onOpen,
   onConfirm,
-  confirmingId,
+  confirmingIds,
   professionalOf,
 }: TodayListProps) {
   const done = appointments.filter((a) => timeToMinutes(a.endTime) <= now.minutes);
@@ -70,7 +71,7 @@ export function TodayList({
         <StatusBadge status={appointment.status} className="hidden sm:inline-flex" />
       </button>
       {appointment.status === "pending" && !muted && (
-        <Button size="sm" variant="outline" disabled={confirmingId === appointment.id} onClick={() => onConfirm(appointment)}>
+        <Button size="sm" variant="outline" disabled={confirmingIds.has(appointment.id)} onClick={() => onConfirm(appointment)}>
           Confirmar
         </Button>
       )}

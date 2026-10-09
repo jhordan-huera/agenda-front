@@ -8,11 +8,13 @@ import { EMPTY_AUDIT_FILTERS, toAuditQuery } from "@/features/activity/audit-fil
 import { AuditFiltersBar } from "@/features/activity/audit-filters-bar";
 import { exportAuditCsv } from "@/features/activity/export-audit";
 import { useBusinessId } from "@/features/auth/use-session";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAuditFeed } from "@/hooks/queries/use-activity";
 import { useTeam } from "@/hooks/queries/use-team";
-import { APP_NAME } from "@/lib/constants/app";
+import { APP_NAME, DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { data, getErrorMessage } from "@/lib/data";
 import { plural } from "@/lib/format";
+import { getZonedNow } from "@/lib/time";
 import type { AuditEntityType } from "@/types";
 
 const TYPES: AuditEntityType[] = [
@@ -30,6 +32,8 @@ const TYPES: AuditEntityType[] = [
 /** Registro de auditoría del negocio: quién hizo qué y cuándo, con lo que cambió. */
 export function ActivityLog() {
   const businessId = useBusinessId();
+  // Las fechas, en la zona horaria del negocio (sin ella, la de la plataforma).
+  const timezone = useCurrentBusiness().data?.timezone;
   const team = useTeam();
   const [filters, setFilters] = useState(EMPTY_AUDIT_FILTERS);
   const query = useMemo(() => toAuditQuery(filters), [filters]);
@@ -47,7 +51,8 @@ export function ActivityLog() {
     try {
       const count = await exportAuditCsv(
         (cursor) => data.auditLogs.list(businessId, { ...query, cursor, limit: 1000 }),
-        `actividad-${new Date().toISOString().slice(0, 10)}.csv`,
+        `actividad-${getZonedNow(timezone ?? DEFAULT_TIMEZONE).date}.csv`,
+        timezone,
       );
       toast.success(count ? `Exportaste ${plural(count, "entrada", "entradas")}` : "No hay actividad con esos filtros");
     } catch (error) {
@@ -70,7 +75,7 @@ export function ActivityLog() {
       </CardHeader>
       <CardContent className="grid gap-4">
         <AuditFiltersBar value={filters} onChange={setFilters} types={TYPES} people={people} />
-        <AuditFeed feed={feed} />
+        <AuditFeed feed={feed} timezone={timezone} />
       </CardContent>
     </Card>
   );

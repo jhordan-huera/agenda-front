@@ -9,6 +9,8 @@ export type DataErrorCode =
   | "plan_limit"
   | "rate_limited"
   | "network"
+  /** Reserva pública: no se pudo pasar el CAPTCHA (la petición no llegó a enviarse). */
+  | "captcha"
   | "unavailable"
   | "server";
 
