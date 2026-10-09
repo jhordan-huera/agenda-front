@@ -9,7 +9,6 @@ import { CAPTCHA_BOX_CLASS, useCaptcha } from "@/features/booking/use-captcha";
 import { useCaptchaSiteKey } from "@/hooks/queries/use-public-booking";
 import { getErrorMessage } from "@/lib/data/errors";
 import { registerSchema } from "@/lib/validations/auth";
-import { NEW_PASSWORD_MIN_LENGTH } from "@/lib/validations/fields";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import { useSession } from "./use-session";
 
@@ -81,7 +80,7 @@ export function RegisterForm() {
           />
         )}
       </FormField>
-      <FormField label="Contraseña" error={errors.password} hint={`Mínimo ${NEW_PASSWORD_MIN_LENGTH} caracteres.`}>
+      <FormField label="Contraseña" error={errors.password} hint="Mínimo 8 caracteres.">
         {(field) => (
           <PasswordInput {...field} autoComplete="new-password" value={values.password} onChange={update("password")} />
         )}

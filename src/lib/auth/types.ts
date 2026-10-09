@@ -2,14 +2,12 @@ import type {
   ChangePasswordInput,
   LoginInput,
   RegisterInput,
-  SetPasswordInput,
   TwoFactorDisableInput,
   TwoFactorLoginInput,
 } from "@/lib/validations/auth";
 import type {
   BusinessRole,
   BusinessStatus,
-  PasswordLinkInfo,
   PlatformRole,
   RecoveryCodes,
   TwoFactorChallenge,
@@ -58,12 +56,8 @@ export interface AuthService {
   /** Falla con `forbidden` si el super admin cerró el registro público. */
   signUp(input: RegisterInput): Promise<Session>;
   signOut(): Promise<void>;
-  /** Cualquier usuario cambia su propia contraseña (con la actual); se cierran sus demás sesiones. */
+  /** Sólo el super admin: las contraseñas de los usuarios las pone él desde el panel /admin. */
   changePassword(input: ChangePasswordInput): Promise<void>;
-  /** Enlace de un solo uso para definir la contraseña (/definir-contrasena): a quién es, si sigue valiendo. */
-  checkPasswordLink(token: string): Promise<PasswordLinkInfo>;
-  /** Define la contraseña con ese enlace (sin sesión). Cierra todas las sesiones de la cuenta. */
-  setPasswordWithLink(input: SetPasswordInput): Promise<void>;
   /** Verificación en dos pasos de la propia cuenta (hoy, sólo el super admin, para quien es obligatoria). */
   twoFactor: {
     status(): Promise<TwoFactorStatus>;

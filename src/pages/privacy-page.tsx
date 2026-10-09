@@ -98,8 +98,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>Emails enviados:</strong> copia de los emails automáticos (confirmaciones, recordatorios y avisos) y
-                si se entregaron. Los emails de acceso no llevan contraseñas, sino un enlace de un solo uso para que cada
-                persona defina la suya; ese enlace no se guarda en la copia.
+                si se entregaron. Las contraseñas que van en los emails de acceso no se guardan en esa copia.
               </li>
             </ul>
           </Section>

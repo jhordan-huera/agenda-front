@@ -7,6 +7,7 @@ import type {
   PlanRejectionInput,
   PlatformAdminInput,
   PlatformSettingsInput,
+  UserPasswordInput,
 } from "@/lib/validations/admin";
 import type { AppointmentInput } from "@/lib/validations/appointment";
 import type {
@@ -31,8 +32,6 @@ import type { ProfessionalInput } from "@/lib/validations/professional";
 import type { BlockedTimeInput, ScheduleDayInput } from "@/lib/validations/schedule";
 import type { ServiceInput } from "@/lib/validations/service";
 import type {
-  AddedPlatformAdmin,
-  AddedTeamMember,
   AdminAuditLog,
   AdminBusinessDetail,
   AdminBusinessCategory,
@@ -77,7 +76,6 @@ import type {
   TeamMember,
   User,
   WhatsAppNoticeKind,
-  PasswordLink,
   PlatformAdmin,
 } from "@/types";
 
@@ -335,23 +333,19 @@ export interface PlatformAdminRepository {
   rejectPlanRequest(requestId: string, input: PlanRejectionInput): Promise<void>;
   listUsers(): Promise<AdminUserSummary[]>;
   setUserActive(userId: string, isActive: boolean): Promise<User>;
-  /**
-   * "Enviar enlace para definir contraseña": le llega por email un enlace de un solo uso (60 minutos) y
-   * se devuelve para copiarlo si el email no llega. El super admin nunca elige ni ve contraseñas.
-   */
-  sendPasswordLink(userId: string): Promise<PasswordLink>;
+  /** Pone la contraseña que elige el super admin, se la envía por email y cierra sus sesiones. */
+  setUserPassword(userId: string, input: UserPasswordInput): Promise<void>;
   /** Equipo de la plataforma: los super admins. */
   listPlatformAdmins(): Promise<PlatformAdmin[]>;
-  /** Sólo el super admin principal: otro super admin para el soporte (le llega el enlace para definir su contraseña). */
-  addPlatformAdmin(input: PlatformAdminInput): Promise<AddedPlatformAdmin>;
-  /** Crea un miembro del equipo de un negocio: le llega un enlace para definir su contraseña. */
-  addBusinessMember(businessId: string, input: AdminMemberInput): Promise<AddedTeamMember>;
+  /** Sólo el super admin principal: otro super admin para el soporte (le llega un email con sus datos). */
+  addPlatformAdmin(input: PlatformAdminInput): Promise<PlatformAdmin>;
+  /** Crea un miembro del equipo de un negocio con la contraseña que elige el super admin. */
+  addBusinessMember(businessId: string, input: AdminMemberInput): Promise<TeamMember>;
   /**
    * Propietario de un negocio que aún no lo tiene (cuenta nueva o una existente sin negocio); le
-   * llega un email con el enlace para definir su contraseña. Con una sola agenda sin usuario, esa
-   * pasa a ser la suya.
+   * llega un email con su acceso. Con una sola agenda sin usuario, esa pasa a ser la suya.
    */
-  assignBusinessOwner(businessId: string, input: BusinessOwnerInput): Promise<AddedTeamMember>;
+  assignBusinessOwner(businessId: string, input: BusinessOwnerInput): Promise<TeamMember>;
   listAuditLogs(filters: AdminAuditFilters): Promise<AuditLogPage<AdminAuditLog>>;
   /** Todos los emails de la plataforma (bandeja de salida global). */
   listEmails(): Promise<EmailNotification[]>;

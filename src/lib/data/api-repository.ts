@@ -1,7 +1,5 @@
 import { api } from "@/lib/api/client";
 import type {
-  AddedPlatformAdmin,
-  AddedTeamMember,
   AdminAuditLog,
   AdminBusinessDetail,
   AdminBusinessCategory,
@@ -37,7 +35,6 @@ import type {
   Subscription,
   TeamMember,
   User,
-  PasswordLink,
   PlatformAdmin,
 } from "@/types";
 import type { AdminCreateBusinessResult, DataRepository } from "./repository";
@@ -218,13 +215,13 @@ export const apiRepository: DataRepository = {
     rejectPlanRequest: (requestId, input) => api.post<void>(`/admin/plan-requests/${id(requestId)}/reject`, input),
     listUsers: () => api.get<AdminUserSummary[]>("/admin/users"),
     setUserActive: (userId, isActive) => api.patch<User>(`/admin/users/${id(userId)}/active`, { isActive }),
-    sendPasswordLink: (userId) => api.post<PasswordLink>(`/admin/users/${id(userId)}/password-link`),
+    setUserPassword: (userId, input) => api.put<void>(`/admin/users/${id(userId)}/password`, input),
     listPlatformAdmins: () => api.get<PlatformAdmin[]>("/admin/platform-admins"),
-    addPlatformAdmin: (input) => api.post<AddedPlatformAdmin>("/admin/platform-admins", input),
+    addPlatformAdmin: (input) => api.post<PlatformAdmin>("/admin/platform-admins", input),
     addBusinessMember: (businessId, input) =>
-      api.post<AddedTeamMember>(`/admin/businesses/${id(businessId)}/members`, input),
+      api.post<TeamMember>(`/admin/businesses/${id(businessId)}/members`, input),
     assignBusinessOwner: (businessId, input) =>
-      api.post<AddedTeamMember>(`/admin/businesses/${id(businessId)}/owner`, input),
+      api.post<TeamMember>(`/admin/businesses/${id(businessId)}/owner`, input),
     listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),
     listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),

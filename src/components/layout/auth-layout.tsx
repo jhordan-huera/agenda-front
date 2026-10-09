@@ -7,15 +7,11 @@ import { APP_NAME } from "@/lib/constants/app";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-/**
- * Pantallas de acceso. `allowSession`: también con una sesión abierta (p. ej. definir la contraseña con
- * el enlace: quien lo abre puede tener abierta la sesión de otra cuenta en ese navegador).
- */
-export function AuthLayout({ allowSession = false }: { allowSession?: boolean }) {
+export function AuthLayout() {
   useInstallableApp();
   return (
     <div className="grid min-h-screen lg:grid-cols-[1fr_1.1fr]">
-      {!allowSession && <RedirectIfAuthenticated />}
+      <RedirectIfAuthenticated />
       <div className="flex flex-col px-4 py-6 sm:px-10">
         <Logo />
         <main className="flex flex-1 items-center justify-center py-10">

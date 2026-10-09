@@ -136,8 +136,10 @@ export const useUpdateBusinessCategory = () =>
     data.businesses.update(businessId, { category }),
   );
 
-/** "Enviar enlace para definir contraseña": devuelve el enlace para copiarlo si el email no llega. */
-export const useSendPasswordLink = () => useAdminMutation((userId: string) => data.admin.sendPasswordLink(userId));
+export const useSetUserPassword = () =>
+  useAdminMutation(({ userId, password }: { userId: string; password: string }) =>
+    data.admin.setUserPassword(userId, { password }),
+  );
 
 export const useAddPlatformAdmin = () => useAdminMutation((input: PlatformAdminInput) => data.admin.addPlatformAdmin(input));
 

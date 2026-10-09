@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UserStatusBadge } from "@/features/admin/business-badges";
-import { usePasswordLinkDialog } from "@/features/admin/use-password-link-dialog";
+import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
 import { useAdminUsers, useSetUserActive } from "@/hooks/queries/use-admin";
 import { getErrorMessage } from "@/lib/data";
 import { formatNumericDate, getFullName, normalizeSearch, toZonedDate } from "@/lib/format";
@@ -58,7 +58,7 @@ function matchesFilter({ user, memberships }: AdminUserSummary, filter: UserFilt
 export default function AdminUsersPage() {
   const users = useAdminUsers();
   const setActive = useSetUserActive();
-  const passwordLink = usePasswordLinkDialog();
+  const setPassword = useSetPasswordDialog();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserFilter>("all");
   // Se conserva el usuario al cerrar para que el texto no cambie durante la animación.
@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
                     </div>
                     <UserActions
                       row={row}
-                      onPassword={() => passwordLink.request({ id: user.id, name, email: user.email })}
+                      onPassword={() => setPassword.request({ id: user.id, name, email: user.email })}
                       onToggle={() => setToggleDialog({ open: true, row })}
                     />
                   </div>
@@ -187,7 +187,7 @@ export default function AdminUsersPage() {
                       <TableCell className="pr-4">
                         <UserActions
                           row={row}
-                          onPassword={() => passwordLink.request({ id: user.id, name, email: user.email })}
+                          onPassword={() => setPassword.request({ id: user.id, name, email: user.email })}
                           onToggle={() => setToggleDialog({ open: true, row })}
                         />
                       </TableCell>
@@ -200,7 +200,7 @@ export default function AdminUsersPage() {
         </>
       )}
 
-      {passwordLink.dialog}
+      {setPassword.dialog}
       <ConfirmDialog
         open={toggleDialog.open}
         onOpenChange={(open) => setToggleDialog((current) => ({ ...current, open }))}
@@ -260,9 +260,9 @@ function UserActions({ row: { user }, onPassword, onToggle }: { row: AdminUserSu
           <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem onSelect={onPassword}>
-          <KeyRound /> Enviar enlace para definir contraseña
+          <KeyRound /> Cambiar contraseña
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant={user.isActive ? "destructive" : "default"} onSelect={onToggle}>

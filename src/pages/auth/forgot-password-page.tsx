@@ -8,10 +8,7 @@ import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 import { getSupportWhatsAppUrl } from "@/lib/whatsapp";
 
-/**
- * Sin recuperación automática por email: el soporte comprueba quién es y le envía un enlace de un solo
- * uso para que defina una contraseña nueva (/definir-contrasena).
- */
+/** Las contraseñas las pone el soporte de la plataforma: no hay recuperación automática por email. */
 export default function ForgotPasswordPage() {
   const settings = usePlatformSettings();
   const supportEmail = settings.data?.supportEmail ?? DEFAULT_SUPPORT_EMAIL;
@@ -25,7 +22,7 @@ export default function ForgotPasswordPage() {
       <PageTitle title="Recuperar el acceso" />
       <AuthCardHeader
         title="¿Olvidaste tu contraseña?"
-        description="Escríbenos desde el email de tu cuenta y te enviaremos un enlace para que definas una contraseña nueva."
+        description="Escríbenos desde el email de tu cuenta y te enviaremos una contraseña nueva."
       />
       <div className="rounded-xl border bg-muted/40 p-6 text-center">
         <Mail className="mx-auto size-10 text-primary" aria-hidden />

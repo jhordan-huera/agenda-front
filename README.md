@@ -112,16 +112,10 @@ src/
 
 ## Contraseñas y soporte
 
-- **Nadie elige ni ve la contraseña de otro**: al agregar el propietario de un negocio, un miembro
-  de un equipo (sólo el super admin puede) o un super admin, la persona recibe por email un enlace
-  de un solo uso (caduca a los 60 minutos) y define su contraseña en `/definir-contrasena?token=…`
-  (`pages/auth/set-password-page.tsx`, sin sesión; mínimo 10 caracteres; al guardarla se cierran
-  sus sesiones). Si la olvida, el super admin pulsa "Enviar enlace para definir contraseña"
-  (Usuarios, ficha del negocio o equipo de la plataforma) y puede copiar el enlace o enviarlo por
-  WhatsApp si el email no llega (`features/admin/password-link-panel.tsx`). "¿Olvidaste tu
-  contraseña?" muestra el contacto de soporte.
-- **Cada usuario cambia su contraseña** en Configuración → Perfil (la actual y la nueva; se cierran
-  sus demás sesiones). Para cambiar el email de la cuenta, el formulario pide la contraseña actual.
+- **Las contraseñas las pone el super admin**: al crear un negocio, al agregar miembros a un equipo
+  (sólo él puede) y al cambiársela a un usuario; el usuario la recibe por email y no puede cambiarla.
+  "¿Olvidaste tu contraseña?" muestra el email de soporte.
+- **Cambiar el email de la cuenta** (Configuración → Perfil) pide la contraseña actual.
 - **Categorías**: los tipos de negocio están en la base de datos y el super admin los gestiona en
   `/admin/categories`. El negocio la elige al crearse y después sólo la cambia el super admin (ficha
   del negocio o modo soporte); en Configuración → Negocio el propietario la ve bloqueada.
@@ -142,8 +136,9 @@ src/
   buscador encuentra por cédula.
 - **Gestionar negocio** (panel `/admin` → negocio): el super admin abre el panel de cualquier
   negocio con permisos de propietario (servicios, horarios, citas, clientes, configuración). Un
-  aviso arriba indica el modo soporte; todo queda en la actividad del negocio, incluidas las
-  consultas a historias clínicas.
+  aviso arriba indica el modo soporte; lo que crea o cambia queda en la actividad del negocio con su
+  nombre ("Nombre (Super admin)"). Lo que sólo consulta (también las historias clínicas y sus
+  archivos) no se registra.
 
 ## ¿Quién crea los negocios?
 
@@ -152,14 +147,13 @@ Hay dos caminos, y el super admin decide cuáles están abiertos:
 1. **Registro propio** (`/register` → onboarding de 6 pasos): el profesional crea su cuenta y su
    negocio, con plan Free. Se puede cerrar desde `/admin/settings` → "Registro público abierto";
    con el registro cerrado, `/register` muestra un aviso y el backend rechaza las altas.
-   **En producción está cerrado**: las cuentas las crea siempre el super admin (cada persona define
-   su contraseña con el enlace que recibe).
+   **En producción está cerrado**: las contraseñas las pone siempre el super admin.
 2. **Alta por el super admin** (`/admin/businesses` → "Nuevo negocio"): datos del negocio con su
    descripción, sus servicios (nombre, minutos y precio; se propone el del tipo de negocio), su
    horario semanal (varios intervalos por día) y el plan. **Sin propietario**: su página de
    reservas funciona desde ya y la cuenta se agrega después en la ficha del negocio ("Agregar
-   propietario": cuenta nueva, o una existente sin negocio). Le llega un email con el enlace para
-   definir su contraseña y su página de reservas; si el negocio tiene una sola agenda, pasa a ser la suya.
+   propietario": cuenta nueva, o una existente sin negocio, con la contraseña que elige el super
+   admin). Le llega un email con su acceso; si el negocio tiene una sola agenda, pasa a ser la suya.
 
 Jerarquía de roles:
 
@@ -174,9 +168,9 @@ Super admin (plataforma)  →  crea / suspende negocios, cambia planes, gestiona
 ## Panel de plataforma (super admin)
 
 **Equipo de la plataforma** (Configuración del panel /admin): el super admin principal agrega a
-otros super admins para que le ayuden con el soporte (nombre y email; les llega el enlace para
-definir su contraseña). Tienen los mismos permisos de plataforma salvo gestionar a otros
-super admins: sólo el principal los agrega, les envía el enlace de contraseña o les quita el acceso, y nadie
+otros super admins para que le ayuden con el soporte (nombre, email y la contraseña que elige; les
+llega un email con sus datos). Tienen los mismos permisos de plataforma salvo gestionar a otros
+super admins: sólo el principal los agrega, les cambia la contraseña o les quita el acceso, y nadie
 puede tocar la cuenta del principal ni la propia desde ahí. La lista muestra quién tiene la
 verificación en dos pasos y su último acceso; todo lo que hace cada uno queda en la actividad con su
 nombre ("Nombre (Super admin)").
@@ -189,12 +183,11 @@ active con una app de autenticación. Después, el panel aparece solo.
 - **Resumen**: negocios activos/suspendidos, ingresos recurrentes (MRR), usuarios, citas y
   reservas online del mes, nuevos negocios por mes y distribución por plan.
 - **Negocios**: búsqueda y filtros por plan/estado; ficha con uso del plan, equipo, actividad,
-  cambio de plan, suspender/reactivar y enviar al propietario (o a un miembro) el enlace para definir
-  su contraseña.
+  cambio de plan, suspender/reactivar y restablecer la contraseña del propietario.
   Un negocio suspendido no puede usar el panel (ve un aviso con el email de soporte) y su
   página pública deja de estar disponible.
-- **Usuarios**: todas las cuentas con su negocio y rol; desactivar/reactivar acceso y "Enviar
-  enlace para definir contraseña" (el super admin nunca ve ni elige contraseñas).
+- **Usuarios**: todas las cuentas con su negocio y rol; desactivar/reactivar acceso y
+  restablecer contraseña (contraseña temporal enviada por email).
 - **Planes**: precios, límites, negocios e ingresos por plan.
 - **Actividad**: auditoría del super admin o de toda la plataforma, y todos los emails enviados.
 - **Configuración**: registro público abierto/cerrado y email de soporte.

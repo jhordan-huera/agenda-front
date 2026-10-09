@@ -166,7 +166,7 @@ export function TeamSettings() {
           <p className="mt-3 text-xs text-muted-foreground">
             {atLimit
               ? "Llegaste al límite de usuarios de lo que tienes contratado. Para sumar más personas, escribe a soporte: "
-              : "Para agregar a alguien a tu equipo o enviarle un enlace para definir su contraseña, escribe a soporte: "}
+              : "Para agregar a alguien a tu equipo o cambiar una contraseña, escribe a soporte: "}
             <SupportContact
               email={supportEmail}
               phone={platform.data?.supportPhone}

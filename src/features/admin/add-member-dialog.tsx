@@ -12,14 +12,13 @@ import { getErrorMessage } from "@/lib/data";
 import { ASSIGNABLE_ROLES, ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/permissions";
 import { adminMemberSchema, type AdminMemberInput } from "@/lib/validations/admin";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import type { AddedTeamMember, BusinessRole } from "@/types";
-import { AccountCreatedStep } from "./password-link-panel";
+import type { BusinessRole } from "@/types";
 
 type AssignableRole = Exclude<BusinessRole, "owner">;
 
-const EMPTY: AdminMemberInput = { firstName: "", lastName: "", email: "", role: "staff" };
+const EMPTY: AdminMemberInput = { firstName: "", lastName: "", email: "", role: "staff", password: "" };
 
-/** Alta de un miembro del equipo de un negocio por el super admin: recibe un enlace para definir su contraseña. */
+/** Alta de un miembro del equipo de un negocio por el super admin (con la contraseña que elige). */
 export function AddMemberDialog({
   businessId,
   businessName,
@@ -65,7 +64,6 @@ function AddMemberForm({
   const addMember = useAddBusinessMember();
   const [values, setValues] = useState<AdminMemberInput>(EMPTY);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [added, setAdded] = useState<AddedTeamMember | null>(null);
   const set = <K extends keyof AdminMemberInput>(key: K, value: AdminMemberInput[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => {
@@ -81,23 +79,13 @@ function AddMemberForm({
     setErrors(validation.errors);
     if (!validation.success) return;
     try {
-      setAdded(await addMember.mutateAsync({ businessId, input: validation.data }));
+      const member = await addMember.mutateAsync({ businessId, input: validation.data });
+      toast.success(`${member.firstName} ya es parte del equipo. Le enviamos sus datos de acceso a ${member.email}`);
+      onDone();
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
   };
-
-  if (added) {
-    return (
-      <AccountCreatedStep
-        title={`${added.member.firstName} ya es parte del equipo de ${businessName}`}
-        description="Con el enlace define su contraseña y entra con su email."
-        link={added.passwordLink}
-        firstName={added.member.firstName}
-        onDone={onDone}
-      />
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-4">
@@ -105,9 +93,7 @@ function AddMemberForm({
         <DialogTitle className="flex items-center gap-2">
           <UserPlus className="size-5 text-primary" aria-hidden /> Agregar al equipo de {businessName}
         </DialogTitle>
-        <DialogDescription>
-          Le enviaremos un email con un enlace de un solo uso para que defina su contraseña (nadie más la conoce).
-        </DialogDescription>
+        <DialogDescription>Le enviaremos un email con su email de acceso y la contraseña que escribas.</DialogDescription>
       </DialogHeader>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="Nombre" error={errors.firstName}>
@@ -134,6 +120,17 @@ function AddMemberForm({
               ))}
             </SelectContent>
           </Select>
+        )}
+      </FormField>
+      <FormField label="Contraseña" error={errors.password} hint="Mínimo 8 caracteres. Apúntala: el usuario no puede cambiarla.">
+        {(field) => (
+          <Input
+            {...field}
+            autoComplete="off"
+            className="font-mono"
+            value={values.password}
+            onChange={(e) => set("password", e.target.value)}
+          />
         )}
       </FormField>
       <DialogFooter>
