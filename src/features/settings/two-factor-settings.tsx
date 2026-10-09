@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/features/auth/use-session";
 import {
   useDisableTwoFactor,
   useEnableTwoFactor,
@@ -29,16 +30,17 @@ const FEW_RECOVERY_CODES = 3;
 
 /**
  * Verificación en dos pasos de la cuenta de super admin: además de la contraseña, el código
- * de 6 dígitos de una app de autenticación del celular.
+ * de 6 dígitos de una app de autenticación del celular. Con datos reales es obligatoria.
+ * `onEnabled`: al terminar de activarla (después de guardar los códigos de recuperación).
  */
-export function TwoFactorSettings() {
+export function TwoFactorSettings({ onEnabled }: { onEnabled?: () => void } = {}) {
   const status = useTwoFactorStatus();
   const [dialog, setDialog] = useState<"enable" | "disable" | "codes" | null>(null);
   const close = () => setDialog(null);
 
   if (status.isPending) return <SettingsSectionSkeleton fields={1} />;
   if (status.isError) return <ErrorState onRetry={() => status.refetch()} />;
-  const { enabled, enabledAt, recoveryCodesLeft } = status.data;
+  const { enabled, enabledAt, recoveryCodesLeft, required } = status.data;
 
   return (
     <Card>
@@ -50,6 +52,7 @@ export function TwoFactorSettings() {
           ) : (
             <Badge variant="destructive">Desactivada</Badge>
           )}
+          {required && <Badge variant="outline">Obligatoria</Badge>}
         </CardTitle>
         <CardDescription>
           Además de la contraseña, al iniciar sesión se pide el código de 6 dígitos de una app de tu celular (Google
@@ -93,9 +96,9 @@ export function TwoFactorSettings() {
           onInteractOutside={(event) => event.preventDefault()}
           onEscapeKeyDown={(event) => event.preventDefault()}
         >
-          {dialog === "enable" && <EnableFlow onDone={close} />}
+          {dialog === "enable" && <EnableFlow onDone={close} onEnabled={onEnabled} />}
           {dialog === "codes" && <RegenerateFlow onDone={close} />}
-          {dialog === "disable" && <DisableForm onDone={close} />}
+          {dialog === "disable" && <DisableForm onDone={close} required={required} />}
         </DialogContent>
       </Dialog>
     </Card>
@@ -104,7 +107,7 @@ export function TwoFactorSettings() {
 
 /* --------------------------------------------------------------- Activar -- */
 
-function EnableFlow({ onDone }: { onDone: () => void }) {
+function EnableFlow({ onDone, onEnabled }: { onDone: () => void; onEnabled?: () => void }) {
   const setup = useTwoFactorSetup();
   const enable = useEnableTwoFactor();
   const [code, setCode] = useState("");
@@ -123,7 +126,18 @@ function EnableFlow({ onDone }: { onDone: () => void }) {
     [setup.data],
   );
 
-  if (recoveryCodes) return <RecoveryCodesView codes={recoveryCodes} title="Verificación activada" onDone={onDone} />;
+  if (recoveryCodes) {
+    return (
+      <RecoveryCodesView
+        codes={recoveryCodes}
+        title="Verificación activada"
+        onDone={() => {
+          onDone();
+          onEnabled?.();
+        }}
+      />
+    );
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -322,8 +336,9 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 
 /* ------------------------------------------------------------- Desactivar -- */
 
-function DisableForm({ onDone }: { onDone: () => void }) {
+function DisableForm({ onDone, required }: { onDone: () => void; required: boolean }) {
   const disable = useDisableTwoFactor();
+  const { refresh } = useSession();
   const [values, setValues] = useState({ password: "", code: "" });
   const [errors, setErrors] = useState<FieldErrors>({});
 
@@ -336,6 +351,8 @@ function DisableForm({ onDone }: { onDone: () => void }) {
       await disable.mutateAsync(result.data);
       toast.success("Verificación en dos pasos desactivada");
       onDone();
+      // Si es obligatoria, la sesión pasa a pedir que se vuelva a activar.
+      if (required) void refresh();
     } catch (error) {
       const message = getErrorMessage(error);
       setErrors(/contraseña/i.test(message) ? { password: message } : { code: message });
@@ -346,7 +363,11 @@ function DisableForm({ onDone }: { onDone: () => void }) {
     <form onSubmit={submit} noValidate className="grid gap-5">
       <DialogHeader>
         <DialogTitle>Desactivar la verificación en dos pasos</DialogTitle>
-        <DialogDescription>Tu cuenta quedará protegida sólo con la contraseña. Confirma que eres tú.</DialogDescription>
+        <DialogDescription>
+          {required
+            ? "Es obligatoria: hasta que la vuelvas a activar (p. ej. con un celular nuevo) no podrás usar el panel de plataforma ni gestionar negocios. Confirma que eres tú."
+            : "Tu cuenta quedará protegida sólo con la contraseña. Confirma que eres tú."}
+        </DialogDescription>
       </DialogHeader>
       <FormField label="Contraseña" error={errors.password}>
         {(field) => (

@@ -5,8 +5,11 @@ import { FormField } from "@/components/shared/form-field";
 import { PasswordInput } from "@/components/shared/password-input";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Input } from "@/components/ui/input";
+import { CAPTCHA_BOX_CLASS, useCaptcha } from "@/features/booking/use-captcha";
+import { useCaptchaSiteKey } from "@/hooks/queries/use-public-booking";
 import { getErrorMessage } from "@/lib/data/errors";
 import { registerSchema } from "@/lib/validations/auth";
+import { NEW_PASSWORD_MIN_LENGTH } from "@/lib/validations/fields";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import { useSession } from "./use-session";
 
@@ -19,6 +22,9 @@ export function RegisterForm() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // CAPTCHA (casi siempre invisible): el registro envía un email de bienvenida a la dirección escrita.
+  const siteKey = useCaptchaSiteKey();
+  const { containerRef: captchaRef, getToken: getCaptchaToken } = useCaptcha(siteKey.data ?? null);
 
   const update = (key: keyof typeof INITIAL_VALUES) => (event: ChangeEvent<HTMLInputElement>) =>
     setValues({ ...values, [key]: event.target.value });
@@ -32,7 +38,9 @@ export function RegisterForm() {
 
     setPending(true);
     try {
-      await signUp(result.data);
+      // El token va junto a los datos: la API lo comprueba antes de crear la cuenta.
+      const input = { ...result.data, captchaToken: await getCaptchaToken() };
+      await signUp(input);
       toast.success("Cuenta creada. Configuremos tu negocio.");
       navigate("/onboarding", { replace: true });
     } catch (error) {
@@ -73,7 +81,7 @@ export function RegisterForm() {
           />
         )}
       </FormField>
-      <FormField label="Contraseña" error={errors.password} hint="Mínimo 8 caracteres.">
+      <FormField label="Contraseña" error={errors.password} hint={`Mínimo ${NEW_PASSWORD_MIN_LENGTH} caracteres.`}>
         {(field) => (
           <PasswordInput {...field} autoComplete="new-password" value={values.password} onChange={update("password")} />
         )}
@@ -88,9 +96,13 @@ export function RegisterForm() {
           />
         )}
       </FormField>
-      <SubmitButton size="lg" className="h-10" loading={pending} loadingText="Creando cuenta…">
-        Crear cuenta
-      </SubmitButton>
+      <div>
+        {/* Sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
+        <div ref={captchaRef} className={CAPTCHA_BOX_CLASS} />
+        <SubmitButton size="lg" className="h-10 w-full" loading={pending} disabled={siteKey.isPending} loadingText="Creando cuenta…">
+          Crear cuenta
+        </SubmitButton>
+      </div>
       <p className="text-center text-xs text-muted-foreground">
         Al crear tu cuenta aceptas los términos del servicio y la política de privacidad.
       </p>

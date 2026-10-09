@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
+import { PasswordInput } from "@/components/shared/password-input";
 import { Input } from "@/components/ui/input";
 import { useUpdateProfile } from "@/hooks/queries/use-account";
 import { getErrorMessage } from "@/lib/data";
 import { getInitials } from "@/lib/format";
+import { currentPasswordSchema } from "@/lib/validations/auth";
 import { profileSchema, type ProfileInput } from "@/lib/validations/business";
 import { validate } from "@/lib/validations/validate";
 import type { User } from "@/types";
@@ -23,17 +25,24 @@ export function ProfileSettingsForm({ user }: { user: User }) {
   };
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(saved);
   const [uploading, setUploading] = useState(false);
+  // Cambiar el email con el que se inicia sesión pide la contraseña actual (con sólo la sesión abierta no basta).
+  const [currentPassword, setCurrentPassword] = useState("");
+  const emailChanged = values.email.trim().toLowerCase() !== user.email;
 
   const submit = async () => {
     const result = validate(profileSchema, values);
-    setErrors(result.errors);
-    if (!result.success) return;
+    const password = emailChanged ? validate(currentPasswordSchema, { currentPassword }) : null;
+    setErrors({ ...result.errors, ...password?.errors });
+    if (!result.success || (password && !password.success)) return;
     try {
-      await updateProfile.mutateAsync(result.data);
+      await updateProfile.mutateAsync(emailChanged ? { ...result.data, currentPassword } : result.data);
       reset(result.data);
-      toast.success("Perfil actualizado");
+      setCurrentPassword("");
+      toast.success(emailChanged ? "Perfil actualizado: desde ahora inicias sesión con tu email nuevo" : "Perfil actualizado");
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      const message = getErrorMessage(error);
+      if (emailChanged && /contraseña/i.test(message)) setErrors({ currentPassword: message });
+      else toast.error(message);
     }
   };
 
@@ -45,7 +54,10 @@ export function ProfileSettingsForm({ user }: { user: User }) {
       saving={updateProfile.isPending}
       uploading={uploading}
       onSubmit={submit}
-      onDiscard={() => reset()}
+      onDiscard={() => {
+        reset();
+        setCurrentPassword("");
+      }}
     >
       <ImageUploadField
         target="avatar"
@@ -76,6 +88,29 @@ export function ProfileSettingsForm({ user }: { user: User }) {
             <Input {...field} type="tel" autoComplete="tel" value={values.phone} onChange={(e) => setField("phone", e.target.value)} />
           )}
         </FormField>
+        {emailChanged && (
+          <FormField
+            label="Tu contraseña actual"
+            error={errors.currentPassword}
+            hint="Para cambiar el email con el que inicias sesión, confirma que eres tú."
+          >
+            {(field) => (
+              <PasswordInput
+                {...field}
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  setErrors((current) => {
+                    const next = { ...current };
+                    delete next.currentPassword;
+                    return next;
+                  });
+                }}
+              />
+            )}
+          </FormField>
+        )}
       </div>
     </SettingsSection>
   );

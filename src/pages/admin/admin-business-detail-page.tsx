@@ -32,7 +32,7 @@ import { AddMemberDialog } from "@/features/admin/add-member-dialog";
 import { AddOwnerDialog } from "@/features/admin/add-owner-dialog";
 import { DeleteBusinessDialog } from "@/features/admin/delete-business-dialog";
 import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
-import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
+import { usePasswordLinkDialog } from "@/features/admin/use-password-link-dialog";
 import { useSession } from "@/features/auth/use-session";
 import { UsageMeter } from "@/features/billing/usage-meter";
 import {
@@ -57,7 +57,7 @@ export default function AdminBusinessDetailPage() {
   const changePlan = useChangeBusinessPlan();
   const updateCategory = useUpdateBusinessCategory();
   const { categories, label: categoryLabel } = useCategories();
-  const setPassword = useSetPasswordDialog();
+  const passwordLink = usePasswordLinkDialog();
   const { enterSupport } = useSession();
   const navigate = useNavigate();
   const [addMemberOpen, setAddMemberOpen] = useState(false);
@@ -204,7 +204,7 @@ export default function AdminBusinessDetailPage() {
             <CardHeader>
               <CardTitle>Equipo</CardTitle>
               <CardDescription>
-                Personas con acceso al panel de este negocio. Sólo tú agregas miembros y pones sus contraseñas.
+                Personas con acceso al panel de este negocio. Sólo tú agregas miembros; cada uno define su contraseña con un enlace.
               </CardDescription>
               <CardAction>
                 {/* El propietario primero: en Free sólo cabe un usuario. */}
@@ -239,9 +239,9 @@ export default function AdminBusinessDetailPage() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        aria-label={`Cambiar la contraseña de ${name}`}
-                        title="Cambiar contraseña"
-                        onClick={() => setPassword.request({ id: member.userId, name, email: member.email })}
+                        aria-label={`Enviar a ${name} un enlace para definir su contraseña`}
+                        title="Enviar enlace para definir contraseña"
+                        onClick={() => passwordLink.request({ id: member.userId, name, email: member.email })}
                       >
                         <KeyRound />
                       </Button>
@@ -278,8 +278,8 @@ export default function AdminBusinessDetailPage() {
                       <p className="truncate text-xs text-muted-foreground">{owner.email}</p>
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full" onClick={() => setPassword.request(owner)}>
-                    <KeyRound /> Cambiar contraseña
+                  <Button variant="outline" className="w-full" onClick={() => passwordLink.request(owner)}>
+                    <KeyRound /> Enviar enlace para definir contraseña
                   </Button>
                 </>
               ) : (
@@ -413,7 +413,7 @@ export default function AdminBusinessDetailPage() {
           }
         }}
       />
-      {setPassword.dialog}
+      {passwordLink.dialog}
       <DeleteBusinessDialog business={business} members={members.length} open={deleteOpen} onOpenChange={setDeleteOpen} />
       <AddMemberDialog
         businessId={business.id}

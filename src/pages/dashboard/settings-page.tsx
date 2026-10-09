@@ -9,6 +9,7 @@ import { ActivityLog } from "@/features/settings/activity-log";
 import { BrandColorsSettings } from "@/features/settings/brand-colors-settings";
 import { BookingSettingsForm } from "@/features/settings/booking-settings-form";
 import { BusinessSettingsForm } from "@/features/settings/business-settings-form";
+import { ChangePasswordForm } from "@/features/settings/change-password-form";
 import { ClinicalSettingsCard } from "@/features/settings/clinical-settings-card";
 import { EmailOutbox } from "@/features/settings/email-outbox";
 import { NotificationSettingsForm, WhatsAppNoticeSettingsForm } from "@/features/settings/notification-settings-form";
@@ -82,6 +83,7 @@ export default function SettingsPage() {
             ) : (
               <>
                 <ProfileSettingsForm user={userQuery.data} />
+                <ChangePasswordForm />
                 <OwnAgendaCard />
               </>
             )}

@@ -24,10 +24,12 @@ export function useCreateBooking(slug: string, getCaptchaToken: GetCaptchaToken)
   });
 }
 
-/** Busca la cédula entre los clientes del negocio (paso "Tus datos" de la reserva). */
-export function useLookupClient(slug: string, getCaptchaToken: GetCaptchaToken) {
-  return useMutation({
-    mutationFn: async (documentId: string) => data.publicBooking.lookupClient(slug, documentId, await getCaptchaToken()),
+/** Site Key del CAPTCHA del registro (la de la reserva viene en el perfil del negocio). */
+export function useCaptchaSiteKey() {
+  return useQuery({
+    queryKey: queryKeys.captchaSiteKey,
+    queryFn: () => data.publicBooking.getCaptchaSiteKey(),
+    staleTime: Number.POSITIVE_INFINITY,
   });
 }
 

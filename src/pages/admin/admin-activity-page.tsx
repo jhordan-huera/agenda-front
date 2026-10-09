@@ -133,7 +133,7 @@ export default function AdminActivityPage() {
 
       <EmailOutboxCard
         outbox={emails}
-        description="Todos los emails de la plataforma: altas, contraseñas, reservas y recordatorios."
+        description="Todos los emails de la plataforma: altas, enlaces de contraseña, reservas y recordatorios."
       />
     </div>
   );

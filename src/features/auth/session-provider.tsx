@@ -81,22 +81,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [applySession]);
 
-  useEffect(
-    () =>
-      // La API respondió 401 (sesión caducada o cerrada desde otro dispositivo): se vuelve a
-      // leer la sesión y, si ya no existe, los layouts redirigen al login.
-      queryClient.getQueryCache().subscribe((event) => {
-        if (
-          event.type === "updated" &&
-          event.action.type === "error" &&
-          event.action.error instanceof DataError &&
-          event.action.error.code === "unauthorized"
-        ) {
-          void refresh();
-        }
-      }),
-    [queryClient, refresh],
-  );
+  useEffect(() => {
+    // La API respondió 401 (sesión caducada o cerrada desde otro dispositivo): se vuelve a leer la
+    // sesión y, si ya no existe, los layouts redirigen al login. Con `two_factor_required` (super admin
+    // sin la verificación en dos pasos), la sesión nueva lo dice y el panel le pide activarla.
+    const needsSession = (error: unknown) =>
+      error instanceof DataError && (error.code === "unauthorized" || error.code === "two_factor_required");
+    const queries = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type === "updated" && event.action.type === "error" && needsSession(event.action.error)) void refresh();
+    });
+    const mutations = queryClient.getMutationCache().subscribe((event) => {
+      if (event.type === "updated" && event.action.type === "error" && needsSession(event.action.error)) void refresh();
+    });
+    return () => {
+      queries();
+      mutations();
+    };
+  }, [queryClient, refresh]);
 
   const updateSupport = useCallback((business: SupportBusiness | null) => {
     writeSupport(business);

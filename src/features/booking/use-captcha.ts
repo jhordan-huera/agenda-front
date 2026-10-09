@@ -2,10 +2,10 @@ import { useCallback, useRef, type RefObject } from "react";
 import { DataError } from "@/lib/data";
 
 /**
- * CAPTCHA de la página de reservas (Cloudflare Turnstile), en modo "sólo si hace falta": casi
- * nadie lo ve; si Cloudflare duda, aparece una casilla para marcar. Cada token sirve para una
- * sola petición, así que `getToken` pide uno nuevo cada vez (buscar la cédula y reservar).
- * Sin `siteKey` (el negocio no lo pide) no carga nada y `getToken` devuelve undefined.
+ * CAPTCHA de la página de reservas y del registro (Cloudflare Turnstile), en modo "sólo si hace
+ * falta": casi nadie lo ve; si Cloudflare duda, aparece una casilla para marcar. Cada token sirve
+ * para una sola petición, así que `getToken` pide uno nuevo cada vez (cada intento de reservar).
+ * Sin `siteKey` (la API no lo pide) no carga nada y `getToken` devuelve undefined.
  */
 
 interface TurnstileApi {

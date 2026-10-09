@@ -7,6 +7,7 @@ import { isStaleAssetError, reloadForNewVersion } from "@/lib/new-version";
 import ForgotPasswordPage from "@/pages/auth/forgot-password-page";
 import LoginPage from "@/pages/auth/login-page";
 import RegisterPage from "@/pages/auth/register-page";
+import SetPasswordPage from "@/pages/auth/set-password-page";
 import LandingPage from "@/pages/landing-page";
 import NotFoundPage from "@/pages/not-found-page";
 import RouteErrorPage from "@/pages/route-error-page";
@@ -38,6 +39,11 @@ export const router = createBrowserRouter([
           { path: "/register", Component: RegisterPage },
           { path: "/forgot-password", Component: ForgotPasswordPage },
         ],
+      },
+      {
+        // Enlace de un solo uso para definir la contraseña (lo envía el soporte): sin sesión.
+        element: <AuthLayout allowSession />,
+        children: [{ path: "/definir-contrasena", Component: SetPasswordPage }],
       },
       { path: "/onboarding", lazy: lazyPage(() => import("@/pages/onboarding-page")) },
       {

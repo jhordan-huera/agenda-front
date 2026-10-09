@@ -18,7 +18,8 @@ export function useUpdateProfile() {
   const { session } = useSession();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: ProfileInput) => data.users.update(session!.userId, input),
+    /** `currentPassword`: obligatoria si cambia el email (con el que se inicia sesión). */
+    mutationFn: (input: ProfileInput & { currentPassword?: string }) => data.users.update(session!.userId, input),
     onSuccess: (user) => {
       queryClient.setQueryData(queryKeys.user(user.id), user);
       // Su nombre y su foto son los de su agenda: también cambian en la lista de profesionales y en la página pública.

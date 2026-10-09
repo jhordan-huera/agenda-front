@@ -31,3 +31,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Copias de seguridad de la base (agenda-backend): nunca en el repositorio público.
+/agenda360-*.sql
+*.sql.gz.enc
+*.sql.gz
+/backups/

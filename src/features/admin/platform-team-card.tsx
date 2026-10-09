@@ -18,8 +18,9 @@ import { getErrorMessage } from "@/lib/data";
 import { formatDateTime, getFullName } from "@/lib/format";
 import { platformAdminSchema, type PlatformAdminInput } from "@/lib/validations/admin";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import type { PlatformAdmin } from "@/types";
-import { useSetPasswordDialog } from "./use-set-password-dialog";
+import type { AddedPlatformAdmin, PlatformAdmin } from "@/types";
+import { AccountCreatedStep } from "./password-link-panel";
+import { usePasswordLinkDialog } from "./use-password-link-dialog";
 
 /**
  * Equipo de la plataforma: los super admins que ayudan con el soporte. Pueden hacer todo en el
@@ -30,7 +31,7 @@ export function PlatformTeamCard() {
   const isOwner = Boolean(session?.platformOwner);
   const team = usePlatformAdmins();
   const setActive = useSetUserActive();
-  const passwordDialog = useSetPasswordDialog();
+  const passwordDialog = usePasswordLinkDialog();
   const [adding, setAdding] = useState(false);
   const [disabling, setDisabling] = useState<PlatformAdmin | null>(null);
 
@@ -94,7 +95,7 @@ export function PlatformTeamCard() {
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-amber-700">
-                          <ShieldAlert className="size-3.5" aria-hidden /> Sin verificación en dos pasos
+                          <ShieldAlert className="size-3.5" aria-hidden /> Sin verificación en dos pasos (la activará al entrar)
                         </span>
                       )}
                       <span>{admin.lastSignInAt ? `Último acceso: ${formatDateTime(admin.lastSignInAt)}` : "Aún no ha entrado"}</span>
@@ -105,9 +106,10 @@ export function PlatformTeamCard() {
                       <Button
                         size="sm"
                         variant="outline"
+                        title="Enviar enlace para definir contraseña"
                         onClick={() => passwordDialog.request({ id: user.id, name, email: user.email })}
                       >
-                        <KeyRound /> Contraseña
+                        <KeyRound /> Enlace de contraseña
                       </Button>
                       {user.isActive ? (
                         <Button size="sm" variant="outline" onClick={() => setDisabling(admin)}>
@@ -148,7 +150,7 @@ export function PlatformTeamCard() {
   );
 }
 
-const EMPTY: PlatformAdminInput = { firstName: "", lastName: "", email: "", password: "" };
+const EMPTY: PlatformAdminInput = { firstName: "", lastName: "", email: "" };
 
 function AddPlatformAdminDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
@@ -165,6 +167,7 @@ function AddPlatformAdminForm({ onDone }: { onDone: () => void }) {
   const add = useAddPlatformAdmin();
   const [values, setValues] = useState<PlatformAdminInput>(EMPTY);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [added, setAdded] = useState<AddedPlatformAdmin | null>(null);
   const set = <K extends keyof PlatformAdminInput>(key: K, value: PlatformAdminInput[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => {
@@ -180,13 +183,23 @@ function AddPlatformAdminForm({ onDone }: { onDone: () => void }) {
     setErrors(validation.errors);
     if (!validation.success) return;
     try {
-      const admin = await add.mutateAsync(validation.data);
-      toast.success(`${admin.user.firstName} ya es super admin. Le enviamos sus datos de acceso a ${admin.user.email}`);
-      onDone();
+      setAdded(await add.mutateAsync(validation.data));
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
   };
+
+  if (added) {
+    return (
+      <AccountCreatedStep
+        title={`${added.admin.user.firstName} ya es super admin`}
+        description="Al entrar por primera vez tendrá que activar la verificación en dos pasos: es obligatoria para los super admins."
+        link={added.passwordLink}
+        firstName={added.admin.user.firstName}
+        onDone={onDone}
+      />
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-4">
@@ -195,8 +208,8 @@ function AddPlatformAdminForm({ onDone }: { onDone: () => void }) {
           <UserPlus className="size-5 text-primary" aria-hidden /> Agregar un super admin
         </DialogTitle>
         <DialogDescription>
-          Podrá entrar al panel de plataforma y gestionar negocios en modo soporte. Le enviaremos un email con su email de
-          acceso y la contraseña que escribas.
+          Podrá entrar al panel de plataforma y gestionar negocios en modo soporte. Le enviaremos un email con un enlace
+          para que defina su contraseña (nadie más la conoce) y, al entrar, activará la verificación en dos pasos.
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -209,17 +222,6 @@ function AddPlatformAdminForm({ onDone }: { onDone: () => void }) {
       </div>
       <FormField label="Email" error={errors.email} hint="Una cuenta aparte: no puede ser el email de un negocio.">
         {(field) => <Input {...field} type="email" value={values.email} onChange={(e) => set("email", e.target.value)} />}
-      </FormField>
-      <FormField label="Contraseña" error={errors.password} hint="Mínimo 8 caracteres. Pídele que active la verificación en dos pasos al entrar.">
-        {(field) => (
-          <Input
-            {...field}
-            autoComplete="off"
-            className="font-mono"
-            value={values.password}
-            onChange={(e) => set("password", e.target.value)}
-          />
-        )}
       </FormField>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>

@@ -1,5 +1,7 @@
 import { api } from "@/lib/api/client";
 import type {
+  AddedPlatformAdmin,
+  AddedTeamMember,
   AdminAuditLog,
   AdminBusinessDetail,
   AdminBusinessCategory,
@@ -30,12 +32,12 @@ import type {
   PlatformStats,
   Professional,
   PublicBusinessProfile,
-  PublicClientLookup,
   Schedule,
   Service,
   Subscription,
   TeamMember,
   User,
+  PasswordLink,
   PlatformAdmin,
 } from "@/types";
 import type { AdminCreateBusinessResult, DataRepository } from "./repository";
@@ -177,10 +179,9 @@ export const apiRepository: DataRepository = {
 
   publicBooking: {
     getProfile: (slug) => api.get<PublicBusinessProfile | null>(`/public/businesses/${id(slug)}`),
-    lookupClient: (slug, documentId, captchaToken) =>
-      api.post<PublicClientLookup>(`/public/businesses/${id(slug)}/clients/lookup`, { documentId, captchaToken }),
     book: (slug, input, captchaToken) =>
       api.post<BookingConfirmation>(`/public/businesses/${id(slug)}/bookings`, { ...input, captchaToken }),
+    getCaptchaSiteKey: async () => (await api.get<{ siteKey: string | null }>("/public/captcha")).siteKey,
     getPayment: (token) => api.get<PublicPayment>(`/public/payments/${id(token)}`),
     requestReceiptUpload: (token, input) => api.post<PaymentReceiptUpload>(`/public/payments/${id(token)}/receipts`, input),
     completeReceiptUpload: (token, receiptId) =>
@@ -217,13 +218,13 @@ export const apiRepository: DataRepository = {
     rejectPlanRequest: (requestId, input) => api.post<void>(`/admin/plan-requests/${id(requestId)}/reject`, input),
     listUsers: () => api.get<AdminUserSummary[]>("/admin/users"),
     setUserActive: (userId, isActive) => api.patch<User>(`/admin/users/${id(userId)}/active`, { isActive }),
-    setUserPassword: (userId, input) => api.put<void>(`/admin/users/${id(userId)}/password`, input),
+    sendPasswordLink: (userId) => api.post<PasswordLink>(`/admin/users/${id(userId)}/password-link`),
     listPlatformAdmins: () => api.get<PlatformAdmin[]>("/admin/platform-admins"),
-    addPlatformAdmin: (input) => api.post<PlatformAdmin>("/admin/platform-admins", input),
+    addPlatformAdmin: (input) => api.post<AddedPlatformAdmin>("/admin/platform-admins", input),
     addBusinessMember: (businessId, input) =>
-      api.post<TeamMember>(`/admin/businesses/${id(businessId)}/members`, input),
+      api.post<AddedTeamMember>(`/admin/businesses/${id(businessId)}/members`, input),
     assignBusinessOwner: (businessId, input) =>
-      api.post<TeamMember>(`/admin/businesses/${id(businessId)}/owner`, input),
+      api.post<AddedTeamMember>(`/admin/businesses/${id(businessId)}/owner`, input),
     listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),
     listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),

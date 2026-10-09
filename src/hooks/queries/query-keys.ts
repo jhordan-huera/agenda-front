@@ -31,6 +31,8 @@ export const queryKeys = {
   publicProfile: (slug: string) => ["public-profile", slug] as const,
   /** Enlace de pago de una cita (/pago/:token). */
   publicPayment: (token: string) => ["public-payment", token] as const,
+  /** Site Key del CAPTCHA del registro. */
+  captchaSiteKey: ["captcha-site-key"] as const,
   platformSettings: ["platform-settings"] as const,
   /** Verificación en dos pasos de la propia cuenta. */
   twoFactor: ["two-factor"] as const,

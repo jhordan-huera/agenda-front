@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/client";
-import type { RecoveryCodes, TwoFactorChallenge, TwoFactorSetup, TwoFactorStatus } from "@/types";
+import type { PasswordLinkInfo, RecoveryCodes, TwoFactorChallenge, TwoFactorSetup, TwoFactorStatus } from "@/types";
 import type { AuthService, Session } from "./types";
 
 /**
@@ -13,6 +13,9 @@ export const apiAuthService: AuthService = {
   signUp: (input) => api.post<Session>("/auth/register", input),
   signOut: () => api.post<void>("/auth/logout"),
   changePassword: (input) => api.post<void>("/auth/change-password", input),
+  // El token va en el cuerpo, no en la URL de la API: así no queda en los registros del servidor.
+  checkPasswordLink: (token) => api.post<PasswordLinkInfo>("/auth/password-link/check", { token }),
+  setPasswordWithLink: (input) => api.post<void>("/auth/password-link", input),
   twoFactor: {
     status: () => api.get<TwoFactorStatus>("/auth/two-factor"),
     setup: () => api.post<TwoFactorSetup>("/auth/two-factor/setup"),

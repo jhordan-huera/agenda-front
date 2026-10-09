@@ -12,6 +12,8 @@ export type DataErrorCode =
   /** Reserva pública: no se pudo pasar el CAPTCHA (la petición no llegó a enviarse). */
   | "captcha"
   | "unavailable"
+  /** Super admin sin la verificación en dos pasos (obligatoria): tiene que activarla para usar /admin y el modo soporte. */
+  | "two_factor_required"
   | "server";
 
 /** Error de la capa de datos con mensaje listo para mostrar al usuario. */

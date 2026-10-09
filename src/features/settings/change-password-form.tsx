@@ -5,13 +5,17 @@ import { PasswordInput } from "@/components/shared/password-input";
 import { authService } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/data";
 import { changePasswordSchema, type ChangePasswordInput } from "@/lib/validations/auth";
+import { NEW_PASSWORD_MIN_LENGTH } from "@/lib/validations/fields";
 import { validate } from "@/lib/validations/validate";
 import { SettingsSection } from "./settings-section";
 import { useSettingsForm } from "./use-settings-form";
 
 const EMPTY: ChangePasswordInput = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
-/** Cambio de la propia contraseña del super admin (las de los usuarios las pone él desde /admin). */
+/**
+ * Cambio de la propia contraseña (cualquier usuario): pide la actual y cierra las demás sesiones abiertas
+ * (otros navegadores o celulares). Si la olvidó, el soporte le envía un enlace para definir otra.
+ */
 export function ChangePasswordForm() {
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -24,7 +28,7 @@ export function ChangePasswordForm() {
     try {
       await authService.changePassword(result.data);
       reset(EMPTY);
-      toast.success("Contraseña actualizada");
+      toast.success("Contraseña actualizada", { description: "Cerramos tus sesiones en otros dispositivos." });
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -35,7 +39,7 @@ export function ChangePasswordForm() {
   return (
     <SettingsSection
       title="Contraseña"
-      description="La contraseña de tu cuenta de super admin."
+      description="Con la que inicias sesión. Al cambiarla se cierran tus sesiones abiertas en otros dispositivos."
       dirty={dirty}
       saving={saving}
       onSubmit={submit}
@@ -52,7 +56,7 @@ export function ChangePasswordForm() {
         )}
       </FormField>
       <div className="grid gap-5 sm:grid-cols-2">
-        <FormField label="Nueva contraseña" error={errors.newPassword} hint="Mínimo 8 caracteres.">
+        <FormField label="Nueva contraseña" error={errors.newPassword} hint={`Mínimo ${NEW_PASSWORD_MIN_LENGTH} caracteres.`}>
           {(field) => (
             <PasswordInput
               {...field}
