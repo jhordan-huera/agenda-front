@@ -27,3 +27,25 @@ export function reloadForNewVersion(): boolean {
   window.location.reload();
   return true;
 }
+
+const MAIN_SCRIPT = /\/assets\/(index-[\w-]+)\.js/;
+
+/** La versión de la app que corre en esta pestaña (su archivo principal, "index-AbC123"); null en desarrollo. */
+export function runningVersion(): string | null {
+  const script = document.querySelector<HTMLScriptElement>('script[type="module"][src*="/assets/index-"]');
+  return script?.src.match(MAIN_SCRIPT)?.[1] ?? null;
+}
+
+/**
+ * La versión publicada ahora: la del index.html del servidor (sin caché ni service worker, que no
+ * guarda "/"), o null si no se pudo saber.
+ */
+export async function publishedVersion(): Promise<string | null> {
+  try {
+    const response = await fetch(`/?version=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return null;
+    return (await response.text()).match(MAIN_SCRIPT)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
