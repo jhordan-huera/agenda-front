@@ -106,9 +106,9 @@ export default function PaymentPage() {
                 )
               }
             />
-          ) : payment.bankAccount ? (
+          ) : payment.bankAccounts.length > 0 ? (
             <BankTransferCard
-              bankAccount={payment.bankAccount}
+              bankAccounts={payment.bankAccounts}
               amount={payment.amount}
               currency={business.currency}
               token={token}

@@ -8,7 +8,7 @@ import { openPaymentReceipt, useAppointmentReceipts, useSetAppointmentPaid } fro
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { formatDateTime, formatLongDate } from "@/lib/format";
 import { RECEIPT_RETENTION_MONTHS } from "@/lib/validations/payment";
-import { getWhatsAppUrl } from "@/lib/whatsapp";
+import { describeBankAccounts, getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, Business, Client, Professional } from "@/types";
 import { paymentLinkOf } from "./appointment-utils";
 
@@ -37,14 +37,16 @@ export function AppointmentPayment({
   if (appointment.price <= 0 && !appointment.receiptAt && !appointment.paidAt) return null;
 
   const paid = Boolean(appointment.paidAt);
-  const transfers = Boolean(professional?.bankAccount);
+  const bankAccounts = professional?.bankAccounts ?? [];
+  const transfers = bankAccounts.length > 0;
   const link = paymentLinkOf(appointment);
+  // Los datos de todas las cuentas (vale cualquiera) y el enlace para enviar el comprobante.
   const whatsAppUrl =
     client?.phone && business && transfers && !paid
       ? getWhatsAppUrl(
           client.phone,
           business.timezone,
-          `Hola ${client.name.split(" ")[0]}, para pagar por transferencia tu cita de ${serviceName} del ${formatLongDate(appointment.date)} a las ${appointment.startTime}, aquí tienes los datos y puedes enviarnos el comprobante: ${link}`,
+          `Hola ${client.name.split(" ")[0]}, para pagar por transferencia tu cita de ${serviceName} del ${formatLongDate(appointment.date)} a las ${appointment.startTime}, ${bankAccounts.length === 1 ? "estos son los datos" : "puedes transferir a cualquiera de estas cuentas"}:\n${describeBankAccounts(bankAccounts)}\n\nCuando transfieras, envíanos el comprobante aquí: ${link}`,
         )
       : null;
 

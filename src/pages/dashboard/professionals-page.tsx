@@ -1,4 +1,4 @@
-import { CalendarClock, Contact, Mail, MoreHorizontal, Pencil, Plus, Power, Trash2, UserRound } from "lucide-react";
+import { CalendarClock, Contact, Landmark, Mail, MoreHorizontal, Pencil, Plus, Power, Trash2, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -88,7 +88,7 @@ function ProfessionalsPageContent() {
   const atLimit = limit !== null && active >= limit;
 
   const toggleActive = async (professional: Professional) => {
-    const { displayName, title, avatarUrl, color, email, meetingUrl, bankAccount, userId, allServices, serviceIds, notifyNewAppointments, dailyAgenda } =
+    const { displayName, title, avatarUrl, color, email, meetingUrl, bankAccounts, userId, allServices, serviceIds, notifyNewAppointments, dailyAgenda } =
       professional;
     try {
       await save.mutateAsync({
@@ -100,7 +100,7 @@ function ProfessionalsPageContent() {
           color,
           email,
           meetingUrl,
-          bankAccount,
+          bankAccounts,
           userId,
           allServices,
           serviceIds,
@@ -269,6 +269,11 @@ function ProfessionalCard({
               : "Sin avisos por email"}
           </dd>
         </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Landmark className="size-4 shrink-0" aria-hidden />
+          <dt className="sr-only">Cobro por transferencia</dt>
+          <dd className="truncate">{describeBankAccounts(professional)}</dd>
+        </div>
         <div>
           <dt className="sr-only">Servicios</dt>
           <dd className="line-clamp-2 text-muted-foreground">{serviceNames}</dd>
@@ -276,6 +281,12 @@ function ProfessionalCard({
       </dl>
     </Card>
   );
+}
+
+/** Resumen de sus datos bancarios: el banco si tiene una cuenta, "2 cuentas bancarias" si tiene varias. */
+function describeBankAccounts({ bankAccounts }: Professional): string {
+  if (bankAccounts.length === 0) return "Sin cobro por transferencia";
+  return bankAccounts.length === 1 ? bankAccounts[0].bank : `${bankAccounts.length} cuentas bancarias`;
 }
 
 /** Privacidad entre profesionales: qué pacientes ve quien tiene el rol Profesional. */

@@ -1,7 +1,7 @@
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
-import { TIMEZONES } from "@/lib/constants/business";
+import { BANK_ACCOUNT_TYPE_LABELS, TIMEZONES } from "@/lib/constants/business";
 import { formatDate } from "@/lib/format";
-import type { Appointment, AppointmentStatus, Business, ISODate, WhatsAppNoticeKind } from "@/types";
+import type { Appointment, AppointmentStatus, BankAccount, Business, ISODate, WhatsAppNoticeKind } from "@/types";
 
 /**
  * Enlaces "click to chat" de WhatsApp (https://wa.me): abren la conversación con el
@@ -58,6 +58,23 @@ export function getReceiptWhatsAppUrl(
     business.timezone,
     `Hola${who}. Te envío el comprobante de la transferencia de mi cita de ${appointment.serviceName} ${when}.`,
   );
+}
+
+/**
+ * Las cuentas de una agenda en un mensaje, una por línea ("Banco Pichincha · Ahorros · N.º 2200123456 ·
+ * Titular: Ana Ruiz"), numeradas si son varias (el paciente transfiere a cualquiera).
+ */
+export function describeBankAccounts(accounts: BankAccount[]): string {
+  const lines = accounts.map((account) =>
+    [
+      account.bank,
+      BANK_ACCOUNT_TYPE_LABELS[account.accountType],
+      `N.º ${account.number}`,
+      `Titular: ${account.holder}`,
+      ...(account.holderId ? [`Cédula/RUC: ${account.holderId}`] : []),
+    ].join(" · "),
+  );
+  return lines.length === 1 ? lines[0] : lines.map((line, index) => `${index + 1}. ${line}`).join("\n");
 }
 
 /**

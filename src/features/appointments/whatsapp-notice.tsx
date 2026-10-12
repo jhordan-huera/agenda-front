@@ -98,7 +98,7 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
       professionalName: professionals.length > 1 ? professional?.displayName : undefined,
       homeVisit: Boolean(appointment.homeVisit),
       virtual: appointment.isVirtual ? { meetingUrl: professional?.meetingUrl || null } : undefined,
-      paymentUrl: professional?.bankAccount && appointment.price > 0 && !appointment.paidAt ? paymentLinkOf(appointment) : undefined,
+      paymentUrl: professional?.bankAccounts.length && appointment.price > 0 && !appointment.paidAt ? paymentLinkOf(appointment) : undefined,
     });
     setNotice({ appointment, previous, kind, client, message });
   };

@@ -8,12 +8,14 @@ import { useUploadReceipt } from "@/hooks/queries/use-public-booking";
 import { BANK_ACCOUNT_TYPE_LABELS } from "@/lib/constants/business";
 import { DataError, getErrorMessage } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { fileContentType } from "@/lib/upload";
 import { RECEIPT_MAX_BYTES, RECEIPT_TYPES } from "@/lib/validations/payment";
 import type { BankAccount } from "@/types";
 
 interface BankTransferCardProps {
-  bankAccount: BankAccount;
+  /** Cuentas de la agenda (al menos una), la principal primero: vale cualquiera. */
+  bankAccounts: BankAccount[];
   /** Monto a transferir (null: el negocio no muestra el precio). */
   amount: number | null;
   currency: string;
@@ -29,12 +31,38 @@ interface BankTransferCardProps {
   paid?: boolean;
 }
 
+interface DataRow {
+  label: string;
+  value: string;
+  /** Con botón para copiarlo (número de cuenta, cédula/RUC). */
+  copy?: boolean;
+}
+
+/** Banco, tipo, número, titular y cédula/RUC (si la tiene) de una cuenta. */
+const accountRows = (account: BankAccount): DataRow[] => [
+  { label: "Banco", value: account.bank },
+  { label: "Tipo de cuenta", value: BANK_ACCOUNT_TYPE_LABELS[account.accountType] },
+  { label: "Número de cuenta", value: account.number, copy: true },
+  { label: "Titular", value: account.holder },
+  ...(account.holderId ? [{ label: "Cédula / RUC", value: account.holderId, copy: true }] : []),
+];
+
+async function copy(text: string, what: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success(`${what} copiado`);
+  } catch {
+    toast.error("No se pudo copiar");
+  }
+}
+
 /**
  * Datos para pagar la cita por transferencia y cómo enviar el comprobante: subirlo aquí (va al
- * almacenamiento privado del negocio) o mandarlo por WhatsApp.
+ * almacenamiento privado del negocio) o mandarlo por WhatsApp. Con varias cuentas, el paciente las
+ * ve todas, una debajo de otra, y transfiere a cualquiera (el comprobante sigue siendo uno por cita).
  */
 export function BankTransferCard({
-  bankAccount,
+  bankAccounts,
   amount,
   currency,
   token,
@@ -46,60 +74,42 @@ export function BankTransferCard({
   // Un comprobante por cita: enviado (ahora o antes), ya no se sube otro.
   const [sentHere, setSentHere] = useState(false);
   const sent = sentHere || receiptsSent > 0;
-  const rows = [
-    { label: "Banco", value: bankAccount.bank },
-    { label: "Tipo de cuenta", value: BANK_ACCOUNT_TYPE_LABELS[bankAccount.accountType] },
-    { label: "Número de cuenta", value: bankAccount.number, copy: true },
-    { label: "Titular", value: bankAccount.holder },
-    ...(bankAccount.holderId ? [{ label: "Cédula / RUC", value: bankAccount.holderId, copy: true }] : []),
-    ...(amount !== null ? [{ label: "Monto", value: formatPrice(amount, currency) }] : []),
-  ];
-
-  const copy = async (text: string, what: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(`${what} copiado`);
-    } catch {
-      toast.error("No se pudo copiar");
-    }
-  };
+  const amountRow: DataRow[] = amount !== null ? [{ label: "Monto", value: formatPrice(amount, currency) }] : [];
+  const single = bankAccounts.length === 1;
 
   return (
-    <section className="rounded-2xl border bg-background p-5 sm:p-6" aria-labelledby="bank-transfer-title">
-      <h3 id="bank-transfer-title" className="flex items-center gap-2 text-lg font-bold">
-        <Landmark className="size-5 text-primary" aria-hidden /> Pago por transferencia
+    <section className="min-w-0 rounded-2xl border bg-background p-5 sm:p-6" aria-labelledby="bank-transfer-title">
+      <h3 id="bank-transfer-title" className="flex items-start gap-2 text-lg leading-snug font-bold">
+        <Landmark className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+        {single ? "Pago por transferencia" : "Transfiere a cualquiera de estas cuentas"}
       </h3>
-      <dl className="mt-4 divide-y border-y">
-        {rows.map((row) => (
-          <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
-            <dt className="text-sm text-muted-foreground">{row.label}</dt>
-            <dd className="flex items-center gap-1 text-right font-semibold">
-              <span className={row.copy ? "font-mono" : undefined}>{row.value}</span>
-              {row.copy && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7"
-                  aria-label={`Copiar ${row.label.toLowerCase()}`}
-                  onClick={() => copy(row.value, row.label)}
-                >
-                  <Copy className="size-3.5" aria-hidden />
-                </Button>
-              )}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="mt-3"
-        onClick={() => copy(rows.map((row) => `${row.label}: ${row.value}`).join("\n"), "Datos")}
-      >
-        <Copy aria-hidden /> Copiar todos los datos
-      </Button>
+      {single ? (
+        <>
+          <DataList rows={[...accountRows(bankAccounts[0]), ...amountRow]} className="mt-4" />
+          <CopyAllButton rows={[...accountRows(bankAccounts[0]), ...amountRow]} />
+        </>
+      ) : (
+        <>
+          {amountRow.length > 0 && <DataList rows={amountRow} className="mt-4" />}
+          <ol className="mt-4 grid gap-3">
+            {bankAccounts.map((account, index) => (
+              <li key={index} aria-label={`Cuenta ${index + 1}: ${account.bank}`} className="min-w-0 rounded-xl border p-3 sm:p-4">
+                <p className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                  <span className="min-w-0 font-bold [overflow-wrap:anywhere]">{account.bank}</span>
+                  <span className="text-sm text-muted-foreground">Cuenta {BANK_ACCOUNT_TYPE_LABELS[account.accountType].toLowerCase()}</span>
+                </p>
+                {/* Banco y tipo ya van en el encabezado de la cuenta. */}
+                <DataList rows={accountRows(account).slice(2)} className="mt-2" />
+                <CopyAllButton
+                  rows={[...accountRows(account), ...amountRow]}
+                  label="Copiar los datos"
+                  ariaLabel={`Copiar los datos de la cuenta de ${account.bank}`}
+                />
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
 
       {paid ? (
         <SuccessNote title="Pago confirmado" text="El negocio ya confirmó tu pago. ¡Gracias!" />
@@ -136,6 +146,50 @@ export function BankTransferCard({
         </div>
       )}
     </section>
+  );
+}
+
+/** Filas "Etiqueta: valor"; las de número y cédula, con su botón de copiar. */
+function DataList({ rows, className }: { rows: DataRow[]; className?: string }) {
+  return (
+    <dl className={cn("divide-y border-y", className)}>
+      {rows.map((row) => (
+        <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
+          <dt className="shrink-0 text-sm text-muted-foreground">{row.label}</dt>
+          <dd className="flex min-w-0 items-center gap-1 text-right font-semibold">
+            <span className={cn("min-w-0 [overflow-wrap:anywhere]", row.copy && "font-mono")}>{row.value}</span>
+            {row.copy && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 shrink-0"
+                aria-label={`Copiar ${row.label.toLowerCase()}`}
+                onClick={() => copy(row.value, row.label)}
+              >
+                <Copy className="size-3.5" aria-hidden />
+              </Button>
+            )}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** Copia todas las filas en texto ("Banco: …"), para pegarlas en la app del banco o en una nota. */
+function CopyAllButton({ rows, label = "Copiar todos los datos", ariaLabel }: { rows: DataRow[]; label?: string; ariaLabel?: string }) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="mt-3"
+      aria-label={ariaLabel}
+      onClick={() => copy(rows.map((row) => `${row.label}: ${row.value}`).join("\n"), "Datos")}
+    >
+      <Copy aria-hidden /> {label}
+    </Button>
   );
 }
 

@@ -19,7 +19,8 @@ interface BookingSuccessProps {
 
 /**
  * La cita queda apuntada: la hora reservada se marca con el resaltador. Si la agenda cobra por
- * transferencia, al lado (debajo en el móvil) van los datos para pagar y el envío del comprobante.
+ * transferencia, al lado (debajo en el móvil) van sus cuentas (todas, una debajo de otra) y el
+ * envío del comprobante.
  */
 export function BookingSuccess({ confirmation, business, clientName, onBookAnother }: BookingSuccessProps) {
   const currency = business.currency;
@@ -106,7 +107,7 @@ export function BookingSuccess({ confirmation, business, clientName, onBookAnoth
       </div>
       {payment && (
         <BankTransferCard
-          bankAccount={payment.bankAccount}
+          bankAccounts={payment.bankAccounts}
           amount={confirmation.showPrice ? confirmation.price : null}
           currency={currency}
           token={payment.token}
