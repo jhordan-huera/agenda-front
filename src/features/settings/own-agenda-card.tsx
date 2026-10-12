@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useSession } from "@/features/auth/use-session";
 import { usePermissions } from "@/features/auth/use-permissions";
 import { useMultiAgendaAccess } from "@/features/professionals/use-agendas";
-import { BankAccountFields } from "@/features/professionals/bank-account-fields";
+import { BankAccountsFields } from "@/features/professionals/bank-account-fields";
 import { useProfessionals, useSaveProfessional } from "@/hooks/queries/use-professionals";
 import { getErrorMessage } from "@/lib/data";
 import type { BankAccountInput } from "@/lib/validations/payment";
@@ -34,12 +34,12 @@ function OwnAgendaForm({ agenda }: { agenda: Professional }) {
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm({
     title: agenda.title,
     meetingUrl: agenda.meetingUrl,
-    bankAccount: inFormOrder(agenda.bankAccount),
+    bankAccounts: inFormOrder(agenda.bankAccounts),
   });
-  const setBankAccount = (bankAccount: BankAccountInput | null) => {
-    setField("bankAccount", bankAccount);
-    // Los errores de sus campos ("bankAccount.number"…) se corrigen al escribir.
-    setErrors((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !key.startsWith("bankAccount."))));
+  const setBankAccounts = (bankAccounts: BankAccountInput[]) => {
+    setField("bankAccounts", bankAccounts);
+    // Los errores de sus campos ("bankAccounts.1.number"…) se corrigen al escribir (y al ordenar o quitar una cuenta).
+    setErrors((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !key.startsWith("bankAccounts"))));
   };
 
   const submit = async () => {
@@ -49,7 +49,7 @@ function OwnAgendaForm({ agenda }: { agenda: Professional }) {
     if (!result.success) return;
     try {
       await save.mutateAsync({ id, input: result.data });
-      reset({ title: result.data.title, meetingUrl: result.data.meetingUrl, bankAccount: result.data.bankAccount });
+      reset({ title: result.data.title, meetingUrl: result.data.meetingUrl, bankAccounts: result.data.bankAccounts });
       toast.success("Agenda actualizada");
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -85,12 +85,21 @@ function OwnAgendaForm({ agenda }: { agenda: Professional }) {
           />
         )}
       </FormField>
-      <BankAccountFields value={values.bankAccount} onChange={setBankAccount} errors={errors} defaultHolder={agenda.displayName} />
+      <BankAccountsFields value={values.bankAccounts} onChange={setBankAccounts} errors={errors} defaultHolder={agenda.displayName} />
     </SettingsSection>
   );
 }
 
-/** La base devuelve las claves en otro orden: así no parece que hay cambios sin guardar. */
-function inFormOrder(account: BankAccount | null): BankAccountInput | null {
-  return account && { bank: account.bank, accountType: account.accountType, number: account.number, holder: account.holder, holderId: account.holderId };
+/**
+ * La base (jsonb) devuelve las claves de cada cuenta en otro orden: con el del formulario, no parece
+ * que hay cambios sin guardar.
+ */
+function inFormOrder(accounts: BankAccount[]): BankAccountInput[] {
+  return accounts.map((account) => ({
+    bank: account.bank,
+    accountType: account.accountType,
+    number: account.number,
+    holder: account.holder,
+    holderId: account.holderId,
+  }));
 }

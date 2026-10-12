@@ -132,8 +132,8 @@ src/
   datos". Si se pierde la respuesta y el paciente vuelve a confirmar, la confirmación no repite los
   datos para pagar: dice "Revisa tu email para pagar". Los topes del día (reservas online, clientes
   nuevos), el CAPTCHA y los datos que no coinciden se muestran junto al botón de reservar, con el
-  WhatsApp del negocio. En el panel, cédula y email son obligatorios al registrar un cliente, y el
-  buscador encuentra por cédula.
+  WhatsApp del negocio. En el panel, los datos obligatorios del cliente dependen del negocio (por
+  defecto, cédula y email; ver «Datos obligatorios del paciente»), y el buscador encuentra por cédula.
 - **Gestionar negocio** (panel `/admin` → negocio): el super admin abre el panel de cualquier
   negocio con permisos de propietario (servicios, horarios, citas, clientes, configuración). Un
   aviso arriba indica el modo soporte; lo que crea o cambia queda en la actividad del negocio con su
@@ -186,6 +186,16 @@ active con una app de autenticación. Después, el panel aparece solo.
   cambio de plan, suspender/reactivar y restablecer la contraseña del propietario.
   Un negocio suspendido no puede usar el panel (ve un aviso con el email de soporte) y su
   página pública deja de estar disponible.
+- **Datos obligatorios del paciente** (ficha del negocio, `features/admin/client-required-fields-card.tsx`):
+  un interruptor por dato (Cédula, Email, Teléfono, Dirección; el Nombre siempre) decide qué pide el
+  panel de ese negocio al crear o editar un paciente. Por defecto, cédula y email, como hasta ahora.
+  Sólo el super admin lo cambia (el negocio no lo ve en su configuración) y queda en la actividad del
+  negocio. La reserva online no cambia: pide siempre cédula, nombre, email y teléfono. El formulario
+  del paciente (`client-form-dialog.tsx`, también «+ Nuevo» en la nueva cita y el modo soporte) usa
+  la configuración del negocio (`Business.clientRequiredFields`): «(opcional)» sólo en los que no lo
+  son, y valida con `clientSchemaFor` (`lib/validations/client.ts`), el mismo esquema que la API. A
+  un paciente antiguo al que le falta un dato que ahora es obligatorio hay que completárselo para
+  guardar su ficha o sus notas.
 - **Usuarios**: todas las cuentas con su negocio y rol; desactivar/reactivar acceso y
   restablecer contraseña (contraseña temporal enviada por email).
 - **Planes**: precios, límites, negocios e ingresos por plan.
@@ -274,17 +284,21 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   Categorías del admin, y los procedimientos y diagnósticos de la historia clínica. Las pestañas de
   Configuración van en cuadrícula y "Tu día" cabe entero (sin deslizar). En pantallas anchas, las
   tablas y la rejilla de siempre; al imprimir, siempre las tablas.
-- **Pago por transferencia**: cada agenda puede tener datos bancarios
-  (`features/professionals/bank-account-fields.tsx`; en Free y Pro, en Configuración → Perfil).
-  Al reservar un servicio con precio, la pantalla final muestra los datos y el monto
-  (`features/payments/bank-transfer-card.tsx`) para copiarlos, subir el comprobante (foto o PDF,
+- **Pago por transferencia**: cada agenda puede tener **hasta 3 cuentas bancarias**
+  (`features/professionals/bank-account-fields.tsx`: «Agregar otra cuenta», «Quitar» y subir o bajar;
+  la primera es la principal; en Business, en Profesionales → Editar, y la tarjeta dice el banco o
+  «2 cuentas bancarias»; en Free y Pro, en Configuración → Perfil). Al reservar un servicio con
+  precio, la pantalla final muestra **todas** las cuentas, una debajo de otra, y el monto
+  (`features/payments/bank-transfer-card.tsx`; con varias, «Transfiere a cualquiera de estas
+  cuentas»), cada una con sus botones de copiar, y deja subir el comprobante (foto o PDF,
   10 MB, directo a Supabase Storage con URL firmada; las fotos se reducen antes en el navegador,
   `prepareReceipt` en `lib/upload.ts`) o mandarlo por WhatsApp. Uno por cita: enviado, en su lugar sale
   «Comprobante enviado» en verde (y, si se equivocó de archivo, el enlace a WhatsApp). Los
   comprobantes se borran 3 meses después de la cita (cron del backend). El enlace privado
-  `/pago/:token` (`pages/payment-page.tsx`, sin sesión) llega en el email de la reserva y en el aviso
-  de confirmación por WhatsApp. En la ficha de la cita (`appointment-payment.tsx`): ver los
-  comprobantes, "Marcar como pagada", copiar o enviar el enlace de pago; la agenda marca
+  `/pago/:token` (`pages/payment-page.tsx`, sin sesión, también con todas las cuentas) llega en el
+  email de la reserva (que lista todas) y en el aviso de confirmación por WhatsApp. En la ficha de la
+  cita (`appointment-payment.tsx`): ver los comprobantes, "Marcar como pagada", copiar el enlace de
+  pago o enviar por WhatsApp los datos de todas las cuentas con el enlace; la agenda marca
   "Comprobante" en las citas por revisar y `?appointment=<id>` en el calendario abre su ficha
   (enlace del email al negocio).
 - **Logos y fotos**: `ImageUploadField` reduce la imagen en el navegador (WebP, 512–800 px) y la sube

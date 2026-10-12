@@ -205,6 +205,8 @@ export const apiRepository: DataRepository = {
       api.put<Subscription>(`/admin/businesses/${id(businessId)}/plan`, { plan }),
     setMaxProfessionals: (businessId, maxProfessionals) =>
       api.put<Subscription>(`/admin/businesses/${id(businessId)}/max-professionals`, { maxProfessionals }),
+    setClientRequiredFields: (businessId, fields) =>
+      api.put<Business>(`/admin/businesses/${id(businessId)}/client-required-fields`, fields),
     deleteBusiness: (businessId, input) => api.delete(`/admin/businesses/${id(businessId)}`, input),
     listCategories: () => api.get<AdminBusinessCategory[]>("/admin/categories"),
     createCategory: (input) => api.post<BusinessCategoryInfo>("/admin/categories", input),

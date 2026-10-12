@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { optionalEmailField, optionalText, requiredText } from "./fields";
 import { imageUrlField } from "./images";
-import { bankAccountSchema } from "./payment";
+import { bankAccountsSchema } from "./payment";
 
 /** Ficha de un profesional (su agenda). La crean el propietario y los administradores. */
 export const professionalSchema = z
@@ -24,8 +24,8 @@ export const professionalSchema = z
       .max(300, "El enlace es demasiado largo")
       .refine((value) => value === "" || /^https:\/\/\S+$/.test(value), "Pega el enlace completo (empieza con https://)")
       .default(""),
-    /** Cuenta para el pago por transferencia; null: no cobra por transferencia. */
-    bankAccount: bankAccountSchema.nullable().default(null),
+    /** Cuentas para el pago por transferencia (hasta 3, la primera es la principal); vacía: no cobra por transferencia. */
+    bankAccounts: bankAccountsSchema.default([]),
     /** Miembro del equipo que usa esta agenda (null: no entra al sistema). */
     userId: z.string().nullable().default(null),
     allServices: z.boolean(),

@@ -1,15 +1,50 @@
 import { z } from "zod";
-import { optionalDocumentIdField, optionalEmailField, optionalText, phoneField, requiredText } from "./fields";
+import type { ClientRequiredFields } from "@/types";
+import {
+  optionalDocumentIdField,
+  optionalEmailField,
+  optionalText,
+  phoneField,
+  requiredPhoneField,
+  requiredText,
+} from "./fields";
 
-export const clientSchema = z.object({
-  name: requiredText("El nombre"),
-  /** Cédula o documento: único por negocio (identifica al cliente en las reservas online). */
-  documentId: optionalDocumentIdField,
-  email: optionalEmailField,
-  phone: phoneField,
-  address: optionalText(200),
-  notes: optionalText(2000),
-  isActive: z.boolean(),
-});
+/** Qué datos del paciente son obligatorios en un negocio (sólo lo cambia el super admin). */
+export const clientRequiredFieldsSchema = z.object(
+  {
+    documentId: z.boolean(),
+    email: z.boolean(),
+    phone: z.boolean(),
+    address: z.boolean(),
+  },
+  { error: "Indica qué datos del paciente son obligatorios" },
+);
 
-export type ClientInput = z.infer<typeof clientSchema>;
+/**
+ * Ficha del paciente desde el panel, con los datos obligatorios del negocio
+ * (Business.clientRequiredFields). El nombre lo es siempre. Lo que se escribe tiene que ser válido
+ * aunque sea opcional: la cédula sólo con números (en Ecuador, además, con su dígito verificador: ver
+ * documentIdError), el email y el teléfono con su formato. La reserva online tiene su propio esquema
+ * (publicBookingSchema): pide siempre cédula, nombre, email y teléfono.
+ */
+export function clientSchemaFor(required: ClientRequiredFields) {
+  return z.object({
+    name: requiredText("El nombre"),
+    /** Cédula o documento: único por negocio (identifica al cliente en las reservas online). */
+    documentId: required.documentId
+      ? optionalDocumentIdField.refine((value) => value !== "", "La cédula es obligatoria")
+      : optionalDocumentIdField,
+    email: required.email
+      ? optionalEmailField.refine((value) => value !== "", "El email es obligatorio")
+      : optionalEmailField,
+    phone: required.phone ? requiredPhoneField : phoneField,
+    address: required.address
+      ? optionalText(200).refine((value) => value !== "", "La dirección es obligatoria")
+      : optionalText(200),
+    notes: optionalText(2000),
+    isActive: z.boolean(),
+  });
+}
+
+export type ClientInput = z.infer<ReturnType<typeof clientSchemaFor>>;
+export type ClientRequiredFieldsInput = z.infer<typeof clientRequiredFieldsSchema>;

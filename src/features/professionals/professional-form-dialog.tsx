@@ -17,7 +17,7 @@ import { useErrorToast } from "@/hooks/use-error-toast";
 import { getInitials } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
-import { BankAccountFields } from "./bank-account-fields";
+import { BankAccountsFields } from "./bank-account-fields";
 import { PROFESSIONAL_COLORS } from "./colors";
 import { professionalSchema, type ProfessionalInput } from "@/lib/validations/professional";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
@@ -65,7 +65,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
     color: professional?.color ?? PROFESSIONAL_COLORS.find((color) => !usedColors.has(color)) ?? PROFESSIONAL_COLORS[0],
     email: professional?.email ?? "",
     meetingUrl: professional?.meetingUrl ?? "",
-    bankAccount: professional?.bankAccount ?? null,
+    bankAccounts: professional?.bankAccounts ?? [],
     userId: professional?.userId ?? null,
     allServices: professional?.allServices ?? true,
     serviceIds: professional?.serviceIds ?? [],
@@ -75,6 +75,11 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
   }));
   const set = <K extends keyof ProfessionalInput>(key: K, value: ProfessionalInput[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
+  const setBankAccounts = (bankAccounts: ProfessionalInput["bankAccounts"]) => {
+    set("bankAccounts", bankAccounts);
+    // Al ordenar o quitar una cuenta, sus errores ("bankAccounts.1.number"…) ya no corresponden a su posición.
+    setErrors((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !key.startsWith("bankAccounts"))));
+  };
 
   // Miembros del equipo que aún no tienen agenda (y el elegido aquí: al guardar un profesional nuevo,
   // la lista recargada ya lo trae con ese usuario y el selector se quedaba en blanco).
@@ -229,9 +234,9 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
           />
         )}
       </FormField>
-      <BankAccountFields
-        value={values.bankAccount}
-        onChange={(bankAccount) => set("bankAccount", bankAccount)}
+      <BankAccountsFields
+        value={values.bankAccounts}
+        onChange={setBankAccounts}
         errors={errors}
         defaultHolder={values.displayName}
       />

@@ -30,6 +30,7 @@ import { AdminAuditList } from "@/features/admin/admin-audit-list";
 import { BusinessStatusBadge, PlanBadge } from "@/features/admin/business-badges";
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
 import { AddOwnerDialog } from "@/features/admin/add-owner-dialog";
+import { ClientRequiredFieldsCard } from "@/features/admin/client-required-fields-card";
 import { DeleteBusinessDialog } from "@/features/admin/delete-business-dialog";
 import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
 import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
@@ -251,6 +252,8 @@ export default function AdminBusinessDetailPage() {
               </ul>
             </CardContent>
           </Card>
+
+          <ClientRequiredFieldsCard key={business.id} business={business} />
 
           <Card>
             <CardHeader>
