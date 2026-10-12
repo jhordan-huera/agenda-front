@@ -275,7 +275,21 @@ function AppointmentDetails({
           </div>
         </section>
 
-        {client && (
+        {client?.restricted && (
+          <>
+            <Separator />
+            <section aria-labelledby="client-heading" className="space-y-2">
+              <h3 id="client-heading" className="text-sm font-semibold text-muted-foreground">
+                Cliente
+              </h3>
+              <p className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
+                Es una reserva online de un paciente que ya estaba en el negocio. Podrás abrir su ficha y su historia cuando
+                recepción, un administrador o el propietario confirme o gestione la cita.
+              </p>
+            </section>
+          </>
+        )}
+        {client && !client.restricted && (
           <>
             <Separator />
             <section aria-labelledby="client-heading" className="space-y-3">
@@ -353,7 +367,7 @@ function AppointmentDetails({
         destructive
         onConfirm={() => changeStatus("cancelled")}
       />
-      {client && clinicalAccess && (
+      {client && !client.restricted && clinicalAccess && (
         <ClinicalNoteDialog
           open={noteOpen}
           onOpenChange={setNoteOpen}

@@ -70,7 +70,6 @@ import type {
   Professional,
   ProfessionalScope,
   PublicBusinessProfile,
-  PublicClientLookup,
   Schedule,
   Service,
   Subscription,
@@ -93,8 +92,11 @@ import type {
 
 export interface UserRepository {
   getById(userId: string): Promise<User | null>;
-  /** Sólo el propio usuario puede editar su perfil. */
-  update(userId: string, input: ProfileInput): Promise<User>;
+  /**
+   * Sólo el propio usuario puede editar su perfil. Para cambiar el email hace falta `currentPassword`
+   * (falla con `validation` si no viene o no es la correcta).
+   */
+  update(userId: string, input: ProfileInput & { currentPassword?: string }): Promise<User>;
 }
 
 export interface CreateBusinessInput extends OnboardingInput {
@@ -261,12 +263,13 @@ export interface AuditLogRepository {
 export interface PublicBookingRepository {
   getProfile(slug: string): Promise<PublicBusinessProfile | null>;
   /**
-   * ¿La cédula ya es de un cliente del negocio? Sin datos de contacto (sólo un nombre para saludar).
+   * Revalida la disponibilidad, los topes del día y el plan, une la reserva a la ficha de la cédula
+   * (si coinciden su email o su teléfono) o crea el cliente, crea la cita y envía emails.
    * `captchaToken`: token de Turnstile, si el perfil trae `captchaSiteKey` (cada token sirve una vez).
    */
-  lookupClient(slug: string, documentId: string, captchaToken?: string): Promise<PublicClientLookup>;
-  /** Revalida la disponibilidad y el plan, crea/reutiliza el cliente (por email), crea la cita y envía emails. */
   book(slug: string, input: PublicBookingInput, captchaToken?: string): Promise<BookingConfirmation>;
+  /** Site Key del CAPTCHA de las páginas sin negocio (el registro); null: no se pide. */
+  getCaptchaSiteKey(): Promise<string | null>;
   /** Enlace de pago de una cita (/pago/:token): datos para transferir y comprobantes enviados. */
   getPayment(token: string): Promise<PublicPayment>;
   requestReceiptUpload(token: string, input: ReceiptInput): Promise<PaymentReceiptUpload>;
@@ -309,7 +312,7 @@ export interface PlatformAdminRepository {
   getStats(): Promise<PlatformStats>;
   listBusinesses(): Promise<AdminBusinessSummary[]>;
   getBusiness(businessId: string): Promise<AdminBusinessDetail | null>;
-  /** Crea el negocio y su propietario (cuenta nueva o una existente sin negocio) con la contraseña elegida. */
+  /** Crea el negocio, todavía sin propietario (se agrega después con assignBusinessOwner). */
   createBusiness(input: AdminBusinessInput): Promise<AdminCreateBusinessResult>;
   /** Suspender bloquea el panel y la página pública del negocio; reactivar lo devuelve a la normalidad. */
   setBusinessStatus(businessId: string, status: BusinessStatus): Promise<Business>;

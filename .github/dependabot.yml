@@ -1,0 +1,14 @@
+# Actualizaciones automáticas de las dependencias (Dependabot abre un pull request por cada una;
+# nada se publica solo). Este repositorio no tiene workflows de GitHub Actions: si se añaden, sumar
+# el ecosistema github-actions como en agenda-backend.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    target-branch: dev
+    open-pull-requests-limit: 5
+    groups:
+      menores:
+        update-types: ["minor", "patch"]

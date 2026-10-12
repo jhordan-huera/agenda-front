@@ -1,10 +1,11 @@
-import { Mail, Navigation, Video } from "lucide-react";
+import { Landmark, Mail, Navigation, Video } from "lucide-react";
+import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import { capitalize, formatLongDate, formatPrice } from "@/lib/format";
 import { BankTransferCard } from "@/features/payments/bank-transfer-card";
 import { describeHomeVisit, getDirectionsUrl, hasMapPoint } from "@/lib/maps";
 import { cn } from "@/lib/utils";
-import { getReceiptWhatsAppUrl } from "@/lib/whatsapp";
+import { getBusinessWhatsAppUrl, getReceiptWhatsAppUrl } from "@/lib/whatsapp";
 import type { BookingConfirmation, PublicBusiness } from "@/types";
 import { TimezoneNote } from "./timezone-note";
 
@@ -73,9 +74,15 @@ export function BookingSuccess({ confirmation, business, clientName, onBookAnoth
         {confirmation.emailSent && (
           <p className="mt-5 flex items-start gap-2 text-sm text-muted-foreground">
             <Mail className="mt-0.5 size-4 shrink-0" aria-hidden />
-            <span className="min-w-0 [overflow-wrap:anywhere]">Te enviamos un email de confirmación a {confirmation.clientEmail}</span>
+            <span className="min-w-0 [overflow-wrap:anywhere]">
+              {/* Sin email: la confirmación fue al de su ficha, que no es el que escribió (no se muestra). */}
+              Te enviamos un email de confirmación {confirmation.clientEmail ? `a ${confirmation.clientEmail}` : "al email que tiene registrado el negocio"}
+            </span>
           </p>
         )}
+
+        {/* La misma reserva otra vez: los datos para pagar no se repiten aquí, ya le llegaron por email. */}
+        {confirmation.paymentByEmail && <PaymentByEmail business={business} emailSent={confirmation.emailSent} />}
 
         <div className="mt-7 flex flex-col gap-2 sm:flex-row">
           {confirmation.meetingUrl && (
@@ -107,6 +114,34 @@ export function BookingSuccess({ confirmation, business, clientName, onBookAnoth
           whatsappUrl={getReceiptWhatsAppUrl(business, { clientName, ...confirmation })}
         />
       )}
+    </div>
+  );
+}
+
+/** Reintento de una reserva con pago por transferencia: se le pide mirar su email (o escribir al negocio). */
+function PaymentByEmail({ business, emailSent }: { business: PublicBusiness; emailSent: boolean }) {
+  const whatsappUrl = emailSent ? null : getBusinessWhatsAppUrl(business);
+  return (
+    <div className="mt-5 flex items-start gap-3 rounded-xl bg-muted px-4 py-3 text-sm">
+      <Landmark className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+      <div className="min-w-0">
+        <p className="font-semibold">{emailSent ? "Revisa tu email para pagar" : "Para pagar, escríbele al negocio"}</p>
+        <p className="text-muted-foreground">
+          {emailSent
+            ? "Ahí tienes los datos para la transferencia y el enlace para enviar el comprobante."
+            : `${business.name} te dará los datos para la transferencia.`}
+        </p>
+        {whatsappUrl && (
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1.5 inline-flex items-center gap-1.5 font-semibold text-ink underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <WhatsAppIcon className="size-4" /> Escribir por WhatsApp
+          </a>
+        )}
+      </div>
     </div>
   );
 }

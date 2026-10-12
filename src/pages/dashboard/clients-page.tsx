@@ -68,7 +68,9 @@ export default function ClientsPage() {
 
   // Última y próxima cita de cada cliente: las calcula la API (no se descarga el historial).
   const summaries = useMemo(() => summariesFromActivity(activity.data ?? []), [activity.data]);
-  const clients = clientsQuery.data ?? [];
+  // Los de reservas online en la agenda que el negocio aún no gestionó llegan sólo con el nombre
+  // (`restricted`): se ven en la cita, pero no son todavía pacientes del profesional.
+  const clients = (clientsQuery.data ?? []).filter((client) => !client.restricted);
 
   const filtered = clients.filter((client) => {
     const term = normalizeSearch(search.trim());

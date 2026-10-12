@@ -122,7 +122,8 @@ function AppointmentForm({
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
 
-  const selectableClients = clients.filter((c) => c.isActive || c.id === values.clientId);
+  // Sin los de reservas online que el negocio aún no gestionó (`restricted`): no son todavía del profesional.
+  const selectableClients = clients.filter((c) => (c.isActive && !c.restricted) || c.id === values.clientId);
   // Con varias agendas, los servicios que atiende el profesional elegido (y el de la cita, si es otro).
   const offered = (service: Service) => !professional || offersService(professional, service.id);
   const selectableServices = services.filter((s) => (s.isActive && offered(s)) || s.id === values.serviceId);

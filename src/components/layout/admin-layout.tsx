@@ -6,10 +6,12 @@ import { useInstallableApp } from "@/features/install/use-installable-app";
 import { getHomePath } from "@/lib/auth";
 import { AdminSidebar } from "./admin-sidebar";
 import { AppShell } from "./app-shell";
+import { TwoFactorRequiredScreen } from "./two-factor-required-screen";
 
 /**
  * Layout del panel de plataforma (/admin). Sólo el super admin entra; el resto vuelve
  * a su inicio. Es una mejora de experiencia: el backend rechaza igualmente cada operación.
+ * Sin la verificación en dos pasos (obligatoria), primero tiene que activarla.
  */
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -23,5 +25,6 @@ export default function AdminLayout() {
   }, [status, session, isSuperAdmin, navigate]);
 
   if (status !== "authenticated" || !isSuperAdmin) return <FullPageLoader />;
+  if (session.twoFactorSetupRequired) return <TwoFactorRequiredScreen />;
   return <AppShell homeHref="/admin" renderSidebar={(onNavigate) => <AdminSidebar onNavigate={onNavigate} />} />;
 }

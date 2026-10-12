@@ -30,7 +30,6 @@ import type {
   PlatformStats,
   Professional,
   PublicBusinessProfile,
-  PublicClientLookup,
   Schedule,
   Service,
   Subscription,
@@ -177,10 +176,9 @@ export const apiRepository: DataRepository = {
 
   publicBooking: {
     getProfile: (slug) => api.get<PublicBusinessProfile | null>(`/public/businesses/${id(slug)}`),
-    lookupClient: (slug, documentId, captchaToken) =>
-      api.post<PublicClientLookup>(`/public/businesses/${id(slug)}/clients/lookup`, { documentId, captchaToken }),
     book: (slug, input, captchaToken) =>
       api.post<BookingConfirmation>(`/public/businesses/${id(slug)}/bookings`, { ...input, captchaToken }),
+    getCaptchaSiteKey: async () => (await api.get<{ siteKey: string | null }>("/public/captcha")).siteKey,
     getPayment: (token) => api.get<PublicPayment>(`/public/payments/${id(token)}`),
     requestReceiptUpload: (token, input) => api.post<PaymentReceiptUpload>(`/public/payments/${id(token)}/receipts`, input),
     completeReceiptUpload: (token, receiptId) =>

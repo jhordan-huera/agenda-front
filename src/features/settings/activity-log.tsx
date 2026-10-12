@@ -7,7 +7,7 @@ import { AuditFeed } from "@/features/activity/audit-feed";
 import { EMPTY_AUDIT_FILTERS, toAuditQuery } from "@/features/activity/audit-filters";
 import { AuditFiltersBar } from "@/features/activity/audit-filters-bar";
 import { exportAuditCsv } from "@/features/activity/export-audit";
-import { useBusinessId } from "@/features/auth/use-session";
+import { useBusinessId, useSession } from "@/features/auth/use-session";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAuditFeed } from "@/hooks/queries/use-activity";
 import { useTeam } from "@/hooks/queries/use-team";
@@ -29,9 +29,14 @@ const TYPES: AuditEntityType[] = [
   "clinical_record",
 ];
 
-/** Registro de auditoría del negocio: quién hizo qué y cuándo, con lo que cambió. */
+/**
+ * Registro de auditoría del negocio: quién hizo qué y cuándo, con lo que cambió. Los eventos de la
+ * historia clínica sólo los ve quien tiene acceso clínico (la API ni los envía a los demás).
+ */
 export function ActivityLog() {
   const businessId = useBusinessId();
+  const { session } = useSession();
+  const types = session?.clinicalAccess ? TYPES : TYPES.filter((type) => type !== "clinical_record");
   // Las fechas, en la zona horaria del negocio (sin ella, la de la plataforma).
   const timezone = useCurrentBusiness().data?.timezone;
   const team = useTeam();
@@ -74,7 +79,7 @@ export function ActivityLog() {
         </CardAction>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <AuditFiltersBar value={filters} onChange={setFilters} types={TYPES} people={people} />
+        <AuditFiltersBar value={filters} onChange={setFilters} types={types} people={people} />
         <AuditFeed feed={feed} timezone={timezone} />
       </CardContent>
     </Card>

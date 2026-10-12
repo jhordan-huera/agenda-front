@@ -1,11 +1,13 @@
 import { CalendarDays, Clock, MapPin, Pencil, ShieldCheck, User, Video } from "lucide-react";
 import type { ReactNode, RefCallback } from "react";
 import { SubmitButton } from "@/components/shared/submit-button";
+import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import { capitalize, formatCurrency, formatDuration, formatLongDate, formatPrice, formatTimeRange, isPriceVisible } from "@/lib/format";
 import { getListPrice } from "@/features/appointments/appointment-utils";
 import { describeHomeVisit, getPlaceMapsUrl } from "@/lib/maps";
 import { addMinutesToTime } from "@/lib/time";
+import { getBusinessWhatsAppUrl } from "@/lib/whatsapp";
 import type { PublicBookingInput } from "@/lib/validations/booking";
 import type { PublicBusiness, PublicProfessional, PublicService } from "@/types";
 import { TimezoneNote } from "./timezone-note";
@@ -19,8 +21,11 @@ interface ConfirmStepProps {
   professional: PublicProfessional | null;
   service: PublicService;
   input: PublicBookingInput;
-  /** Nombre para saludar si la cédula ya era de un cliente del negocio. */
-  knownClientName: string | null;
+  /**
+   * La reserva no se pudo hacer y el paciente debe revisar sus datos o escribir al negocio (datos que
+   * no coinciden con su ficha, tope de reservas online del día…): el mensaje, con el WhatsApp del negocio.
+   */
+  error: string | null;
   submitting: boolean;
   onConfirm: () => void;
   onEdit: () => void;
@@ -33,13 +38,14 @@ export function ConfirmStep({
   professional,
   service,
   input,
-  knownClientName,
+  error,
   submitting,
   onConfirm,
   onEdit,
 }: ConfirmStepProps) {
   const { bookingSettings } = business;
   const showPrice = isPriceVisible(service);
+  const whatsappUrl = error ? getBusinessWhatsAppUrl(business) : null;
   return (
     <div className="space-y-5">
       <dl className="divide-y rounded-xl border">
@@ -95,10 +101,10 @@ export function ConfirmStep({
           )}
         </Row>
         <Row icon={User} label="Tus datos">
-          <span className="font-semibold">{knownClientName ?? input.name}</span>
+          <span className="font-semibold">{input.name}</span>
           <span className="block text-muted-foreground tabular-nums">Cédula {input.documentId}</span>
           <span className="block text-muted-foreground">
-            {knownClientName ? "Usaremos tus datos de contacto registrados" : `${input.email}, ${input.phone}`}
+            {input.email}, {input.phone}
           </span>
           {input.notes && <span className="mt-1 block text-muted-foreground italic">“{input.notes}”</span>}
         </Row>
@@ -109,6 +115,22 @@ export function ConfirmStep({
           <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
           {bookingSettings.cancellationPolicy}
         </p>
+      )}
+
+      {error && (
+        <div role="alert" className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+          <p>{error}</p>
+          {whatsappUrl && (
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1.5 inline-flex items-center gap-1.5 font-semibold text-ink underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <WhatsAppIcon className="size-4" /> Escribir por WhatsApp
+            </a>
+          )}
+        </div>
       )}
 
       <div>

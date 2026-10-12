@@ -1,31 +1,25 @@
-import { Search, UserCheck, Video } from "lucide-react";
-import { useState, type Dispatch, type FormEvent, type RefCallback, type SetStateAction } from "react";
+import { Video } from "lucide-react";
+import { useState, type Dispatch, type FormEvent, type SetStateAction } from "react";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SubmitButton } from "@/components/shared/submit-button";
 import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getPlace } from "@/features/appointments/appointment-utils";
 import { HomeVisitFields } from "@/features/appointments/home-visit-fields";
 import { MODE_ICONS } from "@/features/services/mode-icons";
-import { useLookupClient } from "@/hooks/queries/use-public-booking";
-import { getErrorMessage } from "@/lib/data";
 import { documentIdError, documentIdMaxLength, normalizeDocumentId, onlyDigits } from "@/lib/identity";
 import { formatCurrency, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
-import { clientLookupSchema, newClientContactSchema, publicBookingSchema, type PublicBookingInput } from "@/lib/validations/booking";
+import { publicBookingSchema, type PublicBookingInput } from "@/lib/validations/booking";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { HomeVisitAddress, PublicBusiness, PublicService, ServiceMode } from "@/types";
 import type { ContactValues } from "./contact";
-import { CAPTCHA_BOX_CLASS } from "./use-captcha";
+import { forgetSavedContact } from "./saved-contact";
 
 interface DetailsStepProps {
-  slug: string;
-  /** Token del CAPTCHA para buscar la cédula (ver useCaptcha). */
-  getCaptchaToken: () => Promise<string | undefined>;
-  /** Caja del CAPTCHA (ver useCaptcha): va junto al botón que lo pide, para que se vea en el móvil. */
-  captchaRef: RefCallback<HTMLDivElement>;
   selection: Pick<PublicBookingInput, "serviceId" | "date" | "startTime">;
   service: PublicService;
   business: PublicBusiness;
@@ -54,18 +48,11 @@ function withServicePlace(service: PublicService, current: ContactValues): Conta
   };
 }
 
-export function DetailsStep({
-  slug,
-  getCaptchaToken,
-  captchaRef,
-  selection,
-  service,
-  business,
-  contact,
-  onContactChange,
-  onContinue,
-}: DetailsStepProps) {
-  const lookup = useLookupClient(slug, getCaptchaToken);
+/**
+ * Datos del paciente: siempre cédula, nombre, email y teléfono. La página no dice si ya es cliente
+ * del negocio; si lo es, la reserva se une a su ficha cuando coinciden el email o el teléfono.
+ */
+export function DetailsStep({ selection, service, business, contact, onContactChange, onContinue }: DetailsStepProps) {
   const values = withServicePlace(service, contact);
   const setValues = (update: (current: ContactValues) => ContactValues) =>
     onContactChange((current) => update(withServicePlace(service, current)));
@@ -73,28 +60,10 @@ export function DetailsStep({
   const set = (key: "documentId" | "name" | "email" | "phone" | "notes") => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
 
-  // El cliente se identifica con su cédula: se busca entre los clientes de este negocio.
-  const verified =
-    values.verifiedDocumentId !== "" && values.verifiedDocumentId === normalizeDocumentId(values.documentId);
-  const isKnownClient = verified && values.knownClientName !== null;
-
-  const verifyDocument = async () => {
-    const parsed = validate(clientLookupSchema, { documentId: values.documentId });
-    const documentId = parsed.data?.documentId ?? "";
-    const error = parsed.errors.documentId ?? documentIdError(documentId, business.timezone);
-    setErrors(error ? { documentId: error } : {});
-    if (error) return;
-    try {
-      const result = await lookup.mutateAsync(documentId);
-      setValues((current) => ({
-        ...current,
-        documentId,
-        verifiedDocumentId: documentId,
-        knownClientName: result.found ? result.greetingName : null,
-      }));
-    } catch (lookupError) {
-      setErrors({ documentId: getErrorMessage(lookupError) });
-    }
+  const forgetData = () => {
+    forgetSavedContact();
+    setValues((current) => ({ ...current, documentId: "", name: "", email: "", phone: "", fromSaved: false }));
+    setErrors({});
   };
   const updateHomeVisit = (patch: Partial<HomeVisitAddress>) => {
     setValues((current) => ({ ...current, homeVisit: { ...(current.homeVisit ?? EMPTY_HOME_VISIT), ...patch } }));
@@ -130,42 +99,37 @@ export function DetailsStep({
     virtual: { title: "Virtual", detail: "Por videollamada, desde donde estés" },
   };
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (!verified) return verifyDocument();
-    // Un cliente registrado no vuelve a escribir sus datos: se usan los que ya tiene el negocio.
-    const contactFields = isKnownClient ? { name: "", email: "", phone: "" } : values;
-    const result = validate(publicBookingSchema, { ...selection, ...values, ...contactFields });
-    const newClient = isKnownClient ? null : validate(newClientContactSchema, values);
-    setErrors({ ...result.errors, ...newClient?.errors });
-    if (result.success && (!newClient || newClient.success)) onContinue(result.data);
+    const result = validate(publicBookingSchema, { ...selection, ...values });
+    // La cédula de un negocio de Ecuador, además, debe ser válida (dígito verificador).
+    const documentError = result.errors.documentId ? null : documentIdError(normalizeDocumentId(values.documentId), business.timezone);
+    setErrors({ ...result.errors, ...(documentError ? { documentId: documentError } : {}) });
+    if (result.success && !documentError) onContinue(result.data);
   };
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-4">
-      <FormField
-        label="Número de cédula"
-        error={errors.documentId}
-        hint={verified ? undefined : "Sólo números, sin guiones. Con ella te reconocemos si ya eres cliente."}
-      >
+      {values.fromSaved && (
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+          <span>Usamos los datos que guardaste en este dispositivo.</span>
+          <Button type="button" variant="link" size="sm" className="h-auto p-0 text-ink" onClick={forgetData}>
+            Olvidar mis datos
+          </Button>
+        </div>
+      )}
+      <FormField label="Número de cédula" error={errors.documentId} hint="Sólo números, sin guiones.">
         {(field) => (
-          <div className="flex gap-2">
-            <Input
-              {...field}
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={documentIdMaxLength(business.timezone)}
-              className="h-10"
-              placeholder="Ej.: 1712345678"
-              value={values.documentId}
-              onChange={(e) => set("documentId")(onlyDigits(e.target.value))}
-            />
-            {!verified && (
-              <SubmitButton type="button" variant="outline" className="h-10" loading={lookup.isPending} onClick={verifyDocument}>
-                <Search /> Buscar
-              </SubmitButton>
-            )}
-          </div>
+          <Input
+            {...field}
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={documentIdMaxLength(business.timezone)}
+            className="h-10"
+            placeholder="Ej.: 1712345678"
+            value={values.documentId}
+            onChange={(e) => set("documentId")(onlyDigits(e.target.value))}
+          />
         )}
       </FormField>
       {showNoCedulaHelp && (
@@ -185,150 +149,128 @@ export function DetailsStep({
           )}
         </p>
       )}
+      <FormField label="Nombre completo" error={errors.name}>
+        {(field) => (
+          <Input {...field} autoComplete="name" className="h-10" value={values.name} onChange={(e) => set("name")(e.target.value)} />
+        )}
+      </FormField>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label="Email" error={errors.email}>
+          {(field) => (
+            <Input
+              {...field}
+              type="email"
+              autoComplete="email"
+              placeholder="tu@email.com"
+              className="h-10"
+              value={values.email}
+              onChange={(e) => set("email")(e.target.value)}
+            />
+          )}
+        </FormField>
+        <FormField label="Teléfono" error={errors.phone}>
+          {(field) => (
+            <Input
+              {...field}
+              type="tel"
+              autoComplete="tel"
+              placeholder="+593 99 123 4567"
+              className="h-10"
+              value={values.phone}
+              onChange={(e) => set("phone")(e.target.value)}
+            />
+          )}
+        </FormField>
+      </div>
+      <p className="-mt-2 text-xs text-muted-foreground">
+        Si ya te atendieron aquí, usa el email o el teléfono que le diste a {business.name}.
+      </p>
 
-      {verified && (
-        <p
-          role="status"
-          className={cn(
-            "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
-            isKnownClient ? "bg-emerald-50 text-emerald-900" : "bg-muted/60 text-muted-foreground",
-          )}
-        >
-          {isKnownClient ? (
-            <>
-              <UserCheck className="size-4 shrink-0" aria-hidden />
-              ¡Hola de nuevo, {values.knownClientName}! Ya tenemos tus datos de contacto.
-            </>
-          ) : (
-            "Es tu primera reserva aquí: completa tus datos."
-          )}
+      {service.modes.length > 1 && (
+        <fieldset className="grid gap-2">
+          <legend className="mb-2 text-sm font-medium">¿Cómo quieres tu cita?</legend>
+          <div
+            role="radiogroup"
+            aria-label="Lugar de la cita"
+            className={cn("grid gap-2 sm:grid-cols-2", service.modes.length === 3 && "lg:grid-cols-3")}
+          >
+            {service.modes.map((mode) => {
+              const option = { ...placeOptions[mode], icon: MODE_ICONS[mode] };
+              const selected = getPlace(values) === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => choosePlace(mode)}
+                  className={cn(
+                    "flex items-start gap-3 rounded-xl border p-3 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
+                    selected && "border-primary bg-accent hover:bg-accent",
+                  )}
+                >
+                  <option.icon className={cn("mt-0.5 size-4 shrink-0", selected ? "text-primary" : "text-muted-foreground")} aria-hidden />
+                  <span>
+                    <span className="block font-medium">{option.title}</span>
+                    <span className="block text-xs text-muted-foreground">{option.detail}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
+      {values.isVirtual && (
+        <p className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+          <Video className="mt-0.5 size-4 shrink-0" aria-hidden />
+          Es por videollamada: el enlace para entrar te llega con la confirmación.
         </p>
       )}
-
-      {!verified ? (
-        <div className="grid">
-          {/* CAPTCHA de la búsqueda, junto al botón: sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
-          <div ref={captchaRef} className={CAPTCHA_BOX_CLASS} />
-          <Button type="submit" size="lg" className="h-11 text-sm" disabled={lookup.isPending}>
-            Continuar
-          </Button>
-        </div>
-      ) : (
-        <>
-          {service.modes.length > 1 && (
-            <fieldset className="grid gap-2">
-              <legend className="mb-2 text-sm font-medium">¿Cómo quieres tu cita?</legend>
-              <div
-                role="radiogroup"
-                aria-label="Lugar de la cita"
-                className={cn("grid gap-2 sm:grid-cols-2", service.modes.length === 3 && "lg:grid-cols-3")}
-              >
-                {service.modes.map((mode) => {
-                  const option = { ...placeOptions[mode], icon: MODE_ICONS[mode] };
-                  const selected = getPlace(values) === mode;
-                  return (
-                    <button
-                      key={mode}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => choosePlace(mode)}
-                      className={cn(
-                        "flex items-start gap-3 rounded-xl border p-3 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
-                        selected && "border-primary bg-accent hover:bg-accent",
-                      )}
-                    >
-                      <option.icon className={cn("mt-0.5 size-4 shrink-0", selected ? "text-primary" : "text-muted-foreground")} aria-hidden />
-                      <span>
-                        <span className="block font-medium">{option.title}</span>
-                        <span className="block text-xs text-muted-foreground">{option.detail}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-          )}
-          {values.isVirtual && (
-            <p className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
-              <Video className="mt-0.5 size-4 shrink-0" aria-hidden />
-              Es por videollamada: el enlace para entrar te llega con la confirmación.
-            </p>
-          )}
-          {values.homeVisit && (
-            <section aria-labelledby="home-visit-heading" className="grid gap-3 rounded-xl border bg-muted/30 p-4">
-              <div>
-                <h3 id="home-visit-heading" className="text-sm font-medium">
-                  ¿Dónde te visitamos?
-                </h3>
-                <p className="text-xs text-muted-foreground">Marca en el mapa el lugar exacto para que el profesional llegue sin problemas.</p>
-              </div>
-              <HomeVisitFields
-                value={values.homeVisit}
-                onChange={updateHomeVisit}
-                errors={errors}
-                timezone={business.timezone}
-                centerOnAddress={business.address || undefined}
-                mapRequired
-              />
-            </section>
-          )}
-          {!isKnownClient && (
-            <>
-              <FormField label="Nombre completo" error={errors.name}>
-                {(field) => (
-                  <Input {...field} autoComplete="name" className="h-10" value={values.name} onChange={(e) => set("name")(e.target.value)} />
-                )}
-              </FormField>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField label="Email" error={errors.email}>
-                  {(field) => (
-                    <Input
-                      {...field}
-                      type="email"
-                      autoComplete="email"
-                      placeholder="tu@email.com"
-                      className="h-10"
-                      value={values.email}
-                      onChange={(e) => set("email")(e.target.value)}
-                    />
-                  )}
-                </FormField>
-                <FormField label="Teléfono" error={errors.phone}>
-                  {(field) => (
-                    <Input
-                      {...field}
-                      type="tel"
-                      autoComplete="tel"
-                      placeholder="+593 99 123 4567"
-                      className="h-10"
-                      value={values.phone}
-                      onChange={(e) => set("phone")(e.target.value)}
-                    />
-                  )}
-                </FormField>
-              </div>
-            </>
-          )}
-          <FormField label="Nota para el profesional" error={errors.notes} optional>
-            {(field) => (
-              <Textarea
-                {...field}
-                rows={3}
-                placeholder="Motivo de la consulta, preferencias…"
-                value={values.notes}
-                onChange={(e) => set("notes")(e.target.value)}
-              />
-            )}
-          </FormField>
-          <Button type="submit" size="lg" className="h-11 text-sm">
-            Continuar
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            Usaremos tus datos sólo para gestionar esta cita. No necesitas crear una cuenta.
-          </p>
-        </>
+      {values.homeVisit && (
+        <section aria-labelledby="home-visit-heading" className="grid gap-3 rounded-xl border bg-muted/30 p-4">
+          <div>
+            <h3 id="home-visit-heading" className="text-sm font-medium">
+              ¿Dónde te visitamos?
+            </h3>
+            <p className="text-xs text-muted-foreground">Marca en el mapa el lugar exacto para que el profesional llegue sin problemas.</p>
+          </div>
+          <HomeVisitFields
+            value={values.homeVisit}
+            onChange={updateHomeVisit}
+            errors={errors}
+            timezone={business.timezone}
+            centerOnAddress={business.address || undefined}
+            mapRequired
+          />
+        </section>
       )}
+      <FormField label="Nota para el profesional" error={errors.notes} optional>
+        {(field) => (
+          <Textarea
+            {...field}
+            rows={3}
+            placeholder="Motivo de la consulta, preferencias…"
+            value={values.notes}
+            onChange={(e) => set("notes")(e.target.value)}
+          />
+        )}
+      </FormField>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="remember-contact"
+          checked={values.remember}
+          onCheckedChange={(checked) => setValues((current) => ({ ...current, remember: checked === true }))}
+        />
+        <Label htmlFor="remember-contact" className="font-normal">
+          Recordar mis datos en este dispositivo
+        </Label>
+      </div>
+      <Button type="submit" size="lg" className="h-11 text-sm">
+        Continuar
+      </Button>
+      <p className="text-center text-xs text-muted-foreground">
+        Usaremos tus datos sólo para gestionar esta cita. No necesitas crear una cuenta.
+      </p>
     </form>
   );
 }

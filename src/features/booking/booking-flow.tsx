@@ -16,15 +16,26 @@ import { BookingSuccess } from "./booking-success";
 import { BookingSummary } from "./booking-summary";
 import { BusinessLocationCard } from "./business-location-card";
 import { ConfirmStep } from "./confirm-step";
-import { EMPTY_CONTACT, type ContactValues } from "./contact";
+import { initialContact, type ContactValues } from "./contact";
 import { ProfessionalStep } from "./professional-step";
 import { DetailsStep } from "./details-step";
+import { forgetSavedContact, saveContact } from "./saved-contact";
 import { ServiceStep } from "./service-step";
 import { TimeSlots } from "./time-slots";
 import { TimezoneNote } from "./timezone-note";
 import { useBookingAvailability } from "./use-booking-availability";
 import { useCaptcha } from "./use-captcha";
 import { WhatsAppHelp } from "./whatsapp-help";
+
+/**
+ * Errores que el paciente no arregla eligiendo otra hora: los datos no coinciden con su ficha, el
+ * negocio llegó a su tope de reservas online del día, no se pudo pasar el CAPTCHA… Se muestran junto
+ * al botón de reservar, con el WhatsApp del negocio.
+ */
+const BLOCKING_ERRORS = new Set(["forbidden", "rate_limited", "plan_limit", "unavailable"]);
+
+/** Aviso de "se perdió la respuesta": se cierra si el reintento confirma la reserva. */
+const LOST_RESPONSE_TOAST = "booking-lost-response";
 
 const STEP_COPY: Record<BookingStep, { title: string; description: string }> = {
   service: { title: "¿Qué servicio necesitas?", description: "Elige el servicio que quieres reservar." },
@@ -43,8 +54,10 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
   const [professionalChoice, setProfessionalChoice] = useState<string | null>(null);
   const [requestedDate, setRequestedDate] = useState<ISODate | null>(null);
   const [requestedTime, setRequestedTime] = useState<string | null>(null);
-  const [contact, setContact] = useState<ContactValues>(EMPTY_CONTACT);
+  const [contact, setContact] = useState<ContactValues>(initialContact);
   const [pendingInput, setPendingInput] = useState<PublicBookingInput | null>(null);
+  /** Por qué no se pudo reservar, si el paciente tiene que revisar sus datos o escribir al negocio. */
+  const [bookingError, setBookingError] = useState<string | null>(null);
   /**
    * Reserva enviada cuya respuesta se perdió (se cortó la conexión): pudo quedar hecha. Se deja
    * confirmarla otra vez aunque su hora ya figure ocupada; la API devuelve la cita que ya existe.
@@ -131,13 +144,21 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
     setRequestedTime(null);
     setPendingInput(null);
     setUnconfirmedInput(null);
+    setBookingError(null);
     setStep("service");
   };
 
   const submit = async (input: PublicBookingInput) => {
+    setBookingError(null);
     try {
       const booked = await createBooking.mutateAsync({ ...input, professionalId: chosen?.id ?? null });
       markTaken({ date: booked.date, startTime: booked.startTime, endTime: booked.endTime, professionalId: booked.professionalId });
+      // Sus datos quedan en este navegador para la próxima vez (sólo si lo pidió).
+      if (contact.remember) saveContact(input);
+      else forgetSavedContact();
+      setContact((current) => ({ ...current, fromSaved: current.remember }));
+      // Si antes se perdió la respuesta, el aviso ya no hace falta: aquí está la confirmación.
+      toast.dismiss(LOST_RESPONSE_TOAST);
       setConfirmation(booked);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
@@ -147,6 +168,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
         // La reserva pudo llegar aunque no llegara la respuesta: al reintentar, si ya quedó hecha,
         // la API devuelve esa misma cita (no la duplica) y se muestra como reservada.
         toast.error("No pudimos confirmar tu reserva", {
+          id: LOST_RESPONSE_TOAST,
           description: "Revisa tu conexión y vuelve a pulsar «Confirmar reserva». Si ya quedó hecha, verás la confirmación.",
           duration: 15_000,
         });
@@ -168,6 +190,8 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
         toast.error(getErrorMessage(error), { duration: 10_000 });
         setRequestedTime(null);
         setStep("datetime");
+      } else if (error instanceof DataError && BLOCKING_ERRORS.has(error.code)) {
+        setBookingError(getErrorMessage(error));
       } else {
         toast.error(getErrorMessage(error));
       }
@@ -179,7 +203,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
       <BookingSuccess
         confirmation={confirmation}
         business={business}
-        clientName={contact.knownClientName ?? contact.name}
+        clientName={contact.name}
         onBookAnother={reset}
       />
     );
@@ -299,19 +323,19 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
               professional={shownProfessional}
               service={service}
               input={pendingInput}
-              knownClientName={contact.knownClientName}
+              error={bookingError}
               submitting={createBooking.isPending}
               onConfirm={() => submit(pendingInput)}
-              onEdit={() => setStep("details")}
+              onEdit={() => {
+                setBookingError(null);
+                setStep("details");
+              }}
             />
           )}
 
           {currentStep === "details" && service && date && time && (
             <>
               <DetailsStep
-                slug={slug}
-                getCaptchaToken={getCaptchaToken}
-                captchaRef={captchaRef}
                 selection={{ serviceId: service.id, date, startTime: time }}
                 service={service}
                 business={business}
@@ -319,6 +343,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
                 onContactChange={setContact}
                 onContinue={(input) => {
                   setPendingInput(input);
+                  setBookingError(null);
                   setStep("confirm");
                 }}
               />

@@ -5,7 +5,15 @@ import type {
   TwoFactorDisableInput,
   TwoFactorLoginInput,
 } from "@/lib/validations/auth";
-import type { BusinessRole, BusinessStatus, PlatformRole, RecoveryCodes, TwoFactorChallenge, TwoFactorSetup, TwoFactorStatus } from "@/types";
+import type {
+  BusinessRole,
+  BusinessStatus,
+  PlatformRole,
+  RecoveryCodes,
+  TwoFactorChallenge,
+  TwoFactorSetup,
+  TwoFactorStatus,
+} from "@/types";
 
 export interface Session {
   userId: string;
@@ -23,6 +31,11 @@ export interface Session {
   clinicalAccess: boolean;
   /** Su agenda en el negocio, si atiende citas (null: no tiene; también en modo soporte). */
   professionalId: string | null;
+  /**
+   * Super admin sin la verificación en dos pasos, que es obligatoria: hasta activarla, el panel /admin
+   * y el modo soporte responden `two_factor_required` y se le muestra la pantalla para activarla.
+   */
+  twoFactorSetupRequired: boolean;
   /**
    * Sólo en el frontend: el super admin está gestionando un negocio ("Gestionar negocio").
    * Mientras tanto, businessId/role apuntan a ese negocio con permisos de propietario.
@@ -45,7 +58,7 @@ export interface AuthService {
   signOut(): Promise<void>;
   /** Sólo el super admin: las contraseñas de los usuarios las pone él desde el panel /admin. */
   changePassword(input: ChangePasswordInput): Promise<void>;
-  /** Verificación en dos pasos de la propia cuenta (hoy, sólo el super admin). */
+  /** Verificación en dos pasos de la propia cuenta (hoy, sólo el super admin, para quien es obligatoria). */
   twoFactor: {
     status(): Promise<TwoFactorStatus>;
     /** Clave nueva para escanear; se activa al confirmar un código con `enable`. */

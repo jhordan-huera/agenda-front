@@ -115,6 +115,7 @@ src/
 - **Las contraseñas las pone el super admin**: al crear un negocio, al agregar miembros a un equipo
   (sólo él puede) y al cambiársela a un usuario; el usuario la recibe por email y no puede cambiarla.
   "¿Olvidaste tu contraseña?" muestra el email de soporte.
+- **Cambiar el email de la cuenta** (Configuración → Perfil) pide la contraseña actual.
 - **Categorías**: los tipos de negocio están en la base de datos y el super admin los gestiona en
   `/admin/categories`. El negocio la elige al crearse y después sólo la cambia el super admin (ficha
   del negocio o modo soporte); en Configuración → Negocio el propietario la ve bloqueada.
@@ -122,13 +123,22 @@ src/
   Suscripción; el super admin recibe un email y la aprueba o rechaza desde el resumen del panel.
   El plan sólo se cambia desde el panel `/admin`, y el propietario siempre recibe un email.
 - **Cédula**: sólo números (el campo no admite letras ni guiones; en Ecuador, 10 dígitos). En la
-  página de reservas el cliente se identifica con su cédula; si ya es cliente del
-  negocio no vuelve a escribir sus datos (y no se crean duplicados). En el panel, cédula y email
-  son obligatorios al registrar un cliente, y el buscador encuentra por cédula.
+  página de reservas el paciente escribe siempre cédula, nombre, email y teléfono: la página no
+  dice si la cédula ya es de un cliente del negocio. Si lo es, la reserva se une a su ficha cuando
+  coinciden el email o el teléfono (no se crean duplicados); si no coinciden, se muestra "No pudimos
+  confirmar tus datos…" con el WhatsApp del negocio. Con "Recordar mis datos en este dispositivo"
+  (marcado por defecto) sus datos quedan en ese navegador (`localStorage`,
+  `src/features/booking/saved-contact.ts`) y la próxima vez ya están puestos, con "Olvidar mis
+  datos". Si se pierde la respuesta y el paciente vuelve a confirmar, la confirmación no repite los
+  datos para pagar: dice "Revisa tu email para pagar". Los topes del día (reservas online, clientes
+  nuevos), el CAPTCHA y los datos que no coinciden se muestran junto al botón de reservar, con el
+  WhatsApp del negocio. En el panel, cédula y email son obligatorios al registrar un cliente, y el
+  buscador encuentra por cédula.
 - **Gestionar negocio** (panel `/admin` → negocio): el super admin abre el panel de cualquier
   negocio con permisos de propietario (servicios, horarios, citas, clientes, configuración). Un
-  aviso arriba indica el modo soporte; todo queda en la actividad del negocio, incluidas las
-  consultas a historias clínicas.
+  aviso arriba indica el modo soporte; lo que crea o cambia queda en la actividad del negocio con su
+  nombre ("Nombre (Super admin)"). Lo que sólo consulta (también las historias clínicas y sus
+  archivos) no se registra.
 
 ## ¿Quién crea los negocios?
 
@@ -165,6 +175,11 @@ puede tocar la cuenta del principal ni la propia desde ahí. La lista muestra qu
 verificación en dos pasos y su último acceso; todo lo que hace cada uno queda en la actividad con su
 nombre ("Nombre (Super admin)").
 
+**Verificación en dos pasos obligatoria**: con datos reales, un super admin sin ella inicia sesión pero
+ve la pantalla "Activa la verificación en dos pasos" (`components/layout/two-factor-required-screen.tsx`)
+en lugar del panel; la API responde `two_factor_required` en `/admin` y en el modo soporte hasta que la
+active con una app de autenticación. Después, el panel aparece solo.
+
 - **Resumen**: negocios activos/suspendidos, ingresos recurrentes (MRR), usuarios, citas y
   reservas online del mes, nuevos negocios por mes y distribución por plan.
 - **Negocios**: búsqueda y filtros por plan/estado; ficha con uso del plan, equipo, actividad,
@@ -183,7 +198,11 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
 
 - **Multi-tenant con roles** (Propietario, Administrador, Recepción y Profesional) en
   `business_users`. Los permisos están en `src/lib/permissions.ts` y se aplican en la interfaz **y**
-  en la API; el rol Profesional sólo ve su propia agenda (la API se la filtra).
+  en la API; el rol Profesional sólo ve su propia agenda (la API se la filtra) y, si el negocio elige
+  «sólo sus pacientes», sólo sus pacientes. Una reserva online con la cédula de un paciente que ya
+  existía no se los da: ve la cita con el nombre (el cliente llega con `restricted`), pero no su ficha
+  ni su historia hasta que recepción, un administrador o el propietario la confirme o la gestione.
+  En la actividad del negocio, los eventos de la historia clínica sólo los ve quien tiene acceso clínico.
 - **Varias agendas** (plan Business): página Profesionales (`features/professionals`), horario y
   bloqueos por profesional, calendario con filtro y una columna por profesional en la vista Día,
   "¿Con quién?" en la página de reservas (o "el primero disponible"), llegada del paciente en el
@@ -327,8 +346,10 @@ clientes nuevos y recurrentes), las calcula la API (`useClientActivity`).
 - **Capa de datos.** Los componentes nunca llaman a `fetch`: usan hooks (`src/hooks/queries`) que
   llaman a `data.*` (`src/lib/data/index.ts`), implementado en `lib/data/api-repository.ts` sobre la
   API. Las claves de caché de TanStack Query incluyen el `businessId`.
-- **Sesión** en una cookie `httpOnly` que gestiona la API: el frontend nunca ve el token. Si la API
-  responde 401 (sesión caducada o cerrada en otro dispositivo), la app vuelve al login.
+- **Sesión** en una cookie `httpOnly` que gestiona la API: el frontend nunca ve el token. Caduca a
+  las 12 horas sin usarla (con "Recordarme", a los 14 días sin usarla; cada uso la renueva). Si la API
+  responde 401 (sesión caducada o cerrada en otro dispositivo), la app vuelve al login; con
+  `two_factor_required`, vuelve a leer la sesión y muestra la pantalla para activar la verificación.
 - **Disponibilidad como lógica pura.** `lib/availability.ts` combina horario semanal (con
   intervalos partidos), citas activas, bloqueos, duración del servicio y anticipación
   mínima/máxima. La API usa la misma función para validar la reserva al confirmarla.
@@ -347,12 +368,14 @@ Si se añade un servicio externo nuevo, hay que permitirlo ahí.
 
 El CAPTCHA (Cloudflare Turnstile) lo activa la API: con sus claves configuradas, el perfil público
 trae `captchaSiteKey` y la página de reservas carga el widget (`src/features/booking/use-captcha.ts`).
+El registro (`/register`) usa el mismo widget con la Site Key de `GET /api/public/captcha`.
 
 La API es otro proyecto de Vercel (ver agenda-backend). `middleware.ts` (Routing Middleware de
 Vercel) reenvía `/api/*` a esa API: el navegador sólo habla con el dominio del frontend, así que la
 cookie de sesión es propia y no hace falta CORS. Como Vercel reemplaza la IP del visitante al pasar
 por un proxy, el middleware la envía aparte firmada con `PROXY_SECRET` para que los límites
-anti-abuso de la API sean por visitante.
+anti-abuso de la API sean por visitante. El secreto va en todas las peticiones: con la API en AWS
+Lambda (Function URL pública), lo que no lo trae recibe 403.
 
 Variables de entorno del proyecto en Vercel (no llevan el prefijo `VITE_`: sólo las lee el
 middleware, nunca llegan al navegador):

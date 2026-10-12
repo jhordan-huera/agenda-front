@@ -19,12 +19,16 @@ export default function DashboardLayout() {
   const { status, session } = useSession();
   useInstallableApp();
 
+  // Modo soporte sin la verificación en dos pasos (obligatoria): la API lo rechaza; en /admin se activa.
+  const needsTwoFactor = Boolean(session?.support && session.twoFactorSetupRequired);
+
   useEffect(() => {
     if (status === "unauthenticated") navigate("/login", { replace: true });
     if (status === "authenticated" && session && !session.businessId) navigate(getHomePath(session), { replace: true });
-  }, [status, session, navigate]);
+    if (status === "authenticated" && needsTwoFactor) navigate("/admin", { replace: true });
+  }, [status, session, needsTwoFactor, navigate]);
 
-  if (status !== "authenticated" || !session?.businessId) return <FullPageLoader />;
+  if (status !== "authenticated" || !session?.businessId || needsTwoFactor) return <FullPageLoader />;
   if (session.businessStatus === "suspended" && !session.support) return <SuspendedBusinessScreen />;
   return <DashboardShell />;
 }

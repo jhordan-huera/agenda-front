@@ -94,7 +94,7 @@ export function PlatformTeamCard() {
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-amber-700">
-                          <ShieldAlert className="size-3.5" aria-hidden /> Sin verificación en dos pasos
+                          <ShieldAlert className="size-3.5" aria-hidden /> Sin verificación en dos pasos (la activará al entrar)
                         </span>
                       )}
                       <span>{admin.lastSignInAt ? `Último acceso: ${formatDateTime(admin.lastSignInAt)}` : "Aún no ha entrado"}</span>
@@ -210,7 +210,7 @@ function AddPlatformAdminForm({ onDone }: { onDone: () => void }) {
       <FormField label="Email" error={errors.email} hint="Una cuenta aparte: no puede ser el email de un negocio.">
         {(field) => <Input {...field} type="email" value={values.email} onChange={(e) => set("email", e.target.value)} />}
       </FormField>
-      <FormField label="Contraseña" error={errors.password} hint="Mínimo 8 caracteres. Pídele que active la verificación en dos pasos al entrar.">
+      <FormField label="Contraseña" error={errors.password} hint="Mínimo 8 caracteres. Al entrar tendrá que activar la verificación en dos pasos (es obligatoria).">
         {(field) => (
           <Input
             {...field}
