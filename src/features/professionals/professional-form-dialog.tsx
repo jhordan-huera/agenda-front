@@ -214,7 +214,12 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
         {errors.serviceIds && <p className="text-xs font-medium text-destructive">{errors.serviceIds}</p>}
       </fieldset>
 
-      <FormField label="Email para sus avisos" error={errors.email} optional hint="Vacío: no se le envían emails.">
+      <FormField
+        label="Email para sus avisos"
+        error={errors.email}
+        optional
+        hint="Aquí le llegan sus avisos y la copia de los emails a sus pacientes. Vacío: la copia va al email con el que entra (si tiene usuario)."
+      >
         {(field) => <Input {...field} type="email" value={values.email} onChange={(e) => set("email", e.target.value)} />}
       </FormField>
       <FormField
@@ -243,7 +248,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
       <div className="grid gap-2">
         <SwitchRow
           title="Avisarle de cada cita nueva"
-          description="Las que reservan los pacientes o agenda recepción (no las que crea él)."
+          description="Las que reservan los pacientes o agenda recepción (no las que crea él). Si el paciente recibe el email de la cita, en su lugar le llega la copia."
           checked={values.notifyNewAppointments}
           onChange={(checked) => set("notifyNewAppointments", checked)}
           disabled={!values.email}
