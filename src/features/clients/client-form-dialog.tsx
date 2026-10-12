@@ -17,8 +17,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useSaveClient } from "@/hooks/queries/use-clients";
 import { useErrorToast } from "@/hooks/use-error-toast";
+import { clientRequiredFieldsOf } from "@/lib/constants/business";
 import { documentIdError, documentIdMaxLength, onlyDigits } from "@/lib/identity";
-import { clientSchema, type ClientInput } from "@/lib/validations/client";
+import { clientSchemaFor, type ClientInput } from "@/lib/validations/client";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { Client } from "@/types";
 
@@ -69,6 +70,8 @@ function ClientForm({
   const saveClient = useSaveClient();
   const showError = useErrorToast();
   const { data: business } = useCurrentBusiness();
+  // Los datos obligatorios los elige el super admin para cada negocio (la API valida con los mismos).
+  const required = clientRequiredFieldsOf(business);
   const [values, setValues] = useState<ClientInput>({
     name: client?.name ?? defaultName,
     documentId: client?.documentId ?? "",
@@ -85,23 +88,14 @@ function ClientForm({
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(clientSchema, values);
-    // La cédula es obligatoria (identifica al cliente; en Ecuador se comprueba el dígito verificador).
-    const documentError = !result.success
-      ? null
-      : !result.data.documentId
-        ? "La cédula es obligatoria."
-        : business
-          ? documentIdError(result.data.documentId, business.timezone)
-          : null;
-    // El email también es obligatorio: es por donde el cliente recibe sus citas y recordatorios.
-    const emailError = result.success && !result.data.email ? "El email es obligatorio" : null;
-    setErrors({
-      ...result.errors,
-      ...(documentError ? { documentId: documentError } : {}),
-      ...(emailError ? { email: emailError } : {}),
-    });
-    if (!result.success || documentError || emailError) return;
+    // Sin el negocio aún no se sabe qué datos son obligatorios (el botón espera a que cargue).
+    if (!business) return;
+    const result = validate(clientSchemaFor(required), values);
+    // La cédula escrita, en Ecuador, con su dígito verificador (también si es opcional).
+    const documentError =
+      result.success && result.data.documentId ? documentIdError(result.data.documentId, business.timezone) : null;
+    setErrors({ ...result.errors, ...(documentError ? { documentId: documentError } : {}) });
+    if (!result.success || documentError) return;
 
     try {
       const saved = await saveClient.mutateAsync({ id: client?.id, input: result.data });
@@ -122,6 +116,7 @@ function ClientForm({
       <FormField
         label="Cédula"
         error={errors.documentId}
+        optional={!required.documentId}
         hint="Sólo números, sin guiones. Identifica al cliente: con ella, sus reservas online se unen a esta ficha."
       >
         {(field) => (
@@ -137,7 +132,7 @@ function ClientForm({
         )}
       </FormField>
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="Teléfono" error={errors.phone} optional>
+        <FormField label="Teléfono" error={errors.phone} optional={!required.phone}>
           {(field) => (
             <Input
               {...field}
@@ -148,13 +143,13 @@ function ClientForm({
             />
           )}
         </FormField>
-        <FormField label="Email" error={errors.email}>
+        <FormField label="Email" error={errors.email} optional={!required.email}>
           {(field) => (
             <Input {...field} type="email" value={values.email} onChange={(e) => set("email", e.target.value)} />
           )}
         </FormField>
       </div>
-      <FormField label="Dirección" error={errors.address} optional>
+      <FormField label="Dirección" error={errors.address} optional={!required.address}>
         {(field) => (
           <Input {...field} autoComplete="street-address" value={values.address} onChange={(e) => set("address", e.target.value)} />
         )}
@@ -175,7 +170,9 @@ function ClientForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <SubmitButton loading={saveClient.isPending}>{client ? "Guardar cambios" : "Crear cliente"}</SubmitButton>
+        <SubmitButton loading={saveClient.isPending} disabled={!business}>
+          {client ? "Guardar cambios" : "Crear cliente"}
+        </SubmitButton>
       </DialogFooter>
     </form>
   );

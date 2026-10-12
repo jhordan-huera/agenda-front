@@ -55,6 +55,7 @@ import type {
   BusinessStatus,
   Client,
   ClientActivity,
+  ClientRequiredFields,
   ClinicalNote,
   ClinicalProfile,
   ClinicalAttachment,
@@ -319,6 +320,11 @@ export interface PlatformAdminRepository {
   changeBusinessPlan(businessId: string, plan: PlanId): Promise<Subscription>;
   /** Agendas contratadas por un negocio Business (null: sin tope). */
   setMaxProfessionals(businessId: string, maxProfessionals: number | null): Promise<Subscription>;
+  /**
+   * Datos del paciente obligatorios al crearlo o editarlo desde el panel del negocio (el nombre lo es
+   * siempre). Sólo el super admin: el negocio no lo cambia, ni desde su configuración.
+   */
+  setClientRequiredFields(businessId: string, fields: ClientRequiredFields): Promise<Business>;
   /** Para siempre: sus datos, sus archivos y las cuentas de su equipo. Hay que escribir su nombre. */
   deleteBusiness(businessId: string, input: BusinessDeletionInput): Promise<void>;
   listCategories(): Promise<AdminBusinessCategory[]>;

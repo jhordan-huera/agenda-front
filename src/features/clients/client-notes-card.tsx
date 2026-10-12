@@ -3,12 +3,19 @@ import { toast } from "sonner";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useSaveClient } from "@/hooks/queries/use-clients";
+import { CLIENT_REQUIRED_FIELD_OPTIONS, clientRequiredFieldsOf } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
 import type { Client } from "@/types";
 
+/** "cédula", "cédula y email", "cédula, email y teléfono". */
+const listLabels = (labels: string[]) =>
+  labels.length <= 1 ? (labels[0] ?? "") : `${labels.slice(0, -1).join(", ")} y ${labels.at(-1)}`;
+
 export function ClientNotesCard({ client }: { client: Client }) {
   const saveClient = useSaveClient();
+  const { data: business } = useCurrentBusiness();
   const [notes, setNotes] = useState(client.notes);
   // Si las notas guardadas cambian (p. ej. al editar el cliente desde su diálogo), el borrador
   // vuelve a partir de ellas: si no, mostraba las de antes y "Guardar" las habría restaurado.
@@ -20,6 +27,17 @@ export function ClientNotesCard({ client }: { client: Client }) {
   const changed = notes.trim() !== client.notes;
 
   const save = async () => {
+    // Las notas se guardan con la ficha entera: si le falta un dato que el negocio exige (p. ej. un
+    // cliente antiguo sin cédula), hay que completarlo antes, como al editarlo.
+    if (!business) return;
+    const required = clientRequiredFieldsOf(business);
+    const missing = CLIENT_REQUIRED_FIELD_OPTIONS.filter((field) => required[field.key] && !client[field.key].trim());
+    if (missing.length) {
+      toast.error(
+        `Para guardar las notas, completa primero con «Editar» lo que le falta: ${listLabels(missing.map((field) => field.label.toLowerCase()))}.`,
+      );
+      return;
+    }
     try {
       const { id, name, documentId, email, phone, address, isActive } = client;
       await saveClient.mutateAsync({
@@ -50,7 +68,7 @@ export function ClientNotesCard({ client }: { client: Client }) {
           type="button"
           size="sm"
           className="w-full"
-          disabled={!changed}
+          disabled={!changed || !business}
           loading={saveClient.isPending}
           onClick={save}
         >

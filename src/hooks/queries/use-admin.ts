@@ -8,7 +8,7 @@ import type {
   PlatformAdminInput,
   PlatformSettingsInput,
 } from "@/lib/validations/admin";
-import type { BusinessStatus, PlanId } from "@/types";
+import type { AdminBusinessDetail, BusinessStatus, ClientRequiredFields, PlanId } from "@/types";
 import { queryKeys } from "./query-keys";
 
 /* Panel del super admin. El backend vuelve a comprobar el rol en cada llamada. */
@@ -102,6 +102,26 @@ export const useSetMaxProfessionals = () =>
   useAdminMutation(({ businessId, maxProfessionals }: { businessId: string; maxProfessionals: number | null }) =>
     data.admin.setMaxProfessionals(businessId, maxProfessionals),
   );
+
+/**
+ * Datos obligatorios del paciente de un negocio. También se recarga el negocio en sí: al entrar en él
+ * («Gestionar negocio»), el formulario del paciente ya pide los nuevos.
+ */
+export function useSetClientRequiredFields() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ businessId, fields }: { businessId: string; fields: ClientRequiredFields }) =>
+      data.admin.setClientRequiredFields(businessId, fields),
+    onSuccess: (business) => {
+      // La ficha ya muestra lo guardado (sin «cambios sin guardar» mientras recarga la actividad).
+      queryClient.setQueryData<AdminBusinessDetail | null>(queryKeys.admin.business(business.id), (current) =>
+        current ? { ...current, business } : current,
+      );
+      queryClient.setQueryData(queryKeys.business(business.id), business);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+    },
+  });
+}
 
 /**
  * Sin esperar a recargar el panel: la ficha del negocio eliminado mostraría "no encontrado"

@@ -132,8 +132,8 @@ src/
   datos". Si se pierde la respuesta y el paciente vuelve a confirmar, la confirmación no repite los
   datos para pagar: dice "Revisa tu email para pagar". Los topes del día (reservas online, clientes
   nuevos), el CAPTCHA y los datos que no coinciden se muestran junto al botón de reservar, con el
-  WhatsApp del negocio. En el panel, cédula y email son obligatorios al registrar un cliente, y el
-  buscador encuentra por cédula.
+  WhatsApp del negocio. En el panel, los datos obligatorios del cliente dependen del negocio (por
+  defecto, cédula y email; ver «Datos obligatorios del paciente»), y el buscador encuentra por cédula.
 - **Gestionar negocio** (panel `/admin` → negocio): el super admin abre el panel de cualquier
   negocio con permisos de propietario (servicios, horarios, citas, clientes, configuración). Un
   aviso arriba indica el modo soporte; lo que crea o cambia queda en la actividad del negocio con su
@@ -186,6 +186,16 @@ active con una app de autenticación. Después, el panel aparece solo.
   cambio de plan, suspender/reactivar y restablecer la contraseña del propietario.
   Un negocio suspendido no puede usar el panel (ve un aviso con el email de soporte) y su
   página pública deja de estar disponible.
+- **Datos obligatorios del paciente** (ficha del negocio, `features/admin/client-required-fields-card.tsx`):
+  un interruptor por dato (Cédula, Email, Teléfono, Dirección; el Nombre siempre) decide qué pide el
+  panel de ese negocio al crear o editar un paciente. Por defecto, cédula y email, como hasta ahora.
+  Sólo el super admin lo cambia (el negocio no lo ve en su configuración) y queda en la actividad del
+  negocio. La reserva online no cambia: pide siempre cédula, nombre, email y teléfono. El formulario
+  del paciente (`client-form-dialog.tsx`, también «+ Nuevo» en la nueva cita y el modo soporte) usa
+  la configuración del negocio (`Business.clientRequiredFields`): «(opcional)» sólo en los que no lo
+  son, y valida con `clientSchemaFor` (`lib/validations/client.ts`), el mismo esquema que la API. A
+  un paciente antiguo al que le falta un dato que ahora es obligatorio hay que completárselo para
+  guardar su ficha o sus notas.
 - **Usuarios**: todas las cuentas con su negocio y rol; desactivar/reactivar acceso y
   restablecer contraseña (contraseña temporal enviada por email).
 - **Planes**: precios, límites, negocios e ingresos por plan.
