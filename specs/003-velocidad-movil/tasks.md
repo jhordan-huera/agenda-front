@@ -19,6 +19,10 @@ description: "Tareas de Velocidad en el celular"
 ## Fase 2: Comprobación
 
 - [x] T007 `npm run build` y `npm run lint`; Zod fuera del paquete inicial (mapa de fuentes)
-- [ ] T008 Medición antes/después con `rendimiento.mjs` (portada, login, reservas con y sin mapa)
-- [ ] T009 Pruebas de las specs 001 y 002; login, registro y reserva con errores de validación; sin errores de CSP en la consola; el mapa aparece al bajar
-- [ ] T010 `reporte.md` y commit en `dev`, sin push
+- [x] T008 Medición antes/después con `rendimiento.mjs` (portada, login, reservas con y sin mapa)
+- [x] T009 Pruebas de las specs 001 y 002; login, registro y reserva con errores de validación; sin errores de CSP en la consola; el mapa aparece al bajar
+- [x] T010 `reporte.md` y commit en `dev`, sin push
+
+## Resultado
+
+Ver el [reporte final](./reporte.md).

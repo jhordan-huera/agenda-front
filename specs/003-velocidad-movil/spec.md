@@ -4,7 +4,7 @@
 
 **Creada**: 2026-10-13
 
-**Estado**: Aprobada (2026-10-13, en la conversación: las cuatro mejoras propuestas)
+**Estado**: Implementada (2026-10-13; aprobada en la conversación: las cuatro mejoras propuestas)
 
 **Pedido**: Speed Insights de Vercel marca 74 ("mejorable") en celulares. Medición local (celular
 simulado: CPU 4× más lenta, 4G lenta de 1,6 Mbps y 150 ms):
