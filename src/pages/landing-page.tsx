@@ -5,6 +5,7 @@ import { HeroSection } from "@/features/landing/hero-section";
 import { HowItWorksSection } from "@/features/landing/how-it-works-section";
 import { LandingFooter } from "@/features/landing/landing-footer";
 import { LandingNavbar } from "@/features/landing/landing-navbar";
+import { PanelPreviewSection } from "@/features/landing/panel-preview-section";
 
 export default function LandingPage() {
   return (
@@ -14,6 +15,7 @@ export default function LandingPage() {
       <main>
         <HeroSection />
         <FeaturesSection />
+        <PanelPreviewSection />
         <HowItWorksSection />
         <CtaSection />
       </main>

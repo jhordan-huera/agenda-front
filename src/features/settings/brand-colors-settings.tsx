@@ -61,7 +61,7 @@ export function BrandColorsSettings({ business }: { business: Business }) {
       onSubmit={submit}
       onDiscard={() => reset()}
     >
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
         <div className="grid gap-6">
           <fieldset className="grid gap-3">
             <legend className="mb-3 text-sm font-semibold">
@@ -118,7 +118,7 @@ export function BrandColorsSettings({ business }: { business: Business }) {
               Por ejemplo, los de tu logo. El resto de tonos (fondos, bordes,
               textos) se calculan solos a partir de estos dos.
             </p>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <ColorField
                 label="Color principal"
                 description="Botones, títulos y lo activo."
@@ -250,9 +250,9 @@ function BrandPreview({ colors, slug }: { colors: BrandColors; slug: string }) {
         data-testid="brand-preview"
         aria-hidden
       >
-        {/* Pestañas del panel */}
-        <div className="flex gap-1 border-b bg-sidebar px-3 pt-3 text-xs font-medium text-sidebar-foreground">
-          <span className="rounded-t-md bg-card px-2.5 py-1.5 font-semibold text-ink">
+        {/* El menú del panel: lo activo, en el azul pastel de la marca */}
+        <div className="flex gap-1 border-b bg-sidebar p-2 text-xs font-medium text-sidebar-foreground">
+          <span className="rounded-lg bg-sidebar-accent px-2.5 py-1.5 font-semibold text-sidebar-accent-foreground">
             Inicio
           </span>
           <span className="px-2.5 py-1.5">Agenda</span>

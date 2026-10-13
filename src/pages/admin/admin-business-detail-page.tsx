@@ -73,7 +73,7 @@ export default function AdminBusinessDetailPage() {
       <div className="space-y-6">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-14 w-80" />
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Skeleton className="h-72 lg:col-span-2" />
           <Skeleton className="h-72" />
         </div>
@@ -154,7 +154,7 @@ export default function AdminBusinessDetailPage() {
 
       <PlanRequestsCard businessId={business.id} />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
@@ -167,8 +167,8 @@ export default function AdminBusinessDetailPage() {
                 . El negocio no ve planes ni precios.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6 sm:grid-cols-2">
-              <div className="grid content-start gap-2">
+            <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="grid min-w-0 grid-cols-1 content-start gap-2">
                 <p className="text-sm font-medium">Cambiar plan</p>
                 <Select value={plan.id} onValueChange={(value) => setPlanDialog({ open: true, plan: value as PlanId })}>
                   <SelectTrigger aria-label="Plan del negocio" className="w-full">
@@ -192,7 +192,7 @@ export default function AdminBusinessDetailPage() {
                   />
                 )}
               </div>
-              <div className="grid gap-3">
+              <div className="grid min-w-0 grid-cols-1 gap-3">
                 <UsageMeter label="Citas este mes" used={usage.appointmentsThisMonth} limit={usage.limits.appointmentsPerMonth} />
                 <UsageMeter label="Clientes" used={usage.clients} limit={usage.limits.clients} />
                 <UsageMeter label="Usuarios" used={usage.users} limit={usage.limits.users} />
@@ -303,7 +303,7 @@ export default function AdminBusinessDetailPage() {
               <CardTitle>Información</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="grid gap-1.5">
+              <div className="grid grid-cols-1 gap-1.5">
                 <p className="text-xs text-muted-foreground">Tipo de negocio</p>
                 <Select
                   value={business.category}

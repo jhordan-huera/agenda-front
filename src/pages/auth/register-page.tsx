@@ -27,7 +27,7 @@ export default function RegisterPage() {
       <>
         <PageTitle title="Registro cerrado" />
         <div className="flex flex-col items-start gap-4">
-          <span className="flex size-12 items-center justify-center rounded-full bg-accent text-accent-foreground">
+          <span className="flex size-12 items-center justify-center rounded-xl bg-accent text-ink">
             <LockKeyhole className="size-5" aria-hidden />
           </span>
           <AuthCardHeader
@@ -56,11 +56,13 @@ export default function RegisterPage() {
     <>
       <PageTitle title="Crear cuenta" />
       <AuthCardHeader
-        title="Crea tu cuenta gratis"
+        eyebrow="Gratis para empezar"
+        title="Crea tu cuenta"
+        highlight="gratis"
         description={
           <>
             ¿Ya tienes cuenta?{" "}
-            <Link to="/login" className="font-medium text-primary hover:underline">
+            <Link to="/login" className="font-semibold text-primary hover:underline">
               Inicia sesión
             </Link>
           </>

@@ -4,7 +4,7 @@ import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG } from "@/lib/constants
 import { capitalize } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useChartColors } from "@/features/branding/brand-palette-context";
-import type { VolumePoint } from "./report-stats";
+import type { VolumeGranularity, VolumePoint } from "./report-stats";
 
 function VolumeTooltip({ active, payload }: TooltipContentProps) {
   const point = payload?.[0]?.payload as VolumePoint | undefined;
@@ -31,8 +31,14 @@ function VolumeTooltip({ active, payload }: TooltipContentProps) {
 }
 
 /** Columnas de una sola serie (sin leyenda: el título la nombra) + tabla accesible. */
-export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumePoint[]; groupedByWeek: boolean }) {
-  const title = groupedByWeek ? "Citas por semana" : "Citas por día";
+const TITLES: Record<VolumeGranularity, { title: string; column: string }> = {
+  day: { title: "Citas por día", column: "Día" },
+  week: { title: "Citas por semana", column: "Semana" },
+  month: { title: "Citas por mes", column: "Mes" },
+};
+
+export function AppointmentsVolumeChart({ data, granularity }: { data: VolumePoint[]; granularity: VolumeGranularity }) {
+  const { title, column } = TITLES[granularity];
   const colors = useChartColors();
   const axisTick = { fontSize: 11, fill: colors.tick };
 
@@ -83,7 +89,7 @@ export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumeP
             <table className="hidden w-full text-left text-xs sm:table">
               <thead className="sticky top-0 bg-muted">
                 <tr>
-                  <th className="px-3 py-2 font-medium">{groupedByWeek ? "Semana" : "Día"}</th>
+                  <th className="px-3 py-2 font-medium">{column}</th>
                   <th className="px-3 py-2 text-right font-medium">Citas</th>
                   <th className="px-3 py-2 text-right font-medium">Completadas</th>
                   <th className="px-3 py-2 text-right font-medium">Canceladas</th>

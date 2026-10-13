@@ -196,7 +196,7 @@ export default function ClinicalTemplatesPage() {
                 description={canEdit ? "Crea uno desde cero o duplica uno de la plataforma para adaptarlo." : "Disponibles en los planes Pro y Business."}
               />
             ) : (
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {own.map((template) => (
                   <TemplateCard
                     key={template.id}
@@ -232,7 +232,7 @@ export default function ClinicalTemplatesPage() {
             <h2 id="platform-heading" className="font-semibold">
               Formatos de la plataforma
             </h2>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {platform.map((template) => (
                 <TemplateCard key={template.id} template={template} meta={countFields(template)}>
                   {cardActions(template)}

@@ -24,7 +24,7 @@ export function UserMenu({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-lg p-2 text-left outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-ring/50 aria-expanded:bg-sidebar-accent">
+      <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl p-2 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 aria-expanded:bg-muted">
         <UserAvatar name={name} src={user.avatarUrl} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium">{name}</span>

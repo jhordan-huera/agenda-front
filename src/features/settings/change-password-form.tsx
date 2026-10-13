@@ -51,7 +51,7 @@ export function ChangePasswordForm() {
           />
         )}
       </FormField>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <FormField label="Nueva contraseña" error={errors.newPassword} hint="Mínimo 8 caracteres.">
           {(field) => (
             <PasswordInput

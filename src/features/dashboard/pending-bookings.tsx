@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { capitalize, formatShortDate } from "@/lib/format";
 import type { ZonedNow } from "@/lib/time";
 import type { Appointment } from "@/types";
+import { DashCard, DashCardHeader } from "./dash-card";
 
 interface PendingBookingsProps {
   appointments: Appointment[];
@@ -25,15 +26,16 @@ export function PendingBookings({
   confirmingIds,
 }: PendingBookingsProps) {
   return (
-    <section aria-labelledby="pending-heading">
-      <h2 id="pending-heading" className="flex items-baseline justify-between gap-2 border-b-2 border-ink pb-2 font-bold">
-        Por confirmar
-        <span className="text-sm font-semibold text-muted-foreground tabular-nums">{appointments.length}</span>
-      </h2>
+    <DashCard aria-labelledby="pending-heading">
+      <DashCardHeader
+        id="pending-heading"
+        title="Por confirmar"
+        aside={<span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-bold text-secondary-foreground tabular-nums">{appointments.length}</span>}
+      />
       {appointments.length === 0 ? (
-        <p className="py-4 text-muted-foreground">No tienes citas por confirmar.</p>
+        <p className="text-muted-foreground">No tienes citas por confirmar.</p>
       ) : (
-        <ul className="divide-y">
+        <ul className="-my-3 divide-y">
           {appointments.map((appointment) => (
             <li key={appointment.id} className="flex items-center gap-3 py-3">
               <button
@@ -57,6 +59,6 @@ export function PendingBookings({
           ))}
         </ul>
       )}
-    </section>
+    </DashCard>
   );
 }

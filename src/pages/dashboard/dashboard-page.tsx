@@ -12,6 +12,7 @@ import { useAppointmentDialogs } from "@/features/appointments/use-appointment-d
 import { usePermissions } from "@/features/auth/use-permissions";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
 import { BookingLinkCard } from "@/features/dashboard/booking-link-card";
+import { DashCard, DashCardHeader, KpiTile } from "@/features/dashboard/dash-card";
 import { getDashboardMetrics, getGreeting } from "@/features/dashboard/dashboard-metrics";
 import { dayBounds, freeHoursLeft } from "@/features/dashboard/day-plan";
 import { DayRibbon } from "@/features/dashboard/day-ribbon";
@@ -139,8 +140,8 @@ export default function DashboardPage() {
 
       <PlanLimitBanner />
 
-      <div className="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-12">
-        <div className="min-w-0 space-y-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="min-w-0 space-y-6">
           {loading ? (
             <Skeleton className="h-44 rounded-2xl" />
           ) : appointmentsQuery.isError ? (
@@ -157,17 +158,15 @@ export default function DashboardPage() {
             />
           )}
 
-          <section aria-labelledby="day-heading">
-            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h2 id="day-heading" className="font-bold">
-                Tu día
-              </h2>
-              {!loading && (
-                <p className="text-sm text-muted-foreground">
-                  {plural(today.length, "cita", "citas")} hoy, {plural(metrics.todayPending, "por confirmar", "por confirmar")}
-                </p>
-              )}
-            </div>
+          <DashCard aria-labelledby="day-heading">
+            <DashCardHeader
+              id="day-heading"
+              title="Tu día"
+              aside={
+                !loading &&
+                `${plural(today.length, "cita", "citas")} hoy, ${plural(metrics.todayPending, "por confirmar", "por confirmar")}`
+              }
+            />
             {loading ? (
               <Skeleton className="h-28 rounded-xl" />
             ) : bounds ? (
@@ -192,7 +191,7 @@ export default function DashboardPage() {
                 )}
               </p>
             )}
-          </section>
+          </DashCard>
 
           {!loading && (
             <TodayList
@@ -209,22 +208,16 @@ export default function DashboardPage() {
           )}
 
           {/* La semana y el mes, en la columna principal: se leen después del día. */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,1fr)_14rem] sm:items-end">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,1fr)_15rem]">
             <WeekBars appointments={appointments} now={now} />
-            <dl className="grid grid-cols-2 gap-4 rounded-xl bg-muted p-4 sm:grid-cols-1">
-              <div>
-                <dt className="text-sm text-muted-foreground">Ingresos del mes</dt>
-                <dd className="text-xl font-bold tabular-nums">{loading ? "…" : formatCurrency(metrics.monthRevenue, business?.currency)}</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Clientes activos</dt>
-                <dd className="text-xl font-bold tabular-nums">{loading ? "…" : metrics.activeClients}</dd>
-              </div>
+            <dl className="grid grid-cols-2 content-start gap-6 sm:grid-cols-1">
+              <KpiTile label="Ingresos del mes" value={loading ? "…" : formatCurrency(metrics.monthRevenue, business?.currency)} />
+              <KpiTile label="Clientes activos" value={loading ? "…" : metrics.activeClients} />
             </dl>
           </div>
         </div>
 
-        <aside className="grid grid-cols-1 content-start gap-10 md:grid-cols-2 xl:grid-cols-1">
+        <aside className="grid grid-cols-1 content-start gap-6 md:grid-cols-2 xl:grid-cols-1">
           {loading ? (
             <Skeleton className="h-48" />
           ) : (

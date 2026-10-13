@@ -25,11 +25,26 @@ function buildUrl(path: string, query?: Record<string, QueryValue>): string {
   return `${API_URL}${path}${search ? `?${search}` : ""}`;
 }
 
+declare global {
+  interface Window {
+    /** La petición que public/early-data.js lanza al abrir una página de reservas. */
+    __agendaEarly?: { path: string; response: Promise<Response> };
+  }
+}
+
+/** La respuesta adelantada de esta ruta, una sola vez (después, la app pide como siempre). */
+function takeEarlyResponse(method: string, path: string, options: RequestOptions): Promise<Response> | null {
+  const early = typeof window === "undefined" ? undefined : window.__agendaEarly;
+  if (!early || method !== "GET" || options.query || API_URL !== "/api" || early.path !== path) return null;
+  window.__agendaEarly = undefined;
+  return early.response;
+}
+
 /** Hace la petición y devuelve el JSON. Los errores llegan como DataError con mensaje para el usuario. */
 export async function apiRequest<T>(method: string, path: string, options: RequestOptions = {}): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(buildUrl(path, options.query), {
+    response = await (takeEarlyResponse(method, path, options) ?? fetch(buildUrl(path, options.query), {
       method,
       credentials: "include",
       headers: {
@@ -39,7 +54,7 @@ export async function apiRequest<T>(method: string, path: string, options: Reque
         ...(options.body !== undefined ? { "Content-Type": "application/json" } : {}),
       },
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-    });
+    }));
   } catch {
     throw new DataError("network", "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.");
   }

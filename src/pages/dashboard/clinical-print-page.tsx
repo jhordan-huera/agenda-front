@@ -91,7 +91,7 @@ export default function ClinicalPrintPage() {
           <h2 id="print-personal" className="mb-3 font-semibold">
             Datos del paciente
           </h2>
-          <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
             {personal.map(([label, value]) => (
               <div key={label}>
                 <dt className="text-xs text-muted-foreground">{label}</dt>

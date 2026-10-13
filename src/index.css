@@ -65,6 +65,9 @@
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
   --color-ink: var(--ink);
+  --color-shell: var(--shell);
+  --color-shell-foreground: var(--shell-foreground);
+  --color-canvas: var(--canvas);
   --color-lilac-ink: var(--lilac-ink);
   --color-field: var(--field);
   --color-rule-strong: var(--rule-strong);
@@ -116,6 +119,10 @@
  *   elegido, la reserva que entra), con el trazo de marcador (.marker). Su tono suave (#EFEBFC,
  *   --secondary) viste insignias y botones secundarios.
  * - Tipografía: Sora; las horas, grandes, gruesas y con cifras tabulares.
+ * - Panel (diseño de aplicación SaaS, claro): el lienzo gris claro (--canvas) con el menú y las
+ *   tarjetas en blanco; lo destacado, en un degradado del principal al lila. --shell (casi negro
+ *   con el tono de la marca) viste etiquetas y el pie de la portada. Con los colores de un negocio,
+ *   --shell y --canvas salen de su principal (lib/brand-theme.ts).
  * Los estados de las citas (pendiente, confirmada…) usan sus colores en
  * lib/constants/appointment-status.ts.
  */
@@ -135,6 +142,10 @@
   --highlight-foreground: var(--text);
   --lilac-ink: #5a4ea3;
   --red-pen: #b4453c;
+  /* Marco del panel: lo mismo que da brandThemeVariables con los colores de Agenda360. */
+  --shell: #131e33;
+  --shell-foreground: #eef1f8;
+  --canvas: #f0f3f8;
 
   --background: var(--paper);
   --foreground: var(--text);
@@ -159,13 +170,13 @@
   --chart-3: #a99be0;
   --chart-4: #e3b5c8;
   --chart-5: var(--red-pen);
-  --radius: 0.5rem;
-  /* La barra lateral es la misma bruma que el escritorio; la pestaña activa, del papel de la hoja. */
-  --sidebar: var(--desk);
-  --sidebar-foreground: #283044;
+  --radius: 0.625rem;
+  /* El menú lateral: una tarjeta blanca flotante; lo activo, en el azul pastel de la marca. */
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--graphite);
   --sidebar-primary: var(--ink);
   --sidebar-primary-foreground: var(--paper);
-  --sidebar-accent: #e4ebf9;
+  --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--rule);
   --sidebar-ring: var(--ink);

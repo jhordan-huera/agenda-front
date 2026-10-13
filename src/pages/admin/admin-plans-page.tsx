@@ -29,7 +29,7 @@ export default function AdminPlansPage() {
       {businesses.isError ? (
         <ErrorState onRetry={() => businesses.refetch()} />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {PLANS.map((plan) => {
             const inPlan = (businesses.data ?? []).filter((row) => row.subscription?.plan === plan.id);
             const agendas = inPlan.reduce((total, row) => total + row.usage.professionals, 0);

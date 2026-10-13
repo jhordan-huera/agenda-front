@@ -4,8 +4,12 @@ import { formatDate, plural } from "@/lib/format";
 import { addDaysISO, startOfWeekISO, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/types";
+import { DashCard, DashCardHeader } from "./dash-card";
 
-/** La semana en barras: cuántas citas tiene cada día (sin canceladas). Hoy va en azul. */
+/**
+ * La semana en barras: cuántas citas tiene cada día (sin canceladas). Cada día con su columna de
+ * fondo; hoy, la barra en degradado de la marca y su cifra en una etiqueta oscura.
+ */
 export function WeekBars({ appointments, now }: { appointments: Appointment[]; now: ZonedNow }) {
   const monday = startOfWeekISO(now.date);
   const days = WEEK_DAYS.map((day, index) => {
@@ -17,25 +21,25 @@ export function WeekBars({ appointments, now }: { appointments: Appointment[]; n
   const total = days.reduce((sum, day) => sum + day.count, 0);
 
   return (
-    <section aria-labelledby="week-heading">
-      <div className="flex items-baseline justify-between gap-2 border-b-2 border-ink pb-2">
-        <h2 id="week-heading" className="font-bold">
-          Esta semana
-        </h2>
-        <span className="text-sm font-semibold text-muted-foreground">{plural(total, "cita", "citas")}</span>
-      </div>
-      <ol className="mt-4 grid h-36 grid-cols-7 items-end gap-1.5" aria-label="Citas por día de esta semana">
+    <DashCard aria-labelledby="week-heading">
+      <DashCardHeader id="week-heading" title="Esta semana" aside={<span className="font-semibold">{plural(total, "cita", "citas")}</span>} />
+      <ol className="grid h-44 grid-cols-7 items-end gap-2" aria-label="Citas por día de esta semana">
         {days.map((day) => {
           const today = day.date === now.date;
           return (
-            <li key={day.date} className="flex h-full flex-col items-center justify-end gap-1.5">
-              <span className={cn("h-4 text-xs font-bold tabular-nums", today ? "text-ink" : "text-muted-foreground")}>
-                {day.count || ""}
-              </span>
-              <span aria-hidden className="flex w-full flex-1 items-end">
+            <li key={day.date} className="flex h-full flex-col items-center justify-end gap-2">
+              <span aria-hidden className="flex w-full flex-1 flex-col items-center justify-end rounded-lg bg-muted px-1 pt-1">
                 <span
-                  className={cn("w-full rounded-t-md", today ? "bg-ink" : "bg-chart-2/70", day.count === 0 && "bg-border")}
-                  style={{ height: day.count ? `${Math.max(8, (day.count / max) * 100)}%` : "3px" }}
+                  className={cn(
+                    "mb-1 text-[11px] leading-none font-bold tabular-nums",
+                    today ? "rounded-md bg-shell px-1.5 py-1 text-white" : "text-muted-foreground",
+                  )}
+                >
+                  {day.count || ""}
+                </span>
+                <span
+                  className={cn("w-full rounded-md", today ? "bg-linear-to-t from-ink to-lilac-ink" : "bg-chart-2")}
+                  style={{ height: day.count ? `${Math.max(6, (day.count / max) * 74)}%` : "0" }}
                 />
               </span>
               <span className={cn("text-xs", today ? "font-bold text-ink" : "text-muted-foreground")}>
@@ -48,9 +52,9 @@ export function WeekBars({ appointments, now }: { appointments: Appointment[]; n
           );
         })}
       </ol>
-      <Link to="/dashboard/calendar" className="mt-3 inline-block text-sm font-semibold text-ink underline-offset-4 hover:underline">
+      <Link to="/dashboard/calendar" className="mt-4 inline-block text-sm font-semibold text-ink underline-offset-4 hover:underline">
         Ver la semana en la agenda
       </Link>
-    </section>
+    </DashCard>
   );
 }

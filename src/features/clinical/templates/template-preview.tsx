@@ -18,7 +18,7 @@ export function TemplatePreview({ fields }: { fields: ClinicalField[] }) {
   const merged = { ...initialClinicalValues(visible), ...values };
   if (visible.length === 0) return <p className="text-sm text-muted-foreground">Añade campos para ver cómo queda.</p>;
   return (
-    <div className="grid gap-4 sm:grid-cols-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
       {visible.map((field) => (
         <ClinicalFieldInput
           key={field.id}

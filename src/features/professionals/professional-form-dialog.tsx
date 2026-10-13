@@ -129,7 +129,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
         fallback={getInitials(values.displayName || "?")}
         error={errors.avatarUrl}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Nombre que ven los pacientes" error={errors.displayName}>
           {(field) => (
             <Input {...field} placeholder="Dra. Valeria Cruz" value={values.displayName} onChange={(e) => set("displayName", e.target.value)} />
@@ -199,7 +199,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
           </ChoiceButton>
         </div>
         {!values.allServices && (
-          <div className="grid gap-2 rounded-lg border p-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 rounded-lg border p-3 sm:grid-cols-2">
             {activeServices.map((service) => (
               <label key={service.id} className="flex items-center gap-2 text-sm">
                 <Checkbox

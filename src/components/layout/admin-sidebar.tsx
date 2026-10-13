@@ -20,19 +20,19 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
         <Logo href="/admin" />
       </div>
 
-      <div className="mx-3 mb-2 flex items-center gap-2.5 rounded-lg border bg-background px-3 py-2.5">
+      <div className="mx-3 mb-2 flex items-center gap-2.5 rounded-xl bg-muted px-3 py-2.5">
         <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <ShieldCheck className="size-4" aria-hidden />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">Panel de plataforma</p>
+          <p className="truncate text-sm font-semibold">Panel de plataforma</p>
           <p className="text-xs text-muted-foreground">Super admin</p>
         </div>
       </div>
 
       <SidebarNav label="Plataforma" items={ADMIN_NAV_ITEMS} onNavigate={onNavigate} />
 
-      <div className="space-y-2 border-t p-3">
+      <div className="space-y-1 border-t border-sidebar-border p-3">
         <InstallAppButton />
         {user ? (
           <div className="flex items-center gap-3 rounded-lg p-2">
@@ -45,7 +45,11 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
         ) : (
           <Skeleton className="h-12 w-full" />
         )}
-        <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={signOut}>
+        <Button
+          variant="ghost"
+          className="w-full justify-start rounded-xl text-muted-foreground"
+          onClick={signOut}
+        >
           <LogOut /> Cerrar sesión
         </Button>
       </div>

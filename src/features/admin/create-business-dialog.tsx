@@ -212,7 +212,7 @@ function CreateBusinessForm({ onDone }: { onDone: () => void }) {
 
       <fieldset className="grid gap-4">
         <legend className="mb-3 text-sm font-semibold">Negocio</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField label="Nombre del negocio" error={errors.name}>
             {(field) => <Input {...field} autoFocus value={values.name} onChange={(e) => set("name", e.target.value)} />}
           </FormField>
@@ -265,7 +265,7 @@ function CreateBusinessForm({ onDone }: { onDone: () => void }) {
             />
           )}
         </FormField>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField label="Teléfono" optional error={errors.phone}>
             {(field) => <Input {...field} type="tel" value={values.phone} onChange={(e) => set("phone", e.target.value)} />}
           </FormField>
@@ -278,7 +278,7 @@ function CreateBusinessForm({ onDone }: { onDone: () => void }) {
             {(field) => <Input {...field} type="email" value={values.email} onChange={(e) => set("email", e.target.value)} />}
           </FormField>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField label="Dirección" optional error={errors.address}>
             {(field) => <Input {...field} value={values.address} onChange={(e) => set("address", e.target.value)} />}
           </FormField>
@@ -346,7 +346,7 @@ function CreateBusinessForm({ onDone }: { onDone: () => void }) {
 
       <fieldset>
         <legend className="mb-3 text-sm font-semibold">Plan</legend>
-        <div role="radiogroup" aria-label="Plan" className="grid gap-2 sm:grid-cols-3">
+        <div role="radiogroup" aria-label="Plan" className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {PLANS.map((plan) => {
             const selected = values.plan === plan.id;
             return (

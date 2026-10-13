@@ -133,6 +133,13 @@ export interface AppointmentNoticeData {
   paymentUrl?: string;
 }
 
+/** Para recuperar a un paciente que no ha vuelto (Reportes): se puede editar en WhatsApp antes de enviarlo. */
+export function buildWinBackMessage(data: { clientName: string; businessName: string; bookingUrl: string }): string {
+  const name = data.clientName.trim().split(/\s+/)[0] ?? "";
+  const hello = name ? `Hola ${name}` : "Hola";
+  return `${hello}, hace tiempo que no te vemos en ${data.businessName}. Cuando quieras agendar tu próxima cita, puedes elegir tu hora aquí: ${data.bookingUrl}`;
+}
+
 /** Mensaje de WhatsApp al cliente según el cambio de su cita; el profesional lo revisa antes de enviarlo. */
 export function buildAppointmentNotice(kind: AppointmentNoticeKind, data: AppointmentNoticeData): string {
   const name = data.clientName.trim().split(/\s+/)[0] ?? "";

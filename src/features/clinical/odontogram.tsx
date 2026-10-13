@@ -276,7 +276,7 @@ export function OdontogramInput({ value, onChange }: { value: OdontogramValue; o
       <OdontogramLegend />
 
       {selected && (
-        <div className="grid gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[132px_1fr]">
+        <div className="grid grid-cols-1 gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-[132px_1fr]">
           <div className="grid justify-items-center gap-1">
             <p className="text-sm font-semibold">Pieza {selected}</p>
             <svg viewBox="-6 -6 132 132" className="size-32" role="group" aria-label={`Superficies de la pieza ${selected}`}>

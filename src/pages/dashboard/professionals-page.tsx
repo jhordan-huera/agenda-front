@@ -46,7 +46,7 @@ function MultiAgendaOnly() {
   const multiAgenda = useMultiAgendaAccess();
   if (multiAgenda === undefined) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 3 }, (_, i) => (
           <Skeleton key={i} className="h-44 rounded-xl" />
         ))}
@@ -142,7 +142,7 @@ function ProfessionalsPageContent() {
       )}
 
       {professionalsQuery.isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }, (_, i) => (
             <Skeleton key={i} className="h-44 rounded-xl" />
           ))}
@@ -152,7 +152,7 @@ function ProfessionalsPageContent() {
       ) : professionals.length === 0 ? (
         <EmptyState icon={Contact} title="Aún no hay profesionales" description="Agrega a quienes atienden en tu negocio." />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {professionals.map((professional) => (
             <ProfessionalCard
               key={professional.id}
@@ -319,7 +319,7 @@ function PatientScopeCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div role="radiogroup" aria-label="Pacientes que ve cada profesional" className="grid gap-2 sm:grid-cols-2">
+        <div role="radiogroup" aria-label="Pacientes que ve cada profesional" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {options.map((option) => {
             const selected = business?.professionalScope === option.value;
             return (

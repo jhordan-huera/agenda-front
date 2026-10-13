@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
 import { PasswordInput } from "@/components/shared/password-input";
@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { CAPTCHA_BOX_CLASS, useCaptcha } from "@/features/booking/use-captcha";
 import { useCaptchaSiteKey } from "@/hooks/queries/use-public-booking";
 import { getErrorMessage } from "@/lib/data/errors";
-import { registerSchema } from "@/lib/validations/auth";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
+import { loadAuthSchemas } from "./auth-schemas";
 import { useSession } from "./use-session";
 
 const INITIAL_VALUES = { firstName: "", lastName: "", email: "", password: "", confirmPassword: "" };
@@ -25,12 +25,23 @@ export function RegisterForm() {
   const siteKey = useCaptchaSiteKey();
   const { containerRef: captchaRef, getToken: getCaptchaToken } = useCaptcha(siteKey.data ?? null);
 
+  useEffect(() => {
+    loadAuthSchemas().catch(() => undefined);
+  }, []);
+
   const update = (key: keyof typeof INITIAL_VALUES) => (event: ChangeEvent<HTMLInputElement>) =>
     setValues({ ...values, [key]: event.target.value });
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(registerSchema, values);
+    let schemas;
+    try {
+      schemas = await loadAuthSchemas();
+    } catch (error) {
+      setFormError(getErrorMessage(error));
+      return;
+    }
+    const result = validate(schemas.registerSchema, values);
     setErrors(result.errors);
     setFormError(null);
     if (!result.success) return;
@@ -51,19 +62,19 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
       {formError && (
-        <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
           {formError}
         </p>
       )}
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <FormField label="Nombre" error={errors.firstName}>
           {(field) => (
-            <Input {...field} autoComplete="given-name" className="h-10" value={values.firstName} onChange={update("firstName")} />
+            <Input {...field} autoComplete="given-name" className="h-11" value={values.firstName} onChange={update("firstName")} />
           )}
         </FormField>
         <FormField label="Apellido" error={errors.lastName}>
           {(field) => (
-            <Input {...field} autoComplete="family-name" className="h-10" value={values.lastName} onChange={update("lastName")} />
+            <Input {...field} autoComplete="family-name" className="h-11" value={values.lastName} onChange={update("lastName")} />
           )}
         </FormField>
       </div>
@@ -74,7 +85,7 @@ export function RegisterForm() {
             type="email"
             autoComplete="email"
             placeholder="tu@email.com"
-            className="h-10"
+            className="h-11"
             value={values.email}
             onChange={update("email")}
           />
@@ -82,13 +93,14 @@ export function RegisterForm() {
       </FormField>
       <FormField label="Contraseña" error={errors.password} hint="Mínimo 8 caracteres.">
         {(field) => (
-          <PasswordInput {...field} autoComplete="new-password" value={values.password} onChange={update("password")} />
+          <PasswordInput {...field} className="h-11" autoComplete="new-password" value={values.password} onChange={update("password")} />
         )}
       </FormField>
       <FormField label="Confirmar contraseña" error={errors.confirmPassword}>
         {(field) => (
           <PasswordInput
             {...field}
+            className="h-11"
             autoComplete="new-password"
             value={values.confirmPassword}
             onChange={update("confirmPassword")}
@@ -98,7 +110,7 @@ export function RegisterForm() {
       <div>
         {/* Sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
         <div ref={captchaRef} className={CAPTCHA_BOX_CLASS} />
-        <SubmitButton size="lg" className="h-10 w-full" loading={pending} disabled={siteKey.isPending} loadingText="Creando cuenta…">
+        <SubmitButton size="lg" className="h-11 w-full text-base" loading={pending} disabled={siteKey.isPending} loadingText="Creando cuenta…">
           Crear cuenta
         </SubmitButton>
       </div>

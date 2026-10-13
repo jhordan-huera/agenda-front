@@ -1,7 +1,7 @@
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { Link } from "react-router";
 import { useNavigate } from "react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
 import { PasswordInput } from "@/components/shared/password-input";
@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getHomePath, isTwoFactorChallenge, type Session } from "@/lib/auth";
 import { DataError, getErrorMessage } from "@/lib/data/errors";
-import { loginSchema, twoFactorLoginSchema } from "@/lib/validations/auth";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
+import { loadAuthSchemas } from "./auth-schemas";
 import { useSession } from "./use-session";
 
 
@@ -27,6 +27,10 @@ export function LoginForm() {
   /** Con la verificación en dos pasos: la contraseña es correcta y falta el código. */
   const [challenge, setChallenge] = useState<string | null>(null);
 
+  useEffect(() => {
+    loadAuthSchemas().catch(() => undefined);
+  }, []);
+
   const enter = (session: Session) => {
     toast.success("¡Bienvenido de nuevo!");
     navigate(getHomePath(session), { replace: true });
@@ -34,7 +38,14 @@ export function LoginForm() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(loginSchema, values);
+    let schemas;
+    try {
+      schemas = await loadAuthSchemas();
+    } catch (error) {
+      setFormError(getErrorMessage(error));
+      return;
+    }
+    const result = validate(schemas.loginSchema, values);
     setErrors(result.errors);
     setFormError(null);
     if (!result.success) return;
@@ -71,27 +82,35 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
       {formError && (
-        <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
           {formError}
         </p>
       )}
       <FormField label="Email" error={errors.email}>
         {(field) => (
-          <Input
-            {...field}
-            type="email"
-            autoComplete="email"
-            placeholder="tu@email.com"
-            className="h-10"
-            value={values.email}
-            onChange={(e) => setValues({ ...values, email: e.target.value })}
-          />
+          <div className="relative">
+            <Mail
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              {...field}
+              type="email"
+              autoComplete="email"
+              placeholder="tu@email.com"
+              className="h-11 pl-10"
+              value={values.email}
+              onChange={(e) => setValues({ ...values, email: e.target.value })}
+            />
+          </div>
         )}
       </FormField>
       <FormField label="Contraseña" error={errors.password}>
         {(field) => (
           <PasswordInput
             {...field}
+            icon={<LockKeyhole />}
+            className="h-11"
             autoComplete="current-password"
             placeholder="••••••••"
             value={values.password}
@@ -114,10 +133,9 @@ export function LoginForm() {
           ¿Olvidaste tu contraseña?
         </Link>
       </div>
-      <SubmitButton size="lg" className="h-10" loading={pending} loadingText="Ingresando…">
-        Iniciar sesión
+      <SubmitButton size="lg" className="h-11 w-full text-base" loading={pending} loadingText="Ingresando…">
+        Iniciar sesión <ArrowRight className="transition-transform duration-150 group-hover/button:translate-x-0.5" />
       </SubmitButton>
-
     </form>
   );
 }
@@ -139,7 +157,14 @@ function TwoFactorStep({ challenge, onSuccess, onRestart }: TwoFactorStepProps) 
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(twoFactorLoginSchema, { challenge, code });
+    let schemas;
+    try {
+      schemas = await loadAuthSchemas();
+    } catch (loadError) {
+      setError(getErrorMessage(loadError));
+      return;
+    }
+    const result = validate(schemas.twoFactorLoginSchema, { challenge, code });
     setError(result.errors.code ?? null);
     if (!result.success) return;
     setPending(true);
@@ -155,7 +180,7 @@ function TwoFactorStep({ challenge, onSuccess, onRestart }: TwoFactorStepProps) 
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
-      <div className="flex gap-3 rounded-lg bg-primary/5 px-3 py-3 text-sm">
+      <div className="flex gap-3 rounded-xl bg-accent px-3.5 py-3 text-sm">
         <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
         <div className="space-y-1">
           <p className="font-medium">Verificación en dos pasos</p>
@@ -176,7 +201,7 @@ function TwoFactorStep({ challenge, onSuccess, onRestart }: TwoFactorStepProps) 
               spellCheck={false}
               autoFocus
               placeholder="ABCDE-FGHJK"
-              className="h-10 font-mono uppercase"
+              className="h-11 font-mono uppercase"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
@@ -188,14 +213,14 @@ function TwoFactorStep({ challenge, onSuccess, onRestart }: TwoFactorStepProps) 
               autoFocus
               maxLength={7}
               placeholder="123456"
-              className="h-10 font-mono text-lg tracking-[0.3em]"
+              className="h-11 font-mono text-lg tracking-[0.3em]"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, ""))}
             />
           )
         }
       </FormField>
-      <SubmitButton size="lg" className="h-10" loading={pending} loadingText="Verificando…">
+      <SubmitButton size="lg" className="h-11 w-full text-base" loading={pending} loadingText="Verificando…">
         Verificar
       </SubmitButton>
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">

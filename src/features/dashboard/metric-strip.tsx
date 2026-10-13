@@ -6,6 +6,8 @@ export interface Metric {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
+  /** Cambio frente al periodo anterior (Reportes). */
+  trend?: ReactNode;
 }
 
 /** Cifras del negocio en una sola franja: se leen de corrido, como una línea de la agenda. */
@@ -20,6 +22,7 @@ export function MetricStrip({ metrics, loading, className }: { metrics: Metric[]
           <dd className="text-2xl font-bold tracking-[-0.02em] tabular-nums">
             {loading ? <Skeleton className="h-8 w-16" /> : metric.value}
           </dd>
+          {metric.trend && !loading && <dd>{metric.trend}</dd>}
           {metric.hint && !loading && <dd className="text-sm text-muted-foreground">{metric.hint}</dd>}
         </div>
       ))}

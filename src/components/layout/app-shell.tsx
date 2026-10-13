@@ -13,17 +13,22 @@ interface AppShellProps {
   banner?: ReactNode;
 }
 
-/** Estructura común de los paneles (negocio y plataforma): barra lateral fija y menú móvil. */
+/**
+ * Estructura común de los paneles (negocio y plataforma). En escritorio, el menú es una tarjeta blanca
+ * flotante a la izquierda y el contenido va sobre el lienzo gris claro; en el móvil, el contenido a
+ * pantalla completa y el menú en un cajón.
+ */
 export function AppShell({ homeHref, renderSidebar, banner }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    // El contenido es la hoja de papel; la barra lateral, el escritorio con las pestañas de la agenda.
-    // Sin borde entre ambos: la pestaña activa es del mismo papel que la hoja y se une a ella.
-    <div className="min-h-screen bg-background lg:pl-64 print:bg-white print:pl-0">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:flex print:hidden">{renderSidebar()}</aside>
+    <div className="min-h-screen bg-canvas lg:pl-[16.75rem] print:bg-white print:pl-0">
+      <aside className="fixed inset-y-3 left-3 z-30 hidden w-60 overflow-hidden rounded-2xl border border-sidebar-border shadow-[0_8px_30px_-16px_rgb(16_24_40/0.18)] lg:flex print:hidden">
+        {renderSidebar()}
+      </aside>
 
-      {banner && <div className="sticky top-0 z-20 print:hidden">{banner}</div>}
+      {/* En el móvil la cabecera ya queda fija arriba: el aviso (p. ej. el modo soporte) se va al desplazar. */}
+      {banner && <div className="z-20 lg:sticky lg:top-0 print:hidden">{banner}</div>}
 
       <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur lg:hidden print:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

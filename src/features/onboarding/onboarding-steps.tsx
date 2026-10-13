@@ -94,7 +94,7 @@ export function BasicInfoStep({ values, onChange, errors }: StepProps) {
   const now = getZonedNow(values.timezone);
   return (
     <div className="grid gap-5">
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <FormField label="Teléfono" error={errors.phone} optional>
           {(field) => (
             <Input
@@ -172,7 +172,7 @@ export function FirstServiceStep({ values, onChange, errors }: StepProps) {
       <FormField label="Nombre del servicio" error={errors.name}>
         {(field) => <Input {...field} value={values.service.name} onChange={(e) => setService({ name: e.target.value })} />}
       </FormField>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <FormField label="Duración (minutos)" error={errors.durationMinutes}>
           {(field) => (
             <Input
@@ -255,7 +255,7 @@ export function SummaryStep({ values }: { values: OnboardingValues }) {
 
 function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="grid gap-1 px-4 py-3 sm:grid-cols-[8rem_1fr]">
+    <div className="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[8rem_1fr]">
       <dt className="text-muted-foreground">{label}</dt>
       <dd>{value}</dd>
     </div>
