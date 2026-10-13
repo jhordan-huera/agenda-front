@@ -1,9 +1,9 @@
-import { ArrowRight, BellRing, CalendarCheck, CheckCircle2 } from "lucide-react";
+import { ArrowRight, BellRing, CalendarCheck, CheckCircle2, MailCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { HeroAgenda } from "./hero-agenda";
+import { HeroCalendar } from "./hero-calendar";
 import { Eyebrow, GradientText } from "./section-heading";
 
 const PROFESSIONS = "psicólogos, odontólogos, nutricionistas, fisioterapeutas, entrenadores, estilistas y abogados";
@@ -16,8 +16,9 @@ const FACTS = [
 ];
 
 /**
- * La portada: el titular con su final en degradado y, a la derecha, la hoja del día (la reserva que
- * entra) con dos etiquetas flotantes de lo que pasa después: la confirmación y el recordatorio.
+ * La portada: el titular con su final en degradado y, a la derecha, el calendario de la semana (la
+ * reserva que entra) con etiquetas flotantes de lo que pasa: el aviso de la reserva, la confirmación
+ * al cliente y el recordatorio.
  */
 export function HeroSection() {
   return (
@@ -58,14 +59,23 @@ export function HeroSection() {
         </div>
 
         <div className="relative">
-          <HeroAgenda />
+          <HeroCalendar />
+          <FloatingChip className="-bottom-8 -left-2 sm:-left-8" delay={1.4}>
+            <span className="flex size-8 items-center justify-center rounded-full bg-highlight text-ink">
+              <BellRing className="size-4" aria-hidden />
+            </span>
+            <span className="text-sm leading-tight">
+              <span className="block font-semibold">Nueva reserva online</span>
+              <span className="block text-xs text-muted-foreground">Ana Torres, jueves a las 10:00</span>
+            </span>
+          </FloatingChip>
           <FloatingChip className="-top-6 right-0 sm:-right-5" delay={2.2}>
             <CheckCircle2 className="size-5 text-emerald-600" aria-hidden />
             <span className="text-sm font-semibold">Confirmación enviada</span>
           </FloatingChip>
           <FloatingChip className="-right-2 -bottom-8 sm:-right-6" delay={2.6}>
             <span className="flex size-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-              <BellRing className="size-4" aria-hidden />
+              <MailCheck className="size-4" aria-hidden />
             </span>
             <span className="text-sm leading-tight">
               <span className="block font-semibold">Recordatorio</span>

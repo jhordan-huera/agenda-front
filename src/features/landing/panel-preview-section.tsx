@@ -1,4 +1,4 @@
-import { AgendaWeek } from "@/features/auth/agenda-week";
+import { HeroAgenda } from "./hero-agenda";
 import { PhoneBooking } from "./phone-booking";
 import { SectionHeading } from "./section-heading";
 
@@ -11,8 +11,8 @@ const SAMPLE_KPIS = [
 ];
 
 /**
- * Así se ve el panel: una tarjeta grande con las cifras de la semana y, debajo, la agenda del
- * profesional y la página de reservas en el celular de su cliente. Todo con datos de ejemplo.
+ * Así se ve el panel: una tarjeta grande con las cifras de la semana y, debajo, el día del profesional
+ * (con la reserva que entra) y la página de reservas en el celular de su cliente. Datos de ejemplo.
  */
 export function PanelPreviewSection() {
   return (
@@ -46,9 +46,9 @@ export function PanelPreviewSection() {
             ))}
           </dl>
           <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)]">
-            <div className="flex items-center justify-center rounded-2xl bg-muted p-3 sm:p-6">
-              <div className="w-full max-w-xl">
-                <AgendaWeek />
+            <div className="flex items-center justify-center rounded-2xl bg-muted px-3 pt-6 pb-12 sm:px-10 sm:pt-8 sm:pb-14">
+              <div className="w-full max-w-lg">
+                <HeroAgenda />
               </div>
             </div>
             <div className="flex items-center justify-center rounded-2xl bg-muted px-4 py-8">
