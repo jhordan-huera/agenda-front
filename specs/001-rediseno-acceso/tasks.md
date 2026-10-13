@@ -144,16 +144,6 @@ Tarea: "Tarjeta de soporte en src/pages/auth/forgot-password-page.tsx"
 3. Fase 8 y un solo commit en `dev` con el rediseño, sin push ni PR hasta que lo pida el dueño del
    producto.
 
-## Resultado (2026-10-13)
+## Resultado
 
-- Build y lint sin errores ni avisos.
-- Playwright: panel entero a 1355 × 715, 1440 × 900, 1024 × 700 y 1280 × 680; login sin
-  desplazamiento hasta 700 px de alto (a 680 px el formulario se desplaza 19 px y el panel sigue
-  fijo y entero); 0 px de desborde a 320 y 390 px en las tres pantallas (WebKit); el tabulador no
-  entra al panel; contraste mínimo 4,55:1; sin animaciones con "reducir movimiento".
-- Login real contra la API local: contraseña incorrecta, cuenta correcta y verificación en dos
-  pasos; registro cerrado; la portada sigue igual.
-- Cambios fuera de lo previsto en el plan: las tres etiquetas pasaron a un componente común
-  (`CalendarChips`) y los datos de la portada a `product-facts.ts`, para no repetirlos; la
-  etiqueta en píldora (`Eyebrow`) usa un azul un poco más oscuro porque sobre su fondo pastel daba
-  4,44:1 (también mejora la portada).
+Ver el [reporte final](./reporte.md).
