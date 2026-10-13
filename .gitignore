@@ -37,3 +37,6 @@ dist-ssr
 *.sql.gz.enc
 *.sql.gz
 /backups/
+
+# Caché de Python de los scripts de la skill
+__pycache__/
