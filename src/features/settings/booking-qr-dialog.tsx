@@ -17,7 +17,7 @@ function brandColors() {
   };
   return { qr: read("--text", "#1d2433"), ink: read("--ink", "#4a6cb0"), muted: read("--graphite", "#5b6478"), paper: "#ffffff" };
 }
-const FONT = '"Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif';
+const FONT = '"Sora Variable", ui-sans-serif, system-ui, sans-serif';
 
 interface BookingQrDialogProps {
   open: boolean;

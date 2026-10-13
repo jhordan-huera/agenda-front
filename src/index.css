@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/sora";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -60,8 +60,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
   --color-ink: var(--ink);
@@ -115,7 +115,7 @@
  * - Lila pastel (#DDD4F8, --highlight): marca lo elegido o lo nuevo (la hora reservada, el día
  *   elegido, la reserva que entra), con el trazo de marcador (.marker). Su tono suave (#EFEBFC,
  *   --secondary) viste insignias y botones secundarios.
- * - Tipografía: Plus Jakarta Sans; las horas, grandes, gruesas y con cifras tabulares.
+ * - Tipografía: Sora; las horas, grandes, gruesas y con cifras tabulares.
  * Los estados de las citas (pendiente, confirmada…) usan sus colores en
  * lib/constants/appointment-status.ts.
  */
