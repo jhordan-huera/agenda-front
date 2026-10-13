@@ -124,7 +124,7 @@ description: "Tareas de Reportes útiles"
 - [x] T035 [US8] `@page` en `src/index.css`: A4, márgenes y cajas de margen (negocio y periodo, "Página X de Y", arriba vacías)
 - [x] T036 [US8] Comprobar: PDF A4 sin huecos (Playwright), cifras del PDF = pantalla, colores con fondos desactivados; build y lint
 - [x] T037 [US8] Pasar a la beta (mismos archivos y la página adaptada); build, lint y PDF de la beta
-- [ ] T038 Actualizar `reporte.md` y commit en `dev`, sin push
+- [x] T038 Actualizar `reporte.md` y commit en `dev`, sin push
 
 ## Dependencias y orden
 

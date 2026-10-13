@@ -29,7 +29,7 @@ Todo se puede imprimir o guardar en PDF. La beta tiene lo mismo con sus datos de
 | H5 – Los que más vienen y más faltan | P2 | Hecha | 5 y 5 del periodo |
 | H6 – Días y horas más pedidos | P2 | Hecha | Tabla de calor accesible |
 | H7 – Ocupación con una sola agenda | P2 | Hecha | Cifra "Ocupación" con tendencia en puntos |
-| H8 – Imprimir o PDF | P3 | Hecha | Encabezado con logo; sin menú, botones ni teléfonos |
+| H8 – Imprimir o PDF | P3 | Hecha | Documento propio para A4 (RF-018): resumen con valor anterior, gráfico, tablas, número de página |
 
 ## Comprobación
 
@@ -55,12 +55,13 @@ preparado que lleva 70 días sin venir.
 | RF-014 – Sin desborde en el celular | Cumple | WebKit a 320 y 390 px: 0 px (front y beta) |
 | RF-015 – Permisos sin cambios | Cumple | La página sigue con `reports.view`; los datos salen de las mismas consultas, filtradas por la API |
 | RF-016 – Colores de la marca | Cumple | Barras y mapa con `--primary`; sólo "mejor/peor" usa verde y rojo fijos, con flecha y texto (decisión del plan) |
+| RF-018 – Documento para imprimir | Cumple | PDF reales con Chrome, sin "Gráficos de fondo", pasados a imagen página por página: FisioActiva (mes en curso, 2 páginas), clínica con tabla por profesional (2 páginas), 40 pacientes que no volvieron (tabla que pasa a la página 2 con "Y 10 pacientes más"); pie "negocio · periodo" y "Página X de Y"; barras y mapa con color |
 | RF-017 – La beta igual | Cumple | Mismos archivos de cálculo y componentes; 17 comprobaciones en la beta; sin errores de JavaScript |
 | CE-001 – Cifras = cálculo a mano | Cumple | Ver RF-001, RF-007 y RF-009 |
 | CE-002 – Un año en menos de 2 s | Cumple | 466 ms en local |
 | CE-003 – WhatsApp en un toque | Cumple | Un enlace por paciente con teléfono |
 | CE-004 – 0 px de desborde a 320/390 | Cumple | Ver RF-014 |
-| CE-005 – A4 sin tarjetas cortadas | Cumple (simulado) | Vista de impresión al ancho útil de A4 con tarjetas `break-inside: avoid`; la lista larga sí puede pasar de página |
+| CE-005 – A4 sin huecos ni cortes | Cumple | En los 3 PDF de RF-018: ninguna media página en blanco; las cifras, los gráficos y las filas no se cortan; las tablas largas siguen en la página siguiente |
 | CE-006 – Más útil que el actual | Pendiente | Lo aprueba el dueño del producto |
 | CE-007 – La beta da lo mismo | Cumple | Ver RF-017 |
 
@@ -78,12 +79,23 @@ la beta (repetidos al final).
   sola en su fila.
 - **Las pestañas del periodo ocupan todo el ancho en el celular**: a 320 px se salían 57 px.
 
+- **El PDF se rediseñó tras ver el primero** (RF-018, aprobado por el dueño del producto):
+  - **Antes**: se imprimía la página tal cual y las tarjetas que no cabían dejaban media hoja en
+    blanco.
+  - **Ahora**: un documento propio (`report-print-document.tsx`) con su gráfico SVG y sus tablas.
+  - La pantalla se oculta al imprimir.
+  - El gráfico de la pantalla recupera su animación.
+  - Los cálculos pasan a `report-data.ts` (los comparten la pantalla, el PDF y la beta).
+
 ## Pendientes y riesgos
 
 - **Ocupación del periodo anterior**: se calcula con el horario actual (igual que antes). Si
   cambiaste el horario, la comparación es aproximada.
 - **Periodos anteriores casi vacíos**: en la demo la comparación da porcentajes muy altos (▲ 500 %)
   porque hay pocos datos antes del 7 de septiembre. Con datos reales se verán normales.
+- **Fecha y dirección del navegador en el PDF**: en Chrome 131 o posterior no deberían salir arriba;
+  si salen (u otro navegador), se quitan desmarcando "Encabezados y pies de página" en el diálogo de
+  impresión.
 - **Respaldo de la beta** antes del cambio:
   `~/Documentos/Proyectos/Betas/agenda-beta-respaldo-antes-de-reportes-2026-10-13.tar.gz`.
 - **Falta tu aprobación** del resultado (CE-006).
@@ -93,6 +105,7 @@ la beta (repetidos al final).
 | Repo | Commit | Mensaje |
 |---|---|---|
 | agenda-front | 9195bad | Spec 002: reportes útiles |
+| agenda-front | 22b407d | Spec 002 (RF-018): el PDF como documento para A4 |
 | agenda-beta | — | Sin git: cambios en el disco (respaldo arriba) |
 
 ## Cómo publicarlo
