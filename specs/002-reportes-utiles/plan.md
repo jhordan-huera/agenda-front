@@ -128,6 +128,26 @@ más. Cada bloque nuevo es un componente en `features/reports`.
 Firmas y comportamiento: [contracts/calculos.md](./contracts/calculos.md). Comprobación:
 [quickstart.md](./quickstart.md).
 
+## Cambio: documento para imprimir (RF-018, 2026-10-13)
+
+El primer PDF imprimía la página tal cual y las tarjetas que no cabían saltaban a la hoja siguiente
+dejando media página en blanco. Se reemplaza por un documento propio:
+
+- **`report-print-document.tsx`** (nuevo): `hidden print:block`; recibe los mismos cálculos de la
+  página. Lleva su propio gráfico SVG de barras (ancho fijo con `viewBox`, sin recharts: no se
+  redibuja al imprimir) y tablas compactas. Usa `print-color-adjust: exact` para que barras y mapa
+  salgan sin "Gráficos de fondo".
+- **La página de pantalla** va entera en `print:hidden`. Se quitan los ajustes de impresión de la
+  primera versión (`print-header.tsx`, límites de impresión de la lista, ajuste del SVG de recharts) y
+  el gráfico de pantalla recupera su animación.
+- **El umbral de "no volvieron"** sube a la página (estado compartido) para que el PDF imprima la
+  lista que se ve.
+- **Encabezado y pie de página**: `@page` en `index.css` (A4, márgenes) con cajas de margen: abajo
+  a la izquierda el negocio y el periodo, abajo a la derecha "Página X de Y"; las de arriba vacías
+  para tapar la fecha y el título del navegador (Chrome 131+; en otros navegadores se quitan
+  desmarcando "Encabezados y pies de página").
+- Beta: los mismos archivos.
+
 ## Beta (`agenda-beta`)
 
 Pedida por el dueño del producto al aprobar el plan (RF-017).

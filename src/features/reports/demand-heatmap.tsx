@@ -21,7 +21,7 @@ const hourLabel = (hour: number) => `${String(hour).padStart(2, "0")}:00`;
 export function DemandHeatmap({ heatmap }: { heatmap: Heatmap }) {
   const { days, hours, counts, max } = heatmap;
   return (
-    <Card className="print:break-inside-avoid">
+    <Card>
       <CardHeader>
         <CardTitle>Días y horas más pedidos</CardTitle>
         <CardDescription>Citas que empiezan cada día a cada hora en el periodo (sin canceladas): más color, más citas.</CardDescription>

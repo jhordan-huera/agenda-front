@@ -15,24 +15,12 @@ import { BookingChannelsCard } from "@/features/reports/booking-channels-card";
 import { DemandHeatmap } from "@/features/reports/demand-heatmap";
 import { LapsedClientsCard } from "@/features/reports/lapsed-clients-card";
 import { PeriodPicker } from "@/features/reports/period-picker";
-import { ReportPrintHeader } from "@/features/reports/print-header";
 import { RankedBars } from "@/features/reports/ranked-bars";
-import { getBookingChannels, getDemandHeatmap, getMostNoShows, getTopClients, type ClientVisits } from "@/features/reports/report-insights";
+import { buildReport } from "@/features/reports/report-data";
+import { getLapsedClients, type ClientVisits, type LapsedThreshold } from "@/features/reports/report-insights";
 import { compareValues, getReportFetchRange, resolvePeriod, type ReportPeriodChoice } from "@/features/reports/report-period";
-import {
-  filterByRange,
-  getClientRetention,
-  getProfessionalBreakdown,
-  getRevenueSnapshot,
-  getStatusBreakdown,
-  getTopServices,
-  getTotalOccupancy,
-  getVolumeSeries,
-  share,
-  summarize,
-  volumeGranularity,
-  type ProfessionalReport,
-} from "@/features/reports/report-stats";
+import { ReportPrintDocument } from "@/features/reports/report-print-document";
+import { share, type ProfessionalReport } from "@/features/reports/report-stats";
 import { TopClientsCards } from "@/features/reports/top-clients-cards";
 import { Trend } from "@/features/reports/trend";
 import { ALL_AGENDAS, ProfessionalDot, ProfessionalSelect } from "@/features/professionals/professional-select";
@@ -78,42 +66,24 @@ function ReportsPageContent() {
 
   const report = useMemo(() => {
     const everyone = appointmentsQuery.data ?? [];
-    const all = agenda === ALL_AGENDAS ? everyone : everyone.filter((a) => a.professionalId === agenda);
-    const firstVisits = new Map((activityQuery.data ?? []).map((row) => [row.clientId, row.firstVisit]));
-    const inRange = filterByRange(all, period.range);
-    const inPrevious = filterByRange(all, period.previous);
+    const inRange = (a: (typeof everyone)[number]) => a.date >= period.range.from && a.date <= period.range.to;
     // Agendas de la ocupación: la elegida, la propia (rol Profesional) o las activas y las que tuvieron citas.
     const agendaIds =
       agenda !== ALL_AGENDAS
         ? [agenda]
         : agendas.scoped && agendas.ownProfessionalId
           ? [agendas.ownProfessionalId]
-          : agendas.all.filter((p) => p.isActive || inRange.some((a) => a.professionalId === p.id)).map((p) => p.id);
-    const agendaSchedules = schedules.filter((schedule) => agendaIds.includes(schedule.professionalId));
-    const byProfessional = getProfessionalBreakdown(inRange, period.range, agendaIds, schedules, blockedTimes);
-    const previousByProfessional = getProfessionalBreakdown(inPrevious, period.previous, agendaIds, schedules, blockedTimes);
-    const granularity = volumeGranularity(period.range);
-    const summary = summarize(inRange);
-    return {
-      summary,
-      previousSummary: summarize(inPrevious),
-      hasPrevious: inPrevious.length > 0,
-      granularity,
-      volume: getVolumeSeries(inRange, period.range, granularity),
-      statuses: getStatusBreakdown(summary),
-      topServices: getTopServices(inRange, servicesById),
-      revenue: getRevenueSnapshot(all, now.date),
-      retention: getClientRetention(inRange, firstVisits, period.range),
-      previousRetention: getClientRetention(inPrevious, firstVisits, period.previous),
-      channels: getBookingChannels(inRange, firstVisits, period.range),
-      previousChannels: getBookingChannels(inPrevious, firstVisits, period.previous),
-      byProfessional,
-      occupancy: getTotalOccupancy(byProfessional),
-      previousOccupancy: getTotalOccupancy(previousByProfessional),
-      heatmap: getDemandHeatmap(inRange, agendaSchedules),
-      topClients: getTopClients(inRange),
-      noShows: getMostNoShows(inRange),
-    };
+          : agendas.all.filter((p) => p.isActive || everyone.some((a) => a.professionalId === p.id && inRange(a))).map((p) => p.id);
+    return buildReport({
+      appointments: agenda === ALL_AGENDAS ? everyone : everyone.filter((a) => a.professionalId === agenda),
+      firstVisits: new Map((activityQuery.data ?? []).map((row) => [row.clientId, row.firstVisit])),
+      period,
+      today: now.date,
+      servicesById,
+      agendaIds,
+      schedules,
+      blockedTimes,
+    });
   }, [appointmentsQuery.data, activityQuery.data, servicesById, now.date, period, agenda, agendas.all, agendas.scoped, agendas.ownProfessionalId, schedules, blockedTimes]);
 
   // "No volvieron" mira todo el historial de cada paciente (lo resume la API).
@@ -129,6 +99,12 @@ function ReportsPageContent() {
     [activityQuery.data],
   );
   const clientsById = useMemo(() => new Map((clientsQuery.data ?? []).map((client) => [client.id, client])), [clientsQuery.data]);
+  // El umbral de "no volvieron" vive aquí: la pantalla y el documento impreso muestran la misma lista.
+  const [lapsedThreshold, setLapsedThreshold] = useState<LapsedThreshold>(60);
+  const lapsed = useMemo(() => {
+    const activeIds = new Set((clientsQuery.data ?? []).filter((client) => client.isActive).map((client) => client.id));
+    return getLapsedClients(visits, activeIds, now.date, lapsedThreshold);
+  }, [visits, clientsQuery.data, now.date, lapsedThreshold]);
 
   const { summary, previousSummary } = report;
   // Al cambiar de periodo se mantienen las citas del anterior mientras llegan las nuevas: sus cifras
@@ -142,17 +118,23 @@ function ReportsPageContent() {
       previousLabel={period.previousLabel}
     />
   );
-  const professionalName = agenda === ALL_AGENDAS ? undefined : agendas.byId(agenda)?.displayName;
+  const professionalLabel = !agendas.multiple ? null : agenda === ALL_AGENDAS ? "Todos los profesionales" : (agendas.byId(agenda)?.displayName ?? null);
 
   return (
     <div className="space-y-6">
       <PageTitle title="Reportes" />
-      {business && (
-        <ReportPrintHeader
+      {/* En papel o PDF sale un documento hecho para la hoja (report-print-document.tsx), no esta pantalla. */}
+      {business && !loading && (
+        <ReportPrintDocument
           business={business}
-          periodLabel={period.label}
-          previousLabel={period.previousLabel}
-          professionalName={professionalName}
+          period={period}
+          professionalLabel={professionalLabel}
+          report={report}
+          professionalsById={agendas.multiple && agenda === ALL_AGENDAS ? new Map(agendas.all.map((p) => [p.id, p])) : null}
+          lapsed={lapsed}
+          lapsedThreshold={lapsedThreshold}
+          clientsById={clientsById}
+          today={now.date}
         />
       )}
       <div className="print:hidden">
@@ -185,11 +167,11 @@ function ReportsPageContent() {
       {appointmentsQuery.isError ? (
         <ErrorState onRetry={() => appointmentsQuery.refetch()} />
       ) : (
-        <>
+        <div className="space-y-6 print:hidden">
           {/* La cifra que el profesional busca primero: cuánto generó en el periodo. */}
           <section
             aria-labelledby="revenue-heading"
-            className="grid grid-cols-1 gap-6 rounded-xl border bg-card p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-end print:break-inside-avoid"
+            className="grid grid-cols-1 gap-6 rounded-xl border bg-card p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-end"
           >
             <div>
               <h2 id="revenue-heading" className="text-sm font-semibold text-muted-foreground">
@@ -233,7 +215,6 @@ function ReportsPageContent() {
 
           <MetricStrip
             loading={loading}
-            className="print:break-inside-avoid print:grid-cols-3"
             metrics={[
               { label: "Citas del periodo", value: summary.total, trend: trend(summary.total, previousSummary.total, "up") },
               {
@@ -279,9 +260,7 @@ function ReportsPageContent() {
             />
           ) : (
             <>
-              <div className="print:break-inside-avoid">
-                <AppointmentsVolumeChart data={report.volume} granularity={report.granularity} />
-              </div>
+              <AppointmentsVolumeChart data={report.volume} granularity={report.granularity} />
               {agendas.multiple && agenda === ALL_AGENDAS && (
                 <ProfessionalBreakdownCard
                   rows={report.byProfessional}
@@ -290,7 +269,7 @@ function ReportsPageContent() {
                 />
               )}
               {/* El mapa a la izquierda; a la derecha, de dónde llegan y quiénes son (nuevos o recurrentes). */}
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 print:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <DemandHeatmap heatmap={report.heatmap} />
                 <div className="grid grid-cols-1 content-start gap-6">
                   <BookingChannelsCard
@@ -298,7 +277,7 @@ function ReportsPageContent() {
                     previous={report.hasPrevious ? report.previousChannels : null}
                     previousLabel={period.previousLabel}
                   />
-                  <Card className="print:break-inside-avoid">
+                  <Card>
                     <CardHeader>
                       <CardTitle>Pacientes</CardTitle>
                       <CardDescription>Pacientes atendidos en el periodo: nuevos o que ya habían venido antes.</CardDescription>
@@ -335,19 +314,26 @@ function ReportsPageContent() {
                   </Card>
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 print:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <TopClientsCards top={report.topClients} noShows={report.noShows} clientsById={clientsById} currency={currency} />
               </div>
             </>
           )}
 
           {!loading && business && (
-            <LapsedClientsCard visits={visits} clientsById={clientsById} business={business} today={now.date} />
+            <LapsedClientsCard
+              lapsed={lapsed}
+              threshold={lapsedThreshold}
+              onThresholdChange={setLapsedThreshold}
+              clientsById={clientsById}
+              business={business}
+              today={now.date}
+            />
           )}
 
           {!loading && summary.total > 0 && (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 print:grid-cols-2">
-              <Card className="print:break-inside-avoid">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <Card>
                 <CardHeader>
                   <CardTitle>Distribución por estado</CardTitle>
                   <CardDescription>Proporción de citas del periodo según su estado.</CardDescription>
@@ -369,7 +355,7 @@ function ReportsPageContent() {
                   />
                 </CardContent>
               </Card>
-              <Card className="print:break-inside-avoid">
+              <Card>
                 <CardHeader>
                   <CardTitle>Servicios más reservados</CardTitle>
                   <CardDescription>Citas no canceladas e ingresos estimados por servicio.</CardDescription>
@@ -391,7 +377,7 @@ function ReportsPageContent() {
               </Card>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

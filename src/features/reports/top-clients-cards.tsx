@@ -33,7 +33,7 @@ export function TopClientsCards({
 }) {
   return (
     <>
-      <Card className="print:break-inside-avoid">
+      <Card>
         <CardHeader>
           <CardTitle>Los que más vienen</CardTitle>
           <CardDescription>Pacientes con más citas en el periodo (sin canceladas) y lo cobrado en las completadas.</CardDescription>
@@ -53,7 +53,7 @@ export function TopClientsCards({
           )}
         </CardContent>
       </Card>
-      <Card className="print:break-inside-avoid">
+      <Card>
         <CardHeader>
           <CardTitle>Los que más faltan</CardTitle>
           <CardDescription>Pacientes que no vinieron sin avisar en el periodo, con su asistencia.</CardDescription>

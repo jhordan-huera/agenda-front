@@ -36,7 +36,7 @@ export function PeriodPicker({ value, onChange, today }: { value: ReportPeriodCh
   };
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto print:hidden">
+    <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto">
       <Tabs value={mode} onValueChange={(next) => choose(next as Mode)}>
         {/* En el celular, las cinco pestañas a lo ancho (caben desde 320 px). */}
         <TabsList aria-label="Periodo" className="w-full sm:w-fit">

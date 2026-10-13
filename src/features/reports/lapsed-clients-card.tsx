@@ -6,35 +6,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatShortDate, plural } from "@/lib/format";
 import { daysBetween } from "@/lib/time";
-import { cn } from "@/lib/utils";
 import { buildWinBackMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Business, Client, ISODate } from "@/types";
-import { getLapsedClients, LAPSED_THRESHOLDS, type ClientVisits, type LapsedThreshold } from "./report-insights";
+import { LAPSED_THRESHOLDS, type LapsedClient, type LapsedThreshold } from "./report-insights";
 import { ClientName } from "./top-clients-cards";
 
 const PAGE = 10;
-/** Al imprimir, hasta 30 (la lista entera puede ser larga). */
-const PRINT_LIMIT = 30;
 
 /**
  * Pacientes que dejaron de venir (sin cita desde hace 30, 60 o 90 días y ninguna por delante), con un
  * WhatsApp listo para invitarlos a reservar. Mira todo su historial, no sólo el periodo.
  */
 export function LapsedClientsCard({
-  visits,
+  lapsed,
+  threshold,
+  onThresholdChange,
   clientsById,
   business,
   today,
 }: {
-  visits: ClientVisits[];
+  /** Ya calculada con `getLapsedClients` (la página la comparte con el documento impreso). */
+  lapsed: LapsedClient[];
+  threshold: LapsedThreshold;
+  onThresholdChange: (threshold: LapsedThreshold) => void;
   clientsById: Map<string, Client>;
   business: Pick<Business, "name" | "slug" | "timezone">;
   today: ISODate;
 }) {
-  const [threshold, setThreshold] = useState<LapsedThreshold>(60);
   const [shown, setShown] = useState(PAGE);
-  const activeIds = new Set([...clientsById.values()].filter((client) => client.isActive).map((client) => client.id));
-  const lapsed = getLapsedClients(visits, activeIds, today, threshold);
   const bookingUrl = `${window.location.origin}/book/${business.slug}`;
 
   return (
@@ -50,10 +49,9 @@ export function LapsedClientsCard({
         <Tabs
           value={String(threshold)}
           onValueChange={(value) => {
-            setThreshold(Number(value) as LapsedThreshold);
+            onThresholdChange(Number(value) as LapsedThreshold);
             setShown(PAGE);
           }}
-          className="print:hidden"
         >
           <TabsList aria-label="Sin venir desde hace">
             {LAPSED_THRESHOLDS.map((days) => (
@@ -74,22 +72,14 @@ export function LapsedClientsCard({
           <>
             <p className="mb-3 text-sm text-muted-foreground">{plural(lapsed.length, "paciente", "pacientes")}</p>
             <ul className="divide-y rounded-lg border">
-              {lapsed.slice(0, Math.max(shown, PRINT_LIMIT)).map((item, index) => {
+              {lapsed.slice(0, shown).map((item) => {
                 const client = clientsById.get(item.clientId);
                 const whatsAppUrl =
                   client && !client.restricted && client.phone
                     ? getWhatsAppUrl(client.phone, business.timezone, buildWinBackMessage({ clientName: client.name, businessName: business.name, bookingUrl }))
                     : null;
                 return (
-                  <li
-                    key={item.clientId}
-                    className={cn(
-                      "flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between",
-                      // En pantalla, de 10 en 10; al imprimir, los primeros 30.
-                      index >= shown && "hidden print:flex",
-                      index >= PRINT_LIMIT && "print:hidden",
-                    )}
-                  >
+                  <li key={item.clientId} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <ClientName clientId={item.clientId} clientsById={clientsById} />
                       <p className="text-xs text-muted-foreground">
@@ -98,7 +88,7 @@ export function LapsedClientsCard({
                       </p>
                     </div>
                     {whatsAppUrl && (
-                      <Button asChild variant="outline" size="sm" className="self-start sm:self-auto print:hidden">
+                      <Button asChild variant="outline" size="sm" className="self-start sm:self-auto">
                         <a href={whatsAppUrl} target="_blank" rel="noreferrer">
                           <WhatsAppIcon className="size-4" /> Escribir por WhatsApp
                         </a>
@@ -109,12 +99,9 @@ export function LapsedClientsCard({
               })}
             </ul>
             {shown < lapsed.length && (
-              <Button variant="ghost" size="sm" className="mt-3 print:hidden" onClick={() => setShown(shown + PAGE)}>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setShown(shown + PAGE)}>
                 Ver más ({lapsed.length - shown})
               </Button>
-            )}
-            {lapsed.length > PRINT_LIMIT && (
-              <p className="mt-3 hidden text-sm text-muted-foreground print:block">y {lapsed.length - PRINT_LIMIT} más.</p>
             )}
           </>
         )}

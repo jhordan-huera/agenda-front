@@ -46,12 +46,10 @@ export function AppointmentsVolumeChart({ data, granularity }: { data: VolumePoi
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>
-          Todas las citas del periodo.<span className="print:hidden"> Toca o pasa el cursor por una barra para ver el desglose.</span>
-        </CardDescription>
+        <CardDescription>Todas las citas del periodo. Toca o pasa el cursor por una barra para ver el desglose.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="h-64 print:[&_svg]:h-auto print:[&_svg]:max-w-full" role="img" aria-label={`${title}: gráfico de columnas`}>
+        <div className="h-64" role="img" aria-label={`${title}: gráfico de columnas`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -12 }}>
               <CartesianGrid vertical={false} stroke={colors.grid} />
@@ -65,12 +63,11 @@ export function AppointmentsVolumeChart({ data, granularity }: { data: VolumePoi
               />
               <YAxis allowDecimals={false} tick={axisTick} tickLine={false} axisLine={false} width={40} />
               <Tooltip content={VolumeTooltip} cursor={{ fill: colors.cursor }} />
-              {/* Sin animación: al imprimir, el gráfico se redibuja al ancho de la hoja y saldría vacío. */}
-              <Bar dataKey="total" name="Citas" fill={colors.series} radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={false} />
+              <Bar dataKey="total" name="Citas" fill={colors.series} radius={[4, 4, 0, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <details className="text-sm print:hidden">
+        <details className="text-sm">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Ver como tabla</summary>
           <div className="mt-2 max-h-64 overflow-auto rounded-lg border">
             {/* En el móvil, una fila por día con sus números debajo (las cuatro columnas no caben). */}

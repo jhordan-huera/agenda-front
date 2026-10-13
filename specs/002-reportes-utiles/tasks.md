@@ -117,6 +117,15 @@ description: "Tareas de Reportes útiles"
 
 ---
 
+## Fase 11: Documento para imprimir (RF-018)
+
+- [x] T033 [US8] Crear `src/features/reports/report-print-document.tsx` (encabezado, resumen de 8 cifras con valor anterior, gráfico SVG propio, tablas, `print-color-adjust: exact`)
+- [x] T034 [US8] `reports-page.tsx`: pantalla en `print:hidden`, documento de impresión, umbral de "no volvieron" en la página; `lapsed-clients-card.tsx` controlado y sin límites de impresión; quitar `print-header.tsx` y los ajustes de impresión del gráfico de pantalla
+- [x] T035 [US8] `@page` en `src/index.css`: A4, márgenes y cajas de margen (negocio y periodo, "Página X de Y", arriba vacías)
+- [x] T036 [US8] Comprobar: PDF A4 sin huecos (Playwright), cifras del PDF = pantalla, colores con fondos desactivados; build y lint
+- [x] T037 [US8] Pasar a la beta (mismos archivos y la página adaptada); build, lint y PDF de la beta
+- [ ] T038 Actualizar `reporte.md` y commit en `dev`, sin push
+
 ## Dependencias y orden
 
 - Fase 1 → Fase 2 → historias. T003–T007 bloquean todo.

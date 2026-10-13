@@ -232,6 +232,15 @@ de impresión muestra el reporte completo, sin menú ni botones.
 - **RF-016**: Los colores DEBEN salir del tema del negocio (sus colores de marca).
 - **RF-017**: La beta (`agenda-beta`, con sus datos de prueba) DEBE tener los mismos reportes, con
   el mismo aspecto y comportamiento (pedido del dueño del producto al aprobar el plan).
+- **RF-018** *(cambio del 2026-10-13, tras ver el primer PDF)*: lo impreso DEBE ser un documento
+  hecho para imprimir, no la página tal cual:
+  - encabezado con logo, negocio, "Reporte de actividad", periodo, comparación, profesional y
+    fecha;
+  - resumen de 8 cifras con su cambio y su valor anterior;
+  - gráfico de citas compacto;
+  - tablas (días y horas, origen de las citas, pacientes, los que más vienen y faltan, estados,
+    servicios, por profesional y no volvieron) que pasan de una hoja a otra sin dejar huecos;
+  - número de página en el pie y colores que se imprimen aunque el navegador no imprima fondos.
 
 ### Entidades clave
 
@@ -249,7 +258,8 @@ de impresión muestra el reporte completo, sin menú ni botones.
   local.
 - **CE-003**: Desde la lista de "no volvieron" se abre WhatsApp con el mensaje en un toque.
 - **CE-004**: 0 px de desplazamiento horizontal en Reportes a 320 y 390 px.
-- **CE-005**: La vista de impresión de un mes cabe en páginas A4 sin cortes de tarjetas a la mitad.
+- **CE-005**: La vista de impresión de un mes llena las hojas A4 sin huecos de media página y sin
+  cortar una cifra o una fila de tabla a la mitad.
 - **CE-006**: El dueño del producto encuentra el reporte más útil que el actual (aprobación).
 - **CE-007**: En la beta, las comprobaciones 1–14 del quickstart dan el mismo resultado con sus
   datos de prueba.

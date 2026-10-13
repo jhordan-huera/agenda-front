@@ -21,7 +21,7 @@ export function BookingChannelsCard({
   const compare = (value: (channels: BookingChannels) => number) =>
     previous ? compareValues(value(current), value(previous), "up") : null;
   return (
-    <Card className="print:break-inside-avoid">
+    <Card>
       <CardHeader>
         <CardTitle>Reservas por tu página</CardTitle>
         <CardDescription>Citas del periodo (sin canceladas) que llegaron solas por tu enlace y las que creaste tú.</CardDescription>
