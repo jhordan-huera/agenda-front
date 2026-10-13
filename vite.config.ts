@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
         injectRegister: false,
         injectManifest: {
           // La letra, sólo en alfabeto latino (las otras variantes no se usan en español).
-          globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}", "assets/plus-jakarta-sans-latin-wght-*.woff2"],
+          globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}", "assets/sora-latin-wght-*.woff2"],
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         },
         devOptions: { enabled: false },

@@ -52,7 +52,7 @@ igual. `vercel.json` excluye `/_vercel/` de la reescritura a `index.html`.
 ## Stack
 
 React 19 · TypeScript · Vite · React Router 8 · Tailwind CSS v4 · shadcn/ui (Radix) · Lucide ·
-TanStack Query · Zod · date-fns · Recharts · Sonner · MapLibre · Plus Jakarta Sans.
+TanStack Query · Zod · date-fns · Recharts · Sonner · MapLibre · Sora.
 
 ## Diseño
 
@@ -75,7 +75,7 @@ el beta):
   oscurece solo hasta un contraste de 4,5:1 (y el resaltado se aclara si hace falta). Se guardan en
   `business.brandColors` (columna `brand_colors`, migración 018; null = los de Agenda360) y los
   aplica `BrandThemeProvider`.
-- **Tipografía** Plus Jakarta Sans; las horas, grandes, gruesas y con cifras tabulares.
+- **Tipografía** Sora; las horas, grandes, gruesas y con cifras tabulares.
 - **Pestañas de agenda** (`TabsList variant="folder"`): el menú lateral, los pasos de la reserva y
   las pestañas de Configuración y de la ficha del cliente.
 - **Inicio**: "Tu siguiente cita", "Tu día" en una franja horizontal, "Lo que queda de hoy", la
