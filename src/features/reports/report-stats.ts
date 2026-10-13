@@ -1,25 +1,17 @@
 import { APPOINTMENT_STATUSES, REVENUE_STATUSES } from "@/lib/constants/appointment-status";
 import { formatDate } from "@/lib/format";
 import { getBlockedRanges, getWorkingRanges, type BlockedRange } from "@/lib/availability";
-import { addDaysISO, eachDayISO, startOfWeekISO, timeToMinutes } from "@/lib/time";
+import { addDaysISO, daysBetween, eachDayISO, startOfWeekISO, timeToMinutes } from "@/lib/time";
 import type { Appointment, AppointmentStatus, ISODate, Schedule, Service } from "@/types";
 
 /**
- * Cálculos de reportes: funciones puras sobre la lista de citas.
- * Con PostgreSQL podrían sustituirse por vistas o consultas agregadas.
+ * Cálculos de reportes: funciones puras sobre la lista de citas (el periodo y la comparación están
+ * en report-period.ts; los indicadores de pacientes y demanda, en report-insights.ts).
  */
-
-export const REPORT_PERIODS = [7, 30, 90] as const;
-export type ReportPeriod = (typeof REPORT_PERIODS)[number];
 
 export interface DateRange {
   from: ISODate;
   to: ISODate;
-}
-
-/** Últimos `days` días, incluido hoy. */
-export function getPeriodRange(today: ISODate, days: ReportPeriod): DateRange {
-  return { from: addDaysISO(today, -(days - 1)), to: today };
 }
 
 export function filterByRange(appointments: Appointment[], { from, to }: DateRange): Appointment[] {
@@ -73,9 +65,24 @@ export interface VolumePoint {
   byStatus: StatusCounts;
 }
 
-/** Citas por día; en periodos largos se agrupan por semana para que el gráfico sea legible. */
-export function getVolumeSeries(appointments: Appointment[], range: DateRange, groupByWeek: boolean): VolumePoint[] {
-  const bucketOf = (date: ISODate) => (groupByWeek ? startOfWeekISO(date) : date);
+export type VolumeGranularity = "day" | "week" | "month";
+
+/** Por día hasta un mes, por semana hasta unos cuatro meses y por mes en adelante: barras legibles. */
+export function volumeGranularity(range: DateRange): VolumeGranularity {
+  const days = daysBetween(range.from, range.to) + 1;
+  return days <= 31 ? "day" : days <= 120 ? "week" : "month";
+}
+
+const BUCKET_LABELS: Record<VolumeGranularity, { label: string; fullLabel: (key: ISODate) => string }> = {
+  day: { label: "d", fullLabel: (key) => formatDate(key, "EEEE d 'de' MMMM") },
+  week: { label: "d MMM", fullLabel: (key) => `Semana del ${formatDate(key, "d 'de' MMMM")}` },
+  month: { label: "MMM yy", fullLabel: (key) => formatDate(key, "MMMM 'de' yyyy") },
+};
+
+/** Citas por día, semana o mes del periodo. */
+export function getVolumeSeries(appointments: Appointment[], range: DateRange, granularity: VolumeGranularity): VolumePoint[] {
+  const bucketOf = (date: ISODate) =>
+    granularity === "week" ? startOfWeekISO(date) : granularity === "month" ? `${date.slice(0, 7)}-01` : date;
   const buckets = new Map<ISODate, VolumePoint>();
 
   for (const day of eachDayISO(range.from, range.to)) {
@@ -83,8 +90,8 @@ export function getVolumeSeries(appointments: Appointment[], range: DateRange, g
     if (buckets.has(key)) continue;
     buckets.set(key, {
       key,
-      label: groupByWeek ? formatDate(key, "d MMM") : formatDate(key, "d"),
-      fullLabel: groupByWeek ? `Semana del ${formatDate(key, "d 'de' MMMM")}` : formatDate(key, "EEEE d 'de' MMMM"),
+      label: formatDate(key, BUCKET_LABELS[granularity].label),
+      fullLabel: BUCKET_LABELS[granularity].fullLabel(key),
       total: 0,
       byStatus: emptyCounts(),
     });
@@ -190,22 +197,6 @@ export function getClientRetention(
   return { newClients, returningClients: activeInRange.size - newClients };
 }
 
-/**
- * Citas que necesitan los reportes: el periodo elegido más la semana y el mes en curso (los
- * ingresos de "Hoy", "Esta semana" y "Este mes"). Nunca el historial completo.
- */
-export function getReportFetchRange(today: ISODate, days: ReportPeriod): DateRange {
-  const period = getPeriodRange(today, days);
-  const weekStart = startOfWeekISO(today);
-  const monthStart = `${today.slice(0, 7)}-01`;
-  const monthEnd = addDaysISO(`${addDaysISO(monthStart, 32).slice(0, 7)}-01`, -1);
-  const weekEnd = addDaysISO(weekStart, 6);
-  return {
-    from: [period.from, weekStart, monthStart].sort()[0],
-    to: [period.to, weekEnd, monthEnd].sort().at(-1)!,
-  };
-}
-
 export interface ProfessionalReport {
   professionalId: string;
   summary: ReportSummary;
@@ -214,6 +205,8 @@ export interface ProfessionalReport {
    * los bloqueos. Con el horario actual (no el que tenía antes). null si no tiene horario.
    */
   occupancy: number | null;
+  bookedMinutes: number;
+  availableMinutes: number;
 }
 
 /** Minutos de `range` tapados por los bloqueos (los bloqueos que se pisan cuentan una vez cada uno). */
@@ -243,7 +236,20 @@ export function getProfessionalBreakdown(
     const booked = own
       .filter((appointment) => appointment.status !== "cancelled")
       .reduce((sum, appointment) => sum + timeToMinutes(appointment.endTime) - timeToMinutes(appointment.startTime), 0);
-    return { professionalId, summary: summarize(own), occupancy: available > 0 ? Math.min(1, booked / available) : null };
+    return {
+      professionalId,
+      summary: summarize(own),
+      occupancy: available > 0 ? Math.min(1, booked / available) : null,
+      bookedMinutes: booked,
+      availableMinutes: available,
+    };
   });
+}
+
+/** Ocupación de varias agendas juntas: todos sus minutos con citas sobre todas sus horas de trabajo. */
+export function getTotalOccupancy(rows: ProfessionalReport[]): number | null {
+  const available = rows.reduce((sum, row) => sum + row.availableMinutes, 0);
+  const booked = rows.reduce((sum, row) => sum + row.bookedMinutes, 0);
+  return available > 0 ? Math.min(1, booked / available) : null;
 }
 

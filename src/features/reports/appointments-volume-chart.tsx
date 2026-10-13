@@ -4,7 +4,7 @@ import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG } from "@/lib/constants
 import { capitalize } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useChartColors } from "@/features/branding/brand-palette-context";
-import type { VolumePoint } from "./report-stats";
+import type { VolumeGranularity, VolumePoint } from "./report-stats";
 
 function VolumeTooltip({ active, payload }: TooltipContentProps) {
   const point = payload?.[0]?.payload as VolumePoint | undefined;
@@ -31,8 +31,14 @@ function VolumeTooltip({ active, payload }: TooltipContentProps) {
 }
 
 /** Columnas de una sola serie (sin leyenda: el título la nombra) + tabla accesible. */
-export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumePoint[]; groupedByWeek: boolean }) {
-  const title = groupedByWeek ? "Citas por semana" : "Citas por día";
+const TITLES: Record<VolumeGranularity, { title: string; column: string }> = {
+  day: { title: "Citas por día", column: "Día" },
+  week: { title: "Citas por semana", column: "Semana" },
+  month: { title: "Citas por mes", column: "Mes" },
+};
+
+export function AppointmentsVolumeChart({ data, granularity }: { data: VolumePoint[]; granularity: VolumeGranularity }) {
+  const { title, column } = TITLES[granularity];
   const colors = useChartColors();
   const axisTick = { fontSize: 11, fill: colors.tick };
 
@@ -40,10 +46,12 @@ export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumeP
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>Todas las citas del periodo. Toca o pasa el cursor por una barra para ver el desglose.</CardDescription>
+        <CardDescription>
+          Todas las citas del periodo.<span className="print:hidden"> Toca o pasa el cursor por una barra para ver el desglose.</span>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="h-64" role="img" aria-label={`${title}: gráfico de columnas`}>
+        <div className="h-64 print:[&_svg]:h-auto print:[&_svg]:max-w-full" role="img" aria-label={`${title}: gráfico de columnas`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -12 }}>
               <CartesianGrid vertical={false} stroke={colors.grid} />
@@ -57,11 +65,12 @@ export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumeP
               />
               <YAxis allowDecimals={false} tick={axisTick} tickLine={false} axisLine={false} width={40} />
               <Tooltip content={VolumeTooltip} cursor={{ fill: colors.cursor }} />
-              <Bar dataKey="total" name="Citas" fill={colors.series} radius={[4, 4, 0, 0]} maxBarSize={24} />
+              {/* Sin animación: al imprimir, el gráfico se redibuja al ancho de la hoja y saldría vacío. */}
+              <Bar dataKey="total" name="Citas" fill={colors.series} radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <details className="text-sm">
+        <details className="text-sm print:hidden">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Ver como tabla</summary>
           <div className="mt-2 max-h-64 overflow-auto rounded-lg border">
             {/* En el móvil, una fila por día con sus números debajo (las cuatro columnas no caben). */}
@@ -83,7 +92,7 @@ export function AppointmentsVolumeChart({ data, groupedByWeek }: { data: VolumeP
             <table className="hidden w-full text-left text-xs sm:table">
               <thead className="sticky top-0 bg-muted">
                 <tr>
-                  <th className="px-3 py-2 font-medium">{groupedByWeek ? "Semana" : "Día"}</th>
+                  <th className="px-3 py-2 font-medium">{column}</th>
                   <th className="px-3 py-2 text-right font-medium">Citas</th>
                   <th className="px-3 py-2 text-right font-medium">Completadas</th>
                   <th className="px-3 py-2 text-right font-medium">Canceladas</th>
