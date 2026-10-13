@@ -4,7 +4,7 @@
 
 **Creada**: 2026-10-13
 
-**Estado**: Aprobada (2026-10-13)
+**Estado**: Implementada (2026-10-13)
 
 **Pedido**: "quiero que en mi sistema me genere reportes pero no sé qué más mostrar, porque lo que
 se muestra es muy poco relevante". Elecciones del dueño del producto: comparación con el periodo

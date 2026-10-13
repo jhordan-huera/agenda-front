@@ -113,7 +113,7 @@ description: "Tareas de Reportes útiles"
 
 ## Fase 10: Cierre
 
-- [ ] T032 Marcar las tareas, `/speckit-reporte` (reporte final) y commit en `dev` del front, sin push
+- [x] T032 Marcar las tareas, `/speckit-reporte` (reporte final) y commit en `dev` del front, sin push
 
 ---
 
@@ -135,3 +135,7 @@ description: "Tareas de Reportes útiles"
 1. MVP: fases 1–3 (comparación y periodo libre) y la historia 3 (no volvieron).
 2. Luego historias 4–7 y la impresión.
 3. Comprobación completa del front, después la beta, y el reporte final.
+
+## Resultado
+
+Ver el [reporte final](./reporte.md).
