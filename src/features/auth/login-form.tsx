@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { Link } from "react-router";
 import { useNavigate } from "react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
 import { PasswordInput } from "@/components/shared/password-input";
@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getHomePath, isTwoFactorChallenge, type Session } from "@/lib/auth";
 import { DataError, getErrorMessage } from "@/lib/data/errors";
-import { loginSchema, twoFactorLoginSchema } from "@/lib/validations/auth";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
+import { loadAuthSchemas } from "./auth-schemas";
 import { useSession } from "./use-session";
 
 
@@ -27,6 +27,10 @@ export function LoginForm() {
   /** Con la verificación en dos pasos: la contraseña es correcta y falta el código. */
   const [challenge, setChallenge] = useState<string | null>(null);
 
+  useEffect(() => {
+    loadAuthSchemas().catch(() => undefined);
+  }, []);
+
   const enter = (session: Session) => {
     toast.success("¡Bienvenido de nuevo!");
     navigate(getHomePath(session), { replace: true });
@@ -34,7 +38,14 @@ export function LoginForm() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(loginSchema, values);
+    let schemas;
+    try {
+      schemas = await loadAuthSchemas();
+    } catch (error) {
+      setFormError(getErrorMessage(error));
+      return;
+    }
+    const result = validate(schemas.loginSchema, values);
     setErrors(result.errors);
     setFormError(null);
     if (!result.success) return;
@@ -146,7 +157,14 @@ function TwoFactorStep({ challenge, onSuccess, onRestart }: TwoFactorStepProps) 
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(twoFactorLoginSchema, { challenge, code });
+    let schemas;
+    try {
+      schemas = await loadAuthSchemas();
+    } catch (loadError) {
+      setError(getErrorMessage(loadError));
+      return;
+    }
+    const result = validate(schemas.twoFactorLoginSchema, { challenge, code });
     setError(result.errors.code ?? null);
     if (!result.success) return;
     setPending(true);

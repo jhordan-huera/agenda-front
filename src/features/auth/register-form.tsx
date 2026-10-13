@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
 import { PasswordInput } from "@/components/shared/password-input";
@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { CAPTCHA_BOX_CLASS, useCaptcha } from "@/features/booking/use-captcha";
 import { useCaptchaSiteKey } from "@/hooks/queries/use-public-booking";
 import { getErrorMessage } from "@/lib/data/errors";
-import { registerSchema } from "@/lib/validations/auth";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
+import { loadAuthSchemas } from "./auth-schemas";
 import { useSession } from "./use-session";
 
 const INITIAL_VALUES = { firstName: "", lastName: "", email: "", password: "", confirmPassword: "" };
@@ -25,12 +25,23 @@ export function RegisterForm() {
   const siteKey = useCaptchaSiteKey();
   const { containerRef: captchaRef, getToken: getCaptchaToken } = useCaptcha(siteKey.data ?? null);
 
+  useEffect(() => {
+    loadAuthSchemas().catch(() => undefined);
+  }, []);
+
   const update = (key: keyof typeof INITIAL_VALUES) => (event: ChangeEvent<HTMLInputElement>) =>
     setValues({ ...values, [key]: event.target.value });
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(registerSchema, values);
+    let schemas;
+    try {
+      schemas = await loadAuthSchemas();
+    } catch (error) {
+      setFormError(getErrorMessage(error));
+      return;
+    }
+    const result = validate(schemas.registerSchema, values);
     setErrors(result.errors);
     setFormError(null);
     if (!result.success) return;
