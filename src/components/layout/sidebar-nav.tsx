@@ -13,13 +13,13 @@ export function SidebarNav({ items, label, onNavigate }: { items: NavItem[]; lab
           onClick={onNavigate}
           className={({ isActive }) =>
             cn(
-              "group flex h-10 items-center gap-3 rounded-xl px-3 text-[0.9375rem] text-sidebar-foreground transition-colors outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-3 focus-visible:ring-sidebar-ring focus-visible:ring-inset",
-              // Página actual: resaltada en el menú oscuro, con el icono del color de resaltado.
-              isActive && "bg-white/[0.11] font-semibold text-white hover:bg-white/[0.11]",
+              "flex h-10 items-center gap-3 rounded-xl px-3 text-[0.9375rem] text-sidebar-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
+              // Página actual: en el azul pastel de la marca.
+              isActive && "bg-sidebar-accent font-semibold text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             )
           }
         >
-          <Icon className="size-4 group-aria-[current=page]:text-highlight" aria-hidden />
+          <Icon className="size-4" aria-hidden />
           {itemLabel}
         </NavLink>
       ))}

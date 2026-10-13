@@ -311,8 +311,12 @@ export function brandThemeVariables(
     "--chart-3": palette.chart.highlight,
     "--canvas": palette.canvas,
     "--shell": palette.shell,
-    // El menú es oscuro con cualquier color: su texto y sus fondos (blanco translúcido) no cambian.
-    "--sidebar": palette.shell,
+    // El menú es blanco con cualquier color; su texto, lo activo y sus bordes toman los de la marca.
+    "--sidebar-foreground": palette.graphite,
     "--sidebar-primary": palette.ink,
+    "--sidebar-accent": palette.accent,
+    "--sidebar-accent-foreground": palette.ink,
+    "--sidebar-border": rule(0.1),
+    "--sidebar-ring": palette.ink,
   };
 }

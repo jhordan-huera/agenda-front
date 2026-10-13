@@ -19,24 +19,24 @@ interface NextUpProps {
   onCreate: () => void;
 }
 
-/** El botón principal sobre la tarjeta oscura: claro, para que destaque. */
-const LIGHT_BUTTON = "bg-white text-shell hover:bg-white/90";
+/** El botón principal sobre la tarjeta de color: blanco, para que destaque. */
+const LIGHT_BUTTON = "bg-white text-ink hover:bg-white/90";
 
-/** Fondo de la tarjeta: el oscuro del menú con un resplandor del color de la marca arriba a la derecha. */
-const DARK_CARD =
-  "rounded-2xl bg-shell bg-[radial-gradient(120%_140%_at_100%_0%,color-mix(in_oklch,var(--ink)_45%,transparent),transparent_62%)] text-shell-foreground shadow-[0_8px_24px_-12px_rgb(16_24_40/0.45)]";
+/** La tarjeta destacada: un degradado del color de la marca a su lila (con los colores de cada negocio). */
+const FEATURED_CARD =
+  "rounded-2xl bg-[linear-gradient(135deg,var(--ink),color-mix(in_oklch,var(--ink)_40%,var(--lilac-ink)))] text-white shadow-[0_16px_32px_-18px_color-mix(in_oklch,var(--ink)_70%,transparent)]";
 
 /**
- * Lo primero del Inicio: quién sigue y a qué hora, en la tarjeta oscura destacada. La hora va
- * grande; al lado, lo necesario para atenderla (ver la cita o escribir al cliente por WhatsApp).
+ * Lo primero del Inicio: quién sigue y a qué hora, en la tarjeta destacada. La hora va grande; al
+ * lado, lo necesario para atenderla (ver la cita o escribir al cliente por WhatsApp).
  */
 export function NextUp({ appointment, client, serviceName, business, now, onOpen, onCreate }: NextUpProps) {
   if (!appointment) {
     return (
-      <section className={cn("flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7", DARK_CARD)}>
+      <section className={cn("flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7", FEATURED_CARD)}>
         <div>
           <h2 className="text-xl font-bold text-white">No tienes citas próximas</h2>
-          <p className="mt-1 text-shell-foreground/70">Agenda una cita o comparte tu página de reservas para que te reserven.</p>
+          <p className="mt-1 text-white/80">Agenda una cita o comparte tu página de reservas para que te reserven.</p>
         </div>
         <Button size="lg" className={LIGHT_BUTTON} onClick={onCreate}>
           <CalendarPlus /> Nueva cita
@@ -61,34 +61,34 @@ export function NextUp({ appointment, client, serviceName, business, now, onOpen
   return (
     <section
       aria-labelledby="next-up-heading"
-      className={cn("grid gap-6 p-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-7", DARK_CARD)}
+      className={cn("grid gap-6 p-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-7", FEATURED_CARD)}
     >
       <div>
-        <h2 id="next-up-heading" className="text-sm font-semibold text-highlight">
+        <h2 id="next-up-heading" className="text-sm font-semibold text-white/85">
           {started ? "Ahora mismo" : "Tu siguiente cita"}
         </h2>
         <p className="mt-2 text-6xl leading-none font-extrabold tracking-[-0.03em] text-white tabular-nums">{appointment.startTime}</p>
-        <p className="mt-3 inline-flex rounded-full bg-white/10 px-2.5 py-0.5 text-sm font-semibold text-white">{when}</p>
+        <p className="mt-3 inline-flex rounded-full bg-white/15 px-2.5 py-0.5 text-sm font-semibold text-white">{when}</p>
       </div>
 
-      <div className="min-w-0 sm:border-l sm:border-white/12 sm:pl-8">
+      <div className="min-w-0 sm:border-l sm:border-white/20 sm:pl-8">
         <p className="text-2xl leading-tight font-bold tracking-[-0.01em] text-white">{client?.name ?? "Cliente"}</p>
-        <p className="mt-0.5 text-shell-foreground/70">
+        <p className="mt-0.5 text-white/80">
           {serviceName}, {formatDuration(minutes)}, hasta las {appointment.endTime}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <StatusBadge status={appointment.status} />
           {appointment.homeVisit && (
-            <span className="inline-flex items-center gap-1 text-sm font-semibold text-highlight">
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-white">
               <Home className="size-4" aria-hidden /> A domicilio
             </span>
           )}
           {appointment.isVirtual && (
-            <span className="inline-flex items-center gap-1 text-sm font-semibold text-highlight">
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-white">
               <Video className="size-4" aria-hidden /> Virtual
             </span>
           )}
-          {appointment.source === "booking_page" && <span className="text-sm text-shell-foreground/60">Reserva online</span>}
+          {appointment.source === "booking_page" && <span className="text-sm text-white/75">Reserva online</span>}
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button size="lg" className={LIGHT_BUTTON} onClick={() => onOpen(appointment)}>
@@ -99,7 +99,7 @@ export function NextUp({ appointment, client, serviceName, business, now, onOpen
               asChild
               size="lg"
               variant="outline"
-              className="border-white/15 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+              className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
             >
               <a href={whatsAppUrl} target="_blank" rel="noreferrer">
                 <WhatsAppIcon /> WhatsApp

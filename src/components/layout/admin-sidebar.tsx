@@ -17,16 +17,16 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex h-16 shrink-0 items-center px-5">
-        <Logo href="/admin" tone="inverse" />
+        <Logo href="/admin" />
       </div>
 
-      <div className="mx-3 mb-2 flex items-center gap-2.5 rounded-xl border border-sidebar-border bg-white/[0.04] px-3 py-2.5">
+      <div className="mx-3 mb-2 flex items-center gap-2.5 rounded-xl bg-muted px-3 py-2.5">
         <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <ShieldCheck className="size-4" aria-hidden />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white">Panel de plataforma</p>
-          <p className="text-xs text-sidebar-foreground/70">Super admin</p>
+          <p className="truncate text-sm font-semibold">Panel de plataforma</p>
+          <p className="text-xs text-muted-foreground">Super admin</p>
         </div>
       </div>
 
@@ -38,16 +38,16 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <div className="flex items-center gap-3 rounded-lg p-2">
             <UserAvatar name={getFullName(user)} src={user.avatarUrl} />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-white">{getFullName(user)}</span>
-              <span className="block truncate text-xs text-sidebar-foreground/70">{user.email}</span>
+              <span className="block truncate text-sm font-medium">{getFullName(user)}</span>
+              <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
             </span>
           </div>
         ) : (
-          <Skeleton className="h-12 w-full bg-white/10" />
+          <Skeleton className="h-12 w-full" />
         )}
         <Button
           variant="ghost"
-          className="w-full justify-start rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-white"
+          className="w-full justify-start rounded-xl text-muted-foreground"
           onClick={signOut}
         >
           <LogOut /> Cerrar sesión

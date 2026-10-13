@@ -250,9 +250,9 @@ function BrandPreview({ colors, slug }: { colors: BrandColors; slug: string }) {
         data-testid="brand-preview"
         aria-hidden
       >
-        {/* El menú del panel (oscuro, con el tono del principal) */}
-        <div className="flex gap-1 bg-sidebar p-2 text-xs font-medium text-sidebar-foreground">
-          <span className="rounded-lg bg-white/[0.11] px-2.5 py-1.5 font-semibold text-white">
+        {/* El menú del panel: lo activo, en el azul pastel de la marca */}
+        <div className="flex gap-1 border-b bg-sidebar p-2 text-xs font-medium text-sidebar-foreground">
+          <span className="rounded-lg bg-sidebar-accent px-2.5 py-1.5 font-semibold text-sidebar-accent-foreground">
             Inicio
           </span>
           <span className="px-2.5 py-1.5">Agenda</span>

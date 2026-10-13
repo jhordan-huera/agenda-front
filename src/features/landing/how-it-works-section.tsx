@@ -10,7 +10,7 @@ const STEPS: { title: string; description: string; sample: ReactNode }[] = [
     title: "Crea tu agenda",
     description: "Escribe tus servicios con su duración y precio, y los horarios en que atiendes. Te toma unos minutos.",
     sample: (
-      <div className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3.5 py-3">
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3.5 py-3">
         <span>
           <span className="block font-semibold">Consulta inicial</span>
           <span className="block text-sm text-muted-foreground">1 h, de lunes a viernes</span>
@@ -40,7 +40,7 @@ const STEPS: { title: string; description: string; sample: ReactNode }[] = [
     title: "Recibe las reservas",
     description: "Cada reserva llega a tu agenda y te avisamos por email. Tu cliente recibe la confirmación.",
     sample: (
-      <div className="flex items-start gap-3 rounded-lg border bg-background px-3.5 py-3">
+      <div className="flex items-start gap-3 rounded-xl bg-muted px-3.5 py-3">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-highlight text-ink">
           <BellRing className="size-4" aria-hidden />
         </span>
@@ -55,13 +55,16 @@ const STEPS: { title: string; description: string; sample: ReactNode }[] = [
 
 export function HowItWorksSection() {
   return (
-    <section id="como-funciona" className="scroll-mt-20 bg-accent py-20 sm:py-28">
+    <section id="como-funciona" className="scroll-mt-28 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading title="Empieza hoy mismo" />
-        <ol className="mt-12 grid gap-12 md:grid-cols-3 md:gap-8">
+        <SectionHeading eyebrow="Cómo empezar" title="Empieza" highlight="hoy mismo" />
+        <ol className="mt-14 grid gap-5 md:grid-cols-3">
           {STEPS.map(({ title, description, sample }, index) => (
-            <li key={title} className="flex flex-col border-t-2 border-ink pt-5">
-              <span className="block text-5xl leading-none font-extrabold tracking-[-0.03em] text-ink tabular-nums">
+            <li
+              key={title}
+              className="flex flex-col rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgb(16_24_40/0.04)]"
+            >
+              <span className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-ink to-lilac-ink text-lg font-extrabold text-white tabular-nums">
                 {index + 1}
               </span>
               <h3 className="mt-5 text-lg font-bold">{title}</h3>

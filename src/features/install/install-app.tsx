@@ -33,7 +33,7 @@ export function InstallAppButton() {
       <button
         type="button"
         onClick={start}
-        className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-white outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-sidebar-ring"
+        className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <span className="truncate">Instalar aplicación</span>
         <Download className="size-3.5 shrink-0" aria-hidden />

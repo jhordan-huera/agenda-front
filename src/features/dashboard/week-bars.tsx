@@ -8,7 +8,7 @@ import { DashCard, DashCardHeader } from "./dash-card";
 
 /**
  * La semana en barras: cuántas citas tiene cada día (sin canceladas). Cada día con su columna de
- * fondo; hoy, la barra del color de la marca y su cifra en una etiqueta oscura.
+ * fondo; hoy, la barra en degradado de la marca y su cifra en una etiqueta oscura.
  */
 export function WeekBars({ appointments, now }: { appointments: Appointment[]; now: ZonedNow }) {
   const monday = startOfWeekISO(now.date);
@@ -38,7 +38,7 @@ export function WeekBars({ appointments, now }: { appointments: Appointment[]; n
                   {day.count || ""}
                 </span>
                 <span
-                  className={cn("w-full rounded-md", today ? "bg-ink" : "bg-chart-2")}
+                  className={cn("w-full rounded-md", today ? "bg-linear-to-t from-ink to-lilac-ink" : "bg-chart-2")}
                   style={{ height: day.count ? `${Math.max(6, (day.count / max) * 74)}%` : "0" }}
                 />
               </span>

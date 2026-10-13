@@ -4,20 +4,22 @@ import { Button } from "@/components/ui/button";
 
 const LINKS = [
   { href: "#caracteristicas", label: "Qué hace" },
+  { href: "#tu-panel", label: "Tu panel" },
   { href: "#como-funciona", label: "Cómo empezar" },
 ];
 
+/** Menú de la portada: una barra blanca flotante y redondeada, con efecto cristal. */
 export function LandingNavbar() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-4 sm:pt-4">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 rounded-2xl border border-border/70 bg-white/80 px-4 shadow-[0_8px_30px_-14px_rgb(29_36_51/0.22)] backdrop-blur-md sm:px-5">
         <Logo />
         <nav aria-label="Principal" className="hidden items-center gap-1 md:flex">
           {LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              className="rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               {link.label}
             </a>

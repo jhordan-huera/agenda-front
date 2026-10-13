@@ -20,15 +20,15 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="shrink-0 px-4 pt-6 pb-4">
-        <Logo href="/dashboard" tone="inverse" className="px-2" />
+        <Logo href="/dashboard" className="px-2" />
         {/* El negocio, en su recuadro (como el espacio de trabajo de una aplicación). */}
-        <div className="mt-5 rounded-xl border border-sidebar-border bg-white/[0.04] px-3 py-2.5">
-          <p className="truncate text-sm font-semibold text-white">{business?.name ?? "…"}</p>
-          <p className="text-xs text-sidebar-foreground/70">{role ? ROLE_LABELS[role] : "…"}</p>
+        <div className="mt-5 rounded-xl bg-muted px-3 py-2.5">
+          <p className="truncate text-sm font-semibold text-foreground">{business?.name ?? "…"}</p>
+          <p className="text-xs text-muted-foreground">{role ? ROLE_LABELS[role] : "…"}</p>
         </div>
       </div>
 
-      <p className="px-6 pt-1 pb-1 text-[11px] font-semibold tracking-[0.08em] text-sidebar-foreground/50 uppercase">Menú</p>
+      <p className="px-6 pt-1 pb-1 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground/80 uppercase">Menú</p>
       <SidebarNav
         label="Panel"
         items={NAV_ITEMS.filter((item) => (!item.permission || can(item.permission)) && (!item.multiAgenda || multiAgenda))}
@@ -41,7 +41,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             href={`/book/${business.slug}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-sidebar-ring"
+            className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-ink outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <span className="truncate">Página de reservas</span>
             <ExternalLink className="size-3.5 shrink-0" aria-hidden />
@@ -51,7 +51,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <UserMenu onNavigate={onNavigate} />
         <Button
           variant="ghost"
-          className="w-full justify-start rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-white"
+          className="w-full justify-start rounded-xl text-muted-foreground"
           onClick={signOut}
         >
           <LogOut /> Cerrar sesión

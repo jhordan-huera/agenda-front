@@ -119,9 +119,10 @@
  *   elegido, la reserva que entra), con el trazo de marcador (.marker). Su tono suave (#EFEBFC,
  *   --secondary) viste insignias y botones secundarios.
  * - Tipografía: Sora; las horas, grandes, gruesas y con cifras tabulares.
- * - Panel (diseño de aplicación SaaS): el menú y el marco casi negros con el tono de la marca
- *   (--shell); dentro, el lienzo gris claro (--canvas) con tarjetas blancas. Con los colores de un
- *   negocio, --shell y --canvas salen de su principal (lib/brand-theme.ts).
+ * - Panel (diseño de aplicación SaaS, claro): el lienzo gris claro (--canvas) con el menú y las
+ *   tarjetas en blanco; lo destacado, en un degradado del principal al lila. --shell (casi negro
+ *   con el tono de la marca) viste etiquetas y el pie de la portada. Con los colores de un negocio,
+ *   --shell y --canvas salen de su principal (lib/brand-theme.ts).
  * Los estados de las citas (pendiente, confirmada…) usan sus colores en
  * lib/constants/appointment-status.ts.
  */
@@ -170,15 +171,15 @@
   --chart-4: #e3b5c8;
   --chart-5: var(--red-pen);
   --radius: 0.625rem;
-  /* El menú lateral, oscuro con cualquier color de marca: texto y fondos en blanco translúcido. */
-  --sidebar: var(--shell);
-  --sidebar-foreground: rgb(238 241 248 / 0.78);
+  /* El menú lateral: una tarjeta blanca flotante; lo activo, en el azul pastel de la marca. */
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--graphite);
   --sidebar-primary: var(--ink);
   --sidebar-primary-foreground: var(--paper);
-  --sidebar-accent: rgb(255 255 255 / 0.07);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgb(255 255 255 / 0.09);
-  --sidebar-ring: rgb(255 255 255 / 0.45);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--ink);
 }
 
 @layer base {

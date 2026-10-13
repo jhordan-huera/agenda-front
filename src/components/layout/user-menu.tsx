@@ -19,18 +19,18 @@ export function UserMenu({ onNavigate }: { onNavigate?: () => void }) {
   const { data: business } = useCurrentBusiness();
   const signOut = useSignOut();
 
-  if (!user) return <Skeleton className="h-12 w-full bg-white/10" />;
+  if (!user) return <Skeleton className="h-12 w-full" />;
   const name = getFullName(user);
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl p-2 text-left outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-sidebar-ring aria-expanded:bg-sidebar-accent">
+      <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl p-2 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 aria-expanded:bg-muted">
         <UserAvatar name={name} src={user.avatarUrl} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-white">{name}</span>
-          <span className="block truncate text-xs text-sidebar-foreground/70">{user.email}</span>
+          <span className="block truncate text-sm font-medium">{name}</span>
+          <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
         </span>
-        <ChevronsUpDown className="size-4 text-sidebar-foreground/70" aria-hidden />
+        <ChevronsUpDown className="size-4 text-muted-foreground" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="w-(--radix-dropdown-menu-trigger-width) min-w-56">
         <DropdownMenuLabel className="text-xs text-muted-foreground">{business?.name}</DropdownMenuLabel>

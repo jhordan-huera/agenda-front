@@ -1,77 +1,76 @@
-import type { ReactNode } from "react";
-import { AgendaWeek } from "@/features/auth/agenda-week";
+import { BellRing, CalendarDays, IdCard, MapPin, Smartphone, Stethoscope, type LucideIcon } from "lucide-react";
 import { APP_NAME } from "@/lib/constants/app";
-import { PhoneBooking } from "./phone-booking";
+import { cn } from "@/lib/utils";
 import { SectionHeading } from "./section-heading";
 
-/** Lo que hace la app, separado por quién lo usa: el profesional y sus clientes, cada uno con su pantalla. */
-const AUDIENCES: { title: string; visual: ReactNode; items: { title: string; description: string }[] }[] = [
+/** El color de cada icono, alternando como en una cuadrícula de funciones: marca, lila y verde. */
+const TONES = ["bg-accent text-ink", "bg-secondary text-secondary-foreground", "bg-emerald-50 text-emerald-700"];
+
+/** Lo que hace la app, para quién es cada cosa: el profesional y sus clientes. */
+const FEATURES: { audience: string; icon: LucideIcon; title: string; description: string }[] = [
   {
-    title: "Para ti",
-    visual: <AgendaWeek />,
-    items: [
-      {
-        title: "Tu día de un vistazo",
-        description: "Agenda por día, semana o mes. Bloquea el almuerzo o tus vacaciones y nadie reserva esas horas.",
-      },
-      {
-        title: "Cada cliente, una ficha",
-        description: "Identificado por su cédula, con su historial de citas, notas privadas y lo que te ha pagado.",
-      },
-      {
-        title: "Historia clínica",
-        description: "Para consultorios de salud: antecedentes y evoluciones de cada paciente, listas para imprimir.",
-      },
-    ],
+    audience: "Para ti",
+    icon: CalendarDays,
+    title: "Tu día de un vistazo",
+    description: "Agenda por día, semana o mes. Bloquea el almuerzo o tus vacaciones y nadie reserva esas horas.",
   },
   {
-    title: "Para tus clientes",
-    visual: <PhoneBooking />,
-    items: [
-      {
-        title: "Reservan sin crear cuenta",
-        description: "Eligen servicio, día y hora libre desde el celular. Si ya te visitaron, basta con su cédula.",
-      },
-      {
-        title: "Recordatorio antes de la cita",
-        description: "Les llega un email antes de la cita, con la dirección y el enlace para llegar en Google Maps.",
-      },
-      {
-        title: "Atención a domicilio",
-        description: "Marcan en el mapa el lugar exacto donde los visitas.",
-      },
-    ],
+    audience: "Para ti",
+    icon: IdCard,
+    title: "Cada cliente, una ficha",
+    description: "Identificado por su cédula, con su historial de citas, notas privadas y lo que te ha pagado.",
+  },
+  {
+    audience: "Para ti",
+    icon: Stethoscope,
+    title: "Historia clínica",
+    description: "Para consultorios de salud: antecedentes y evoluciones de cada paciente, listas para imprimir.",
+  },
+  {
+    audience: "Para tus clientes",
+    icon: Smartphone,
+    title: "Reservan sin crear cuenta",
+    description: "Eligen servicio, día y hora libre desde el celular, sin registrarse ni descargar nada.",
+  },
+  {
+    audience: "Para tus clientes",
+    icon: BellRing,
+    title: "Recordatorio antes de la cita",
+    description: "Les llega un email antes de la cita, con la dirección y el enlace para llegar en Google Maps.",
+  },
+  {
+    audience: "Para tus clientes",
+    icon: MapPin,
+    title: "Atención a domicilio",
+    description: "Marcan en el mapa el lugar exacto donde los visitas.",
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section id="caracteristicas" className="scroll-mt-20 py-20 sm:py-28">
+    <section id="caracteristicas" className="scroll-mt-28 bg-canvas py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
-          title="Menos mensajes para cuadrar una hora"
+          eyebrow="Qué hace"
+          title="Menos mensajes para cuadrar"
+          highlight="una hora"
           description={`${APP_NAME} responde por ti la pregunta de siempre: «¿tiene un espacio el jueves?».`}
         />
-        <div className="mt-14 grid gap-14 md:grid-cols-2 md:gap-10">
-          {AUDIENCES.map((audience) => (
-            <div key={audience.title}>
-              <div className="flex min-h-[25rem] items-center justify-center overflow-hidden rounded-2xl bg-muted px-5 py-10 sm:px-8 md:h-[35rem]">
-                <div className="flex w-full max-w-md justify-center [&_figure]:w-full [&_figure]:-rotate-1 [&_figure]:shadow-[0_28px_56px_-30px_rgb(29_36_51/0.35)]">
-                  {audience.visual}
-                </div>
-              </div>
-              <h3 className="mt-8 border-b-2 border-ink pb-3 text-xl font-bold text-ink">{audience.title}</h3>
-              <dl className="divide-y">
-                {audience.items.map((item) => (
-                  <div key={item.title} className="py-4">
-                    <dt className="font-semibold">{item.title}</dt>
-                    <dd className="mt-1 leading-relaxed text-muted-foreground">{item.description}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
+        <ul className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map(({ audience, icon: Icon, title, description }, index) => (
+            <li
+              key={title}
+              className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgb(16_24_40/0.04)] transition-[transform,box-shadow] duration-200 hover:shadow-[0_16px_32px_-18px_rgb(29_36_51/0.28)] motion-safe:hover:-translate-y-0.5"
+            >
+              <span className={cn("flex size-11 items-center justify-center rounded-xl", TONES[index % TONES.length])}>
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <p className="mt-5 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">{audience}</p>
+              <h3 className="mt-1 text-lg font-bold">{title}</h3>
+              <p className="mt-2 leading-relaxed text-muted-foreground">{description}</p>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );
