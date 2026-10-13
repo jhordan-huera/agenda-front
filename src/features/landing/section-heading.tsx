@@ -6,10 +6,10 @@ export function GradientText({ children }: { children: ReactNode }) {
   return <span className="bg-linear-to-r from-ink to-lilac-ink bg-clip-text text-transparent">{children}</span>;
 }
 
-/** Etiqueta en forma de píldora sobre un título (como «Funciones»). */
+/** Etiqueta en forma de píldora sobre un título (como «Funciones»). El azul, un poco más oscuro: sobre el fondo pastel llega a 4,5:1. */
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={cn("inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-sm font-semibold text-ink", className)}>
+    <p className={cn("inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-sm font-semibold text-[color-mix(in_oklch,var(--ink),black_15%)]", className)}>
       {children}
     </p>
   );

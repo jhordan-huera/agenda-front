@@ -24,8 +24,10 @@ export default function ForgotPasswordPage() {
         title="¿Olvidaste tu contraseña?"
         description="Escríbenos desde el email de tu cuenta y te enviaremos una contraseña nueva."
       />
-      <div className="rounded-xl border bg-muted/40 p-6 text-center">
-        <Mail className="mx-auto size-10 text-primary" aria-hidden />
+      <div className="rounded-2xl border border-border/70 bg-card p-6 text-center shadow-[0_18px_40px_-28px_rgb(29_36_51/0.35)]">
+        <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-accent text-ink">
+          <Mail className="size-6" aria-hidden />
+        </span>
         <p className="mt-4 text-sm text-muted-foreground">Contacta al soporte:</p>
         {settings.isPending ? (
           <Skeleton className="mx-auto mt-2 h-5 w-48" />

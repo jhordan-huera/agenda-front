@@ -1,19 +1,12 @@
-import { ArrowRight, BellRing, CalendarCheck, CheckCircle2, MailCheck } from "lucide-react";
-import type { ReactNode } from "react";
+import { ArrowRight, CalendarCheck } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { CalendarChips } from "./floating-chip";
 import { HeroCalendar } from "./hero-calendar";
+import { PRODUCT_FACTS } from "./product-facts";
 import { Eyebrow, GradientText } from "./section-heading";
 
 const PROFESSIONS = "psicólogos, odontólogos, nutricionistas, fisioterapeutas, entrenadores, estilistas y abogados";
-
-/** Lo que es cierto de la app, en cifras cortas (sin inventar usuarios ni porcentajes). */
-const FACTS = [
-  { value: "24/7", label: "Reservas online" },
-  { value: "Gratis", label: "Para empezar" },
-  { value: "Sin cuenta", label: "Tus clientes reservan solos" },
-];
 
 /**
  * La portada: el titular con su final en degradado y, a la derecha, el calendario de la semana (la
@@ -49,7 +42,7 @@ export function HeroSection() {
             </Button>
           </div>
           <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-5">
-            {FACTS.map((fact) => (
+            {PRODUCT_FACTS.map((fact) => (
               <div key={fact.label} className="flex flex-col-reverse">
                 <dt className="text-sm text-muted-foreground">{fact.label}</dt>
                 <dd className="text-2xl font-extrabold tracking-[-0.02em]">{fact.value}</dd>
@@ -60,28 +53,7 @@ export function HeroSection() {
 
         <div className="relative">
           <HeroCalendar />
-          <FloatingChip className="-bottom-8 -left-2 sm:-left-8" delay={1.4}>
-            <span className="flex size-8 items-center justify-center rounded-full bg-highlight text-ink">
-              <BellRing className="size-4" aria-hidden />
-            </span>
-            <span className="text-sm leading-tight">
-              <span className="block font-semibold">Nueva reserva online</span>
-              <span className="block text-xs text-muted-foreground">Ana Torres, jueves a las 10:00</span>
-            </span>
-          </FloatingChip>
-          <FloatingChip className="-top-6 right-0 sm:-right-5" delay={2.2}>
-            <CheckCircle2 className="size-5 text-emerald-600" aria-hidden />
-            <span className="text-sm font-semibold">Confirmación enviada</span>
-          </FloatingChip>
-          <FloatingChip className="-right-2 -bottom-8 sm:-right-6" delay={2.6}>
-            <span className="flex size-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-              <MailCheck className="size-4" aria-hidden />
-            </span>
-            <span className="text-sm leading-tight">
-              <span className="block font-semibold">Recordatorio</span>
-              <span className="block text-xs text-muted-foreground">Antes de cada cita</span>
-            </span>
-          </FloatingChip>
+          <CalendarChips />
         </div>
       </div>
       <p className="mx-auto max-w-6xl px-4 pb-12 text-center text-muted-foreground sm:px-6">Hecho para {PROFESSIONS}.</p>
@@ -89,18 +61,3 @@ export function HeroSection() {
   );
 }
 
-/** Etiqueta que flota junto a la hoja del día (decorativa: lo mismo lo cuenta el texto). */
-function FloatingChip({ className, delay, children }: { className: string; delay: number; children: ReactNode }) {
-  return (
-    <div
-      aria-hidden
-      style={{ animationDelay: `${delay}s` }}
-      className={cn(
-        "absolute z-10 hidden items-center gap-2.5 rounded-xl border border-border/70 bg-white/95 px-3.5 py-2.5 shadow-[0_14px_30px_-14px_rgb(29_36_51/0.35)] backdrop-blur animate-in fill-mode-both duration-500 fade-in slide-in-from-bottom-2 motion-reduce:animate-none sm:flex",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
-}
