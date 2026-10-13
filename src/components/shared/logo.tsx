@@ -6,18 +6,20 @@ import { BrandMark } from "./brand-mark";
 interface LogoProps {
   href?: string;
   className?: string;
+  /** "inverse": el nombre en blanco, sobre el menú oscuro del panel. */
+  tone?: "default" | "inverse";
 }
 
 // "Agenda360" → "Agenda" en negrita y "360" más ligero, junto al símbolo.
 const [, WORD = APP_NAME, NUMBER = ""] = /^(\D+)(\d*)$/.exec(APP_NAME) ?? [];
 
-/** Logotipo: el símbolo (calendario con el día reservado) y el nombre en azul. */
-export function Logo({ href = "/", className }: LogoProps) {
+/** Logotipo: el símbolo (calendario con el día reservado) y el nombre en azul (o en blanco). */
+export function Logo({ href = "/", className, tone = "default" }: LogoProps) {
   return (
     <Link
       to={href}
       aria-label={APP_NAME}
-      className={cn("inline-flex items-center gap-2 rounded-md text-xl tracking-[-0.02em] text-ink", className)}
+      className={cn("inline-flex items-center gap-2 rounded-md text-xl tracking-[-0.02em]", tone === "inverse" ? "text-white" : "text-ink", className)}
     >
       <BrandMark />
       <Wordmark />

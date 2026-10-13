@@ -84,10 +84,12 @@ export interface BrandPalette {
   inkAdjusted: boolean;
   accent: string;
   desk: string;
-  sidebarAccent: string;
+  /** El lienzo del panel, donde van las tarjetas blancas: un poco más oscuro que `desk`. */
+  canvas: string;
+  /** El menú lateral y el marco del panel: casi negro, con el tono del principal. */
+  shell: string;
   text: string;
   graphite: string;
-  sidebarText: string;
   highlight: string;
   highlightAdjusted: boolean;
   /** Tono suave del resaltado (insignias, botones secundarios) y su texto. */
@@ -239,14 +241,14 @@ export function resolveBrandPalette(colors: BrandColors): BrandPalette {
     inkAdjusted: ink !== colors.primary,
     accent: tone(0.948, 0.0187),
     desk,
-    sidebarAccent: tone(0.939, 0.0204),
+    canvas: tone(0.962, 0.008),
+    shell: tone(0.235, 0.045),
     text,
     graphite: adjustLightness(
       tone(0.503, 0.0338),
       -0.01,
       (hex) => contrastRatio(hex, desk) >= 4.5,
     ),
-    sidebarText: tone(0.311, 0.0378),
     highlight: highlightHex,
     highlightAdjusted: highlightHex !== colors.highlight,
     secondary,
@@ -307,12 +309,10 @@ export function brandThemeVariables(
     "--lilac-ink": palette.secondaryText,
     "--chart-2": palette.chart.soft,
     "--chart-3": palette.chart.highlight,
-    "--sidebar": palette.desk,
-    "--sidebar-foreground": palette.sidebarText,
+    "--canvas": palette.canvas,
+    "--shell": palette.shell,
+    // El menú es oscuro con cualquier color: su texto y sus fondos (blanco translúcido) no cambian.
+    "--sidebar": palette.shell,
     "--sidebar-primary": palette.ink,
-    "--sidebar-accent": palette.sidebarAccent,
-    "--sidebar-accent-foreground": palette.ink,
-    "--sidebar-border": rule(0.1),
-    "--sidebar-ring": palette.ink,
   };
 }

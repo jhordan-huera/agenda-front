@@ -6,6 +6,7 @@ import { plural } from "@/lib/format";
 import { timeToMinutes, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Appointment, Professional } from "@/types";
+import { DashCard, DashCardHeader } from "./dash-card";
 
 interface TodayListProps {
   appointments: Appointment[];
@@ -79,19 +80,17 @@ export function TodayList({
   );
 
   return (
-    <section aria-labelledby="today-heading">
-      <h2 id="today-heading" className="border-b-2 border-ink pb-2 font-bold">
-        Lo que queda de hoy
-      </h2>
+    <DashCard aria-labelledby="today-heading">
+      <DashCardHeader id="today-heading" title="Lo que queda de hoy" />
       {later.length === 0 ? (
-        <p className="py-4 text-muted-foreground">
+        <p className="text-muted-foreground">
           {nextId ? "Después de tu siguiente cita no tienes más por hoy." : "No te quedan citas por hoy."}
         </p>
       ) : (
-        <ul className="divide-y">{later.map((appointment) => row(appointment))}</ul>
+        <ul className="-mt-3 divide-y">{later.map((appointment) => row(appointment))}</ul>
       )}
       {done.length > 0 && (
-        <details className="group border-t">
+        <details className="group mt-3 border-t">
           <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
             <ChevronRight className="size-4 transition-transform duration-150 group-open:rotate-90" aria-hidden />
             Ya atendidas hoy: {plural(done.length, "cita", "citas")}
@@ -99,6 +98,6 @@ export function TodayList({
           <ul className="divide-y">{done.map((appointment) => row(appointment, true))}</ul>
         </details>
       )}
-    </section>
+    </DashCard>
   );
 }
