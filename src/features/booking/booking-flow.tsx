@@ -277,7 +277,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
                   otro servicio o vuelve más tarde.
                 </p>
               ) : (
-                <div className="grid gap-6 md:grid-cols-[minmax(0,300px)_1fr]">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,300px)_1fr]">
                   <BookingCalendar
                     key={service.id}
                     today={today}

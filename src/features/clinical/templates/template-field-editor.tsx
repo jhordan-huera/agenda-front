@@ -48,7 +48,7 @@ export function TemplateFieldEditor({ draft, index, total, numberFields, error, 
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <FormField label={isSection ? "Título" : "Nombre del campo"}>
           {(field) => (
             <Input
@@ -81,7 +81,7 @@ export function TemplateFieldEditor({ draft, index, total, numberFields, error, 
       )}
 
       {draft.type === "number" && (
-        <div className="grid gap-3 sm:grid-cols-4 sm:items-end">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-end">
           <FormField label="Unidad" optional>
             {(field) => <Input {...field} placeholder="kg, cm, °C…" value={draft.unit} onChange={(e) => onChange({ unit: e.target.value })} />}
           </FormField>
@@ -98,7 +98,7 @@ export function TemplateFieldEditor({ draft, index, total, numberFields, error, 
       )}
 
       {draft.type === "scale" && (
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <FormField label="Desde">
             {(field) => <Input {...field} inputMode="numeric" value={draft.min} onChange={(e) => onChange({ min: e.target.value })} />}
           </FormField>
@@ -176,7 +176,7 @@ export function TemplateFieldEditor({ draft, index, total, numberFields, error, 
       )}
 
       {draft.type === "bmi" && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {(["weightField", "heightField"] as const).map((key) => (
             <FormField key={key} label={key === "weightField" ? "Campo del peso (kg)" : "Campo de la talla (cm)"}>
               {(field) => (

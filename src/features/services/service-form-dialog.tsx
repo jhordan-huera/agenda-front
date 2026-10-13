@@ -139,7 +139,7 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
           />
         )}
       </FormField>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Duración (minutos)" error={errors.durationMinutes}>
           {(field) => (
             <Input
@@ -178,7 +178,7 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
 
       <fieldset className="grid gap-2">
         <legend className="mb-2 text-sm font-medium">El precio en tu página de reservas</legend>
-        <div role="radiogroup" aria-label="El precio en tu página de reservas" className="grid gap-2 sm:grid-cols-3">
+        <div role="radiogroup" aria-label="El precio en tu página de reservas" className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {PRICE_DISPLAYS.map((option) => {
             const selected = values.priceDisplay === option.value;
             return (
@@ -208,7 +208,7 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
 
       <fieldset className="grid gap-2">
         <legend className="mb-2 text-sm font-medium">Modalidad</legend>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {SERVICE_MODES.map((mode) => {
             const checked = values.modes.includes(mode.value);
             const Icon = MODE_ICONS[mode.value];

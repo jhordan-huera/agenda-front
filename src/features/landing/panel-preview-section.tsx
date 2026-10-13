@@ -45,7 +45,7 @@ export function PanelPreviewSection() {
               </div>
             ))}
           </dl>
-          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)]">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)]">
             <div className="flex items-center justify-center rounded-2xl bg-muted px-3 pt-6 pb-12 sm:px-10 sm:pt-8 sm:pb-14">
               <div className="w-full max-w-lg">
                 <HeroAgenda />

@@ -192,7 +192,7 @@ function ClinicalNoteForm({
         <DialogDescription>Historia clínica de {clientName}.</DialogDescription>
       </DialogHeader>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_150px]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_150px]">
         <FormField label="Formato" hint={template && <span data-testid="template-reason">{templateReason}</span>}>
           {(field) => (
             <Select
@@ -284,7 +284,7 @@ function ClinicalNoteForm({
               El odontograma parte del registrado el {formatNumericDate(lastOdontogram.date)}: actualiza sólo lo que cambió.
             </p>
           )}
-          <div className="grid gap-4 sm:grid-cols-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
             {template.fields.map((field) => (
               <ClinicalFieldInput key={field.id} field={field} values={values} onChange={setValue} error={errors[field.id]} />
             ))}

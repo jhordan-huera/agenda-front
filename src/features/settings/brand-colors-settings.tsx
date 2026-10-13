@@ -61,7 +61,7 @@ export function BrandColorsSettings({ business }: { business: Business }) {
       onSubmit={submit}
       onDiscard={() => reset()}
     >
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
         <div className="grid gap-6">
           <fieldset className="grid gap-3">
             <legend className="mb-3 text-sm font-semibold">
@@ -118,7 +118,7 @@ export function BrandColorsSettings({ business }: { business: Business }) {
               Por ejemplo, los de tu logo. El resto de tonos (fondos, bordes,
               textos) se calculan solos a partir de estos dos.
             </p>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <ColorField
                 label="Color principal"
                 description="Botones, títulos y lo activo."

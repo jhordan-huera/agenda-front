@@ -137,7 +137,7 @@ function ReportsPageContent() {
           {/* La cifra que el profesional busca primero: cuánto generó en el periodo. */}
           <section
             aria-labelledby="revenue-heading"
-            className="grid gap-6 rounded-xl border bg-card p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-end"
+            className="grid grid-cols-1 gap-6 rounded-xl border bg-card p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-end"
           >
             <div>
               <h2 id="revenue-heading" className="text-sm font-semibold text-muted-foreground">
@@ -214,7 +214,7 @@ function ReportsPageContent() {
                   currency={currency}
                 />
               )}
-              <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-3">
                 <Card>
                   <CardHeader>
                     <CardTitle>Distribución por estado</CardTitle>

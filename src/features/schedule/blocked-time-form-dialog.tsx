@@ -129,7 +129,7 @@ function BlockedTimeForm({
         </TabsList>
       </Tabs>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Desde" error={errors.startDate}>
           {(field) => (
             <Input
@@ -161,7 +161,7 @@ function BlockedTimeForm({
       </div>
 
       {!values.allDay && (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField label="Hora inicial" error={errors.startTime}>
             {(field) => (
               <Input

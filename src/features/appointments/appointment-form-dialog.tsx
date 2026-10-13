@@ -357,7 +357,7 @@ function AppointmentForm({
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <FormField label="Fecha" error={errors.date}>
           {(field) => <Input {...field} type="date" value={values.date} onChange={(e) => set("date", e.target.value)} />}
         </FormField>
@@ -393,7 +393,7 @@ function AppointmentForm({
         </FormField>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <FormField label="Precio (USD)" error={errors.price}>
         {(field) => (
           <div className="relative">

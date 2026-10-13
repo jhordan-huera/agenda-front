@@ -23,7 +23,7 @@ const FACTS = [
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-[radial-gradient(55%_45%_at_0%_0%,color-mix(in_oklch,var(--ink)_12%,transparent),transparent),radial-gradient(45%_45%_at_100%_8%,color-mix(in_oklch,var(--highlight)_55%,transparent),transparent)]">
-      <div className="mx-auto grid max-w-6xl gap-16 px-4 pt-32 pb-16 sm:px-6 sm:pt-36 lg:grid-cols-[1fr_minmax(0,30rem)] lg:items-center lg:pb-20">
+      <div className="mx-auto grid grid-cols-1 max-w-6xl gap-16 px-4 pt-32 pb-16 sm:px-6 sm:pt-36 lg:grid-cols-[1fr_minmax(0,30rem)] lg:items-center lg:pb-20">
         <div className="max-w-xl">
           <Eyebrow>
             <span aria-hidden className="size-2 rounded-full bg-emerald-500" />

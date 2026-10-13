@@ -55,14 +55,14 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
       <BusinessTemplateBanner />
 
       {record.isPending ? (
-        <div className="grid gap-6 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
           <Skeleton className="h-96 lg:col-span-3" />
           <Skeleton className="h-96 lg:col-span-2" />
         </div>
       ) : record.isError ? (
         <ErrorState title="No pudimos abrir la historia clínica" description={record.error.message} onRetry={() => record.refetch()} />
       ) : (
-        <div className="grid items-start gap-6 lg:grid-cols-5">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-5">
           <section aria-labelledby="notes-heading" className="space-y-4 lg:col-span-3">
             <ClinicalEvolutionChart record={record.data} />
             <h2 id="notes-heading" className="font-semibold">

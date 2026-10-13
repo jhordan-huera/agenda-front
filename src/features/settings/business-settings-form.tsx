@@ -81,7 +81,7 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
         onUploadingChange={setUploading}
         fallback={<Building2 className="size-6" aria-hidden />}
       />
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <FormField label="Nombre del negocio" error={errors.name}>
           {(field) => <Input {...field} value={values.name} onChange={(e) => setField("name", e.target.value)} />}
         </FormField>
@@ -135,7 +135,7 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
         )}
       </FormField>
       <BookingLinkField savedSlug={business.slug} pendingChange={values.slug !== business.slug} businessName={business.name} />
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <FormField label="Teléfono del negocio" error={errors.phone} optional>
           {(field) => <Input {...field} type="tel" value={values.phone} onChange={(e) => setField("phone", e.target.value)} />}
         </FormField>

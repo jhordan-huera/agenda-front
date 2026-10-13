@@ -10,7 +10,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 export function AuthLayout() {
   useInstallableApp();
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1fr_1.1fr]">
+    <div className="grid grid-cols-1 min-h-screen lg:grid-cols-[1fr_1.1fr]">
       <RedirectIfAuthenticated />
       <div className="flex flex-col px-4 py-6 sm:px-10">
         <Logo />

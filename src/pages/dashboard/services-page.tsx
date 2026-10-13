@@ -75,7 +75,7 @@ function ServicesPageContent() {
       />
 
       {servicesQuery.isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-48 rounded-xl" />
           ))}
@@ -94,7 +94,7 @@ function ServicesPageContent() {
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {services.map((service) => (
             <ServiceCard
               key={service.id}

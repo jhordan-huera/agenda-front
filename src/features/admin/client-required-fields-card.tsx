@@ -41,7 +41,7 @@ export function ClientRequiredFieldsCard({ business }: { business: Business }) {
       onSubmit={submit}
       onDiscard={() => reset()}
     >
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SwitchField label="Nombre" description="Siempre obligatorio." checked disabled onCheckedChange={() => undefined} />
         {CLIENT_REQUIRED_FIELD_OPTIONS.map((field) => (
           <SwitchField

@@ -95,7 +95,7 @@ function AddMemberForm({
         </DialogTitle>
         <DialogDescription>Le enviaremos un email con su email de acceso y la contraseña que escribas.</DialogDescription>
       </DialogHeader>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Nombre" error={errors.firstName}>
           {(field) => <Input {...field} autoFocus value={values.firstName} onChange={(e) => set("firstName", e.target.value)} />}
         </FormField>

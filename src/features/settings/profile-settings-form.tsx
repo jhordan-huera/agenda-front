@@ -67,7 +67,7 @@ export function ProfileSettingsForm({ user }: { user: User }) {
         onUploadingChange={setUploading}
         fallback={getInitials(`${values.firstName} ${values.lastName}`)}
       />
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <FormField label="Nombre" error={errors.firstName}>
           {(field) => (
             <Input {...field} autoComplete="given-name" value={values.firstName} onChange={(e) => setField("firstName", e.target.value)} />

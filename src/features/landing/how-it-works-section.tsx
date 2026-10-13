@@ -58,7 +58,7 @@ export function HowItWorksSection() {
     <section id="como-funciona" className="scroll-mt-28 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading eyebrow="Cómo empezar" title="Empieza" highlight="hoy mismo" />
-        <ol className="mt-14 grid gap-5 md:grid-cols-3">
+        <ol className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3">
           {STEPS.map(({ title, description, sample }, index) => (
             <li
               key={title}

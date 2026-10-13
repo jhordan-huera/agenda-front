@@ -55,7 +55,7 @@ export function RegisterForm() {
           {formError}
         </p>
       )}
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <FormField label="Nombre" error={errors.firstName}>
           {(field) => (
             <Input {...field} autoComplete="given-name" className="h-10" value={values.firstName} onChange={update("firstName")} />

@@ -27,7 +27,8 @@ export function AppShell({ homeHref, renderSidebar, banner }: AppShellProps) {
         {renderSidebar()}
       </aside>
 
-      {banner && <div className="sticky top-0 z-20 print:hidden">{banner}</div>}
+      {/* En el móvil la cabecera ya queda fija arriba: el aviso (p. ej. el modo soporte) se va al desplazar. */}
+      {banner && <div className="z-20 lg:sticky lg:top-0 print:hidden">{banner}</div>}
 
       <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur lg:hidden print:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

@@ -28,7 +28,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
 export function LandingFooter() {
   return (
     <footer className="bg-shell text-shell-foreground">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
+      <div className="mx-auto grid grid-cols-1 max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
         <div className="max-w-xs">
           <Logo tone="inverse" />
           <p className="mt-4 text-sm leading-relaxed text-shell-foreground/70">

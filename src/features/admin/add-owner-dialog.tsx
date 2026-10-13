@@ -74,7 +74,7 @@ function AddOwnerForm({ businessId, businessName, onDone }: { businessId: string
           Entrará con su email y la contraseña que escribas; se la enviamos por email junto con su página de reservas.
         </DialogDescription>
       </DialogHeader>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Nombre" error={errors.firstName}>
           {(field) => <Input {...field} autoFocus value={values.firstName} onChange={(e) => set("firstName", e.target.value)} />}
         </FormField>

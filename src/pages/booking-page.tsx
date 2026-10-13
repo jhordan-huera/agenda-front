@@ -30,7 +30,7 @@ export default function BookingPage() {
             </div>
           </div>
         </div>
-        <div className="mx-auto grid max-w-5xl gap-6 px-4 py-8 lg:grid-cols-[1fr_320px]">
+        <div className="mx-auto grid grid-cols-1 max-w-5xl gap-6 px-4 py-8 lg:grid-cols-[1fr_320px]">
           <Skeleton className="h-96 rounded-2xl" />
           <Skeleton className="h-48 rounded-xl" />
         </div>

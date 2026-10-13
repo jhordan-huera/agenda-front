@@ -58,7 +58,7 @@ export default function AdminOverviewPage() {
         />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {data ? <SignupsChart data={data.signupsByMonth} /> : <Skeleton className="h-80 rounded-xl" />}
         </div>

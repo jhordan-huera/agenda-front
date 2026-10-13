@@ -185,7 +185,7 @@ export function TeamSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <dl className="grid gap-3 sm:grid-cols-3">
+          <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {(["owner", "admin", "staff"] as const).map((role) => (
               <div key={role} className="rounded-lg border p-3">
                 <dt className="text-sm font-medium">{ROLE_LABELS[role]}</dt>
