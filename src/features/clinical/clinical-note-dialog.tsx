@@ -107,7 +107,7 @@ function ClinicalNoteForm({
   // La fecha de la evolución es siempre la de hoy (la pone la API): no se puede fechar con retraso.
   const { data: business } = useCurrentBusiness();
   const today = useBusinessNow(business?.timezone).date;
-  // Mientras no se elija un formato a mano, se usa el del servicio de la cita (si tiene) o el del negocio.
+  // Mientras no se elija un formato a mano, se usa el del negocio.
   const [chosenTemplateId, setChosenTemplateId] = useState<string | null>(null);
   const [linkedAppointment, setLinkedAppointment] = useState<string | null>(appointmentId);
   // Lo escrito en cada formato se conserva al cambiar de uno a otro.
@@ -115,21 +115,14 @@ function ClinicalNoteForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const formRef = useRef<HTMLFormElement>(null);
 
-  const linkedService = (() => {
-    const appointment = linkedAppointment ? appointments.find((a) => a.id === linkedAppointment) : undefined;
-    return appointment ? servicesById.get(appointment.serviceId) : undefined;
-  })();
-  const serviceTemplate = templates.find((t) => t.id === linkedService?.clinicalTemplateId)?.id;
-  const templateId = chosenTemplateId ?? serviceTemplate ?? initialTemplateId;
+  const templateId = chosenTemplateId ?? initialTemplateId;
   const template = templates.find((t) => t.id === templateId);
   const businessDefault = templates.find((t) => t.id === initialTemplateId);
   // Por qué se usa este formato (se muestra bajo el selector).
   const templateReason =
     templateId === initialTemplateId
       ? "Es el formato de tu negocio."
-      : !chosenTemplateId && serviceTemplate && linkedService
-        ? `Es el formato del servicio «${linkedService.name}». El de tu negocio es «${businessDefault?.name}».`
-        : `Elegido sólo para esta evolución. El de tu negocio es «${businessDefault?.name}».`;
+      : `Elegido sólo para esta evolución. El de tu negocio es «${businessDefault?.name}».`;
   // El odontograma parte del último registrado: sólo se actualiza lo que cambió.
   const lastOdontogram = findLastOdontogram(record);
   const hasOdontogram = Boolean(template?.fields.some((field) => field.type === "odontogram"));
