@@ -60,7 +60,8 @@ export function PlanRequestsCard({ businessId }: { businessId?: string }) {
           <ul className="divide-y rounded-lg border">
             {pending.map((request) => (
               <li key={request.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <div className="min-w-0 flex-1">
+                {/* En el celular, el negocio ocupa toda la fila y los botones van debajo. */}
+                <div className="min-w-0 flex-1 basis-full sm:basis-auto">
                   <p className="text-sm font-medium">
                     {businessId ? (
                       request.businessName
