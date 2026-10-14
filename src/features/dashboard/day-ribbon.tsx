@@ -1,9 +1,48 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { minutesToTime, timeToMinutes, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Schedule } from "@/types";
 import { blocksOn, workingRangesOn, type MinuteSpan } from "./day-plan";
+
+/** Aire entre dos horas escritas, y lo que la de "ahora" ocupa de más por su fondo (px-1). */
+const LABEL_GAP = 4;
+const NOW_LABEL_PADDING = 8;
+/** Cada cuántas horas se escriben, del más corto al más largo: el primero en el que caben. */
+const HOUR_STEPS = [1, 2, 3, 4, 6];
+
+/**
+ * Las horas que se escriben bajo una franja de `width` px sin que se toquen (`textWidth`: lo que mide
+ * "00:00" escrito, que cambia según el dispositivo): cada 1, 2, 3… horas (el paso más corto que cabe),
+ * con prioridad para la etiqueta de "ahora" y para la primera y la última hora (alineadas hacia
+ * dentro); la que quede encima de una de ésas se omite.
+ */
+function hoursThatFit(hours: number[], bounds: MinuteSpan, nowMinutes: number | null, width: number, textWidth: number): Set<number> {
+  const LABEL_WIDTH = textWidth + LABEL_GAP;
+  const NOW_LABEL_WIDTH = textWidth + NOW_LABEL_PADDING + LABEL_GAP;
+  const span = bounds.end - bounds.start;
+  const x = (minutes: number) => ((minutes - bounds.start) / span) * width;
+  const pxPerHour = width / (span / 60);
+  const step = HOUR_STEPS.find((hoursApart) => hoursApart * pxPerHour >= LABEL_WIDTH) ?? HOUR_STEPS[HOUR_STEPS.length - 1];
+  const boxOf = (minutes: number): [number, number] =>
+    minutes === bounds.start
+      ? [0, LABEL_WIDTH]
+      : minutes === bounds.end
+        ? [width - LABEL_WIDTH, width]
+        : [x(minutes) - LABEL_WIDTH / 2, x(minutes) + LABEL_WIDTH / 2];
+  const taken: [number, number][] = nowMinutes === null ? [] : [[x(nowMinutes) - NOW_LABEL_WIDTH / 2, x(nowMinutes) + NOW_LABEL_WIDTH / 2]];
+  const fits = ([from, to]: [number, number]) => taken.every(([a, b]) => to <= a || from >= b);
+  const onStep = (minutes: number) => ((minutes - bounds.start) / 60) % step === 0;
+  const shown = new Set<number>();
+  const order = [bounds.start, bounds.end, ...hours.filter((minutes) => minutes !== bounds.start && minutes !== bounds.end && onStep(minutes))];
+  for (const minutes of order) {
+    const box = boxOf(minutes);
+    if (!fits(box)) continue;
+    taken.push(box);
+    shown.add(minutes);
+  }
+  return shown;
+}
 
 interface DayRibbonProps {
   bounds: MinuteSpan;
@@ -28,6 +67,32 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
   const width = (from: number, to: number) => `${((Math.min(to, bounds.end) - Math.max(from, bounds.start)) / span) * 100}%`;
   const hours = Array.from({ length: span / 60 + 1 }, (_, i) => bounds.start + i * 60);
   const nowVisible = now.minutes > bounds.start && now.minutes < bounds.end;
+  // Las horas que caben debajo de la franja, según su ancho real (cambia al girar el móvil o al
+  // redimensionar la ventana) y lo que mide una hora escrita en este dispositivo (se vuelve a medir
+  // cuando carga la letra). Mientras no se mide, valores de un móvil.
+  const axisRef = useRef<HTMLDivElement>(null);
+  const probeRef = useRef<HTMLSpanElement>(null);
+  const [axisWidth, setAxisWidth] = useState(300);
+  const [textWidth, setTextWidth] = useState(32);
+  useEffect(() => {
+    const axis = axisRef.current;
+    const probe = probeRef.current;
+    if (!axis || !probe) return;
+    const measure = () => {
+      setAxisWidth(axis.getBoundingClientRect().width || 300);
+      setTextWidth(probe.getBoundingClientRect().width || 32);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(axis);
+    let active = true;
+    void document.fonts?.ready.then(() => active && measure());
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, []);
+  const shownHours = hoursThatFit(hours, bounds, nowVisible ? now.minutes : null, axisWidth, textWidth);
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowRatio = nowVisible ? (now.minutes - bounds.start) / span : null;
 
@@ -101,17 +166,19 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
             </span>
           )}
         </div>
-        <div aria-hidden className="relative mt-1.5 h-4">
-          {/* Junto a la etiqueta de "ahora" se omiten las horas que quedarían encima; en el móvil, una sí y otra no. */}
+        <div ref={axisRef} aria-hidden className="relative mt-1.5 h-4">
+          {/* Sólo para medir cuánto ocupa una hora escrita. */}
+          <span ref={probeRef} className="invisible absolute text-[11px] tabular-nums">
+            00:00
+          </span>
+          {/* Sólo las horas que caben sin quedar encima de otra ni de la de "ahora" (ver hoursThatFit). */}
           {hours
-            .map((minutes, index) => ({ minutes, index }))
-            .filter(({ minutes }) => !nowVisible || Math.abs(minutes - now.minutes) > span / 24)
-            .map(({ minutes, index }) => (
+            .filter((minutes) => shownHours.has(minutes))
+            .map((minutes) => (
               <span
                 key={minutes}
                 className={cn(
                   "absolute text-[11px] text-muted-foreground tabular-nums",
-                  index % 2 === 1 && minutes !== bounds.end && "max-sm:hidden",
                   // La primera y la última hora se alinean hacia dentro para no salirse de la franja.
                   minutes === bounds.start ? "translate-x-0" : minutes === bounds.end ? "-translate-x-full" : "-translate-x-1/2",
                 )}
