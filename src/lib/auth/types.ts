@@ -6,6 +6,7 @@ import type {
   TwoFactorLoginInput,
 } from "@/lib/validations/auth";
 import type {
+  BrandColors,
   BusinessRole,
   BusinessStatus,
   PlatformRole,
@@ -36,6 +37,11 @@ export interface Session {
    * y el modo soporte responden `two_factor_required` y se le muestra la pantalla para activarla.
    */
   twoFactorSetupRequired: boolean;
+  /**
+   * Colores del panel de plataforma del super admin (spec 007): los elige en Configuración y se
+   * guardan en su cuenta. null: los de Agenda360 (y siempre null si no es super admin).
+   */
+  panelColors: BrandColors | null;
   /**
    * Sólo en el frontend: el super admin está gestionando un negocio ("Gestionar negocio").
    * Mientras tanto, businessId/role apuntan a ese negocio con permisos de propietario.

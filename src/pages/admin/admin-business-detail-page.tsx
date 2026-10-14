@@ -1,20 +1,24 @@
 import {
   ArrowLeft,
   Building2,
+  CalendarDays,
+  CalendarRange,
   ExternalLink,
+  History,
   KeyRound,
-  LifeBuoy,
+  LayoutDashboard,
   Mail,
   MapPin,
-  PauseCircle,
   Phone,
-  PlayCircle,
+  SlidersHorizontal,
   Trash2,
   UserPlus,
   UserRoundPlus,
+  Users,
+  UsersRound,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -26,14 +30,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminAuditList } from "@/features/admin/admin-audit-list";
-import { BusinessStatusBadge, PlanBadge } from "@/features/admin/business-badges";
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
 import { AddOwnerDialog } from "@/features/admin/add-owner-dialog";
+import { BusinessHero } from "@/features/admin/business-hero";
 import { ClientRequiredFieldsCard } from "@/features/admin/client-required-fields-card";
 import { MultiClientAppointmentsCard } from "@/features/admin/multi-client-appointments-card";
 import { DeleteBusinessDialog } from "@/features/admin/delete-business-dialog";
 import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
+import { NEAR_LIMIT } from "@/features/admin/sales-lists";
+import { StatGrid, type StatItem } from "@/features/admin/stat-cards";
 import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
 import { useSession } from "@/features/auth/use-session";
 import { UsageMeter } from "@/features/billing/usage-meter";
@@ -52,6 +59,28 @@ import { ROLE_LABELS } from "@/lib/permissions";
 import type { PlanId } from "@/types";
 import { MaxProfessionalsField } from "@/features/admin/max-professionals-field";
 
+/** Pestañas de la ficha (spec 007). Van en la dirección (`?pestana=`) para recargar o volver atrás sin perderla. */
+const TABS = [
+  { value: "resumen", label: "Resumen", icon: LayoutDashboard },
+  { value: "equipo", label: "Equipo", icon: Users },
+  { value: "ajustes", label: "Ajustes", icon: SlidersHorizontal },
+  { value: "actividad", label: "Actividad", icon: History },
+] as const;
+type Tab = (typeof TABS)[number]["value"];
+const isTab = (value: string | null): value is Tab => TABS.some((tab) => tab.value === value);
+
+/** Una cifra del uso frente a su límite, con color si se acerca o llega (siempre con el texto). */
+function usageStat(label: string, icon: StatItem["icon"], used: number, limit: number | null): StatItem {
+  const share = limit ? used / limit : 0;
+  return {
+    label,
+    icon,
+    value: used,
+    hint: limit === null ? "Sin límite en su plan" : `de ${limit} en su plan`,
+    tone: limit === null ? "default" : share >= 1 ? "danger" : share >= NEAR_LIMIT ? "warning" : "default",
+  };
+}
+
 export default function AdminBusinessDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const detail = useAdminBusiness(id);
@@ -62,6 +91,24 @@ export default function AdminBusinessDetailPage() {
   const setPassword = useSetPasswordDialog();
   const { enterSupport } = useSession();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  // La pestaña cambia al momento; la dirección la acompaña (sin llenar el historial) para recargar o volver atrás.
+  const [tab, setTab] = useState<Tab>(() => {
+    const requested = params.get("pestana");
+    return isTab(requested) ? requested : "resumen";
+  });
+  const changeTab = (value: string) => {
+    if (!isTab(value)) return;
+    setTab(value);
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set("pestana", value);
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [addOwnerOpen, setAddOwnerOpen] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState(false);
@@ -73,11 +120,9 @@ export default function AdminBusinessDetailPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-5 w-24" />
-        <Skeleton className="h-14 w-80" />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <Skeleton className="h-72 lg:col-span-2" />
-          <Skeleton className="h-72" />
-        </div>
+        <Skeleton className="h-36 rounded-2xl" />
+        <StatGrid items={[]} loading />
+        <Skeleton className="h-72" />
       </div>
     );
   }
@@ -113,39 +158,16 @@ export default function AdminBusinessDetailPage() {
         <ArrowLeft className="size-4" /> Negocios
       </Link>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">{business.name}</h1>
-            <PlanBadge plan={plan.id} />
-            <BusinessStatusBadge status={business.status} />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {categoryLabel(business.category) || business.category} · Alta {formatNumericDate(toZonedDate(business.createdAt))}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="lg"
-            onClick={() => {
-              enterSupport({ id: business.id, name: business.name });
-              navigate("/dashboard");
-            }}
-          >
-            <LifeBuoy /> Gestionar negocio
-          </Button>
-          {!suspended && (
-            <Button asChild size="lg" variant="outline">
-              <a href={`/book/${business.slug}`} target="_blank" rel="noreferrer">
-                <ExternalLink /> Página pública
-              </a>
-            </Button>
-          )}
-          <Button size="lg" variant={suspended ? "default" : "destructive"} onClick={() => setConfirmStatus(true)}>
-            {suspended ? <PlayCircle /> : <PauseCircle />} {suspended ? "Reactivar negocio" : "Suspender negocio"}
-          </Button>
-        </div>
-      </div>
+      <BusinessHero
+        business={business}
+        plan={plan.id}
+        categoryName={categoryLabel(business.category) || business.category}
+        onManage={() => {
+          enterSupport({ id: business.id, name: business.name });
+          navigate("/dashboard");
+        }}
+        onToggleStatus={() => setConfirmStatus(true)}
+      />
 
       {suspended && (
         <p role="status" className="rounded-lg border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -153,55 +175,185 @@ export default function AdminBusinessDetailPage() {
         </p>
       )}
 
+      <StatGrid
+        items={[
+          usageStat("Citas del mes", CalendarDays, usage.appointmentsThisMonth, usage.limits.appointmentsPerMonth),
+          usageStat("Pacientes", UsersRound, usage.clients, usage.limits.clients),
+          usageStat("Usuarios", Users, usage.users, usage.limits.users),
+          usageStat("Agendas", CalendarRange, usage.professionals, usage.limits.professionals),
+        ]}
+      />
+
       <PlanRequestsCard businessId={business.id} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Suscripción y uso</CardTitle>
-              <CardDescription>
-                Plan {plan.name}
-                {subscription?.currentPeriodEnd
-                  ? ` · Renueva el ${formatNumericDate(toZonedDate(subscription.currentPeriodEnd))}`
-                  : " · Sin fecha de renovación"}
-                . El negocio no ve planes ni precios.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div className="grid min-w-0 grid-cols-1 content-start gap-2">
-                <p className="text-sm font-medium">Cambiar plan</p>
-                <Select value={plan.id} onValueChange={(value) => setPlanDialog({ open: true, plan: value as PlanId })}>
-                  <SelectTrigger aria-label="Plan del negocio" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    {PLANS.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {option.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">El cobro lo acuerdas tú con el negocio.</p>
-                {plan.id === "business" && (
-                  <MaxProfessionalsField
-                    key={subscription?.maxProfessionals ?? "sin-tope"}
-                    businessId={business.id}
-                    value={subscription?.maxProfessionals ?? null}
-                    active={usage.professionals}
-                  />
-                )}
-              </div>
-              <div className="grid min-w-0 grid-cols-1 gap-3">
-                <UsageMeter label="Citas este mes" used={usage.appointmentsThisMonth} limit={usage.limits.appointmentsPerMonth} />
-                <UsageMeter label="Clientes" used={usage.clients} limit={usage.limits.clients} />
-                <UsageMeter label="Usuarios" used={usage.users} limit={usage.limits.users} />
-                <UsageMeter label="Agendas" used={usage.professionals} limit={usage.limits.professionals} />
-              </div>
-            </CardContent>
-          </Card>
+      <Tabs value={tab} onValueChange={changeTab} className="gap-5">
+        <div className="overflow-x-auto border-b">
+          <TabsList
+            variant="line"
+            aria-label="Secciones de la ficha"
+            className="w-full justify-between gap-2 p-0 group-data-horizontal/tabs:h-11 sm:w-fit sm:justify-start sm:gap-4"
+          >
+            {TABS.map(({ value, label, icon: Icon }) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="flex-none px-1 text-[0.9375rem] after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:text-ink"
+              >
+                <Icon aria-hidden className="hidden sm:block" /> {label}
+                {value === "equipo" && <span className="rounded-full bg-muted px-1.5 text-xs tabular-nums">{members.length}</span>}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
+        {/* Las pestañas quedan montadas: un ajuste a medio escribir no se pierde al cambiar de pestaña. */}
+        <TabsContent value="resumen" forceMount className="data-[state=inactive]:hidden">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Suscripción y uso</CardTitle>
+                  <CardDescription>
+                    Plan {plan.name}
+                    {subscription?.currentPeriodEnd
+                      ? ` · Renueva el ${formatNumericDate(toZonedDate(subscription.currentPeriodEnd))}`
+                      : " · Sin fecha de renovación"}
+                    . El negocio no ve planes ni precios.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div className="grid min-w-0 grid-cols-1 content-start gap-2">
+                    <p className="text-sm font-medium">Cambiar plan</p>
+                    <Select value={plan.id} onValueChange={(value) => setPlanDialog({ open: true, plan: value as PlanId })}>
+                      <SelectTrigger aria-label="Plan del negocio" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        {PLANS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>
+                            {option.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">El cobro lo acuerdas tú con el negocio.</p>
+                    {plan.id === "business" && (
+                      <MaxProfessionalsField
+                        key={subscription?.maxProfessionals ?? "sin-tope"}
+                        businessId={business.id}
+                        value={subscription?.maxProfessionals ?? null}
+                        active={usage.professionals}
+                      />
+                    )}
+                  </div>
+                  <div className="grid min-w-0 grid-cols-1 gap-3">
+                    <UsageMeter label="Citas este mes" used={usage.appointmentsThisMonth} limit={usage.limits.appointmentsPerMonth} />
+                    <UsageMeter label="Clientes" used={usage.clients} limit={usage.limits.clients} />
+                    <UsageMeter label="Usuarios" used={usage.users} limit={usage.limits.users} />
+                    <UsageMeter label="Agendas" used={usage.professionals} limit={usage.limits.professionals} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Propietario</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {owner ? (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <UserAvatar name={owner.name} />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{owner.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">{owner.email}</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" className="w-full" onClick={() => setPassword.request(owner)}>
+                        <KeyRound /> Cambiar contraseña
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Aún no tiene. Su página de reservas ya funciona; agrégalo cuando tengas sus datos.
+                      </p>
+                      <Button className="w-full" onClick={() => setAddOwnerOpen(true)}>
+                        <UserRoundPlus /> Agregar propietario
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Información</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <p className="text-xs text-muted-foreground">Tipo de negocio</p>
+                    <Select
+                      value={business.category}
+                      disabled={updateCategory.isPending}
+                      onValueChange={async (category) => {
+                        try {
+                          await updateCategory.mutateAsync({ businessId: business.id, category });
+                          toast.success(`Tipo de negocio: ${categoryLabel(category)}`);
+                        } catch (error) {
+                          toast.error(getErrorMessage(error));
+                        }
+                      }}
+                    >
+                      <SelectTrigger aria-label="Tipo de negocio" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        {categories
+                          .filter((category) => category.isActive || category.id === business.category)
+                          .map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="flex items-center gap-3">
+                    <ExternalLink className="size-4 text-muted-foreground" aria-hidden /> /book/{business.slug}
+                  </p>
+                  <p className="flex items-center gap-3">
+                    <Phone className="size-4 text-muted-foreground" aria-hidden /> {business.phone || "Sin teléfono"}
+                  </p>
+                  <p className="flex items-center gap-3">
+                    <Mail className="size-4 text-muted-foreground" aria-hidden />
+                    <span className="truncate">{business.email || "Sin email"}</span>
+                  </p>
+                  <p className="flex items-start gap-3">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden /> {business.address || "Sin dirección"}
+                  </p>
+                  <dl className="grid grid-cols-2 gap-3 border-t pt-3 text-xs">
+                    <div>
+                      <dt className="text-muted-foreground">Zona horaria</dt>
+                      <dd className="mt-0.5 font-medium">
+                        {TIMEZONES.find((t) => t.value === business.timezone)?.label ?? business.timezone}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Última actividad</dt>
+                      <dd className="mt-0.5 font-medium">
+                        {detail.data.lastActivityAt ? formatDateTime(detail.data.lastActivityAt) : "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="equipo" forceMount className="data-[state=inactive]:hidden">
           <Card>
             <CardHeader>
               <CardTitle>Equipo</CardTitle>
@@ -253,116 +405,11 @@ export default function AdminBusinessDetailPage() {
               </ul>
             </CardContent>
           </Card>
+        </TabsContent>
 
+        <TabsContent value="ajustes" forceMount className="space-y-6 data-[state=inactive]:hidden">
           <ClientRequiredFieldsCard key={business.id} business={business} />
           <MultiClientAppointmentsCard key={`multi-${business.id}`} business={business} />
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Actividad reciente</CardTitle>
-              <CardDescription>Últimas acciones en el negocio, incluidas las del super admin.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminAuditList entries={recentActivity} />
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Propietario</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {owner ? (
-                <>
-                  <div className="flex items-center gap-3">
-                    <UserAvatar name={owner.name} />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{owner.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{owner.email}</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full" onClick={() => setPassword.request(owner)}>
-                    <KeyRound /> Cambiar contraseña
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">
-                    Aún no tiene. Su página de reservas ya funciona; agrégalo cuando tengas sus datos.
-                  </p>
-                  <Button className="w-full" onClick={() => setAddOwnerOpen(true)}>
-                    <UserRoundPlus /> Agregar propietario
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Información</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="grid grid-cols-1 gap-1.5">
-                <p className="text-xs text-muted-foreground">Tipo de negocio</p>
-                <Select
-                  value={business.category}
-                  disabled={updateCategory.isPending}
-                  onValueChange={async (category) => {
-                    try {
-                      await updateCategory.mutateAsync({ businessId: business.id, category });
-                      toast.success(`Tipo de negocio: ${categoryLabel(category)}`);
-                    } catch (error) {
-                      toast.error(getErrorMessage(error));
-                    }
-                  }}
-                >
-                  <SelectTrigger aria-label="Tipo de negocio" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    {categories
-                      .filter((category) => category.isActive || category.id === business.category)
-                      .map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <p className="flex items-center gap-3">
-                <ExternalLink className="size-4 text-muted-foreground" aria-hidden /> /book/{business.slug}
-              </p>
-              <p className="flex items-center gap-3">
-                <Phone className="size-4 text-muted-foreground" aria-hidden /> {business.phone || "Sin teléfono"}
-              </p>
-              <p className="flex items-center gap-3">
-                <Mail className="size-4 text-muted-foreground" aria-hidden />
-                <span className="truncate">{business.email || "Sin email"}</span>
-              </p>
-              <p className="flex items-start gap-3">
-                <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden /> {business.address || "Sin dirección"}
-              </p>
-              <dl className="grid grid-cols-2 gap-3 border-t pt-3 text-xs">
-                <div>
-                  <dt className="text-muted-foreground">Zona horaria</dt>
-                  <dd className="mt-0.5 font-medium">
-                    {TIMEZONES.find((t) => t.value === business.timezone)?.label ?? business.timezone}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Última actividad</dt>
-                  <dd className="mt-0.5 font-medium">
-                    {detail.data.lastActivityAt ? formatDateTime(detail.data.lastActivityAt) : "—"}
-                  </dd>
-                </div>
-              </dl>
-            </CardContent>
-          </Card>
-
           <Card className="border-destructive/30">
             <CardHeader>
               <CardTitle>Eliminar negocio</CardTitle>
@@ -376,8 +423,20 @@ export default function AdminBusinessDetailPage() {
               </Button>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="actividad" forceMount className="data-[state=inactive]:hidden">
+          <Card>
+            <CardHeader>
+              <CardTitle>Actividad reciente</CardTitle>
+              <CardDescription>Últimas acciones en el negocio, incluidas las del super admin.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AdminAuditList entries={recentActivity} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <ConfirmDialog
         open={confirmStatus}

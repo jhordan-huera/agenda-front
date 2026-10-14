@@ -1,4 +1,6 @@
+import type { LucideIcon } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
+import { CardTitleIcon } from "@/components/shared/card-title-icon";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface SettingsSectionProps {
   title: string;
+  /** Ícono junto al título (las tarjetas del panel de plataforma lo llevan). */
+  icon?: LucideIcon;
   description?: ReactNode;
   children: ReactNode;
   /** Hay cambios sin guardar: habilita "Guardar cambios" y "Descartar". */
@@ -20,6 +24,7 @@ interface SettingsSectionProps {
 /** Tarjeta de configuración con formulario independiente y pie de guardar/descartar. */
 export function SettingsSection({
   title,
+  icon,
   description,
   children,
   dirty,
@@ -38,7 +43,13 @@ export function SettingsSection({
       {/* `contents`: el formulario no rompe el layout flex de la tarjeta. */}
       <form onSubmit={handleSubmit} noValidate className="contents">
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
+          {icon ? (
+            <CardTitle className="flex items-center gap-2.5">
+              <CardTitleIcon icon={icon} /> {title}
+            </CardTitle>
+          ) : (
+            <CardTitle>{title}</CardTitle>
+          )}
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
         <CardContent className="grid gap-5">{children}</CardContent>

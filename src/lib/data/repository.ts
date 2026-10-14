@@ -4,6 +4,7 @@ import type {
   BusinessOwnerInput,
   BusinessCategoryInput,
   BusinessDeletionInput,
+  PanelColorsInput,
   PlanRejectionInput,
   PlatformAdminInput,
   PlatformSettingsInput,
@@ -362,6 +363,8 @@ export interface PlatformAdminRepository {
   /** Todos los emails de la plataforma (bandeja de salida global). */
   listEmails(): Promise<EmailNotification[]>;
   updateSettings(input: PlatformSettingsInput): Promise<PlatformSettings>;
+  /** Colores del panel de plataforma de la cuenta que lo pide (spec 007). */
+  updatePanelColors(input: PanelColorsInput): Promise<{ colors: BrandColors | null }>;
 }
 
 export interface DataRepository {

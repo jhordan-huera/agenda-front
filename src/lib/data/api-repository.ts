@@ -27,6 +27,7 @@ import type {
   EmailNotification,
   PlanUsage,
   PlatformSettings,
+  BrandColors,
   PlatformStats,
   Professional,
   PublicBusinessProfile,
@@ -229,5 +230,6 @@ export const apiRepository: DataRepository = {
     listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),
     listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),
+    updatePanelColors: (input) => api.put<{ colors: BrandColors | null }>("/admin/panel-colors", input),
   },
 };

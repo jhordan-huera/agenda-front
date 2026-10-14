@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Star } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminBusinesses } from "@/hooks/queries/use-admin";
 import { PLANS } from "@/lib/constants/plans";
+import { cn } from "@/lib/utils";
 import type { PlanLimits } from "@/types";
 
 const LIMIT_ROWS: { key: keyof PlanLimits; label: string }[] = [
@@ -17,6 +18,11 @@ const LIMIT_ROWS: { key: keyof PlanLimits; label: string }[] = [
 
 export default function AdminPlansPage() {
   const businesses = useAdminBusinesses();
+  const countIn = (planId: string) => (businesses.data ?? []).filter((row) => row.subscription?.plan === planId).length;
+  // El plan con más negocios, marcado (si hay empate, ninguno).
+  const counts = PLANS.map((plan) => countIn(plan.id));
+  const top = Math.max(0, ...counts);
+  const mostUsed = top > 0 && counts.filter((count) => count === top).length === 1 ? PLANS[counts.indexOf(top)].id : null;
 
   return (
     <div className="space-y-6">
@@ -34,9 +40,16 @@ export default function AdminPlansPage() {
             const inPlan = (businesses.data ?? []).filter((row) => row.subscription?.plan === plan.id);
             const agendas = inPlan.reduce((total, row) => total + row.usage.professionals, 0);
             return (
-              <Card key={plan.id} className="gap-5 px-5">
+              <Card key={plan.id} className={cn("gap-5 px-5", plan.id === mostUsed && "ring-2 ring-primary/60")}>
                 <div>
-                  <p className="text-lg font-bold">{plan.name}</p>
+                  <p className="flex flex-wrap items-center gap-2 text-lg font-bold">
+                    {plan.name}
+                    {plan.id === mostUsed && (
+                      <span className="inline-flex h-5 items-center gap-1 rounded-full bg-accent px-2 text-xs font-medium text-ink ring-1 ring-ink/20 ring-inset">
+                        <Star className="size-3" aria-hidden /> Más usado
+                      </span>
+                    )}
+                  </p>
                   <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
                 </div>
 

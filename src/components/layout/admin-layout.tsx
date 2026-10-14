@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { useSession } from "@/features/auth/use-session";
+import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { useInstallableApp } from "@/features/install/use-installable-app";
 import { getHomePath } from "@/lib/auth";
 import { AdminSidebar } from "./admin-sidebar";
@@ -26,5 +27,10 @@ export default function AdminLayout() {
 
   if (status !== "authenticated" || !isSuperAdmin) return <FullPageLoader />;
   if (session.twoFactorSetupRequired) return <TwoFactorRequiredScreen />;
-  return <AppShell homeHref="/admin" renderSidebar={(onNavigate) => <AdminSidebar onNavigate={onNavigate} />} />;
+  // Los colores que eligió este super admin para su panel (spec 007); sin ellos, los de Agenda360.
+  return (
+    <BrandThemeProvider colors={session.panelColors}>
+      <AppShell homeHref="/admin" renderSidebar={(onNavigate) => <AdminSidebar onNavigate={onNavigate} />} />
+    </BrandThemeProvider>
+  );
 }

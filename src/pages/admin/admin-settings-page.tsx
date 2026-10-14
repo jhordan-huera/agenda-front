@@ -1,9 +1,11 @@
+import { KeyRound, Settings2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ErrorState } from "@/components/shared/error-state";
 import { FormField } from "@/components/shared/form-field";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Input } from "@/components/ui/input";
+import { PanelColorsCard } from "@/features/admin/panel-colors-card";
 import { PlatformTeamCard } from "@/features/admin/platform-team-card";
 import { ChangePasswordForm } from "@/features/settings/change-password-form";
 import { SettingsSection, SettingsSectionSkeleton } from "@/features/settings/settings-section";
@@ -24,17 +26,23 @@ export default function AdminSettingsPage() {
       <PageTitle title="Configuración de la plataforma" />
       <PageHeader title="Configuración" description="Ajustes globales de la plataforma y de tu cuenta." />
 
-      <div className="grid max-w-3xl gap-6">
-        {settings.isPending ? (
-          <SettingsSectionSkeleton fields={3} />
-        ) : settings.isError ? (
-          <ErrorState onRetry={() => settings.refetch()} />
-        ) : (
-          <PlatformSettingsForm settings={settings.data} />
-        )}
-        <PlatformTeamCard />
-        <TwoFactorSettings />
-        <ChangePasswordForm />
+      {/* Dos columnas en pantallas anchas: la plataforma a la izquierda y tu cuenta a la derecha. */}
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
+        <div className="grid min-w-0 gap-6">
+          {settings.isPending ? (
+            <SettingsSectionSkeleton fields={3} />
+          ) : settings.isError ? (
+            <ErrorState onRetry={() => settings.refetch()} />
+          ) : (
+            <PlatformSettingsForm settings={settings.data} />
+          )}
+          <PlatformTeamCard />
+        </div>
+        <div className="grid min-w-0 gap-6">
+          <PanelColorsCard />
+          <TwoFactorSettings icon={ShieldCheck} />
+          <ChangePasswordForm icon={KeyRound} />
+        </div>
       </div>
     </div>
   );
@@ -59,6 +67,7 @@ function PlatformSettingsForm({ settings }: { settings: PlatformSettings }) {
   return (
     <SettingsSection
       title="Altas de negocios y soporte"
+      icon={Settings2}
       description="Decide quién puede crear negocios en la plataforma y cómo te contactan."
       dirty={dirty}
       saving={update.isPending}
