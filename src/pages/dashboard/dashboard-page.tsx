@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getServiceName, getUpcomingAppointments } from "@/features/appointments/appointment-utils";
+import { appointmentClientIds, getAppointmentClientNames, getServiceName, getUpcomingAppointments } from "@/features/appointments/appointment-utils";
 import { useAppointmentDialogs } from "@/features/appointments/use-appointment-dialogs";
 import { usePermissions } from "@/features/auth/use-permissions";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
@@ -83,14 +83,14 @@ export default function DashboardPage() {
   const remaining = today.filter((a) => timeToMinutes(a.endTime) > now.minutes).length;
   const loading = appointmentsQuery.isPending || lookupsPending || schedulesQuery.isPending || blockedQuery.isPending;
 
-  const clientName = (id: string) => clientsById.get(id)?.name ?? "Cliente";
+  const clientName = (appointment: Appointment) => getAppointmentClientNames(clientsById, appointment, { fallback: "Cliente" });
   const serviceName = (id: string) => getServiceName(servicesById, id);
 
   const confirm = async (appointment: Appointment) => {
     setConfirmingIds((current) => new Set(current).add(appointment.id));
     try {
       await updateStatus.mutateAsync({ id: appointment.id, status: "confirmed" });
-      toast.success(`Cita de ${clientName(appointment.clientId)} confirmada`);
+      toast.success(`Cita de ${clientName(appointment)} confirmada`);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -149,7 +149,7 @@ export default function DashboardPage() {
           ) : (
             <NextUp
               appointment={next}
-              client={next ? clientsById.get(next.clientId) : undefined}
+              clients={next ? appointmentClientIds(next).flatMap((id) => clientsById.get(id) ?? []) : []}
               serviceName={next ? serviceName(next.serviceId) : ""}
               business={business ?? undefined}
               now={now}

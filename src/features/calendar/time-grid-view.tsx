@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Client, ISODate, Professional, Schedule, Service } from "@/types";
 import { layoutDayEvents } from "./calendar-utils";
 import { useAppointmentDrag, type DropTarget } from "./use-appointment-drag";
+import { getAppointmentClientNames } from "@/features/appointments/appointment-utils";
 
 const HOUR_HEIGHT = 56;
 const MIN_EVENT_HEIGHT = 22;
@@ -222,7 +223,9 @@ function DayColumn({
       {events.map(({ item: appointment, start, end, lane, lanes }) => {
         const top = toY(start);
         const height = Math.max(toY(end) - top, MIN_EVENT_HEIGHT);
-        const clientName = clientsById.get(appointment.clientId)?.name ?? "Cliente";
+        // Con varios pacientes (sesiones de pareja): todos en el lector de pantalla; en el bloque, hasta dos.
+        const clientName = getAppointmentClientNames(clientsById, appointment, { fallback: "Cliente" });
+        const shortClientName = getAppointmentClientNames(clientsById, appointment, { fallback: "Cliente", max: 2 });
         const serviceName = servicesById.get(appointment.serviceId)?.name ?? "";
         const status = APPOINTMENT_STATUS_CONFIG[appointment.status];
         // Con todas las agendas en la misma columna, el color del profesional junto al nombre.
@@ -259,7 +262,7 @@ function DayColumn({
               )}
               {appointment.homeVisit && <Home className="size-3 shrink-0" aria-hidden />}
               {appointment.isVirtual && <Video className="size-3 shrink-0" aria-hidden />}
-              <span className="truncate">{clientName}</span>
+              <span className="truncate">{shortClientName}</span>
             </p>
             {height >= 36 && <p className="truncate opacity-80">{formatTimeRange(appointment.startTime, appointment.endTime)}</p>}
             {height >= 54 && <p className="truncate opacity-70">{serviceName}</p>}

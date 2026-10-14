@@ -36,7 +36,8 @@ import { appointmentSchema, type AppointmentInput } from "@/lib/validations/appo
 import { dateField, timeField } from "@/lib/validations/fields";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { Appointment, AppointmentStatus, HomeVisitAddress, ISODate, Service, ServiceMode, TimeString } from "@/types";
-import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getClientName, getListPrice, getPlace, suggestStartTime } from "./appointment-utils";
+import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getAppointmentClientNames, getListPrice, getPlace, suggestStartTime } from "./appointment-utils";
+import { ExtraClientsField } from "./extra-clients-field";
 import { HomeVisitFields } from "./home-visit-fields";
 
 export interface AppointmentDefaults {
@@ -90,8 +91,9 @@ function AppointmentForm({
   const showError = useErrorToast();
   const agendas = useAgendas();
   const multiAgenda = useMultiAgendaAccess();
-  // `name`: lo escrito en el buscador cuando el cliente aún no existe.
-  const [newClient, setNewClient] = useState({ open: false, name: "" });
+  // `name`: lo escrito en el buscador cuando el cliente aún no existe. `slot`: para cuál de los otros
+  // pacientes (null: el principal).
+  const [newClient, setNewClient] = useState<{ open: boolean; name: string; slot: number | null }>({ open: false, name: "", slot: null });
   const [errors, setErrors] = useState<FieldErrors>({});
   // El navegador no entiende lo escrito en el precio (p. ej. "12,50" en algunos teléfonos): su valor llega vacío.
   const [priceUnreadable, setPriceUnreadable] = useState(false);
@@ -100,6 +102,7 @@ function AppointmentForm({
     const date = appointment?.date ?? defaults?.date ?? now.date;
     return {
       clientId: appointment?.clientId ?? defaults?.clientId ?? "",
+      extraClientIds: appointment?.extraClientIds ?? [],
       serviceId: appointment?.serviceId ?? "",
       date,
       startTime: appointment?.startTime ?? defaults?.startTime ?? (date === now.date ? suggestStartTime(now) : "09:00"),
@@ -124,6 +127,23 @@ function AppointmentForm({
 
   // Sin los de reservas online que el negocio aún no gestionó (`restricted`): no son todavía del profesional.
   const selectableClients = clients.filter((c) => (c.isActive && !c.restricted) || c.id === values.clientId);
+  // Otros pacientes (sesiones de pareja): si el negocio lo permite o si la cita ya los tiene.
+  const extraClientIds = values.extraClientIds ?? [];
+  const canAddClients = Boolean(business?.multiClientAppointments);
+  const showExtraClients = canAddClients || extraClientIds.length > 0;
+  const selectableExtraClients = clients.filter((c) => (c.isActive && !c.restricted) || extraClientIds.includes(c.id));
+  const setMainClient = (clientId: string) =>
+    setValues((current) => ({
+      ...current,
+      clientId,
+      // Si pasa a ser el principal, deja de estar entre los otros.
+      extraClientIds: (current.extraClientIds ?? []).filter((id) => id !== clientId),
+    }));
+  const setExtraClient = (slot: number, clientId: string) =>
+    set(
+      "extraClientIds",
+      extraClientIds.map((id, i) => (i === slot ? clientId : id)),
+    );
   // Con varias agendas, los servicios que atiende el profesional elegido (y el de la cita, si es otro).
   const offered = (service: Service) => !professional || offersService(professional, service.id);
   const selectableServices = services.filter((s) => (s.isActive && offered(s)) || s.id === values.serviceId);
@@ -178,7 +198,7 @@ function AppointmentForm({
       ? findConflictingAppointment(timeWindow, appointments)
       : undefined;
   const conflictMessage = conflict
-    ? `Se solapa con la cita de ${getClientName(clientsById, conflict.clientId)} (${formatTimeRange(conflict.startTime, conflict.endTime)}).`
+    ? `Se solapa con la cita de ${getAppointmentClientNames(clientsById, conflict)} (${formatTimeRange(conflict.startTime, conflict.endTime)}).`
     : undefined;
   // El horario y los bloqueos que cuentan son los de esa agenda (y los de todo el negocio).
   const agendaSchedules = professionalId ? schedules.filter((s) => s.professionalId === professionalId) : schedules;
@@ -190,7 +210,8 @@ function AppointmentForm({
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(appointmentSchema, { ...values, professionalId });
+    // Los espacios de «Otros pacientes» que quedaron sin elegir no cuentan.
+    const result = validate(appointmentSchema, { ...values, extraClientIds: extraClientIds.filter(Boolean), professionalId });
     // Vacío o ilegible no es $0: se pide (el esquema rechaza el vacío con "Escribe el precio").
     const priceError = priceUnreadable && values.price === "" ? "Escribe sólo números, p. ej. 25.50" : undefined;
     setErrors(priceError ? { ...result.errors, price: priceError } : result.errors);
@@ -258,15 +279,28 @@ function AppointmentForm({
               className="min-w-0 flex-1"
               clients={selectableClients}
               value={values.clientId}
-              onChange={(clientId) => set("clientId", clientId)}
-              onCreate={(name) => setNewClient({ open: true, name })}
+              onChange={setMainClient}
+              onCreate={(name) => setNewClient({ open: true, name, slot: null })}
             />
-            <Button type="button" variant="outline" onClick={() => setNewClient({ open: true, name: "" })}>
+            <Button type="button" variant="outline" onClick={() => setNewClient({ open: true, name: "", slot: null })}>
               <Plus /> Nuevo
             </Button>
           </div>
         )}
       </FormField>
+
+      {showExtraClients && (
+        <ExtraClientsField
+          clients={selectableExtraClients}
+          clientsById={clientsById}
+          mainClientId={values.clientId}
+          value={extraClientIds}
+          onChange={(next) => set("extraClientIds", next)}
+          canAdd={canAddClients}
+          onCreate={(slot, name) => setNewClient({ open: true, name, slot })}
+          error={errors.extraClientIds}
+        />
+      )}
 
       <FormField
         label="Servicio"
@@ -474,7 +508,7 @@ function AppointmentForm({
       open={newClient.open}
       onOpenChange={(open) => setNewClient((current) => ({ ...current, open }))}
       defaultName={newClient.name}
-      onSaved={(client) => set("clientId", client.id)}
+      onSaved={(client) => (newClient.slot === null ? setMainClient(client.id) : setExtraClient(newClient.slot, client.id))}
     />
     </>
   );

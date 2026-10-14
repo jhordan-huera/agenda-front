@@ -1,10 +1,34 @@
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
+import { joinNames } from "@/lib/format";
 import { durationInMinutes, isPast, minutesToTime, type ZonedNow } from "@/lib/time";
 import type { AppointmentInput } from "@/lib/validations/appointment";
 import type { Appointment, Client, HomeVisitAddress, Service, ServiceMode } from "@/types";
 
 export function getClientName(clientsById: Map<string, Client>, clientId: string): string {
   return clientsById.get(clientId)?.name ?? "Cliente eliminado";
+}
+
+/**
+ * Todos los pacientes de la cita: el principal primero y luego los demás (citas con varios pacientes,
+ * Business.multiClientAppointments). `extraClientIds` puede faltar si la API es anterior.
+ */
+export function appointmentClientIds(appointment: Pick<Appointment, "clientId"> & { extraClientIds?: string[] }): string[] {
+  return [appointment.clientId, ...(appointment.extraClientIds ?? [])];
+}
+
+/**
+ * Los nombres de los pacientes de la cita: "Ana Torres" o "Ana Torres y Carlos Pérez". Con `max`, si
+ * hay más se resume: "Ana Torres y 2 más" (bloques pequeños de la agenda).
+ */
+export function getAppointmentClientNames(
+  clientsById: Map<string, Client>,
+  appointment: Pick<Appointment, "clientId"> & { extraClientIds?: string[] },
+  options: { max?: number; fallback?: string } = {},
+): string {
+  const names = appointmentClientIds(appointment).map((id) => clientsById.get(id)?.name ?? options.fallback ?? "Cliente eliminado");
+  const max = options.max ?? names.length;
+  if (names.length > max) return `${names[0]} y ${names.length - 1} más`;
+  return joinNames(names);
 }
 
 export function getServiceName(servicesById: Map<string, Service>, serviceId: string): string {
@@ -52,6 +76,8 @@ export const paymentLinkOf = (appointment: Pick<Appointment, "paymentToken">) =>
 export function appointmentToInput(appointment: Appointment): AppointmentInput {
   return {
     clientId: appointment.clientId,
+    // Siempre: al mover la cita en la agenda se reenvía todo y, sin la lista, la API conserva la que tenía.
+    extraClientIds: appointment.extraClientIds ?? [],
     serviceId: appointment.serviceId,
     date: appointment.date,
     startTime: appointment.startTime,

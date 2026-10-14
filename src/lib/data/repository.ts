@@ -211,7 +211,8 @@ export interface AppointmentRepository {
   update(businessId: string, appointmentId: string, input: AppointmentInput): Promise<Appointment>;
   updateStatus(businessId: string, appointmentId: string, status: AppointmentStatus): Promise<Appointment>;
   /** Registra en la actividad que se abrió WhatsApp con el aviso de un cambio de la cita. */
-  logWhatsAppNotice(businessId: string, appointmentId: string, kind: WhatsAppNoticeKind): Promise<void>;
+  /** `clientId`: a cuál de los pacientes de la cita (con varios pacientes, un registro por cada uno). */
+  logWhatsAppNotice(businessId: string, appointmentId: string, kind: WhatsAppNoticeKind, clientId?: string): Promise<void>;
   /** Llegada del paciente (o quitarla): sólo en citas pendientes o confirmadas. */
   setArrival(businessId: string, appointmentId: string, arrived: boolean): Promise<Appointment>;
   /** Marca la cita como pagada (o lo deshace). */
@@ -325,6 +326,11 @@ export interface PlatformAdminRepository {
    * siempre). Sólo el super admin: el negocio no lo cambia, ni desde su configuración.
    */
   setClientRequiredFields(businessId: string, fields: ClientRequiredFields): Promise<Business>;
+  /**
+   * Citas con varios pacientes (sesiones de pareja, hasta 3 por cita) en el negocio. Sólo el super admin:
+   * el negocio no lo cambia.
+   */
+  setMultiClientAppointments(businessId: string, enabled: boolean): Promise<Business>;
   /** Para siempre: sus datos, sus archivos y las cuentas de su equipo. Hay que escribir su nombre. */
   deleteBusiness(businessId: string, input: BusinessDeletionInput): Promise<void>;
   listCategories(): Promise<AdminBusinessCategory[]>;

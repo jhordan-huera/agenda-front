@@ -13,7 +13,8 @@ interface TodayListProps {
   now: ZonedNow;
   /** La cita que ya se muestra arriba (Tu siguiente cita): no se repite aquí. */
   nextId: string | null;
-  clientName: (id: string) => string;
+  /** Los nombres de los pacientes de la cita ("Ana Torres y Carlos Pérez"). */
+  clientName: (appointment: Appointment) => string;
   serviceName: (id: string) => string;
   onOpen: (appointment: Appointment) => void;
   onConfirm: (appointment: Appointment) => void;
@@ -48,7 +49,7 @@ export function TodayList({
         <span className="w-14 shrink-0 text-lg font-bold text-ink tabular-nums">{appointment.startTime}</span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2 truncate font-semibold">
-            <span className="truncate">{clientName(appointment.clientId)}</span>
+            <span className="truncate">{clientName(appointment)}</span>
             {appointment.arrivedAt && appointment.status !== "completed" && (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-highlight/60 px-2 py-0.5 text-xs text-ink">
                 <DoorOpen className="size-3" aria-hidden /> Llegó

@@ -7,7 +7,8 @@ import { DashCard, DashCardHeader } from "./dash-card";
 interface PendingBookingsProps {
   appointments: Appointment[];
   now: ZonedNow;
-  clientName: (id: string) => string;
+  /** Los nombres de los pacientes de la cita ("Ana Torres y Carlos Pérez"). */
+  clientName: (appointment: Appointment) => string;
   serviceName: (id: string) => string;
   onOpen: (appointment: Appointment) => void;
   onConfirm: (appointment: Appointment) => void;
@@ -46,7 +47,7 @@ export function PendingBookings({
                 <span className="block text-sm font-bold text-ink tabular-nums">
                   {appointment.date === now.date ? "Hoy" : capitalize(formatShortDate(appointment.date))}, {appointment.startTime}
                 </span>
-                <span className="block truncate font-semibold">{clientName(appointment.clientId)}</span>
+                <span className="block truncate font-semibold">{clientName(appointment)}</span>
                 <span className="block truncate text-sm text-muted-foreground">
                   {serviceName(appointment.serviceId)}
                   {appointment.source === "booking_page" && ", reserva online"}

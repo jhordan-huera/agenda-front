@@ -42,9 +42,9 @@ import { durationInMinutes } from "@/lib/time";
 import { describeHomeVisit, getDirectionsUrl } from "@/lib/maps";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
-import type { Appointment, AppointmentStatus } from "@/types";
+import type { Appointment, AppointmentStatus, Client } from "@/types";
 import { AppointmentPayment } from "./appointment-payment";
-import { getClientName, getServiceName } from "./appointment-utils";
+import { appointmentClientIds, getAppointmentClientNames, getServiceName } from "./appointment-utils";
 
 interface AppointmentDetailsSheetProps {
   appointmentId: string | null;
@@ -107,17 +107,20 @@ function AppointmentDetails({
   // La llegada se marca en citas que aún no se atendieron.
   const canMarkArrival = appointment.status === "pending" || appointment.status === "confirmed";
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const [noteOpen, setNoteOpen] = useState(false);
+  // Para qué paciente se registra la evolución (con varios pacientes, cada uno tiene la suya).
+  const [noteFor, setNoteFor] = useState<Client | null>(null);
   const clinicalAccess = useClinicalAccess();
+  // El paciente principal (el del pago) y, en una sesión de pareja o de familia, los demás.
   const client = clientsById.get(appointment.clientId);
-  const clientName = getClientName(clientsById, appointment.clientId);
+  const patients = appointmentClientIds(appointment).flatMap((id) => clientsById.get(id) ?? []);
+  const clientName = getAppointmentClientNames(clientsById, appointment);
   // Mensaje ya escrito con los datos de la cita; el negocio lo revisa antes de enviarlo.
-  const whatsAppUrl =
-    client?.phone && business
+  const whatsAppUrlOf = (patient: Client) =>
+    patient.phone && business
       ? getWhatsAppUrl(
-          client.phone,
+          patient.phone,
           business.timezone,
-          `Hola ${client.name.split(" ")[0]}, te escribimos de ${business.name} sobre tu cita de ${getServiceName(servicesById, appointment.serviceId)} el ${formatLongDate(appointment.date)} a las ${appointment.startTime}.`,
+          `Hola ${patient.name.split(" ")[0]}, te escribimos de ${business.name} sobre tu cita de ${getServiceName(servicesById, appointment.serviceId)} el ${formatLongDate(appointment.date)} a las ${appointment.startTime}.`,
         )
       : null;
 
@@ -275,73 +278,24 @@ function AppointmentDetails({
           </div>
         </section>
 
-        {client?.restricted && (
-          <>
-            <Separator />
-            <section aria-labelledby="client-heading" className="space-y-2">
-              <h3 id="client-heading" className="text-sm font-semibold text-muted-foreground">
-                Cliente
-              </h3>
-              <p className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
-                Es una reserva online de un paciente que ya estaba en el negocio. Podrás abrir su ficha y su historia cuando
-                recepción, un administrador o el propietario confirme o gestione la cita.
-              </p>
-            </section>
-          </>
-        )}
-        {client && !client.restricted && (
+        {patients.length > 0 && (
           <>
             <Separator />
             <section aria-labelledby="client-heading" className="space-y-3">
               <h3 id="client-heading" className="text-sm font-semibold text-muted-foreground">
-                Cliente
+                {patients.length > 1 ? "Pacientes" : "Cliente"}
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {whatsAppUrl && (
-                  <Button asChild variant="outline" size="sm">
-                    <a href={whatsAppUrl} target="_blank" rel="noreferrer">
-                      <WhatsAppIcon /> WhatsApp
-                    </a>
-                  </Button>
-                )}
-                {client.phone && (
-                  <Button asChild variant="outline" size="sm">
-                    <a href={`tel:${client.phone}`}>
-                      <Phone /> Llamar
-                    </a>
-                  </Button>
-                )}
-                {client.email && (
-                  <Button asChild variant="outline" size="sm">
-                    <a href={`mailto:${client.email}`}>
-                      <Mail /> Email
-                    </a>
-                  </Button>
-                )}
-                <Button asChild variant="ghost" size="sm">
-                  <Link to={`/dashboard/clients/${client.id}`}>
-                    <ExternalLink /> Ver ficha
-                  </Link>
-                </Button>
-              </div>
+              {patients.map((patient) => (
+                <PatientContact
+                  key={patient.id}
+                  patient={patient}
+                  showName={patients.length > 1}
+                  whatsAppUrl={whatsAppUrlOf(patient)}
+                  clinicalAccess={clinicalAccess}
+                  onNote={() => setNoteFor(patient)}
+                />
+              ))}
             </section>
-            {clinicalAccess && (
-              <section aria-labelledby="clinical-heading" className="space-y-3">
-                <h3 id="clinical-heading" className="text-sm font-semibold text-muted-foreground">
-                  Historia clínica
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setNoteOpen(true)}>
-                    <FilePlus2 /> Registrar evolución
-                  </Button>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to={`/dashboard/clients/${client.id}?tab=historia`}>
-                      <ExternalLink /> Ver historia
-                    </Link>
-                  </Button>
-                </div>
-              </section>
-            )}
           </>
         )}
       </div>
@@ -367,16 +321,92 @@ function AppointmentDetails({
         destructive
         onConfirm={() => changeStatus("cancelled")}
       />
-      {client && !client.restricted && clinicalAccess && (
+      {noteFor && clinicalAccess && (
         <ClinicalNoteDialog
-          open={noteOpen}
-          onOpenChange={setNoteOpen}
-          clientId={client.id}
-          clientName={client.name}
+          open
+          onOpenChange={(open) => !open && setNoteFor(null)}
+          clientId={noteFor.id}
+          clientName={noteFor.name}
           appointmentId={appointment.id}
         />
       )}
     </>
+  );
+}
+
+/**
+ * Contacto, ficha e historia de un paciente de la cita. Una reserva online de alguien que ya estaba en el
+ * negocio queda restringida hasta que el negocio la gestione (ver Client.restricted).
+ */
+function PatientContact({
+  patient,
+  showName,
+  whatsAppUrl,
+  clinicalAccess,
+  onNote,
+}: {
+  patient: Client;
+  /** Con varios pacientes, el nombre de cada uno sobre sus botones. */
+  showName: boolean;
+  whatsAppUrl: string | null;
+  clinicalAccess: boolean;
+  onNote: () => void;
+}) {
+  if (patient.restricted) {
+    return (
+      <div className="space-y-1.5">
+        {showName && <p className="text-sm font-semibold">{patient.name}</p>}
+        <p className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
+          Es una reserva online de un paciente que ya estaba en el negocio. Podrás abrir su ficha y su historia cuando
+          recepción, un administrador o el propietario confirme o gestione la cita.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className={cn("space-y-2", showName && "rounded-lg border p-3")}>
+      {showName && <p className="text-sm font-semibold">{patient.name}</p>}
+      <div className="flex flex-wrap gap-2">
+        {whatsAppUrl && (
+          <Button asChild variant="outline" size="sm">
+            <a href={whatsAppUrl} target="_blank" rel="noreferrer" aria-label={`Escribir a ${patient.name} por WhatsApp`}>
+              <WhatsAppIcon /> WhatsApp
+            </a>
+          </Button>
+        )}
+        {patient.phone && (
+          <Button asChild variant="outline" size="sm">
+            <a href={`tel:${patient.phone}`} aria-label={`Llamar a ${patient.name}`}>
+              <Phone /> Llamar
+            </a>
+          </Button>
+        )}
+        {patient.email && (
+          <Button asChild variant="outline" size="sm">
+            <a href={`mailto:${patient.email}`} aria-label={`Escribir un email a ${patient.name}`}>
+              <Mail /> Email
+            </a>
+          </Button>
+        )}
+        <Button asChild variant="ghost" size="sm">
+          <Link to={`/dashboard/clients/${patient.id}`} aria-label={`Ver la ficha de ${patient.name}`}>
+            <ExternalLink /> Ver ficha
+          </Link>
+        </Button>
+      </div>
+      {clinicalAccess && (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={onNote} aria-label={`Registrar evolución de ${patient.name}`}>
+            <FilePlus2 /> Registrar evolución
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to={`/dashboard/clients/${patient.id}?tab=historia`} aria-label={`Ver la historia clínica de ${patient.name}`}>
+              <ExternalLink /> Ver historia
+            </Link>
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 
