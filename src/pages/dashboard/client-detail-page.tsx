@@ -352,7 +352,9 @@ export default function ClientDetailPage() {
       <ClientFormDialog open={editing} onOpenChange={setEditing} client={client} />
       <DeleteClientDialog
         client={deleting ? client : null}
-        appointmentCount={appointments.length}
+        // Se borran sólo las citas donde es el paciente principal; de las demás (sesiones con varios
+        // pacientes) sólo sale él.
+        appointmentCount={appointments.filter((appointment) => appointment.clientId === client.id).length}
         onOpenChange={setDeleting}
         redirectTo="/dashboard/clients"
       />

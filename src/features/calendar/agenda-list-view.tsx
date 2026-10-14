@@ -7,6 +7,7 @@ import { capitalize, formatDate, formatTimeRange, plural } from "@/lib/format";
 import { minutesToTime, timeToMinutes } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Client, ISODate, Professional, Service } from "@/types";
+import { getAppointmentClientNames } from "@/features/appointments/appointment-utils";
 
 interface AgendaListViewProps {
   days: ISODate[];
@@ -113,7 +114,7 @@ function DayItems({
         }
         const { appointment } = item;
         const status = APPOINTMENT_STATUS_CONFIG[appointment.status];
-        const clientName = clientsById.get(appointment.clientId)?.name ?? "Cliente";
+        const clientName = getAppointmentClientNames(clientsById, appointment, { fallback: "Cliente" });
         const serviceName = servicesById.get(appointment.serviceId)?.name ?? "";
         const professional = professionalsById?.get(appointment.professionalId);
         const cancelled = appointment.status === "cancelled";

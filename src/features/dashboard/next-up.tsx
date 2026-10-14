@@ -2,7 +2,7 @@ import { CalendarPlus, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
-import { capitalize, formatDuration, formatLongDate } from "@/lib/format";
+import { capitalize, formatDuration, formatLongDate, joinNames } from "@/lib/format";
 import { timeToMinutes, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
@@ -11,7 +11,8 @@ import { untilLabel } from "./day-plan";
 
 interface NextUpProps {
   appointment: Appointment | null;
-  client: Client | undefined;
+  /** Los pacientes de la cita (con varios pacientes, todos; el principal primero). */
+  clients: Client[];
   serviceName: string;
   business: Business | undefined;
   now: ZonedNow;
@@ -30,7 +31,7 @@ const FEATURED_CARD =
  * Lo primero del Inicio: quién sigue y a qué hora, en la tarjeta destacada. La hora va grande; al
  * lado, lo necesario para atenderla (ver la cita o escribir al cliente por WhatsApp).
  */
-export function NextUp({ appointment, client, serviceName, business, now, onOpen, onCreate }: NextUpProps) {
+export function NextUp({ appointment, clients, serviceName, business, now, onOpen, onCreate }: NextUpProps) {
   if (!appointment) {
     return (
       <section className={cn("flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7", FEATURED_CARD)}>
@@ -49,14 +50,19 @@ export function NextUp({ appointment, client, serviceName, business, now, onOpen
   const started = today && timeToMinutes(appointment.startTime) <= now.minutes;
   const when = untilLabel(appointment, now) || capitalize(formatLongDate(appointment.date));
   const minutes = timeToMinutes(appointment.endTime) - timeToMinutes(appointment.startTime);
-  const whatsAppUrl =
-    client?.phone && business
-      ? getWhatsAppUrl(
-          client.phone,
-          business.timezone,
-          `Hola ${client.name.split(" ")[0]}, te escribimos de ${business.name} sobre tu cita de ${serviceName} ${today ? "de hoy" : `del ${formatLongDate(appointment.date)}`} a las ${appointment.startTime}.`,
-        )
-      : null;
+  // Un botón de WhatsApp por paciente con teléfono (en una sesión de pareja, uno para cada uno).
+  const whatsApp = business
+    ? clients.flatMap((client) => {
+        const url = client.phone
+          ? getWhatsAppUrl(
+              client.phone,
+              business.timezone,
+              `Hola ${client.name.split(" ")[0]}, te escribimos de ${business.name} sobre tu cita de ${serviceName} ${today ? "de hoy" : `del ${formatLongDate(appointment.date)}`} a las ${appointment.startTime}.`,
+            )
+          : null;
+        return url ? [{ client, url }] : [];
+      })
+    : [];
 
   return (
     <section
@@ -72,7 +78,9 @@ export function NextUp({ appointment, client, serviceName, business, now, onOpen
       </div>
 
       <div className="min-w-0 sm:border-l sm:border-white/20 sm:pl-8">
-        <p className="text-2xl leading-tight font-bold tracking-[-0.01em] text-white">{client?.name ?? "Cliente"}</p>
+        <p className="text-2xl leading-tight font-bold tracking-[-0.01em] text-white">
+          {clients.length > 0 ? joinNames(clients.map((client) => client.name)) : "Cliente"}
+        </p>
         <p className="mt-0.5 text-white/80">
           {serviceName}, {formatDuration(minutes)}, hasta las {appointment.endTime}
         </p>
@@ -94,18 +102,19 @@ export function NextUp({ appointment, client, serviceName, business, now, onOpen
           <Button size="lg" className={LIGHT_BUTTON} onClick={() => onOpen(appointment)}>
             Ver cita
           </Button>
-          {whatsAppUrl && (
+          {whatsApp.map(({ client, url }) => (
             <Button
+              key={client.id}
               asChild
               size="lg"
               variant="outline"
               className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
             >
-              <a href={whatsAppUrl} target="_blank" rel="noreferrer">
-                <WhatsAppIcon /> WhatsApp
+              <a href={url} target="_blank" rel="noreferrer" aria-label={`Escribir a ${client.name} por WhatsApp`}>
+                <WhatsAppIcon /> {whatsApp.length > 1 ? client.name.split(" ")[0] : "WhatsApp"}
               </a>
             </Button>
-          )}
+          ))}
         </div>
       </div>
     </section>

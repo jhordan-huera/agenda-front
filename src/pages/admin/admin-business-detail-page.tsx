@@ -31,6 +31,7 @@ import { BusinessStatusBadge, PlanBadge } from "@/features/admin/business-badges
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
 import { AddOwnerDialog } from "@/features/admin/add-owner-dialog";
 import { ClientRequiredFieldsCard } from "@/features/admin/client-required-fields-card";
+import { MultiClientAppointmentsCard } from "@/features/admin/multi-client-appointments-card";
 import { DeleteBusinessDialog } from "@/features/admin/delete-business-dialog";
 import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
 import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
@@ -254,6 +255,7 @@ export default function AdminBusinessDetailPage() {
           </Card>
 
           <ClientRequiredFieldsCard key={business.id} business={business} />
+          <MultiClientAppointmentsCard key={`multi-${business.id}`} business={business} />
 
           <Card>
             <CardHeader>

@@ -8,7 +8,7 @@ import type {
   PlatformAdminInput,
   PlatformSettingsInput,
 } from "@/lib/validations/admin";
-import type { AdminBusinessDetail, BusinessStatus, ClientRequiredFields, PlanId } from "@/types";
+import type { AdminBusinessDetail, Business, BusinessStatus, ClientRequiredFields, PlanId } from "@/types";
 import { queryKeys } from "./query-keys";
 
 /* Panel del super admin. El backend vuelve a comprobar el rol en cada llamada. */
@@ -112,15 +112,30 @@ export function useSetClientRequiredFields() {
   return useMutation({
     mutationFn: ({ businessId, fields }: { businessId: string; fields: ClientRequiredFields }) =>
       data.admin.setClientRequiredFields(businessId, fields),
-    onSuccess: (business) => {
-      // La ficha ya muestra lo guardado (sin «cambios sin guardar» mientras recarga la actividad).
-      queryClient.setQueryData<AdminBusinessDetail | null>(queryKeys.admin.business(business.id), (current) =>
-        current ? { ...current, business } : current,
-      );
-      queryClient.setQueryData(queryKeys.business(business.id), business);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-    },
+    onSuccess: (business) => onBusinessSettingSaved(queryClient, business),
   });
+}
+
+/** Citas con varios pacientes en un negocio (como los datos obligatorios: se recarga también el negocio). */
+export function useSetMultiClientAppointments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ businessId, enabled }: { businessId: string; enabled: boolean }) =>
+      data.admin.setMultiClientAppointments(businessId, enabled),
+    onSuccess: (business) => onBusinessSettingSaved(queryClient, business),
+  });
+}
+
+/**
+ * Un ajuste del negocio que sólo cambia el super admin: la ficha ya muestra lo guardado (sin «cambios
+ * sin guardar» mientras recarga la actividad) y, al entrar en él («Gestionar negocio»), el panel ya lo usa.
+ */
+function onBusinessSettingSaved(queryClient: ReturnType<typeof useQueryClient>, business: Business) {
+  queryClient.setQueryData<AdminBusinessDetail | null>(queryKeys.admin.business(business.id), (current) =>
+    current ? { ...current, business } : current,
+  );
+  queryClient.setQueryData(queryKeys.business(business.id), business);
+  void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
 }
 
 /**

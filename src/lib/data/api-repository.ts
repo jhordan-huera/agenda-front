@@ -142,8 +142,8 @@ export const apiRepository: DataRepository = {
       api.put<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}`, input),
     updateStatus: (businessId, appointmentId, status) =>
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, { status }),
-    logWhatsAppNotice: (businessId, appointmentId, kind) =>
-      api.post<void>(`${business(businessId)}/appointments/${id(appointmentId)}/whatsapp-notice`, { kind }),
+    logWhatsAppNotice: (businessId, appointmentId, kind, clientId) =>
+      api.post<void>(`${business(businessId)}/appointments/${id(appointmentId)}/whatsapp-notice`, { kind, clientId }),
     setArrival: (businessId, appointmentId, arrived) =>
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/arrival`, { arrived }),
     setPaid: (businessId, appointmentId, paid) =>
@@ -207,6 +207,8 @@ export const apiRepository: DataRepository = {
       api.put<Subscription>(`/admin/businesses/${id(businessId)}/max-professionals`, { maxProfessionals }),
     setClientRequiredFields: (businessId, fields) =>
       api.put<Business>(`/admin/businesses/${id(businessId)}/client-required-fields`, fields),
+    setMultiClientAppointments: (businessId, enabled) =>
+      api.put<Business>(`/admin/businesses/${id(businessId)}/multi-client-appointments`, { enabled }),
     deleteBusiness: (businessId, input) => api.delete(`/admin/businesses/${id(businessId)}`, input),
     listCategories: () => api.get<AdminBusinessCategory[]>("/admin/categories"),
     createCategory: (input) => api.post<BusinessCategoryInfo>("/admin/categories", input),

@@ -3,6 +3,7 @@ import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Client, ISODate } from "@/types";
+import { getAppointmentClientNames } from "@/features/appointments/appointment-utils";
 
 const MAX_VISIBLE = 3;
 
@@ -88,7 +89,7 @@ export function MonthView({
                   >
                     <span className={cn("size-1.5 shrink-0 rounded-full", APPOINTMENT_STATUS_CONFIG[appointment.status].dot)} />
                     <span className="text-muted-foreground tabular-nums">{appointment.startTime}</span>
-                    <span className="truncate">{clientsById.get(appointment.clientId)?.name ?? "Cliente"}</span>
+                    <span className="truncate">{getAppointmentClientNames(clientsById, appointment, { fallback: "Cliente", max: 1 })}</span>
                   </button>
                 ))}
                 {hidden > 0 && <span className="px-1 text-[11px] font-medium text-primary">+{hidden} más</span>}

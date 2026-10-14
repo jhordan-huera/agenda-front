@@ -1,6 +1,7 @@
 import { addDaysISO, getDayOfWeek, isPast, timeToMinutes, type ZonedNow } from "@/lib/time";
 import type { Appointment, DayOfWeek, ISODate, Schedule } from "@/types";
 import type { DateRange } from "./report-stats";
+import { appointmentClientIds } from "@/features/appointments/appointment-utils";
 
 /**
  * Indicadores de Reportes que dicen qué hacer: de dónde llegan las citas, cuándo las piden, qué
@@ -102,24 +103,20 @@ export interface ClientRank {
   attendance: number | null;
 }
 
+/** Una cita con varios pacientes (sesión de pareja) cuenta para cada uno; lo cobrado, sólo para el principal. */
 function rankClients(inRange: Appointment[]): ClientRank[] {
   const ranks = new Map<string, ClientRank>();
   for (const appointment of inRange.filter(active)) {
-    const rank = ranks.get(appointment.clientId) ?? {
-      clientId: appointment.clientId,
-      appointments: 0,
-      completed: 0,
-      noShow: 0,
-      spent: 0,
-      attendance: null,
-    };
-    rank.appointments += 1;
-    if (appointment.status === "completed") {
-      rank.completed += 1;
-      rank.spent += appointment.price;
+    for (const clientId of appointmentClientIds(appointment)) {
+      const rank = ranks.get(clientId) ?? { clientId, appointments: 0, completed: 0, noShow: 0, spent: 0, attendance: null };
+      rank.appointments += 1;
+      if (appointment.status === "completed") {
+        rank.completed += 1;
+        if (clientId === appointment.clientId) rank.spent += appointment.price;
+      }
+      if (appointment.status === "no_show") rank.noShow += 1;
+      ranks.set(clientId, rank);
     }
-    if (appointment.status === "no_show") rank.noShow += 1;
-    ranks.set(appointment.clientId, rank);
   }
   for (const rank of ranks.values()) {
     const attended = rank.completed + rank.noShow;
@@ -162,21 +159,18 @@ export interface ClientVisits {
 export function summarizeClientVisits(appointments: Appointment[], now: ZonedNow): ClientVisits[] {
   const summaries = new Map<string, ClientVisits>();
   for (const appointment of appointments) {
-    const summary = summaries.get(appointment.clientId) ?? {
-      clientId: appointment.clientId,
-      visits: 0,
-      firstVisit: null,
-      lastVisit: null,
-      hasUpcoming: false,
-    };
-    summaries.set(appointment.clientId, summary);
-    if (!active(appointment)) continue;
-    summary.visits += 1;
-    if (!summary.firstVisit || appointment.date < summary.firstVisit) summary.firstVisit = appointment.date;
-    if (isPast(appointment.date, appointment.startTime, now)) {
-      if (!summary.lastVisit || appointment.date > summary.lastVisit) summary.lastVisit = appointment.date;
-    } else if (appointment.status !== "no_show") {
-      summary.hasUpcoming = true;
+    // Con varios pacientes, la cita es una visita de cada uno.
+    for (const clientId of appointmentClientIds(appointment)) {
+      const summary = summaries.get(clientId) ?? { clientId, visits: 0, firstVisit: null, lastVisit: null, hasUpcoming: false };
+      summaries.set(clientId, summary);
+      if (!active(appointment)) continue;
+      summary.visits += 1;
+      if (!summary.firstVisit || appointment.date < summary.firstVisit) summary.firstVisit = appointment.date;
+      if (isPast(appointment.date, appointment.startTime, now)) {
+        if (!summary.lastVisit || appointment.date > summary.lastVisit) summary.lastVisit = appointment.date;
+      } else if (appointment.status !== "no_show") {
+        summary.hasUpcoming = true;
+      }
     }
   }
   return [...summaries.values()];

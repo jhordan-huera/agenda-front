@@ -12,7 +12,8 @@ interface DayRibbonProps {
   schedules: Schedule[];
   blockedTimes: BlockedTime[];
   nextId: string | null;
-  clientName: (id: string) => string;
+  /** Los nombres de los pacientes de la cita ("Ana Torres y Carlos Pérez"). */
+  clientName: (appointment: Appointment) => string;
   onOpen: (appointment: Appointment) => void;
 }
 
@@ -80,7 +81,7 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
                 key={appointment.id}
                 type="button"
                 onClick={() => onOpen(appointment)}
-                aria-label={`${appointment.startTime}, ${clientName(appointment.clientId)}, ${APPOINTMENT_STATUS_CONFIG[appointment.status].label}`}
+                aria-label={`${appointment.startTime}, ${clientName(appointment)}, ${APPOINTMENT_STATUS_CONFIG[appointment.status].label}`}
                 className={cn(
                   "absolute inset-y-2.5 z-[2] overflow-hidden rounded-md border-l-[3px] text-left text-xs transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-2 sm:py-1.5",
                   APPOINTMENT_STATUS_CONFIG[appointment.status].event,
@@ -90,7 +91,7 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
                 style={{ left: `calc(${pct(start)} + 2px)`, width: `calc(${width(start, end)} - 4px)` }}
               >
                 <span className="hidden font-bold tabular-nums sm:block">{appointment.startTime}</span>
-                <span className="hidden truncate font-semibold sm:block">{clientName(appointment.clientId)}</span>
+                <span className="hidden truncate font-semibold sm:block">{clientName(appointment)}</span>
               </button>
             );
           })}

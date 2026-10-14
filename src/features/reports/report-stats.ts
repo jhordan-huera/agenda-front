@@ -3,6 +3,7 @@ import { formatDate } from "@/lib/format";
 import { getBlockedRanges, getWorkingRanges, type BlockedRange } from "@/lib/availability";
 import { addDaysISO, daysBetween, eachDayISO, startOfWeekISO, timeToMinutes } from "@/lib/time";
 import type { Appointment, AppointmentStatus, ISODate, Schedule, Service } from "@/types";
+import { appointmentClientIds } from "@/features/appointments/appointment-utils";
 
 /**
  * Cálculos de reportes: funciones puras sobre la lista de citas (el periodo y la comparación están
@@ -187,7 +188,10 @@ export function getClientRetention(
   const activeInRange = new Set<string>();
   for (const appointment of appointmentsInRange) {
     if (appointment.status === "cancelled") continue;
-    if (appointment.date >= range.from && appointment.date <= range.to) activeInRange.add(appointment.clientId);
+    // Con varios pacientes (sesión de pareja), cuentan todos.
+    if (appointment.date >= range.from && appointment.date <= range.to) {
+      for (const clientId of appointmentClientIds(appointment)) activeInRange.add(clientId);
+    }
   }
   let newClients = 0;
   for (const clientId of activeInRange) {
