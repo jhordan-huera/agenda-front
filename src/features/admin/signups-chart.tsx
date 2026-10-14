@@ -1,56 +1,35 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipContentProps } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CHART_COLORS } from "@/features/reports/chart-colors";
-import { capitalize, formatDate } from "@/lib/format";
+import { capitalize, formatDate, plural } from "@/lib/format";
 import type { PlatformStats } from "@/types";
 
-const AXIS_TICK = { fontSize: 11, fill: CHART_COLORS.tick };
-
-interface Point {
-  label: string;
-  fullLabel: string;
-  count: number;
-}
-
-function SignupsTooltip({ active, payload }: TooltipContentProps) {
-  const point = payload?.[0]?.payload as Point | undefined;
-  if (!active || !point) return null;
-  return (
-    <div className="rounded-lg border bg-popover p-3 text-xs shadow-md">
-      <p className="font-medium">{point.fullLabel}</p>
-      <p className="mt-1 text-sm font-semibold tabular-nums">
-        {point.count} negocio{point.count === 1 ? "" : "s"} nuevo{point.count === 1 ? "" : "s"}
-      </p>
-    </div>
-  );
-}
-
-/** Negocios creados por mes (registro propio o alta del super admin). */
+/**
+ * Negocios creados por mes (registro propio o alta del super admin), en barras pequeñas con su
+ * cifra encima: con pocos negocios, un gráfico grande queda casi vacío.
+ */
 export function SignupsChart({ data }: { data: PlatformStats["signupsByMonth"] }) {
-  const points: Point[] = data.map(({ month, count }) => ({
-    label: capitalize(formatDate(`${month}-01`, "MMM")),
-    fullLabel: capitalize(formatDate(`${month}-01`, "MMMM yyyy")),
-    count,
-  }));
-
+  const max = Math.max(1, ...data.map((point) => point.count));
+  const thisMonth = data.at(-1)?.count ?? 0;
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Nuevos negocios</CardTitle>
-        <CardDescription>Altas por mes en los últimos 6 meses.</CardDescription>
+        <CardTitle>Altas de negocios</CardTitle>
+        <CardDescription>{thisMonth > 0 ? `${plural(thisMonth, "negocio nuevo", "negocios nuevos")} este mes.` : "Ninguno nuevo este mes."}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-56" role="img" aria-label={`Nuevos negocios por mes: ${points.map((p) => `${p.fullLabel} ${p.count}`).join(", ")}`}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={points} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
-              <CartesianGrid vertical={false} stroke={CHART_COLORS.grid} />
-              <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: CHART_COLORS.axis }} />
-              <YAxis allowDecimals={false} tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} />
-              <Tooltip content={SignupsTooltip} cursor={{ fill: CHART_COLORS.cursor }} />
-              <Bar dataKey="count" name="Negocios" fill={CHART_COLORS.series} radius={[4, 4, 0, 0]} maxBarSize={36} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ul className="flex h-28 items-end gap-2" aria-label="Negocios creados por mes, últimos 6 meses">
+          {data.map(({ month, count }) => (
+            <li key={month} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+              <span className="text-xs font-semibold tabular-nums">{count}</span>
+              <span
+                className="w-full rounded-t-md bg-primary/80"
+                style={{ height: `${Math.max(4, (count / max) * 72)}px` }}
+                aria-hidden
+              />
+              <span className="text-xs text-muted-foreground">{capitalize(formatDate(`${month}-01`, "MMM"))}</span>
+              <span className="sr-only">{capitalize(formatDate(`${month}-01`, "MMMM yyyy"))}: {count}</span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );
