@@ -58,6 +58,7 @@ export function NotificationSettingsForm({ business }: { business: Business }) {
     reminders: current.reminders,
     cancellations: current.cancellations,
     reminderHoursBefore: current.reminderHoursBefore,
+    followUps: current.followUps,
   });
   const { save, saving } = useSaveNotificationSettings(business);
 
@@ -82,7 +83,7 @@ export function NotificationSettingsForm({ business }: { business: Business }) {
     >
       <SwitchField
         label="Confirmaciones"
-        description="Al reservar, confirmar o modificar una cita."
+        description="Al reservar, confirmar o modificar una cita, y si vuelve a quedar pendiente de confirmar."
         checked={values.confirmations}
         onCheckedChange={(checked) => setField("confirmations", checked)}
       />
@@ -119,6 +120,12 @@ export function NotificationSettingsForm({ business }: { business: Business }) {
         description="Cuando una cita se cancela."
         checked={values.cancellations}
         onCheckedChange={(checked) => setField("cancellations", checked)}
+      />
+      <SwitchField
+        label="Seguimiento: Completada y No asistió"
+        description="Un gracias por la visita, o una invitación a elegir otra hora con tu enlace de reservas. Sólo de citas de los últimos 7 días."
+        checked={values.followUps}
+        onCheckedChange={(checked) => setField("followUps", checked)}
       />
     </SettingsSection>
   );

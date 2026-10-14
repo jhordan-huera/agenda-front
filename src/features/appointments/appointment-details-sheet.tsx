@@ -25,6 +25,8 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,7 +64,7 @@ export function AppointmentDetailsSheet({ appointmentId, open, onOpenChange, onE
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-md">
         {appointment ? (
-          <AppointmentDetails appointment={appointment} onEdit={onEdit} />
+          <AppointmentDetails key={appointment.id} appointment={appointment} onEdit={onEdit} />
         ) : (
           <div className="space-y-4 p-4 pr-12">
             <SheetTitle className={appointment === null ? undefined : "sr-only"}>
@@ -107,6 +109,9 @@ function AppointmentDetails({
   // La llegada se marca en citas que aún no se atendieron.
   const canMarkArrival = appointment.status === "pending" || appointment.status === "confirmed";
   const [confirmCancel, setConfirmCancel] = useState(false);
+  // Avisar al paciente del cambio de estado (spec 008). Siempre marcada al abrir la ficha: se desmarca
+  // sólo para corregir un error, y no se recuerda para que nunca quede apagada por olvido.
+  const [notify, setNotify] = useState(true);
   // Para qué paciente se registra la evolución (con varios pacientes, cada uno tiene la suya).
   const [noteFor, setNoteFor] = useState<Client | null>(null);
   const clinicalAccess = useClinicalAccess();
@@ -136,8 +141,10 @@ function AppointmentDetails({
 
   const changeStatus = async (status: AppointmentStatus) => {
     try {
-      await updateStatus.mutateAsync({ id: appointment.id, status });
-      toast.success(`Estado actualizado: ${APPOINTMENT_STATUS_CONFIG[status].label}`);
+      await updateStatus.mutateAsync({ id: appointment.id, status, notify });
+      toast.success(`Estado actualizado: ${APPOINTMENT_STATUS_CONFIG[status].label}`, {
+        description: notify ? undefined : "Sin avisar al paciente.",
+      });
     } catch (error) {
       showError(error);
       throw error;
@@ -276,6 +283,23 @@ function AppointmentDetails({
               );
             })}
           </div>
+          <div className="flex items-start gap-2 pt-1">
+            <Checkbox
+              id="notify-patient"
+              checked={notify}
+              onCheckedChange={(checked) => setNotify(checked === true)}
+              aria-describedby="notify-patient-hint"
+              className="mt-0.5"
+            />
+            <div className="grid gap-0.5">
+              <Label htmlFor="notify-patient" className="font-normal">
+                Avisar al paciente por email y WhatsApp
+              </Label>
+              <p id="notify-patient-hint" className="text-xs text-muted-foreground">
+                Desmárcala si sólo corriges un error. También vale para «Cancelar cita».
+              </p>
+            </div>
+          </div>
         </section>
 
         {patients.length > 0 && (
@@ -315,7 +339,7 @@ function AppointmentDetails({
         open={confirmCancel}
         onOpenChange={setConfirmCancel}
         title="¿Cancelar esta cita?"
-        description={`La cita de ${clientName} quedará como cancelada y el horario volverá a estar disponible.`}
+        description={`La cita de ${clientName} quedará como cancelada y el horario volverá a estar disponible.${notify ? "" : " No se avisará al paciente."}`}
         confirmLabel="Cancelar cita"
         cancelLabel="Volver"
         destructive

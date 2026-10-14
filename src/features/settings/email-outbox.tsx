@@ -34,6 +34,9 @@ const TYPE_LABELS: Record<EmailType, string> = {
   plan_change_approved: "Plan aprobado",
   plan_changed: "Cambio de plan",
   plan_change_rejected: "Plan rechazado",
+  appointment_pending: "Pendiente de confirmar",
+  appointment_completed: "Gracias por la visita",
+  appointment_no_show: "No asistió",
 };
 
 /** Bandeja de salida del negocio. */
