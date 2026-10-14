@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { GrowthPair, ISODate, PlatformStats } from "@/types";
+import { GrowthChart } from "./growth-chart";
 import { growthChange } from "./sales-lists";
 
 /**
@@ -87,6 +88,7 @@ export function GrowthSection({ growth }: { growth: PlatformStats["growth"] | un
           );
         })}
       </div>
+      {growth?.daily && <GrowthChart growth={growth} />}
     </section>
   );
 }

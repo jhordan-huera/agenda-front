@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { capitalize, formatShortDate, plural, toZonedDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ISODate, PlatformStats } from "@/types";
+import { EmailsChart } from "./emails-chart";
 import { daysSince } from "./sales-lists";
 
 type Status = "ok" | "warn" | "bad" | "unknown";
@@ -156,6 +157,7 @@ export function HealthSection({
             : Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)}
         </div>
       )}
+      {!unavailable && health?.emailsByDay && <EmailsChart days={health.emailsByDay} />}
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AdminBusinessSummary, ISODate } from "@/types";
+import { BusinessGrowthChart } from "./business-growth-chart";
 import { PlanBadge } from "./business-badges";
 import { idle, nearLimit, topGrowing } from "./sales-lists";
 
@@ -53,6 +54,7 @@ export function SalesSection({ businesses, loading, today }: { businesses: Admin
         </h2>
         <p className="text-sm text-muted-foreground">A quién ofrecerle un plan mejor, quién crece y quién dejó de usar el sistema.</p>
       </div>
+      {!loading && <BusinessGrowthChart businesses={businesses} />}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:items-start">
         <List title="Cerca del límite" description="Usan el 80 % o más de su plan." empty="Nadie cerca del límite." loading={loading}>
           {nearLimit(businesses).map(({ summary, text, offer }) => (
