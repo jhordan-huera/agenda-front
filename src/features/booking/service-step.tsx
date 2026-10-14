@@ -1,9 +1,10 @@
-import { Clock } from "lucide-react";
+import { Clock, Users } from "lucide-react";
 import { MODE_ICONS } from "@/features/services/mode-icons";
 import { describeServiceModes } from "@/lib/constants/business";
 import { formatCurrency, formatDuration, formatPrice, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PublicService } from "@/types";
+import { peopleLabel } from "./contact";
 
 interface ServiceStepProps {
   services: PublicService[];
@@ -40,6 +41,11 @@ export function ServiceStep({ services, currency, selectedId, onSelect }: Servic
                 <span className="inline-flex items-center gap-1.5">
                   <Clock className="size-4" aria-hidden /> {formatDuration(service.durationMinutes)}
                 </span>
+                {peopleLabel(service) && (
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
+                    <Users className="size-4" aria-hidden /> {peopleLabel(service)}
+                  </span>
+                )}
                 {(service.modes.length > 1 || service.modes[0] !== "business") && (
                   <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
                     <ModeIcon className="size-4" aria-hidden />

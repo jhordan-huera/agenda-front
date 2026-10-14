@@ -148,6 +148,10 @@ function AppointmentForm({
   const offered = (service: Service) => !professional || offersService(professional, service.id);
   const selectableServices = services.filter((s) => (s.isActive && offered(s)) || s.id === values.serviceId);
   const selectedService = services.find((s) => s.id === values.serviceId);
+  // Servicio en pareja o en familia (spec 005): para cuántas personas es y cuántos pacientes faltan.
+  // Sólo un aviso: se puede guardar igual (uno no vino, o aún no está registrado).
+  const sessionPeople = canAddClients && selectedService ? (selectedService.peoplePerSession ?? 1) : 1;
+  const missingPatients = Math.max(0, sessionPeople - 1 - extraClientIds.filter(Boolean).length);
 
   /** Cambia el lugar (local, domicilio o virtual); el precio sigue al de lista si no se editó a mano. */
   const applyPlace = (current: FormValues, service: Service | undefined, place: ServiceMode): FormValues => {
@@ -301,6 +305,13 @@ function AppointmentForm({
           error={errors.extraClientIds}
         />
       )}
+      {missingPatients > 0 && (
+        <p className="-mt-2 flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+          Este servicio es para {sessionPeople} personas: {missingPatients === 1 ? "falta un paciente" : `faltan ${missingPatients} pacientes`}.
+          Puedes guardar igual.
+        </p>
+      )}
 
       <FormField
         label="Servicio"
@@ -322,9 +333,15 @@ function AppointmentForm({
                 const currentPlace = getPlace(current);
                 const nextPlace = !service || service.modes.includes(currentPlace) ? currentPlace : service.modes[0];
                 const homeVisit = nextPlace === "home" ? (current.homeVisit ?? newHomeVisit()) : null;
+                // En un servicio para varias personas se abren los espacios de los otros pacientes; los
+                // vacíos que sobran se quitan.
+                const people = canAddClients && service ? (service.peoplePerSession ?? 1) : 1;
+                const chosen = (current.extraClientIds ?? []).filter(Boolean);
+                const extraClientIds = [...chosen, ...Array<string>(Math.max(0, people - 1 - chosen.length)).fill("")];
                 return {
                   ...current,
                   serviceId,
+                  extraClientIds,
                   homeVisit,
                   isVirtual: nextPlace === "virtual",
                   durationMinutes: service?.durationMinutes ?? current.durationMinutes,

@@ -13,10 +13,10 @@ import { documentIdError, documentIdMaxLength, normalizeDocumentId, onlyDigits }
 import { formatCurrency, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
-import { publicBookingSchema, type PublicBookingInput } from "@/lib/validations/booking";
+import { publicBookingSchema, type BookingPerson, type PublicBookingInput } from "@/lib/validations/booking";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { HomeVisitAddress, PublicBusiness, PublicService, ServiceMode } from "@/types";
-import type { ContactValues } from "./contact";
+import { EMPTY_PERSON, otherPeopleOf, type ContactValues } from "./contact";
 import { forgetSavedContact } from "./saved-contact";
 
 interface DetailsStepProps {
@@ -48,9 +48,15 @@ function withServicePlace(service: PublicService, current: ContactValues): Conta
   };
 }
 
+/** Las otras personas que pide el servicio (en pareja o en familia), con las que ya escribió. */
+const peopleFor = (service: PublicService, current: ContactValues): BookingPerson[] =>
+  Array.from({ length: otherPeopleOf(service) }, (_, index) => current.extraPatients[index] ?? EMPTY_PERSON);
+
 /**
  * Datos del paciente: siempre cédula, nombre, email y teléfono. La página no dice si ya es cliente
- * del negocio; si lo es, la reserva se une a su ficha cuando coinciden el email o el teléfono.
+ * del negocio; si lo es, la reserva se une a su ficha cuando coinciden el email o el teléfono. En un
+ * servicio en pareja o en familia, lo mismo de cada una de las demás personas (quien reserva es el
+ * paciente principal).
  */
 export function DetailsStep({ selection, service, business, contact, onContactChange, onContinue }: DetailsStepProps) {
   const values = withServicePlace(service, contact);
@@ -59,6 +65,12 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
   const [errors, setErrors] = useState<FieldErrors>({});
   const set = (key: "documentId" | "name" | "email" | "phone" | "notes") => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
+  const others = peopleFor(service, values);
+  const setOther = (index: number, key: keyof BookingPerson, value: string) =>
+    setValues((current) => ({
+      ...current,
+      extraPatients: peopleFor(service, current).map((person, i) => (i === index ? { ...person, [key]: value } : person)),
+    }));
 
   const forgetData = () => {
     forgetSavedContact();
@@ -101,15 +113,22 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    const result = validate(publicBookingSchema, { ...selection, ...values });
-    // La cédula de un negocio de Ecuador, además, debe ser válida (dígito verificador).
-    const documentError = result.errors.documentId ? null : documentIdError(normalizeDocumentId(values.documentId), business.timezone);
-    setErrors({ ...result.errors, ...(documentError ? { documentId: documentError } : {}) });
-    if (result.success && !documentError) onContinue(result.data);
+    const result = validate(publicBookingSchema, { ...selection, ...values, extraPatients: others });
+    // La cédula de un negocio de Ecuador, además, debe ser válida (dígito verificador), la de cada persona.
+    const documentErrors: FieldErrors = {};
+    const checkDocument = (path: string, documentId: string) => {
+      const error = result.errors[path] ? null : documentIdError(normalizeDocumentId(documentId), business.timezone);
+      if (error) documentErrors[path] = error;
+    };
+    checkDocument("documentId", values.documentId);
+    others.forEach((person, index) => checkDocument(`extraPatients.${index}.documentId`, person.documentId));
+    setErrors({ ...result.errors, ...documentErrors });
+    if (result.success && Object.keys(documentErrors).length === 0) onContinue(result.data);
   };
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-4">
+      {others.length > 0 && <h3 className="text-base font-bold">Tus datos</h3>}
       {values.fromSaved && (
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
           <span>Usamos los datos que guardaste en este dispositivo.</span>
@@ -185,6 +204,19 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
       <p className="-mt-2 text-xs text-muted-foreground">
         Si ya te atendieron aquí, usa el email o el teléfono que le diste a {business.name}.
       </p>
+
+      {others.map((person, index) => (
+        <OtherPersonFields
+          key={index}
+          title={others.length === 1 ? "Datos de la otra persona" : `Persona ${index + 2}`}
+          person={person}
+          errors={errors}
+          path={`extraPatients.${index}`}
+          documentMaxLength={documentIdMaxLength(business.timezone)}
+          businessName={business.name}
+          onChange={(key, value) => setOther(index, key, value)}
+        />
+      ))}
 
       {service.modes.length > 1 && (
         <fieldset className="grid gap-2">
@@ -262,7 +294,7 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
           onCheckedChange={(checked) => setValues((current) => ({ ...current, remember: checked === true }))}
         />
         <Label htmlFor="remember-contact" className="font-normal">
-          Recordar mis datos en este dispositivo
+          Recordar mis datos en este dispositivo{others.length > 0 && " (sólo los tuyos)"}
         </Label>
       </div>
       <Button type="submit" size="lg" className="h-11 text-sm">
@@ -272,5 +304,85 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
         Usaremos tus datos sólo para gestionar esta cita. No necesitas crear una cuenta.
       </p>
     </form>
+  );
+}
+
+/**
+ * Los datos de otra persona de la sesión: los mismos que los de quien reserva. Sin autocompletar: el
+ * navegador ofrecería los de quien reserva.
+ */
+function OtherPersonFields({
+  title,
+  person,
+  errors,
+  path,
+  documentMaxLength,
+  businessName,
+  onChange,
+}: {
+  title: string;
+  person: BookingPerson;
+  errors: FieldErrors;
+  /** Ruta de sus errores ("extraPatients.0"). */
+  path: string;
+  documentMaxLength: number;
+  businessName: string;
+  onChange: (key: keyof BookingPerson, value: string) => void;
+}) {
+  return (
+    <fieldset className="grid gap-4 rounded-xl border bg-muted/30 p-4">
+      <legend className="sr-only">{title}</legend>
+      <h3 aria-hidden className="text-base font-bold">
+        {title}
+      </h3>
+      <FormField label="Número de cédula" error={errors[`${path}.documentId`]} hint="Sólo números, sin guiones.">
+        {(field) => (
+          <Input
+            {...field}
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={documentMaxLength}
+            className="h-10"
+            value={person.documentId}
+            onChange={(e) => onChange("documentId", onlyDigits(e.target.value))}
+          />
+        )}
+      </FormField>
+      <FormField label="Nombre completo" error={errors[`${path}.name`]}>
+        {(field) => (
+          <Input {...field} autoComplete="off" className="h-10" value={person.name} onChange={(e) => onChange("name", e.target.value)} />
+        )}
+      </FormField>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="Email" error={errors[`${path}.email`]}>
+          {(field) => (
+            <Input
+              {...field}
+              type="email"
+              autoComplete="off"
+              className="h-10"
+              value={person.email}
+              onChange={(e) => onChange("email", e.target.value)}
+            />
+          )}
+        </FormField>
+        <FormField label="Teléfono" error={errors[`${path}.phone`]}>
+          {(field) => (
+            <Input
+              {...field}
+              type="tel"
+              autoComplete="off"
+              placeholder="+593 99 123 4567"
+              className="h-10"
+              value={person.phone}
+              onChange={(e) => onChange("phone", e.target.value)}
+            />
+          )}
+        </FormField>
+      </div>
+      <p className="-mt-2 text-xs text-muted-foreground">
+        Si ya se atendió aquí, usa el email o el teléfono que le dio a {businessName}. Puede ser el mismo que el tuyo.
+      </p>
+    </fieldset>
   );
 }

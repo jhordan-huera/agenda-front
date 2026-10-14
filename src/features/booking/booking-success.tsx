@@ -1,7 +1,7 @@
 import { Landmark, Mail, Navigation, Video } from "lucide-react";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
-import { capitalize, formatLongDate, formatPrice } from "@/lib/format";
+import { capitalize, formatLongDate, formatPrice, joinNames } from "@/lib/format";
 import { BankTransferCard } from "@/features/payments/bank-transfer-card";
 import { describeHomeVisit, getDirectionsUrl, hasMapPoint } from "@/lib/maps";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,8 @@ interface BookingSuccessProps {
   business: PublicBusiness;
   /** Cómo se presentó al reservar (para el mensaje de WhatsApp con el comprobante). */
   clientName: string;
+  /** Las otras personas de una sesión en pareja o en familia, como las escribió (vacío: individual). */
+  otherNames?: string[];
   onBookAnother: () => void;
 }
 
@@ -22,12 +24,13 @@ interface BookingSuccessProps {
  * transferencia, al lado (debajo en el móvil) van sus cuentas (todas, una debajo de otra) y el
  * envío del comprobante.
  */
-export function BookingSuccess({ confirmation, business, clientName, onBookAnother }: BookingSuccessProps) {
+export function BookingSuccess({ confirmation, business, clientName, otherNames = [], onBookAnother }: BookingSuccessProps) {
   const currency = business.currency;
   // En el local: dirección y botón "Cómo llegar" (al punto exacto si el negocio lo marcó).
   const atBusiness =
     !confirmation.homeVisit && !confirmation.isVirtual && (Boolean(business.address) || hasMapPoint(business));
   const rows = [
+    ...(otherNames.length > 0 ? [{ label: "Sesión para", value: joinNames([clientName, ...otherNames]) }] : []),
     { label: "Servicio", value: confirmation.serviceName },
     { label: "Profesional", value: confirmation.professionalName },
     ...(confirmation.homeVisit ? [{ label: "A domicilio", value: describeHomeVisit(confirmation.homeVisit) }] : []),
@@ -78,6 +81,7 @@ export function BookingSuccess({ confirmation, business, clientName, onBookAnoth
             <span className="min-w-0 [overflow-wrap:anywhere]">
               {/* Sin email: la confirmación fue al de su ficha, que no es el que escribió (no se muestra). */}
               Te enviamos un email de confirmación {confirmation.clientEmail ? `a ${confirmation.clientEmail}` : "al email que tiene registrado el negocio"}
+              {otherNames.length > 0 && ". Cada persona de la sesión recibe el suyo"}
             </span>
           </p>
         )}

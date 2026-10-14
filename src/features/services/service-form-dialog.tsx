@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, User, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { meetingUrlPlace, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useSaveService } from "@/hooks/queries/use-services";
 import { SERVICE_MODES } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
@@ -60,6 +61,13 @@ const PRICE_DISPLAYS: { value: PriceDisplay; label: string; description: string 
   },
 ];
 
+/** Personas por sesión: sólo en los negocios con las citas con varios pacientes (lo habilita el super admin). */
+const PEOPLE_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "1 · Individual" },
+  { value: 2, label: "2 · Pareja" },
+  { value: 3, label: "3 · Familia" },
+];
+
 function initialPriceDisplay(service?: Service): PriceDisplay {
   if (!service) return "show";
   if (!service.showPrice) return "hidden";
@@ -69,6 +77,8 @@ function initialPriceDisplay(service?: Service): PriceDisplay {
 function ServiceForm({ service, onDone }: { service?: Service; onDone: () => void }) {
   const saveService = useSaveService();
   const multiAgenda = useMultiAgendaAccess();
+  const { data: business } = useCurrentBusiness();
+  const canChoosePeople = Boolean(business?.multiClientAppointments);
   const [values, setValues] = useState({
     name: service?.name ?? "",
     description: service?.description ?? "",
@@ -77,6 +87,7 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
     priceDisplay: initialPriceDisplay(service),
     modes: service?.modes ?? (["business"] as ServiceMode[]),
     homeVisitFee: String(service?.homeVisitFee ?? 0),
+    peoplePerSession: service?.peoplePerSession ?? 1,
     isActive: service?.isActive ?? true,
   });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -94,9 +105,11 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const { priceDisplay, ...rest } = values;
+    const { priceDisplay, peoplePerSession, ...rest } = values;
     const result = validate(serviceSchema, {
       ...rest,
+      // Sin el permiso del negocio no se manda: el servidor conserva el que tenía.
+      ...(canChoosePeople ? { peoplePerSession } : {}),
       price: free ? 0 : rest.price || "0",
       showPrice: priceDisplay !== "hidden",
       homeVisitFee: rest.modes.includes("home") ? rest.homeVisitFee : 0,
@@ -242,6 +255,39 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
           </p>
         )}
       </fieldset>
+
+      {canChoosePeople && (
+        <fieldset className="grid gap-2">
+          <legend className="mb-2 text-sm font-medium">Personas por sesión</legend>
+          <div role="radiogroup" aria-label="Personas por sesión" className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {PEOPLE_OPTIONS.map((option) => {
+              const selected = values.peoplePerSession === option.value;
+              const Icon = option.value === 1 ? User : Users;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => set("peoplePerSession", option.value)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
+                    selected && "border-primary bg-accent hover:bg-accent",
+                  )}
+                >
+                  <Icon className={cn("size-4 shrink-0", selected ? "text-primary" : "text-muted-foreground")} aria-hidden />
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {values.peoplePerSession > 1
+              ? `Terapia de pareja o de familia: tu página de reservas pide los datos de las ${values.peoplePerSession} personas y la cita es una sola, con todas. Cada una recibe sus avisos.`
+              : "Una persona por cita."}
+          </p>
+        </fieldset>
+      )}
 
       {values.modes.includes("home") && (
         <FormField label="Recargo a domicilio (USD)" error={errors.homeVisitFee} hint="Se suma al precio. 0 = sin recargo." className="sm:w-1/2">
