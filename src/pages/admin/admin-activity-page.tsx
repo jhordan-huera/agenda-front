@@ -1,4 +1,4 @@
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, MailCheck, MailX, ShieldAlert, UserRoundX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/shared/page-header";
@@ -12,8 +12,9 @@ import { AuditFeed } from "@/features/activity/audit-feed";
 import { EMPTY_AUDIT_FILTERS, toAuditQuery } from "@/features/activity/audit-filters";
 import { AuditFiltersBar } from "@/features/activity/audit-filters-bar";
 import { exportAuditCsv } from "@/features/activity/export-audit";
+import { StatGrid } from "@/features/admin/stat-cards";
 import { EmailOutboxCard } from "@/features/settings/email-outbox";
-import { useAdminAuditFeed, useAdminBusinesses, useAdminEmails } from "@/hooks/queries/use-admin";
+import { useAdminAuditFeed, useAdminBusinesses, useAdminEmails, useAdminStats } from "@/hooks/queries/use-admin";
 import { data, getErrorMessage, type AdminAuditFilters, type AdminAuditScope } from "@/lib/data";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { plural } from "@/lib/format";
@@ -52,6 +53,8 @@ export default function AdminActivityPage() {
   const [onlyFailed, setOnlyFailed] = useState(false);
   const businesses = useAdminBusinesses();
   const emails = useAdminEmails();
+  const stats = useAdminStats();
+  const health = stats.data?.health;
   const [exporting, setExporting] = useState(false);
 
   const query = useMemo<Omit<AdminAuditFilters, "cursor">>(
@@ -86,6 +89,39 @@ export default function AdminActivityPage() {
     <div className="space-y-6">
       <PageTitle title="Actividad de la plataforma" />
       <PageHeader title="Actividad" description="Auditoría de la plataforma y emails enviados por el sistema." />
+
+      {!stats.isError && (
+        <StatGrid
+          loading={stats.isPending}
+          items={
+            health
+              ? [
+                  { label: "Emails enviados hoy", value: health.emailsToday.sent, icon: MailCheck, hint: `${health.emailsToday.queued} en cola` },
+                  {
+                    label: "Emails fallidos hoy",
+                    value: health.emailsToday.failed,
+                    icon: MailX,
+                    tone: health.emailsToday.failed > 0 ? "warning" : "default",
+                    hint: health.emailsToday.failed > 0 ? "Revisa la lista de abajo" : "Ninguno",
+                  },
+                  {
+                    label: "Intentos fallidos (24 h)",
+                    value: health.security.failedLogins24h,
+                    icon: UserRoundX,
+                    hint: "Inicios de sesión con contraseña incorrecta",
+                  },
+                  {
+                    label: "Cuentas en alerta",
+                    value: health.security.accountsOnAlert,
+                    icon: ShieldAlert,
+                    tone: health.security.accountsOnAlert > 0 ? "danger" : "default",
+                    hint: "10 o más intentos en la última hora",
+                  },
+                ]
+              : []
+          }
+        />
+      )}
 
       <Card>
         <CardHeader>
@@ -127,12 +163,13 @@ export default function AdminActivityPage() {
               </label>
             )}
           </AuditFiltersBar>
-          <AuditFeed feed={feed} showBusiness />
+          <AuditFeed feed={feed} showBusiness groupByDay />
         </CardContent>
       </Card>
 
       <EmailOutboxCard
         outbox={emails}
+        groupByDay
         description="Todos los emails de la plataforma: altas, contraseñas, reservas y recordatorios."
       />
     </div>

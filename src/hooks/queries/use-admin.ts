@@ -5,9 +5,11 @@ import type {
   AdminMemberInput,
   BusinessOwnerInput,
   BusinessCategoryInput,
+  PanelColorsInput,
   PlatformAdminInput,
   PlatformSettingsInput,
 } from "@/lib/validations/admin";
+import { useSession } from "@/features/auth/use-session";
 import type { AdminBusinessDetail, Business, BusinessStatus, ClientRequiredFields, PlanId } from "@/types";
 import { queryKeys } from "./query-keys";
 
@@ -187,6 +189,15 @@ export const useAssignBusinessOwner = () =>
   useAdminMutation(({ businessId, input }: { businessId: string; input: BusinessOwnerInput }) =>
     data.admin.assignBusinessOwner(businessId, input),
   );
+
+/** Guarda los colores del panel del super admin y refresca la sesión: el panel cambia al momento (spec 007). */
+export function useUpdatePanelColors() {
+  const { refresh } = useSession();
+  return useMutation({
+    mutationFn: (input: PanelColorsInput) => data.admin.updatePanelColors(input),
+    onSuccess: () => refresh(),
+  });
+}
 
 export function useUpdatePlatformSettings() {
   const queryClient = useQueryClient();

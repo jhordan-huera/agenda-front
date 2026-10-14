@@ -2,13 +2,14 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { capitalize, formatDate } from "@/lib/format";
 import type { PlatformStats } from "@/types";
-import { ADMIN_CHART, AXIS_TICK } from "./admin-chart-colors";
+import { useAdminChartColors } from "./admin-chart-colors";
 import { ChartLegend, ChartTable, TooltipBox } from "./chart-parts";
 
 type Day = PlatformStats["health"]["emailsByDay"][number] & { label: string };
 
 /** Emails enviados y fallidos de los últimos 14 días, en columnas apiladas (spec 006, historia 5). */
 export function EmailsChart({ days }: { days: PlatformStats["health"]["emailsByDay"] }) {
+  const { colors, axisTick } = useAdminChartColors();
   const data: Day[] = days.map((day) => ({ ...day, label: formatDate(day.date, "d MMM") }));
   const sent = days.reduce((total, day) => total + day.sent, 0);
   const failed = days.reduce((total, day) => total + day.failed, 0);
@@ -20,8 +21,8 @@ export function EmailsChart({ days }: { days: PlatformStats["health"]["emailsByD
       <TooltipBox
         title={capitalize(formatDate(day.date, "EEEE d 'de' MMMM"))}
         lines={[
-          { label: "Enviados", value: day.sent, color: ADMIN_CHART.series },
-          { label: "Fallidos", value: day.failed, color: ADMIN_CHART.failed },
+          { label: "Enviados", value: day.sent, color: colors.series },
+          { label: "Fallidos", value: day.failed, color: colors.failed },
         ]}
       />
     );
@@ -38,8 +39,8 @@ export function EmailsChart({ days }: { days: PlatformStats["health"]["emailsByD
         </div>
         <ChartLegend
           items={[
-            { label: "Enviados", color: ADMIN_CHART.series },
-            { label: "Fallidos", color: ADMIN_CHART.failed },
+            { label: "Enviados", color: colors.series },
+            { label: "Fallidos", color: colors.failed },
           ]}
         />
       </CardHeader>
@@ -47,12 +48,12 @@ export function EmailsChart({ days }: { days: PlatformStats["health"]["emailsByD
         <div className="h-56" role="img" aria-label={`Emails de los últimos 14 días: ${sent} enviados y ${failed} fallidos.`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -4 }}>
-              <CartesianGrid vertical={false} stroke={ADMIN_CHART.grid} />
-              <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: ADMIN_CHART.axis }} interval="preserveStartEnd" minTickGap={8} />
-              <YAxis allowDecimals={false} tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} />
-              <Tooltip content={EmailsTooltip} cursor={{ fill: ADMIN_CHART.cursor }} />
-              <Bar dataKey="sent" stackId="emails" fill={ADMIN_CHART.series} maxBarSize={24} isAnimationActive={false} />
-              <Bar dataKey="failed" stackId="emails" fill={ADMIN_CHART.failed} radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={false} />
+              <CartesianGrid vertical={false} stroke={colors.grid} />
+              <XAxis dataKey="label" tick={axisTick} tickLine={false} axisLine={{ stroke: colors.axis }} interval="preserveStartEnd" minTickGap={8} />
+              <YAxis allowDecimals={false} tick={axisTick} tickLine={false} axisLine={false} width={40} />
+              <Tooltip content={EmailsTooltip} cursor={{ fill: colors.cursor }} />
+              <Bar dataKey="sent" stackId="emails" fill={colors.series} maxBarSize={24} isAnimationActive={false} />
+              <Bar dataKey="failed" stackId="emails" fill={colors.failed} radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer>
         </div>

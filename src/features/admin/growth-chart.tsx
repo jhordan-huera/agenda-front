@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { capitalize, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { DailyCounts, PlatformStats } from "@/types";
-import { ADMIN_CHART, AXIS_TICK } from "./admin-chart-colors";
+import { useAdminChartColors } from "./admin-chart-colors";
 import { ChartLegend, ChartTable, TooltipBox } from "./chart-parts";
 
 type Metric = keyof DailyCounts;
@@ -37,6 +37,7 @@ function accumulate(daily: PlatformStats["growth"]["daily"], metric: Metric): Po
  * para ver si va por delante o por detrás (spec 006, historia 5).
  */
 export function GrowthChart({ growth }: { growth: PlatformStats["growth"] }) {
+  const { colors, axisTick } = useAdminChartColors();
   const [metric, setMetric] = useState<Metric>("appointments");
   const currentMonth = capitalize(formatDate(growth.from, "MMMM"));
   const previousMonth = capitalize(formatDate(growth.previousFrom, "MMMM"));
@@ -52,8 +53,8 @@ export function GrowthChart({ growth }: { growth: PlatformStats["growth"] }) {
       <TooltipBox
         title={`Día ${point.day} · acumulado`}
         lines={[
-          ...(point.current === null ? [] : [{ label: currentMonth, value: point.current, color: ADMIN_CHART.series }]),
-          ...(point.previous === null ? [] : [{ label: previousMonth, value: point.previous, color: ADMIN_CHART.previous }]),
+          ...(point.current === null ? [] : [{ label: currentMonth, value: point.current, color: colors.series }]),
+          ...(point.previous === null ? [] : [{ label: previousMonth, value: point.previous, color: colors.previous }]),
         ]}
       />
     );
@@ -87,8 +88,8 @@ export function GrowthChart({ growth }: { growth: PlatformStats["growth"] }) {
         </div>
         <ChartLegend
           items={[
-            { label: currentMonth, color: ADMIN_CHART.series },
-            { label: previousMonth, color: ADMIN_CHART.previous, dashed: true },
+            { label: currentMonth, color: colors.series },
+            { label: previousMonth, color: colors.previous, dashed: true },
           ]}
         />
       </CardHeader>
@@ -100,12 +101,12 @@ export function GrowthChart({ growth }: { growth: PlatformStats["growth"] }) {
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -4 }}>
-              <CartesianGrid vertical={false} stroke={ADMIN_CHART.grid} />
-              <XAxis dataKey="day" tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: ADMIN_CHART.axis }} interval="preserveStartEnd" minTickGap={12} />
-              <YAxis allowDecimals={false} tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} />
-              <Tooltip content={GrowthTooltip} cursor={{ stroke: ADMIN_CHART.axis }} />
-              <Line type="monotone" dataKey="previous" stroke={ADMIN_CHART.previous} strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} />
-              <Line type="monotone" dataKey="current" stroke={ADMIN_CHART.series} strokeWidth={3} dot={false} isAnimationActive={false} />
+              <CartesianGrid vertical={false} stroke={colors.grid} />
+              <XAxis dataKey="day" tick={axisTick} tickLine={false} axisLine={{ stroke: colors.axis }} interval="preserveStartEnd" minTickGap={12} />
+              <YAxis allowDecimals={false} tick={axisTick} tickLine={false} axisLine={false} width={40} />
+              <Tooltip content={GrowthTooltip} cursor={{ stroke: colors.axis }} />
+              <Line type="monotone" dataKey="previous" stroke={colors.previous} strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} />
+              <Line type="monotone" dataKey="current" stroke={colors.series} strokeWidth={3} dot={false} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

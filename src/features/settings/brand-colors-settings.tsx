@@ -1,21 +1,12 @@
-import { Check, ExternalLink, Info } from "lucide-react";
-import { useId, useState, type CSSProperties } from "react";
+import { ExternalLink } from "lucide-react";
+import { type CSSProperties } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { BrandColorsPicker } from "@/features/branding/brand-colors-picker";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
-import {
-  BRAND_PRESETS,
-  brandThemeVariables,
-  DEFAULT_BRAND_COLORS,
-  normalizeHex,
-  resolveBrandPalette,
-  sameColors,
-} from "@/lib/brand-theme";
+import { brandThemeVariables, DEFAULT_BRAND_COLORS, resolveBrandPalette } from "@/lib/brand-theme";
 import { getErrorMessage } from "@/lib/data";
-import { cn } from "@/lib/utils";
 import type { BrandColors, Business } from "@/types";
 import { SettingsSection } from "./settings-section";
 import { useSettingsForm } from "./use-settings-form";
@@ -31,14 +22,6 @@ export function BrandColorsSettings({ business }: { business: Business }) {
   }>({ colors: business.brandColors });
   const colors = values.colors;
   const effective = colors ?? DEFAULT_BRAND_COLORS;
-  const palette = resolveBrandPalette(effective);
-
-  // Elegir a mano los colores de Agenda360 es lo mismo que no tener colores propios.
-  const setColors = (next: BrandColors | null) =>
-    setField(
-      "colors",
-      next && sameColors(next, DEFAULT_BRAND_COLORS) ? null : next,
-    );
 
   const submit = async () => {
     try {
@@ -62,167 +45,11 @@ export function BrandColorsSettings({ business }: { business: Business }) {
       onDiscard={() => reset()}
     >
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-        <div className="grid gap-6">
-          <fieldset className="grid gap-3">
-            <legend className="mb-3 text-sm font-semibold">
-              Paletas listas
-            </legend>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {BRAND_PRESETS.map((preset) => {
-                const swatch = preset.colors ?? DEFAULT_BRAND_COLORS;
-                const checked = sameColors(preset.colors, colors);
-                return (
-                  <label key={preset.id} className="relative">
-                    <input
-                      type="radio"
-                      name="brand-preset"
-                      value={preset.id}
-                      checked={checked}
-                      onChange={() => setColors(preset.colors)}
-                      className="peer sr-only"
-                    />
-                    <span
-                      className={cn(
-                        "flex cursor-pointer items-center gap-2 rounded-lg border bg-card px-2.5 py-2.5 text-sm font-medium transition-[border-color,box-shadow] duration-150 hover:border-rule-strong",
-                        "peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50",
-                        checked && "border-ink/50 ring-1 ring-ink/30",
-                      )}
-                    >
-                      <Swatches colors={swatch} />
-                      <span
-                        className="min-w-0 flex-1 truncate"
-                        title={preset.name}
-                      >
-                        {preset.name}
-                      </span>
-                    </span>
-                    {checked && (
-                      <span
-                        className="absolute -top-1.5 -right-1.5 grid size-4.5 place-items-center rounded-full bg-ink text-primary-foreground"
-                        aria-hidden
-                      >
-                        <Check className="size-3" strokeWidth={3} />
-                      </span>
-                    )}
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-
-          <fieldset className="grid gap-3">
-            <legend className="mb-1 text-sm font-semibold">
-              O elige tus colores
-            </legend>
-            <p className="text-xs text-muted-foreground">
-              Por ejemplo, los de tu logo. El resto de tonos (fondos, bordes,
-              textos) se calculan solos a partir de estos dos.
-            </p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ColorField
-                label="Color principal"
-                description="Botones, títulos y lo activo."
-                value={effective.primary}
-                onChange={(primary) => setColors({ ...effective, primary })}
-              />
-              <ColorField
-                label="Color de resaltado"
-                description="Lo elegido o lo nuevo: la hora reservada, el día elegido."
-                value={effective.highlight}
-                onChange={(highlight) => setColors({ ...effective, highlight })}
-              />
-            </div>
-            {(palette.inkAdjusted || palette.highlightAdjusted) && (
-              <p
-                className="flex items-start gap-2 rounded-lg bg-secondary px-3 py-2 text-xs text-secondary-foreground"
-                role="status"
-              >
-                <Info className="mt-px size-3.5 shrink-0" aria-hidden />
-                <span>
-                  {palette.inkAdjusted &&
-                    "Tu color principal es muy claro para escribir en blanco encima: en botones y títulos se usa un poco más oscuro. "}
-                  {palette.highlightAdjusted &&
-                    "El resaltado se aclaró un poco para que el texto encima se lea. "}
-                  Así lo ves en la vista previa.
-                </span>
-              </p>
-            )}
-          </fieldset>
-        </div>
+        <BrandColorsPicker colors={colors} onChange={(next) => setField("colors", next)} />
 
         <BrandPreview colors={effective} slug={business.slug} />
       </div>
     </SettingsSection>
-  );
-}
-
-function Swatches({ colors }: { colors: BrandColors }) {
-  return (
-    <span className="flex shrink-0" aria-hidden>
-      <span
-        className="size-4.5 rounded-full ring-2 ring-card"
-        style={{ background: colors.primary }}
-      />
-      <span
-        className="-ml-1.5 size-4.5 rounded-full ring-2 ring-card"
-        style={{ background: colors.highlight }}
-      />
-    </span>
-  );
-}
-
-interface ColorFieldProps {
-  label: string;
-  description: string;
-  value: string;
-  onChange: (hex: string) => void;
-}
-
-/** Selector del sistema (el cuadro de color) y el código #RRGGBB, que también se puede escribir. */
-function ColorField({ label, description, value, onChange }: ColorFieldProps) {
-  const id = useId();
-  // Lo escrito a medias (#4a6) no se aplica hasta que sea un color válido.
-  const [draft, setDraft] = useState<{ text: string; for: string } | null>(
-    null,
-  );
-  const text = draft?.for === value ? draft.text : value.toUpperCase();
-  const invalid = draft?.for === value && normalizeHex(draft.text) === null;
-
-  return (
-    <div className="grid content-start gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          aria-label={`${label}: elegir en la paleta`}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="size-9 shrink-0 cursor-pointer rounded-md border border-input bg-card p-0.5 [&::-moz-color-swatch]:rounded-[5px] [&::-moz-color-swatch]:border-0 [&::-webkit-color-swatch]:rounded-[5px] [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
-        />
-        <Input
-          id={id}
-          value={text}
-          spellCheck={false}
-          maxLength={7}
-          aria-invalid={invalid || undefined}
-          aria-describedby={`${id}-description`}
-          className="h-9 font-medium uppercase tabular-nums"
-          onChange={(event) => {
-            const hex = normalizeHex(event.target.value);
-            if (hex && event.target.value.replace("#", "").length === 6) {
-              setDraft(null);
-              onChange(hex);
-            } else {
-              setDraft({ text: event.target.value, for: value });
-            }
-          }}
-          onBlur={() => setDraft(null)}
-        />
-      </div>
-      <p id={`${id}-description`} className="text-xs text-muted-foreground">
-        {invalid ? "Escribe el color como #RRGGBB." : description}
-      </p>
-    </div>
   );
 }
 

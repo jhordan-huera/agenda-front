@@ -4,6 +4,7 @@ import type {
   BusinessOwnerInput,
   BusinessCategoryInput,
   BusinessDeletionInput,
+  PanelColorsInput,
   PlanRejectionInput,
   PlatformAdminInput,
   PlatformSettingsInput,
@@ -209,7 +210,8 @@ export interface AppointmentRepository {
   /** Falla con `conflict` si se solapa con otra cita activa y con `plan_limit` si se superó el plan. */
   create(businessId: string, input: AppointmentInput): Promise<Appointment>;
   update(businessId: string, appointmentId: string, input: AppointmentInput): Promise<Appointment>;
-  updateStatus(businessId: string, appointmentId: string, status: AppointmentStatus): Promise<Appointment>;
+  /** `notify: false`: corrige un error sin avisar al paciente (spec 008). */
+  updateStatus(businessId: string, appointmentId: string, status: AppointmentStatus, notify?: boolean): Promise<Appointment>;
   /** Registra en la actividad que se abrió WhatsApp con el aviso de un cambio de la cita. */
   /** `clientId`: a cuál de los pacientes de la cita (con varios pacientes, un registro por cada uno). */
   logWhatsAppNotice(businessId: string, appointmentId: string, kind: WhatsAppNoticeKind, clientId?: string): Promise<void>;
@@ -362,6 +364,8 @@ export interface PlatformAdminRepository {
   /** Todos los emails de la plataforma (bandeja de salida global). */
   listEmails(): Promise<EmailNotification[]>;
   updateSettings(input: PlatformSettingsInput): Promise<PlatformSettings>;
+  /** Colores del panel de plataforma de la cuenta que lo pide (spec 007). */
+  updatePanelColors(input: PanelColorsInput): Promise<{ colors: BrandColors | null }>;
 }
 
 export interface DataRepository {

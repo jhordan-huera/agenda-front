@@ -6,6 +6,7 @@ import { ErrorState } from "@/components/shared/error-state";
 import { FormField } from "@/components/shared/form-field";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { CardTitleIcon } from "@/components/shared/card-title-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,8 +47,8 @@ export function PlatformTeamCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UsersRound className="size-4 text-primary" aria-hidden /> Equipo de la plataforma
+        <CardTitle className="flex items-center gap-2.5">
+          <CardTitleIcon icon={UsersRound} /> Equipo de la plataforma
         </CardTitle>
         <CardDescription>
           Super admins que te ayudan con el soporte: entran a este panel y gestionan negocios como tú. Todo lo que hacen queda

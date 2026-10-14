@@ -9,9 +9,10 @@ import { useBusinessId } from "@/features/auth/use-session";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useInvalidateActivity } from "@/hooks/queries/use-invalidate-activity";
 import { useLookups } from "@/hooks/queries/use-lookups";
-import { DEFAULT_NOTIFICATION_SETTINGS } from "@/lib/constants/business";
+import { DEFAULT_NOTIFICATION_SETTINGS, isFollowUpDate } from "@/lib/constants/business";
 import { joinNames } from "@/lib/format";
 import { data } from "@/lib/data";
+import { getZonedNow } from "@/lib/time";
 import { buildAppointmentNotice, getWhatsAppUrl, type AppointmentNoticeKind } from "@/lib/whatsapp";
 import type { Appointment, Business, Client } from "@/types";
 import { appointmentClientIds, getServiceName, paymentLinkOf } from "./appointment-utils";
@@ -22,6 +23,7 @@ import { useProfessionals } from "@/hooks/queries/use-professionals";
 const REASONS: Record<AppointmentNoticeKind, string> = {
   confirmed: "La cita quedó confirmada.",
   pending: "La cita cancelada vuelve a estar agendada, pendiente de confirmar.",
+  unconfirmed: "La cita volvió a quedar pendiente de confirmar.",
   cancelled: "La cita quedó cancelada.",
   rescheduled: "Cambió la fecha, la hora, el profesional o el lugar de la cita.",
   completed: "La cita quedó completada.",
@@ -34,17 +36,23 @@ const placeOf = (appointment: Appointment) =>
 
 /**
  * ¿Le llega además un email automático? Lo mismo que decide la API al guardar la cita
- * (notifyAppointmentChange): el de cancelación; el de "restablecida" si estaba cancelada; el de
- * cambio si cambió la fecha, la hora, el servicio, el profesional o el lugar; y el de confirmación
- * al pasar a "Confirmada" (con los emails activados en Configuración). A cada paciente, al suyo.
+ * (notifyAppointmentChange), con los emails activados en Configuración. A cada paciente, el suyo:
+ * - la cancelación;
+ * - Atendida o No asistió, con «Seguimiento» y si la cita es de los últimos 7 días (spec 008);
+ * - «vuelve a estar agendada» si estaba cancelada;
+ * - el de cambio si cambió la fecha, la hora, el servicio, el profesional o el lugar;
+ * - el de confirmación al pasar a Confirmada y «pendiente de confirmar» al volver a Pendiente.
  */
 function sendsEmail(notice: PendingNotice, client: Client, business: Business): boolean {
   const { kind, appointment, previous } = notice;
   if (!client.email) return false;
   const settings = { ...DEFAULT_NOTIFICATION_SETTINGS, ...business.notificationSettings };
   if (kind === "cancelled") return settings.cancellations;
-  if (kind === "completed" || kind === "no_show" || !settings.confirmations) return false;
-  if (!previous) return kind === "confirmed" || kind === "rescheduled" || kind === "pending";
+  if (kind === "completed" || kind === "no_show") {
+    return settings.followUps && isFollowUpDate(appointment.date, getZonedNow(business.timezone).date);
+  }
+  if (!settings.confirmations) return false;
+  if (!previous) return kind === "confirmed" || kind === "rescheduled" || kind === "pending" || kind === "unconfirmed";
   if (previous.status === "cancelled") return true;
   const rescheduled =
     previous.date !== appointment.date ||
@@ -52,7 +60,11 @@ function sendsEmail(notice: PendingNotice, client: Client, business: Business): 
     previous.serviceId !== appointment.serviceId ||
     previous.professionalId !== appointment.professionalId ||
     placeOf(previous) !== placeOf(appointment);
-  return rescheduled || (appointment.status === "confirmed" && previous.status !== "confirmed");
+  return (
+    rescheduled ||
+    (appointment.status === "confirmed" && previous.status !== "confirmed") ||
+    (appointment.status === "pending" && previous.status !== "pending")
+  );
 }
 
 /** Un paciente de la cita con teléfono válido y su mensaje (que el profesional puede retocar). */

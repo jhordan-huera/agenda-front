@@ -19,6 +19,15 @@ const TOP_GROWING = 5;
 /** Días desde una fecha y hora hasta hoy, en la zona del panel (null si no hay fecha). */
 export const daysSince = (iso: string | null, today: ISODate) => (iso ? daysBetween(toZonedDate(iso), today) : null);
 
+/** «Hoy», «Ayer», «Hace 5 días» o «Sin actividad» (tarjetas de negocios, spec 007). */
+export function activityLabel(iso: string | null, today: ISODate): string {
+  const days = daysSince(iso, today);
+  if (days === null) return "Sin actividad";
+  if (days <= 0) return "Hoy";
+  if (days === 1) return "Ayer";
+  return `Hace ${days} días`;
+}
+
 /** El plan siguiente, para ofrecerlo (Free → Pro, Pro → Business; null en el último). */
 export function nextPlan(plan: PlanId) {
   const index = PLANS.findIndex((candidate) => candidate.id === plan);

@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AdminBusinessSummary } from "@/types";
-import { ADMIN_CHART } from "./admin-chart-colors";
+import { useAdminChartColors } from "./admin-chart-colors";
 import { ChartLegend } from "./chart-parts";
 
 /** Negocios del gráfico (los de más citas este mes). */
@@ -12,6 +12,7 @@ const SHOWN = 8;
  * horizontales con el nombre encima, para que se lea entero también en el celular (spec 006, historia 5).
  */
 export function BusinessGrowthChart({ businesses }: { businesses: AdminBusinessSummary[] }) {
+  const { colors } = useAdminChartColors();
   const rows = businesses
     .filter(({ business, growth }) => business.status === "active" && growth && (growth.current > 0 || growth.previous > 0))
     .sort((a, b) => b.growth.current - a.growth.current || b.growth.previous - a.growth.previous)
@@ -32,8 +33,8 @@ export function BusinessGrowthChart({ businesses }: { businesses: AdminBusinessS
         </div>
         <ChartLegend
           items={[
-            { label: "Este mes", color: ADMIN_CHART.series },
-            { label: "Mes pasado", color: ADMIN_CHART.soft },
+            { label: "Este mes", color: colors.series },
+            { label: "Mes pasado", color: colors.soft },
           ]}
         />
       </CardHeader>
@@ -50,8 +51,8 @@ export function BusinessGrowthChart({ businesses }: { businesses: AdminBusinessS
                 </span>
               </div>
               <div className="mt-1.5 space-y-1" aria-hidden>
-                <div className="h-2.5 rounded-full" style={{ width: width(growth.current), backgroundColor: ADMIN_CHART.series }} />
-                <div className="h-2.5 rounded-full" style={{ width: width(growth.previous), backgroundColor: ADMIN_CHART.soft }} />
+                <div className="h-2.5 rounded-full" style={{ width: width(growth.current), backgroundColor: colors.series }} />
+                <div className="h-2.5 rounded-full" style={{ width: width(growth.previous), backgroundColor: colors.soft }} />
               </div>
             </li>
           ))}

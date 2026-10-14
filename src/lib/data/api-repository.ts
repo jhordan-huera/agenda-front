@@ -27,6 +27,7 @@ import type {
   EmailNotification,
   PlanUsage,
   PlatformSettings,
+  BrandColors,
   PlatformStats,
   Professional,
   PublicBusinessProfile,
@@ -140,8 +141,8 @@ export const apiRepository: DataRepository = {
     create: (businessId, input) => api.post<Appointment>(`${business(businessId)}/appointments`, input),
     update: (businessId, appointmentId, input) =>
       api.put<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}`, input),
-    updateStatus: (businessId, appointmentId, status) =>
-      api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, { status }),
+    updateStatus: (businessId, appointmentId, status, notify = true) =>
+      api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, { status, notify }),
     logWhatsAppNotice: (businessId, appointmentId, kind, clientId) =>
       api.post<void>(`${business(businessId)}/appointments/${id(appointmentId)}/whatsapp-notice`, { kind, clientId }),
     setArrival: (businessId, appointmentId, arrived) =>
@@ -229,5 +230,6 @@ export const apiRepository: DataRepository = {
     listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),
     listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),
+    updatePanelColors: (input) => api.put<{ colors: BrandColors | null }>("/admin/panel-colors", input),
   },
 };

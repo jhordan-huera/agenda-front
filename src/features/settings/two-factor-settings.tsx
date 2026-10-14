@@ -1,7 +1,8 @@
-import { Check, Copy, Download, KeyRound, ShieldCheck, ShieldOff } from "lucide-react";
+import { Check, Copy, Download, KeyRound, ShieldCheck, ShieldOff, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { renderSVG } from "uqr";
+import { CardTitleIcon } from "@/components/shared/card-title-icon";
 import { ErrorState } from "@/components/shared/error-state";
 import { FormField } from "@/components/shared/form-field";
 import { PasswordInput } from "@/components/shared/password-input";
@@ -33,7 +34,7 @@ const FEW_RECOVERY_CODES = 3;
  * de 6 dígitos de una app de autenticación del celular. Con datos reales es obligatoria.
  * `onEnabled`: al terminar de activarla (después de guardar los códigos de recuperación).
  */
-export function TwoFactorSettings({ onEnabled }: { onEnabled?: () => void } = {}) {
+export function TwoFactorSettings({ onEnabled, icon }: { onEnabled?: () => void; icon?: LucideIcon } = {}) {
   const status = useTwoFactorStatus();
   const [dialog, setDialog] = useState<"enable" | "disable" | "codes" | null>(null);
   const close = () => setDialog(null);
@@ -46,6 +47,7 @@ export function TwoFactorSettings({ onEnabled }: { onEnabled?: () => void } = {}
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2">
+          {icon && <CardTitleIcon icon={icon} />}
           Verificación en dos pasos
           {enabled ? (
             <Badge className="bg-emerald-100 text-emerald-800">Activada</Badge>

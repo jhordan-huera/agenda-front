@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
@@ -12,7 +13,7 @@ import { useSettingsForm } from "./use-settings-form";
 const EMPTY: ChangePasswordInput = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
 /** Cambio de la propia contraseña del super admin (las de los usuarios las pone él desde /admin). */
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ icon }: { icon?: LucideIcon } = {}) {
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(EMPTY);
   const [saving, setSaving] = useState(false);
 
@@ -35,6 +36,7 @@ export function ChangePasswordForm() {
   return (
     <SettingsSection
       title="Contraseña"
+      icon={icon}
       description="La contraseña de tu cuenta de super admin."
       dirty={dirty}
       saving={saving}

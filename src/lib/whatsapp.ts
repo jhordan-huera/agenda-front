@@ -84,11 +84,11 @@ export function describeBankAccounts(accounts: BankAccount[]): string {
 export type AppointmentNoticeKind = WhatsAppNoticeKind;
 
 /**
- * Aviso que corresponde a un cambio de estado. Pasar a "Pendiente" sólo lo tiene si la cita estaba
- * cancelada (vuelve a estar agendada); desde otro estado, no se avisa.
+ * Aviso que corresponde a un cambio de estado (spec 008: todos se avisan). Pasar a "Pendiente" desde
+ * Cancelada es "vuelve a estar agendada"; desde otro estado, "queda pendiente de confirmar".
  */
 export function noticeForStatus(status: AppointmentStatus, previous?: AppointmentStatus): AppointmentNoticeKind | null {
-  if (status === "pending") return previous === "cancelled" ? "pending" : null;
+  if (status === "pending") return previous === "cancelled" ? "pending" : previous ? "unconfirmed" : null;
   return status;
 }
 
@@ -165,6 +165,8 @@ export function buildAppointmentNotice(kind: AppointmentNoticeKind, data: Appoin
       return `${hello}, cambiamos tu cita de ${data.serviceName} con ${data.businessName}: ahora es ${when}${withWhom}${atHome}.${videoCall} Si no te queda bien, respóndenos por aquí.${payment}`;
     case "pending":
       return `${hello}, tu cita de ${data.serviceName} ${when} con ${data.businessName} vuelve a estar agendada; te escribiremos para confirmarla.${videoCall}${payment}`;
+    case "unconfirmed":
+      return `${hello}, tu cita de ${data.serviceName} ${when} con ${data.businessName} queda pendiente de confirmar; te escribiremos para confirmarla.`;
     case "completed":
       return `${hello}, gracias por tu visita a ${data.businessName}. Cuando quieras volver, puedes reservar aquí: ${data.bookingUrl}`;
     case "no_show":

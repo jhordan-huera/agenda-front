@@ -4,7 +4,7 @@ import type { BusinessStatus, PlanId } from "@/types";
 
 const BADGE = "inline-flex h-5 items-center rounded-full px-2 text-xs font-medium whitespace-nowrap ring-1 ring-inset";
 
-export function BusinessStatusBadge({ status }: { status: BusinessStatus }) {
+export function BusinessStatusBadge({ status, className }: { status: BusinessStatus; className?: string }) {
   return (
     <span
       className={cn(
@@ -12,6 +12,7 @@ export function BusinessStatusBadge({ status }: { status: BusinessStatus }) {
         status === "active"
           ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
           : "bg-amber-50 text-amber-800 ring-amber-600/25",
+        className,
       )}
     >
       {status === "active" ? "Activo" : "Suspendido"}
@@ -25,8 +26,8 @@ const PLAN_TONES: Record<PlanId, string> = {
   business: "bg-ink text-white ring-ink",
 };
 
-export function PlanBadge({ plan }: { plan: PlanId }) {
-  return <span className={cn(BADGE, PLAN_TONES[plan])}>{getPlan(plan).name}</span>;
+export function PlanBadge({ plan, className }: { plan: PlanId; className?: string }) {
+  return <span className={cn(BADGE, PLAN_TONES[plan], className)}>{getPlan(plan).name}</span>;
 }
 
 export function UserStatusBadge({ active }: { active: boolean }) {
