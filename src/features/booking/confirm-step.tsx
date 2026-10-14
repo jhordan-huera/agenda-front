@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, MapPin, Pencil, ShieldCheck, User, Video } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Pencil, ShieldCheck, User, Users, Video } from "lucide-react";
 import type { ReactNode, RefCallback } from "react";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
@@ -101,6 +101,11 @@ export function ConfirmStep({
           )}
         </Row>
         <Row icon={User} label="Tus datos">
+          {input.extraPatients.length > 0 && (
+            <span aria-hidden className="block text-xs font-medium text-muted-foreground">
+              Tus datos
+            </span>
+          )}
           <span className="font-semibold">{input.name}</span>
           <span className="block text-muted-foreground tabular-nums">Cédula {input.documentId}</span>
           <span className="block text-muted-foreground">
@@ -108,6 +113,18 @@ export function ConfirmStep({
           </span>
           {input.notes && <span className="mt-1 block text-muted-foreground italic">“{input.notes}”</span>}
         </Row>
+        {input.extraPatients.map((person, index) => (
+          <Row key={index} icon={Users} label={input.extraPatients.length === 1 ? "La otra persona" : `Persona ${index + 2}`}>
+            <span aria-hidden className="block text-xs font-medium text-muted-foreground">
+              {input.extraPatients.length === 1 ? "La otra persona" : `Persona ${index + 2}`}
+            </span>
+            <span className="font-semibold">{person.name}</span>
+            <span className="block text-muted-foreground tabular-nums">Cédula {person.documentId}</span>
+            <span className="block text-muted-foreground">
+              {person.email}, {person.phone}
+            </span>
+          </Row>
+        ))}
       </dl>
 
       {bookingSettings.allowCancellations && bookingSettings.cancellationPolicy && (

@@ -3,6 +3,7 @@ import { getListPrice } from "@/features/appointments/appointment-utils";
 import { capitalize, formatCurrency, formatDuration, formatLongDate, formatPrice, formatTimeRange, isPriceVisible } from "@/lib/format";
 import { addMinutesToTime } from "@/lib/time";
 import type { ISODate, PublicBusiness, PublicProfessional, PublicService, ServiceMode } from "@/types";
+import { peopleLabel } from "./contact";
 import { TimezoneNote } from "./timezone-note";
 
 interface BookingSummaryProps {
@@ -33,6 +34,7 @@ export function BookingSummary({ business, professional, service, date, time, pl
             <dd className="text-sm text-muted-foreground">
               {formatDuration(service.durationMinutes)} con {professional?.displayName ?? "el primer profesional disponible"}
             </dd>
+            {peopleLabel(service) && <dd className="text-sm font-semibold text-ink">{peopleLabel(service)}</dd>}
           </div>
           <div>
             <dt className="sr-only">Fecha y hora</dt>

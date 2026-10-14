@@ -12,7 +12,7 @@ import { useBusinessTemplate } from "./use-business-template";
  */
 export function BusinessTemplateBanner() {
   const { can } = usePermissions();
-  const { templates, template, chosen, exceptions } = useBusinessTemplate();
+  const { templates, template, chosen } = useBusinessTemplate();
 
   if (templates.isPending) return <Skeleton className="h-[74px] rounded-xl" />;
   if (!template) return null;
@@ -34,8 +34,6 @@ export function BusinessTemplateBanner() {
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {chosen ? "Lo elegiste para todo tu negocio." : "Es el recomendado para tu especialidad. Puedes elegir otro para todo tu negocio."}
-            {exceptions.length > 0 &&
-              ` En las citas de ${exceptions.map((e) => `${e.service.name} se usa «${e.template.name}»`).join(", en las de ")}.`}
           </p>
         </div>
       </div>

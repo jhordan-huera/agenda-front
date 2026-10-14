@@ -36,7 +36,7 @@ const countFields = (template: ClinicalTemplate) =>
 export default function ClinicalTemplatesPage() {
   const clinicalAccess = useClinicalAccess();
   const { can } = usePermissions();
-  const { templates, template: current, chosen, exceptions } = useBusinessTemplate(clinicalAccess);
+  const { templates, template: current, chosen } = useBusinessTemplate(clinicalAccess);
   const subscription = useSubscription();
   const setActive = useSetClinicalTemplateActive();
   const setDefault = useSetDefaultClinicalTemplate();
@@ -154,24 +154,6 @@ export default function ClinicalTemplatesPage() {
                   : "Se eligió solo porque es el recomendado para tu especialidad. Para usar otro, pulsa «Usar en todo el negocio» en cualquier formato de abajo."}
               </ExplainItem>
               <ExplainItem icon={Info}>Al registrar una evolución puedes cambiarlo sólo para esa consulta.</ExplainItem>
-              <ExplainItem icon={Info}>
-                {exceptions.length > 0 ? (
-                  <>
-                    Excepciones: en las citas de{" "}
-                    {exceptions.map((e) => `${e.service.name} se usa «${e.template.name}»`).join(", en las de ")}.{" "}
-                    <Link to="/dashboard/services" className="font-semibold text-ink underline-offset-4 hover:underline">
-                      Cambiar en Servicios
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    Si un servicio necesita otro formato, elígelo al editar el servicio.{" "}
-                    <Link to="/dashboard/services" className="font-semibold text-ink underline-offset-4 hover:underline">
-                      Ir a Servicios
-                    </Link>
-                  </>
-                )}
-              </ExplainItem>
             </ul>
           </section>
 

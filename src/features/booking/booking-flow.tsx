@@ -16,7 +16,7 @@ import { BookingSuccess } from "./booking-success";
 import { BookingSummary } from "./booking-summary";
 import { BusinessLocationCard } from "./business-location-card";
 import { ConfirmStep } from "./confirm-step";
-import { initialContact, type ContactValues } from "./contact";
+import { initialContact, otherPeopleOf, type ContactValues } from "./contact";
 import { ProfessionalStep } from "./professional-step";
 import { DetailsStep } from "./details-step";
 import { forgetSavedContact, saveContact } from "./saved-contact";
@@ -204,6 +204,7 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
         confirmation={confirmation}
         business={business}
         clientName={contact.name}
+        otherNames={pendingInput?.extraPatients.map((person) => person.name) ?? []}
         onBookAnother={reset}
       />
     );
@@ -219,7 +220,12 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
               ? `Sólo se muestran los horarios disponibles. Reserva con al menos ${plural(minNotice, "hora", "horas")} de anticipación.`
               : "Sólo se muestran los horarios disponibles.",
         }
-      : STEP_COPY[currentStep];
+      : currentStep === "details" && service && otherPeopleOf(service) > 0
+        ? {
+            title: "Los datos de cada persona",
+            description: `La sesión es para ${otherPeopleOf(service) + 1} personas: cada una recibe sus avisos.`,
+          }
+        : STEP_COPY[currentStep];
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">

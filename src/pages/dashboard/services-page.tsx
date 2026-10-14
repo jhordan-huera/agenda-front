@@ -9,7 +9,10 @@ import { RequirePermission } from "@/components/layout/require-permission";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAgendas } from "@/features/professionals/use-agendas";
 import { ServiceCard } from "@/features/services/service-card";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
+import { offersService } from "@/lib/availability";
 import { ServiceFormDialog } from "@/features/services/service-form-dialog";
 import { useDeleteService, useSaveService, useServices } from "@/hooks/queries/use-services";
 import { getErrorMessage } from "@/lib/data";
@@ -25,6 +28,8 @@ export default function ServicesPage() {
 
 function ServicesPageContent() {
   const servicesQuery = useServices();
+  const { data: business } = useCurrentBusiness();
+  const agendas = useAgendas();
   const saveService = useSaveService();
   const deleteService = useDeleteService();
   const [formState, setFormState] = useState<{ open: boolean; service?: Service }>({ open: false });
@@ -35,7 +40,7 @@ function ServicesPageContent() {
   const openCreate = () => setFormState({ open: true });
 
   const toggleActive = async (service: Service) => {
-    const { name, description, durationMinutes, price, showPrice, modes, homeVisitFee, clinicalTemplateId } = service;
+    const { name, description, durationMinutes, price, showPrice, modes, homeVisitFee } = service;
     try {
       await saveService.mutateAsync({
         id: service.id,
@@ -47,7 +52,6 @@ function ServicesPageContent() {
           showPrice,
           modes,
           homeVisitFee,
-          clinicalTemplateId,
           isActive: !service.isActive,
         },
       });
@@ -99,6 +103,9 @@ function ServicesPageContent() {
             <ServiceCard
               key={service.id}
               service={service}
+              people={business?.multiClientAppointments ? service.peoplePerSession : 1}
+              // Mientras cargan los profesionales no se avisa de nada.
+              offered={agendas.isPending || agendas.all.some((p) => p.isActive && offersService(p, service.id))}
               onEdit={(s) => setFormState({ open: true, service: s })}
               onToggleActive={toggleActive}
               onDelete={setDeleting}
