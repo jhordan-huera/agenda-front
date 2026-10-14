@@ -2,6 +2,7 @@ import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { ActiveBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VerifyBadge } from "@/components/shared/verify-badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -90,7 +91,10 @@ export function ClientsTable({ clients, summaries, onEdit, onDelete }: ClientsTa
                   <AppointmentDate appointment={summary.nextAppointment} />
                 </TableCell>
                 <TableCell>
-                  <ActiveBadge active={client.isActive} />
+                  <span className="flex flex-wrap gap-1.5">
+                    <ActiveBadge active={client.isActive} />
+                    {client.claimedClientId && <VerifyBadge />}
+                  </span>
                 </TableCell>
                 <TableCell className="pr-4" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>

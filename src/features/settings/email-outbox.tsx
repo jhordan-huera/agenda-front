@@ -37,6 +37,7 @@ const TYPE_LABELS: Record<EmailType, string> = {
   appointment_pending: "Pendiente de confirmar",
   appointment_completed: "Gracias por la visita",
   appointment_no_show: "No asistió",
+  account_security_changed: "Seguridad de la cuenta",
 };
 
 /** Bandeja de salida del negocio. */

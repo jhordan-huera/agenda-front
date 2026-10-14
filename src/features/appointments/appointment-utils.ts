@@ -31,6 +31,20 @@ export function getAppointmentClientNames(
   return joinNames(names);
 }
 
+/**
+ * Los pacientes «Por verificar» de la cita (spec 009): escribieron la cédula de otra ficha con otro
+ * email y otro teléfono. Vacío: la cita no tiene nada que revisar.
+ */
+export function clientsToVerify(
+  clientsById: Map<string, Client>,
+  appointment: Pick<Appointment, "clientId"> & { extraClientIds?: string[] },
+): Client[] {
+  return appointmentClientIds(appointment).flatMap((id) => {
+    const client = clientsById.get(id);
+    return client?.claimedClientId ? [client] : [];
+  });
+}
+
 export function getServiceName(servicesById: Map<string, Service>, serviceId: string): string {
   return servicesById.get(serviceId)?.name ?? "Servicio eliminado";
 }

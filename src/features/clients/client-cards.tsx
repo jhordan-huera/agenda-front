@@ -1,6 +1,7 @@
 import { Eye, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VerifyBadge } from "@/components/shared/verify-badge";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +69,7 @@ export function ClientCards({ clients, summaries, now, business, onEdit, onDelet
                   {client.documentId ? `Cédula ${client.documentId}` : "Sin cédula"}
                   {!client.isActive && ", inactivo"}
                 </p>
+                {client.claimedClientId && <VerifyBadge className="mt-1" />}
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

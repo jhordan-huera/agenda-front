@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { emailField, passwordField, requiredText } from "./fields";
+import { emailField, passwordField, personNameField } from "./fields";
 
 export const loginSchema = z.object({
   email: emailField,
@@ -9,8 +9,8 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
-    firstName: requiredText("El nombre"),
-    lastName: requiredText("El apellido"),
+    firstName: personNameField("El nombre"),
+    lastName: personNameField("El apellido"),
     email: emailField,
     password: passwordField,
     confirmPassword: z.string(),

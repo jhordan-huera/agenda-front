@@ -46,7 +46,9 @@ export async function apiRequest<T>(method: string, path: string, options: Reque
   try {
     response = await (takeEarlyResponse(method, path, options) ?? fetch(buildUrl(path, options.query), {
       method,
-      credentials: "include",
+      // Las rutas públicas (página de reservas, pago) no usan la sesión: van sin la cookie, y algunas
+      // respuestas las guarda la CDN (spec 009).
+      credentials: path.startsWith("/public/") ? "omit" : "include",
       headers: {
         Accept: "application/json",
         // Protección CSRF: la API rechaza las escrituras sin esta cabecera.
