@@ -29,8 +29,8 @@ Con los datos demo (`npm run dev:local` o `npm run db:seed` en la API), todas la
 | Cuenta | Negocio | Rol | Para probar |
 | --- | --- | --- | --- |
 | `admin@demo.com` | — (plataforma) | **Super admin** | Panel `/admin`: crear, suspender y cambiar el plan de negocios, usuarios, registro público |
-| `jhordan@demo.com` | Centro Profesional (plan Pro) | Propietario | Todo: equipo, suscripción, actividad |
-| `andrea@demo.com` | Centro Profesional | Administrador | Sin acceso a equipo ni suscripción |
+| `jhordan@demo.com` | Centro Profesional (plan Pro) | Propietario | Todo: negocio, colores, equipo, actividad |
+| `andrea@demo.com` | Centro Profesional | Administrador | Sin acceso a la configuración del negocio ni al equipo |
 | `miguel@demo.com` | Centro Profesional | Staff | Sólo agenda, citas y clientes |
 | `laura@demo.com` | Estudio Bella (plan Free) | Propietaria | Límites del plan Free y aislamiento entre negocios |
 | `carolina@demo.com` | Psicóloga Carolina Vega | Propietaria | Negocio **suspendido** por el super admin |
@@ -68,8 +68,9 @@ el beta):
 - **Icono** `public/icon-calendar.svg` (y `BrandMark`), con versiones PNG de 32, 192 y 180 px. Cada
   icono nuevo lleva otro nombre de archivo y `src/main.tsx` lo vuelve a declarar con `?v=` para que
   los navegadores no sigan mostrando el anterior.
-- **Colores de cada negocio** (Configuración → Colores, propietario y administradores, cualquier
-  plan): una paleta lista (Agenda360, Eucalipto, Lavanda, Rosa, Turquesa, Coral, Oliva, Grafito) o
+- **Colores de cada negocio** (Configuración → Colores, cualquier plan; los cambia sólo el
+  propietario, con el permiso `business.manage`, o el super admin en modo soporte: un administrador
+  no ve la pestaña): una paleta lista (Agenda360, Eucalipto, Lavanda, Rosa, Turquesa, Coral, Oliva, Grafito) o
   dos colores a elección (principal y resaltado), con vista previa. Se aplican a su panel, a su
   página de reservas y a la lámina del QR; la portada, el login y el panel de plataforma siguen con
   los de Agenda360. De los dos colores sale toda la paleta (fondos, bordes, textos, gráficos) en
@@ -122,9 +123,10 @@ src/
 - **Categorías**: los tipos de negocio están en la base de datos y el super admin los gestiona en
   `/admin/categories`. El negocio la elige al crearse y después sólo la cambia el super admin (ficha
   del negocio o modo soporte); en Configuración → Negocio el propietario la ve bloqueada.
-- **Cambios de plan con aprobación**: el propietario solicita el plan en Configuración →
-  Suscripción; el super admin recibe un email y la aprueba o rechaza desde el resumen del panel.
-  El plan sólo se cambia desde el panel `/admin`, y el propietario siempre recibe un email.
+- **Cambios de plan**: los negocios no ven planes ni precios (ya no hay pestaña Configuración →
+  Suscripción). El plan lo cambia el super admin en la ficha del negocio en `/admin`, y el
+  propietario siempre recibe un email. Las solicitudes pendientes, si las hubiera (la API aún las
+  acepta), aparecen en el resumen del panel para aprobarlas o rechazarlas.
 - **Cédula**: sólo números (el campo no admite letras ni guiones; en Ecuador, 10 dígitos). En la
   página de reservas el paciente escribe siempre cédula, nombre, email y teléfono: la página no
   dice si la cédula ya es de un cliente del negocio. Si lo es, la reserva se une a su ficha cuando
@@ -163,7 +165,7 @@ Jerarquía de roles:
 ```
 Super admin (plataforma)  →  crea / suspende negocios, cambia planes, gestiona cuentas
   └─ Negocio
-       ├─ Propietario  →  todo su negocio: equipo, configuración, suscripción
+       ├─ Propietario  →  todo su negocio: equipo, configuración, colores
        ├─ Administrador →  operación diaria y reportes
        └─ Staff         →  agenda, citas y clientes
 ```
@@ -183,10 +185,18 @@ ve la pantalla "Activa la verificación en dos pasos" (`components/layout/two-fa
 en lugar del panel; la API responde `two_factor_required` en `/admin` y en el modo soporte hasta que la
 active con una app de autenticación. Después, el panel aparece solo.
 
-- **Resumen**: negocios activos/suspendidos, ingresos recurrentes (MRR), usuarios, citas y
-  reservas online del mes, nuevos negocios por mes y distribución por plan.
-- **Negocios**: búsqueda y filtros por plan/estado; ficha con uso del plan, equipo, actividad,
-  cambio de plan, suspender/reactivar y restablecer la contraseña del propietario.
+- **Resumen**: negocios activos de los que hay y su reparto por plan (sólo los activos), el
+  crecimiento del mes, la salud del sistema (emails de hoy, el **cupo de Gmail**, el cron, la copia de
+  seguridad y los intentos fallidos) y los negocios para vender («Cerca del límite» cuenta los
+  pacientes igual que el tope del plan). No hay ingresos ni MRR: aún no hay cobro.
+  - **Cupo de Gmail** (spec 015, `features/admin/health-section.tsx`): los envíos de las últimas 24 h
+    frente al cupo de la cuenta, en ámbar desde el 80 % y en rojo al llegar al límite de los emails
+    al paciente (el cupo menos la reserva del equipo), y cuántos esperan en la cola, al paciente y al
+    negocio. Lo que no cabe no se pierde: sale en cuanto hay cupo (primero el equipo, después el
+    paciente y al final las copias al profesional y los avisos al negocio).
+- **Negocios**: búsqueda y filtros por plan/estado; ficha con uso del plan, desde cuándo está en su
+  plan («En Pro desde el 3 oct»: sin cobro, no hay fecha de renovación), equipo, actividad, cambio
+  de plan, suspender/reactivar y restablecer la contraseña del propietario.
   Un negocio suspendido no puede usar el panel (ve un aviso con el email de soporte) y su
   página pública deja de estar disponible.
 - **Datos obligatorios del paciente** (ficha del negocio, `features/admin/client-required-fields-card.tsx`):
@@ -201,7 +211,8 @@ active con una app de autenticación. Después, el panel aparece solo.
   guardar su ficha o sus notas.
 - **Usuarios**: todas las cuentas con su negocio y rol; desactivar/reactivar acceso y
   restablecer contraseña (contraseña temporal enviada por email).
-- **Planes**: precios, límites, negocios e ingresos por plan.
+- **Planes**: los límites de cada plan y cuántos negocios y agendas activas tiene (los precios se
+  acuerdan con cada negocio: no hay ingresos por plan).
 - **Actividad**: auditoría del super admin o de toda la plataforma, y todos los emails enviados.
 - **Configuración**: registro público abierto/cerrado y email de soporte.
 
@@ -258,8 +269,8 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
     evolución muestra con qué formato se escribió. Si se desactiva el formato elegido, se vuelve al
     recomendado.
   - **Formatos propios** (Pro y Business): Configuración → Negocio → Gestionar formatos, editor con
-    vista previa; duplicar uno de la plataforma o crear desde cero. Cada servicio puede tener su
-    formato, que se propone al registrar la evolución de esa cita.
+    vista previa; duplicar uno de la plataforma o crear desde cero. Los servicios no tienen formato
+    propio: en todas las citas se propone el formato de tu negocio.
   - **Archivos** (Pro y Business): radiografías, exámenes, fotos o PDF en la ficha del paciente. Atajo "Registrar evolución" desde el detalle de la cita y vista para imprimir o
   guardar en PDF (para el archivo del profesional). Acceso: el propietario, los miembros que él
   autoriza en Equipo y el super admin en "Gestionar negocio"; las evoluciones no se editan ni se borran (se añaden

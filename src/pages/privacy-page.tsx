@@ -7,11 +7,12 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "14 de octubre de 2026";
+const LAST_UPDATED = "15 de octubre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
- * Pública: la enlazan la web, el inicio de sesión y la página de reservas.
+ * Pública: la enlazan la web, el inicio de sesión, el registro y la página de reservas. Sólo promete
+ * lo que existe (spec 015): lo que falta (exportar los datos, avisar de los cambios desde la app) no.
  */
 export default function PrivacyPage() {
   const settings = usePlatformSettings();
@@ -129,12 +130,13 @@ export default function PrivacyPage() {
           <Section title="5. Quién puede ver los datos">
             <ul>
               <li>
-                <strong>El equipo de cada negocio</strong>, según su rol. La historia clínica sólo la ven las personas a las
-                que el negocio da acceso clínico.
+                <strong>El equipo de cada negocio</strong>, según su rol. Dentro del negocio, la historia clínica sólo la ven
+                las personas a las que el negocio da acceso clínico.
               </li>
               <li>
-                <strong>El soporte de {APP_NAME}</strong> puede entrar al panel de un negocio para darle asistencia. Todo lo
-                que cambie queda en el registro de actividad del negocio.
+                <strong>El soporte de {APP_NAME}</strong> puede entrar al panel de un negocio para darle asistencia, y ahí ve
+                lo mismo que su propietario, también la historia clínica. Todo lo que cambie queda en el registro de
+                actividad del negocio.
               </li>
               <li>
                 <strong>Los inicios de sesión, las IP y los navegadores</strong> sólo los ve el equipo de {APP_NAME}, para la
@@ -147,9 +149,9 @@ export default function PrivacyPage() {
             <p>
               El profesional es responsable de obtener el consentimiento de su paciente antes de registrar su historia
               clínica (la plataforma guarda la fecha de ese consentimiento). Las evoluciones registradas no se pueden
-              modificar ni borrar, sólo completar con una aclaración. Queda registrado quién abre cada historia clínica y
-              cada archivo. Los archivos se guardan en un almacenamiento privado y sólo se abren con enlaces temporales de
-              unos minutos.
+              modificar ni borrar, sólo completar con una aclaración. Queda registrado quién del equipo del negocio abre
+              cada historia clínica y cada archivo. Los archivos se guardan en un almacenamiento privado y sólo se abren
+              con enlaces temporales de unos minutos.
             </p>
           </Section>
 
@@ -208,6 +210,8 @@ export default function PrivacyPage() {
               <li>Los datos de cada negocio, sus clientes y sus citas, mientras el negocio tenga su cuenta.</li>
               <li>
                 Al eliminar un negocio se borran de forma definitiva sus datos, sus archivos y las cuentas de su equipo.
+                Las copias de seguridad de la base de datos ya hechas (semanales y cifradas) guardan esos datos hasta que
+                se borra cada copia.
               </li>
               <li>
                 Registro de actividad: los inicios y cierres de sesión, 90 días; las acciones en el panel, 5 meses; los accesos
@@ -233,7 +237,7 @@ export default function PrivacyPage() {
               </li>
               <li>Verificación anti-robots en la página de reservas.</li>
               <li>
-                Una copia de seguridad diaria de la base de datos, cifrada: sólo {APP_NAME} tiene la clave para abrirla.
+                Una copia de seguridad semanal de la base de datos, cifrada: sólo {APP_NAME} tiene la clave para abrirla.
               </li>
               <li>Verificación en dos pasos (código del celular) en la cuenta de administración de la plataforma.</li>
               <li>Un registro de actividad que nadie puede modificar ni borrar desde la aplicación.</li>
@@ -257,8 +261,9 @@ export default function PrivacyPage() {
             </p>
             <p>
               Escríbenos a {contact}. Si eres cliente o paciente de un negocio, también puedes pedírselo directamente a él.
-              Responderemos en un plazo máximo de 15 días. Si no quedas conforme, puedes reclamar ante la Superintendencia de
-              Protección de Datos Personales.
+              Responderemos en un plazo máximo de 15 días. La aplicación no tiene una descarga automática de los datos: la
+              portabilidad se pide de la misma forma, escribiéndonos, y la atendemos dentro del plazo que fija la ley. Si
+              no quedas conforme, puedes reclamar ante la Superintendencia de Protección de Datos Personales.
             </p>
           </Section>
 
@@ -271,8 +276,8 @@ export default function PrivacyPage() {
 
           <Section title="13. Cambios en esta política">
             <p>
-              Si cambiamos esta política, publicaremos aquí la nueva versión con su fecha. Si el cambio es importante, lo
-              avisaremos por email a los negocios.
+              Si cambiamos esta política, publicaremos aquí la nueva versión con su fecha de actualización. Si el cambio es
+              importante, se lo comunicaremos a los negocios antes de que se aplique.
             </p>
           </Section>
         </article>

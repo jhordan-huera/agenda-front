@@ -54,7 +54,7 @@ import { useCategories } from "@/hooks/queries/use-categories";
 import { TIMEZONES } from "@/lib/constants/business";
 import { PLANS, getPlan } from "@/lib/constants/plans";
 import { getErrorMessage } from "@/lib/data";
-import { formatDateTime, formatNumericDate, toZonedDate } from "@/lib/format";
+import { formatDate, formatDateTime, toZonedDate } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import type { PlanId } from "@/types";
 import { MaxProfessionalsField } from "@/features/admin/max-professionals-field";
@@ -79,6 +79,12 @@ function usageStat(label: string, icon: StatItem["icon"], used: number, limit: n
     hint: limit === null ? "Sin límite en su plan" : `de ${limit} en su plan`,
     tone: limit === null ? "default" : share >= 1 ? "danger" : share >= NEAR_LIMIT ? "warning" : "default",
   };
+}
+
+/** «3 oct» (en la zona del panel) o, si no es de este año, «3 oct 2025»: desde cuándo está en su plan. */
+function planSinceLabel(iso: string): string {
+  const date = toZonedDate(iso);
+  return formatDate(date, date.slice(0, 4) === toZonedDate(new Date().toISOString()).slice(0, 4) ? "d MMM" : "d MMM yyyy");
 }
 
 export default function AdminBusinessDetailPage() {
@@ -214,10 +220,8 @@ export default function AdminBusinessDetailPage() {
                 <CardHeader>
                   <CardTitle>Suscripción y uso</CardTitle>
                   <CardDescription>
-                    Plan {plan.name}
-                    {subscription?.currentPeriodEnd
-                      ? ` · Renueva el ${formatNumericDate(toZonedDate(subscription.currentPeriodEnd))}`
-                      : " · Sin fecha de renovación"}
+                    {/* Desde cuándo está en su plan (spec 015): sin cobro todavía, no hay fecha de renovación. */}
+                    {subscription?.planSince ? `En ${plan.name} desde el ${planSinceLabel(subscription.planSince)}` : `Plan ${plan.name}`}
                     . El negocio no ve planes ni precios.
                   </CardDescription>
                 </CardHeader>
