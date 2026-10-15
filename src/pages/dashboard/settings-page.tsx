@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions } from "@/features/auth/use-permissions";
+import { useSession } from "@/features/auth/use-session";
+import { PushSettingsCard } from "@/features/push/push-settings-card";
 import { ActivityLog } from "@/features/settings/activity-log";
 import { BrandColorsSettings } from "@/features/settings/brand-colors-settings";
 import { BookingSettingsForm } from "@/features/settings/booking-settings-form";
@@ -33,6 +35,9 @@ const TABS: { value: string; label: string; permission?: Permission }[] = [
 export default function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { can } = usePermissions();
+  const { session } = useSession();
+  // Avisos en el celular (spec 013): sólo el propietario, y no el super admin en modo soporte.
+  const ownsPush = session?.role === "owner" && !session.support;
   const userQuery = useCurrentUser();
   const businessQuery = useCurrentBusiness();
 
@@ -101,6 +106,7 @@ export default function SettingsPage() {
             {withBusiness((business) => <BrandColorsSettings business={business} />)}
           </TabsContent>
           <TabsContent value="notificaciones" className="grid max-w-3xl gap-6">
+            {ownsPush && <PushSettingsCard audience="owner" />}
             {withBusiness((business) => (
               <>
                 <NotificationSettingsForm business={business} />

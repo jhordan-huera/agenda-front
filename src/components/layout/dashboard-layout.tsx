@@ -1,14 +1,15 @@
 import { LifeBuoy, LogOut } from "lucide-react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { useSession } from "@/features/auth/use-session";
 import { WhatsAppNoticeProvider } from "@/features/appointments/whatsapp-notice";
 import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { useInstallableApp } from "@/features/install/use-installable-app";
+import { PushPrompt } from "@/features/push/push-prompt";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
-import { getHomePath } from "@/lib/auth";
+import { getHomePath, loginPathFor } from "@/lib/auth";
 import { AppShell } from "./app-shell";
 import { SidebarContent } from "./sidebar-content";
 import { SuspendedBusinessScreen } from "./suspended-business-screen";
@@ -16,6 +17,7 @@ import { SuspendedBusinessScreen } from "./suspended-business-screen";
 /** Layout del panel del negocio: protege las rutas y muestra la navegación. */
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { status, session } = useSession();
   useInstallableApp();
 
@@ -23,10 +25,11 @@ export default function DashboardLayout() {
   const needsTwoFactor = Boolean(session?.support && session.twoFactorSetupRequired);
 
   useEffect(() => {
-    if (status === "unauthenticated") navigate("/login", { replace: true });
+    // Sin sesión (p. ej. al tocar un aviso con la sesión caducada): al entrar, vuelve a esta pantalla (spec 013).
+    if (status === "unauthenticated") navigate(loginPathFor(location.pathname, location.search), { replace: true });
     if (status === "authenticated" && session && !session.businessId) navigate(getHomePath(session), { replace: true });
     if (status === "authenticated" && needsTwoFactor) navigate("/admin", { replace: true });
-  }, [status, session, needsTwoFactor, navigate]);
+  }, [status, session, needsTwoFactor, navigate, location.pathname, location.search]);
 
   if (status !== "authenticated" || !session?.businessId || needsTwoFactor) return <FullPageLoader />;
   if (session.businessStatus === "suspended" && !session.support) return <SuspendedBusinessScreen />;
@@ -43,7 +46,14 @@ function DashboardShell() {
         <AppShell
           homeHref="/dashboard"
           renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} />}
-          banner={session?.support && <SupportBanner businessName={session.support.businessName} />}
+          banner={
+            session?.support ? (
+              <SupportBanner businessName={session.support.businessName} />
+            ) : (
+              // Avisos en el celular (spec 013): sólo el propietario; nunca coincide con el modo soporte.
+              session?.role === "owner" && <PushPrompt audience="owner" />
+            )
+          }
         />
       </WhatsAppNoticeProvider>
     </BrandThemeProvider>

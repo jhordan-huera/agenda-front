@@ -355,6 +355,21 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   onboarding, el panel y el panel de plataforma (`useInstallableApp`); la portada y la página de
   reservas no enlazan el manifiesto ni descargan la app. Sin conexión, la app espera en la pantalla
   de carga con un aviso y sigue sola cuando vuelve (no manda al login).
+- **Avisos en el celular** (spec 013, Web Push estándar): sólo el propietario de cada negocio y el
+  super admin. Al entrar al panel, una franja ofrece «Activa los avisos en este celular» («Ahora no»
+  la deja 7 días en ese aparato; `src/features/push/push-prompt.tsx`), y Configuración → Notificaciones
+  (y Configuración en /admin) tiene la tarjeta «Avisos en este celular» (`push-settings-card.tsx`):
+  activar o desactivar en ese aparato, el aviso de prueba y un interruptor por tipo (todos encendidos
+  de fábrica). Explica qué hacer en el iPhone sin instalar (sólo llegan con la app instalada, iOS 16.4
+  o más) y con el permiso bloqueado. «Activar» llama a `pushManager.subscribe` en el mismo toque (el
+  navegador pide el permiso ahí); al abrir el panel, `usePushDevice` guarda en silencio la suscripción
+  del navegador (reanuda lo que pausó «Cerrar sesión» y se vuelve a suscribir si cambió la clave). El
+  service worker muestra cada aviso (`push`) y, al tocarlo, abre su pantalla: con la app abierta navega
+  sin recargar (`notification-navigation.ts`), si no abre una ventana, y con la sesión caducada pasa
+  por `/login?next=…` (`safeNextPath`: sólo rutas propias del panel). La clave pública llega de
+  `GET /api/push/config`: no hay variables nuevas. **Se prueban con la versión compilada**
+  (`npm run build` y `npx vite preview`, con `API_PROXY_TARGET` apuntando a la API local); en
+  `npm run dev` no hay service worker y la tarjeta lo dice. `vercel.json` (CSP) no cambia.
 - **Sin reservas dobles**: nunca dos citas a la misma hora (lo garantiza la base). Cada negocio elige
   en Configuración → Agenda cuántas citas puede reservar una misma persona (por su cédula) el mismo
   día desde su página (1 por defecto, hasta 3 o sin límite). La página de reservas oculta al momento
