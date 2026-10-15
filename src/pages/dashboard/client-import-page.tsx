@@ -89,6 +89,8 @@ function ClientImport() {
   const [reading, setReading] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [uncertain, setUncertain] = useState(false);
+  // «Importar también los que tienen datos por completar» (ampliación del 2026-10-15): encendida de entrada.
+  const [includeIncomplete, setIncludeIncomplete] = useState(true);
   const [result, setResult] = useState<ClientImportResult | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -115,12 +117,20 @@ function ClientImport() {
     () => (workbook && sheet && stage !== "file" ? importRowsOf(sheet, workbook.headerIndex, workbook.columns) : []),
     [workbook, sheet, stage],
   );
-  const review = useMemo(
+  // Con la casilla, para saber cuántos y cuáles tienen datos por completar; sin ella, sólo si se apaga.
+  const withIncomplete = useMemo(
     () =>
       stage === "review" && clients && usage
-        ? classifyImportRows(rows, { required, timezone, existing: clients, remaining })
+        ? classifyImportRows(rows, { required, timezone, existing: clients, remaining, allowIncomplete: true })
         : null,
     [stage, rows, clients, usage, required, timezone, remaining],
+  );
+  const review = useMemo(
+    () =>
+      !withIncomplete || includeIncomplete
+        ? withIncomplete
+        : classifyImportRows(rows, { required, timezone, existing: clients ?? [], remaining, allowIncomplete: false }),
+    [withIncomplete, includeIncomplete, rows, clients, required, timezone, remaining],
   );
   const bytes = useMemo(() => (stage === "review" ? payloadBytes(rows) : 0), [stage, rows]);
 
@@ -143,7 +153,7 @@ function ClientImport() {
     if (!review) return;
     setUncertain(false);
     try {
-      const imported = await importClients.mutateAsync({ rows });
+      const imported = await importClients.mutateAsync({ rows, includeIncomplete });
       if (imported.created > 0) toast.success(importedText(imported.created));
       else toast.info(importedText(0));
       setResult(imported);
@@ -159,6 +169,7 @@ function ClientImport() {
     setWorkbook(null);
     setResult(null);
     setUncertain(false);
+    setIncludeIncomplete(true);
     setStage("file");
   };
 
@@ -238,6 +249,9 @@ function ClientImport() {
           <ReviewStep
             rows={rows}
             review={review}
+            incomplete={withIncomplete?.incomplete ?? []}
+            includeIncomplete={includeIncomplete}
+            onIncludeIncomplete={setIncludeIncomplete}
             bytes={bytes}
             remaining={remaining}
             clientName={clientName}

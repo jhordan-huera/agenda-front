@@ -12,9 +12,13 @@ const KIND_STYLES: Record<ImportIssue["kind"], string> = {
   existing: "bg-accent text-ink",
   repeated: "bg-muted text-muted-foreground",
   overLimit: "bg-highlight/15 text-ink",
+  incomplete: "bg-sky-50 text-sky-800",
 };
 
-/** Lo que no se importa, fila por fila («Fila 12 · La cédula no es válida…»), sin tablas anchas. */
+/**
+ * Las filas de la revisión y del resultado, una por línea («Fila 12 · La cédula no es válida…»), sin
+ * tablas anchas: lo que no se importa o lo que entra por completar.
+ */
 export function ImportIssues({ issues, linkExisting = false }: { issues: ImportIssue[]; linkExisting?: boolean }) {
   const [showAll, setShowAll] = useState(false);
   if (issues.length === 0) return null;

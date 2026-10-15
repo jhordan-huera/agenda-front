@@ -1,8 +1,8 @@
-import { CircleCheck, FileSpreadsheet, Users } from "lucide-react";
+import { CircleCheck, FileSpreadsheet, UserPen, Users } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import type { ClientImportResult } from "@/types";
-import { formatCount, importedText, issuesOf } from "./import-data";
+import { formatCount, importedText, incompleteIssuesOf, issuesOf } from "./import-data";
 import { ImportIssues } from "./import-issues";
 
 /** «3 ya existían, 5 con errores y 2 repetidas en el archivo»: lo que no entró, sólo con cifras. */
@@ -19,9 +19,15 @@ function notImportedText(result: ClientImportResult): string {
   return `No se importaron: ${list}.`;
 }
 
+/** «5 entraron por completar»: ya cuentan entre los importados. */
+function incompleteText(count: number): string {
+  return `${count === 1 ? "1 entró" : `${formatCount(count)} entraron`} por completar: ${count === 1 ? "le falta" : "les falta"} algún dato obligatorio de tu negocio.`;
+}
+
 /**
  * Al terminar: el resumen de la API (si alguien creó un paciente entretanto y la cifra cambió, manda
- * ésta), lo que no entró con «Ver ficha» en los que ya existían y el camino de vuelta a la lista.
+ * ésta), los que entraron por completar (con el camino a ellos en Clientes), lo que no entró con «Ver
+ * ficha» en los que ya existían y el camino de vuelta a la lista.
  */
 export function ResultStep({
   result,
@@ -33,6 +39,7 @@ export function ResultStep({
   onAnother: () => void;
 }) {
   const issues = issuesOf(result, clientName);
+  const incomplete = incompleteIssuesOf(result.incomplete);
   return (
     <div className="space-y-6">
       <div role="status" className="flex gap-3 rounded-xl border bg-card p-5">
@@ -41,9 +48,26 @@ export function ResultStep({
         </span>
         <div className="min-w-0 space-y-1">
           <p className="text-lg font-bold">{importedText(result.created)}</p>
+          {incomplete.length > 0 && <p className="text-sm">{incompleteText(incomplete.length)}</p>}
           <p className="text-sm text-muted-foreground">{notImportedText(result)}</p>
         </div>
       </div>
+
+      {incomplete.length > 0 && (
+        <section aria-labelledby="import-result-incomplete" className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 id="import-result-incomplete" className="font-semibold">
+              Por completar
+            </h2>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/dashboard/clients" state={{ filter: "incomplete" }}>
+                <UserPen /> Ver los por completar
+              </Link>
+            </Button>
+          </div>
+          <ImportIssues issues={incomplete} />
+        </section>
+      )}
 
       {issues.length > 0 && (
         <section aria-labelledby="import-result-issues" className="space-y-3">

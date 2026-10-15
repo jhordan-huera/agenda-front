@@ -422,6 +422,15 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   - **Revisión:** cuántos se importarán, cuántos ya existían, cuáles tienen errores (fila y motivo),
     cuáles están repetidos y cuántos no entran por el tope del plan, con «Descargar las filas con
     errores». Usa el mismo código que la API (`src/lib/validations/client-import.ts`, compartido).
+  - **Datos por completar** (ampliación del 2026-10-15):
+    - la casilla «Importar también los que tienen datos por completar» viene encendida;
+    - con ella basta el nombre, y las filas a las que les falta un dato obligatorio del negocio entran
+      marcadas «Por completar»;
+    - lo mal escrito sigue con error;
+    - en Clientes hay un filtro «Por completar» y la marca (`components/shared/incomplete-badge.tsx`);
+    - la ficha dice «Faltan datos: …» con «Completar»;
+    - se calcula con `missingRequiredFields` (`src/lib/validations/client.ts`): no se guarda, y
+      desaparece al completarlo.
 
   Se importan en una sola petición, todo o nada; si se corta la conexión, la pantalla lo dice y
   repetir no duplica. Los importados no reciben emails y no cuentan como clientes nuevos del mes.

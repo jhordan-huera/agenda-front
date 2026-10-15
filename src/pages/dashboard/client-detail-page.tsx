@@ -9,6 +9,7 @@ import {
   Pencil,
   Phone,
   Trash2,
+  UserPen,
   UserX,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -43,6 +44,7 @@ import { ClientFormDialog } from "@/features/clients/client-form-dialog";
 import { ClientNotesCard } from "@/features/clients/client-notes-card";
 import { getClientSummary, summarizeByClient } from "@/features/clients/client-summary";
 import { DeleteClientDialog } from "@/features/clients/delete-client-dialog";
+import { clientMissingFields, missingDataText } from "@/features/clients/missing-fields";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useClient } from "@/hooks/queries/use-clients";
@@ -110,6 +112,8 @@ export default function ClientDetailPage() {
       />
     );
   }
+
+  const missing = clientMissingFields(client, business);
 
   const overview = (
     <>
@@ -330,6 +334,26 @@ export default function ClientDetailPage() {
           )}
         </div>
       </div>
+
+      {/* «Por completar» (spec 012): le faltan datos obligatorios del negocio. «Completar» abre el formulario
+          de siempre, que los pide al guardar; con ellos, el aviso desaparece solo. */}
+      {missing.length > 0 && (
+        <div
+          role="status"
+          className="flex flex-col gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="flex min-w-0 items-start gap-2">
+            <UserPen className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              <strong className="font-semibold">{missingDataText(missing)}.</strong> Tu negocio los pide en la ficha de cada
+              paciente.
+            </span>
+          </p>
+          <Button size="sm" variant="outline" className="self-start bg-white sm:self-auto" onClick={() => setEditing(true)}>
+            <Pencil /> Completar
+          </Button>
+        </div>
+      )}
 
       {/* «Por verificar» (spec 009): al unirlo a su ficha, este paciente desaparece y se abre la ficha. */}
       {client.claimedClientId && (

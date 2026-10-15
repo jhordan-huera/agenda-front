@@ -112,7 +112,10 @@ export function FileStep({
             <Download /> Descargar plantilla
           </a>
         </Button>
-        <p className="text-sm">{requiredFieldsText(required)}</p>
+        <p className="text-sm">
+          {requiredFieldsText(required)}
+          {Object.values(required).some(Boolean) && " Si a alguno le falta un dato, lo puedes importar igual, «Por completar»."}
+        </p>
         <div className="space-y-2">
           <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Ejemplo de una fila</p>
           <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">

@@ -6,6 +6,7 @@ import {
   type ImportTarget,
 } from "@/lib/validations/client-import";
 import type { ClientImportResult, ClientImportRow, ClientRequiredFields } from "@/types";
+import { missingRowText } from "../missing-fields";
 import type { SpreadsheetSheet } from "./read-spreadsheet";
 
 /** «5.000»: las cifras de los mensajes, con el punto de los miles. */
@@ -68,13 +69,13 @@ export function importRowsOf(sheet: SpreadsheetSheet, headerIndex: number, colum
     .filter((row) => !isEmptyImportRow(row));
 }
 
-/** Los bytes del JSON que se manda (el tope es MAX_IMPORT_BYTES). */
+/** Los bytes del JSON que se manda (el tope es MAX_IMPORT_BYTES; la casilla no cuenta). */
 export const payloadBytes = (rows: readonly ClientImportRow[]) => new TextEncoder().encode(JSON.stringify({ rows })).length;
 
-/** Lo que no se importa, fila por fila, en el orden de la hoja. */
+/** Una fila de las listas de la revisión y del resultado: lo que no se importa o lo que entra por completar. */
 export interface ImportIssue {
   row: number;
-  kind: "error" | "existing" | "repeated" | "overLimit";
+  kind: "error" | "existing" | "repeated" | "overLimit" | "incomplete";
   text: string;
   /** La ficha del paciente que ya existía. */
   clientId?: string;
@@ -95,6 +96,10 @@ export function issuesOf(result: ClientImportResult, clientName: (clientId: stri
     ...result.overLimit.map((row): ImportIssue => ({ row, kind: "overLimit", text: "No entra por el tope de tu plan" })),
   ].sort((a, b) => a.row - b.row);
 }
+
+/** Los que entran «Por completar», con lo que le falta a cada uno («Falta la cédula y el email»). */
+export const incompleteIssuesOf = (incomplete: ClientImportResult["incomplete"]): ImportIssue[] =>
+  incomplete.map((entry) => ({ row: entry.row, kind: "incomplete", text: missingRowText(entry.missing) }));
 
 /** «Descargar las filas con errores»: la fila, el motivo y sus datos, para corregirlas en Excel. */
 export function errorRowsTable(result: ClientImportResult, rows: readonly ClientImportRow[]): string[][] {

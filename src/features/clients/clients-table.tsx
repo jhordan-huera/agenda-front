@@ -1,5 +1,6 @@
 import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { IncompleteBadge } from "@/components/shared/incomplete-badge";
 import { ActiveBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VerifyBadge } from "@/components/shared/verify-badge";
@@ -13,12 +14,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { capitalize, formatShortDate } from "@/lib/format";
-import type { Appointment, Client } from "@/types";
+import type { Appointment, Business, Client } from "@/types";
 import { getClientSummary, type ClientSummary } from "./client-summary";
+import { clientMissingFields, missingDataText } from "./missing-fields";
 
 interface ClientsTableProps {
   clients: Client[];
   summaries: Map<string, ClientSummary>;
+  /** Sus datos obligatorios, para la marca «Por completar». */
+  business: Business | null | undefined;
   onEdit: (client: Client) => void;
   /** Sin esta acción (rol sin permiso) no se muestra "Eliminar". */
   onDelete?: (client: Client) => void;
@@ -33,7 +37,7 @@ function AppointmentDate({ appointment }: { appointment?: Appointment }) {
   );
 }
 
-export function ClientsTable({ clients, summaries, onEdit, onDelete }: ClientsTableProps) {
+export function ClientsTable({ clients, summaries, business, onEdit, onDelete }: ClientsTableProps) {
   const navigate = useNavigate();
 
   return (
@@ -56,6 +60,7 @@ export function ClientsTable({ clients, summaries, onEdit, onDelete }: ClientsTa
         <TableBody>
           {clients.map((client) => {
             const summary = getClientSummary(summaries, client.id);
+            const missing = clientMissingFields(client, business);
             return (
               <TableRow
                 key={client.id}
@@ -94,6 +99,7 @@ export function ClientsTable({ clients, summaries, onEdit, onDelete }: ClientsTa
                   <span className="flex flex-wrap gap-1.5">
                     <ActiveBadge active={client.isActive} />
                     {client.claimedClientId && <VerifyBadge />}
+                    {missing.length > 0 && <IncompleteBadge detail={missingDataText(missing)} />}
                   </span>
                 </TableCell>
                 <TableCell className="pr-4" onClick={(e) => e.stopPropagation()}>
