@@ -32,6 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminAuditList } from "@/features/admin/admin-audit-list";
+import { VersusTypeCard } from "@/features/admin/analytics/versus-type-card";
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
 import { AddOwnerDialog } from "@/features/admin/add-owner-dialog";
 import { BusinessHero } from "@/features/admin/business-hero";
@@ -215,7 +216,7 @@ export default function AdminBusinessDetailPage() {
         {/* Las pestañas quedan montadas: un ajuste a medio escribir no se pierde al cambiar de pestaña. */}
         <TabsContent value="resumen" forceMount className="data-[state=inactive]:hidden">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+            <div className="space-y-6 lg:col-span-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Suscripción y uso</CardTitle>
@@ -258,6 +259,8 @@ export default function AdminBusinessDetailPage() {
                   </div>
                 </CardContent>
               </Card>
+              {/* Analítica (spec 016): de la última foto de 30 días; una API anterior no la trae. */}
+              <VersusTypeCard analytics={detail.data.analytics ?? null} />
             </div>
             <div className="space-y-6">
               <Card>

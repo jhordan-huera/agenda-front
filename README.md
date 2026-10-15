@@ -209,6 +209,25 @@ active con una app de autenticación. Después, el panel aparece solo.
   son, y valida con `clientSchemaFor` (`lib/validations/client.ts`), el mismo esquema que la API. A
   un paciente antiguo al que le falta un dato que ahora es obligatorio hay que completárselo para
   guardar su ficha o sus notas.
+- **Analítica** (spec 016, `pages/admin/admin-analytics-page.tsx` y `features/admin/analytics/`): los
+  últimos 30 o 90 días frente al periodo anterior, en cuatro pestañas (la pestaña y el periodo van en
+  la dirección, `?pestana=` y `?dias=`):
+  - **Comparar:** todos los negocios en una tabla ordenable (tocando la columna; otra vez, al revés),
+    con filtros por tipo, plan y estado (por defecto, los activos), búsqueda y «Exportar CSV» con lo que
+    se ve (se arma en el navegador). Cada tasa dice la de su tipo («tipo 12 %»), en verde o en rojo con
+    su flecha si es muy distinta; con menos de 10 citas, «pocos datos». A 390 px la tabla se desplaza
+    dentro de su recuadro, con el negocio fijo a la izquierda.
+  - **Por tipo de negocio:** el valor típico (la mediana) de cada tipo y sus días y horas de más demanda.
+  - **Salud y ventas:** cuántos están sanos, en riesgo o críticos; «En riesgo» con los motivos y el
+    contacto del propietario (llamar, WhatsApp con el saludo escrito y email) y «Listos para subir de
+    plan» con su motivo. «Negocios para vender» del Resumen sigue igual.
+  - **Uso y valor:** los totales de la plataforma con «Copiar» para ventas, la adopción de cada función,
+    qué usa cada negocio y el valor del periodo (con las inasistencias antes y después).
+
+  La ficha del negocio suma «Frente a su tipo» (`features/admin/analytics/versus-type-card.tsx`), con
+  su salud. Las cifras son la foto que prepara el cron cada mañana (la API no calcula nada al abrir la
+  página): arriba dice «Datos de hoy a las 06:10» y, sin foto todavía, «Las cifras se preparan cada
+  mañana». Sin datos de pacientes. La beta no la lleva.
 - **Usuarios**: todas las cuentas con su negocio y rol; desactivar/reactivar acceso y
   restablecer contraseña (contraseña temporal enviada por email).
 - **Planes**: los límites de cada plan y cuántos negocios y agendas activas tiene (los precios se
