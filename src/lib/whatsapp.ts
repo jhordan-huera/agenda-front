@@ -145,7 +145,15 @@ export interface AppointmentNoticeData {
   virtual?: { meetingUrl: string | null };
   /** Enlace de pago (la agenda cobra por transferencia y la cita aún no está pagada). */
   paymentUrl?: string;
+  /** «Cancelar ésta y las siguientes» de una serie (spec 011): las fechas canceladas, en orden. */
+  dates?: ISODate[];
 }
+
+/** "martes 20 de octubre, martes 27 de octubre y martes 3 de noviembre". */
+const describeDates = (dates: ISODate[]) => {
+  const days = dates.map((date) => formatDate(date, "EEEE d 'de' MMMM"));
+  return days.length <= 1 ? (days[0] ?? "") : `${days.slice(0, -1).join(", ")} y ${days[days.length - 1]}`;
+};
 
 /** Para recuperar a un paciente que no ha vuelto (Reportes): se puede editar en WhatsApp antes de enviarlo. */
 export function buildWinBackMessage(data: { clientName: string; businessName: string; bookingUrl: string }): string {
@@ -185,5 +193,11 @@ export function buildAppointmentNotice(kind: AppointmentNoticeKind, data: Appoin
       return `${hello}, gracias por tu visita a ${data.businessName}. Cuando quieras volver, puedes reservar aquí: ${data.bookingUrl}`;
     case "no_show":
       return `${hello}, te esperábamos ${when} para tu cita de ${data.serviceName} con ${data.businessName}. ¿Quieres reagendarla? Puedes elegir otra hora aquí: ${data.bookingUrl}`;
+    case "series_cancelled": {
+      const dates = data.dates?.length ? data.dates : [data.date];
+      return dates.length === 1
+        ? `${hello}, tu cita de ${data.serviceName} con ${data.businessName} del ${describeDates(dates)} quedó cancelada. Si quieres agendar otra, puedes hacerlo aquí: ${data.bookingUrl}`
+        : `${hello}, tus citas de ${data.serviceName} con ${data.businessName} del ${describeDates(dates)} quedaron canceladas. Si quieres agendar otras, puedes hacerlo aquí: ${data.bookingUrl}`;
+    }
   }
 }

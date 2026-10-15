@@ -5,7 +5,7 @@ import { useOfferWhatsAppNotice } from "@/features/appointments/whatsapp-notice-
 import { useBusinessId } from "@/features/auth/use-session";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { data, type AppointmentFilters } from "@/lib/data";
-import type { AppointmentInput } from "@/lib/validations/appointment";
+import type { AppointmentInput, AppointmentSeriesInput, AppointmentSeriesPreviewInput } from "@/lib/validations/appointment";
 import { noticeForChange, noticeForStatus } from "@/lib/whatsapp";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { queryKeys } from "./query-keys";
@@ -337,6 +337,49 @@ export function useUpdateAppointmentStatus() {
       // Sin esperar la recarga: "¿Cancelar esta cita?" se cierra al responder la API (no queda
       // apilada con el aviso de WhatsApp) y la cita ya se ve con su nuevo estado.
       applySaved(appointment);
+    },
+  });
+}
+
+/* --------------------------------------------------- Citas que se repiten (spec 011) -- */
+
+/** «Revisar fechas»: la lista de fechas de la serie, antes de crearla (no cambia nada). */
+export function usePreviewAppointmentSeries() {
+  const businessId = useBusinessId();
+  return useMutation({
+    mutationFn: (input: AppointmentSeriesPreviewInput) => data.appointments.previewSeries(businessId, input),
+  });
+}
+
+/** «Crear N citas»: después se recargan la agenda y la actividad, como al guardar una cita. */
+export function useCreateAppointmentSeries() {
+  const businessId = useBusinessId();
+  const invalidate = useInvalidateAppointments();
+  return useMutation({
+    mutationFn: (input: AppointmentSeriesInput) => data.appointments.createSeries(businessId, input),
+    onSuccess: () => void invalidate(),
+  });
+}
+
+/**
+ * «Cancelar ésta y las siguientes» de una serie: las canceladas se ven al momento en la agenda y en la
+ * ficha. Con «Avisar al paciente» (spec 008), el WhatsApp ya escrito con todas las fechas.
+ */
+export function useCancelFollowingAppointments() {
+  const businessId = useBusinessId();
+  const queryClient = useQueryClient();
+  const invalidate = useInvalidateAppointments();
+  const offerWhatsApp = useOfferWhatsAppNotice();
+  return useMutation({
+    mutationFn: async ({ id, notify = true }: { id: string; notify?: boolean }) => {
+      // Si se acaba de mover en la agenda, ese movimiento se guarda antes.
+      await settleAppointmentMove(id);
+      return data.appointments.cancelFollowing(businessId, id, notify);
+    },
+    onSuccess: ({ cancelled }, { notify = true }) => {
+      for (const appointment of cancelled) setCachedAppointment(queryClient, businessId, appointment.id, () => withPendingMove(appointment));
+      if (notify && cancelled[0]) offerWhatsApp(cancelled[0], "series_cancelled", undefined, cancelled);
+      void invalidate();
     },
   });
 }

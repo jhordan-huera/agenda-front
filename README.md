@@ -317,6 +317,17 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   que «Permitir cancelaciones» y la antelación valen también para «Tu cita» y avisa si el
   recordatorio sale cuando ya no se puede cancelar. Un panel con un backend anterior trata
   `clientConfirmations` como vacía.
+- **Citas que se repiten** (spec 011): en «Nueva cita», «Repetir» (`series-fields.tsx`) con cada
+  cuánto (cada semana, cada 2 semanas o cada mes) y cuántas citas (de 2 a 24, 8 por defecto); el
+  Estado sólo ofrece Pendiente o Confirmada y el botón pasa a «Revisar fechas». La lista de fechas
+  (`series-review.tsx`) reemplaza al formulario en el mismo diálogo: la calcula la API con
+  `lib/appointment-series.ts` (compartido) y marca cada fecha con su texto (otra cita, bloqueo, no
+  atiende, fuera de horario o el cupo del plan). En las marcadas, «Otra hora» (las horas libres de ese
+  día), «Agendar igual» (bloqueo, día sin atención o fuera del horario; desmarcada al empezar) y
+  «Quitar»; el cupo se recalcula al momento. «Crear N citas» avisa cuántas se crearon y cuáles no. La
+  ficha dice «Cita 3 de 8 · cada semana» y ofrece «Cancelar ésta y las siguientes», con la casilla
+  «Avisar al paciente» y el WhatsApp ya escrito con todas las fechas. Un panel con un backend
+  anterior trata `series` como null.
 - **Logos y fotos**: `ImageUploadField` reduce la imagen en el navegador (WebP, 512–800 px) y la sube
   al bucket público `imagenes` de Supabase Storage (`hooks/queries/use-images.ts`, `lib/upload.ts`);
   el formulario guarda su dirección pública, no la imagen.

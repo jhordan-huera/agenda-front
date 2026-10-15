@@ -10,7 +10,7 @@ import type {
   PlatformSettingsInput,
   UserPasswordInput,
 } from "@/lib/validations/admin";
-import type { AppointmentInput } from "@/lib/validations/appointment";
+import type { AppointmentInput, AppointmentSeriesInput, AppointmentSeriesPreviewInput } from "@/lib/validations/appointment";
 import type {
   ClinicalAddendumInput,
   ClinicalAttachmentInput,
@@ -40,6 +40,8 @@ import type {
   AdminPlanRequest,
   AdminUserSummary,
   Appointment,
+  AppointmentSeriesCreated,
+  AppointmentSeriesPreview,
   AppointmentStatus,
   ImageUpload,
   PaymentReceipt,
@@ -219,6 +221,15 @@ export interface AppointmentRepository {
   update(businessId: string, appointmentId: string, input: AppointmentInput): Promise<Appointment>;
   /** `notify: false`: corrige un error sin avisar al paciente (spec 008). */
   updateStatus(businessId: string, appointmentId: string, status: AppointmentStatus, notify?: boolean): Promise<Appointment>;
+  /** La lista de fechas de una serie, antes de crearla (spec 011): no cambia nada. */
+  previewSeries(businessId: string, input: AppointmentSeriesPreviewInput): Promise<AppointmentSeriesPreview>;
+  /**
+   * Crea la serie con las fechas que quedaron en la lista. Las que se ocuparon mientras tanto vuelven en
+   * `skipped`; si no se puede crear ninguna, falla con `conflict` (o `plan_limit`).
+   */
+  createSeries(businessId: string, input: AppointmentSeriesInput): Promise<AppointmentSeriesCreated>;
+  /** «Cancelar ésta y las siguientes» de una serie: las citas canceladas, en orden. `notify`: «Avisar al paciente». */
+  cancelFollowing(businessId: string, appointmentId: string, notify?: boolean): Promise<{ cancelled: Appointment[] }>;
   /** Registra en la actividad que se abrió WhatsApp con el aviso de un cambio de la cita. */
   /** `clientId`: a cuál de los pacientes de la cita (con varios pacientes, un registro por cada uno). */
   logWhatsAppNotice(businessId: string, appointmentId: string, kind: WhatsAppNoticeKind, clientId?: string): Promise<void>;

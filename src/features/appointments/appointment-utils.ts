@@ -1,8 +1,8 @@
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
-import { joinNames } from "@/lib/format";
+import { capitalize, formatDate, joinNames } from "@/lib/format";
 import { durationInMinutes, isPast, minutesToTime, type ZonedNow } from "@/lib/time";
 import type { AppointmentInput } from "@/lib/validations/appointment";
-import type { Appointment, Client, ClientConfirmation, HomeVisitAddress, Service, ServiceMode } from "@/types";
+import type { Appointment, Client, ClientConfirmation, HomeVisitAddress, ISODate, Service, ServiceMode } from "@/types";
 
 export function getClientName(clientsById: Map<string, Client>, clientId: string): string {
   return clientsById.get(clientId)?.name ?? "Cliente eliminado";
@@ -128,4 +128,9 @@ export function appointmentToInput(appointment: Appointment): AppointmentInput {
     isVirtual: appointment.isVirtual,
     professionalId: appointment.professionalId,
   };
+}
+
+/** «Martes 27 de octubre» (con el año si la serie pasa a otro): las fechas de una serie (spec 011). */
+export function seriesDayLabel(date: ISODate, withYear = false): string {
+  return capitalize(formatDate(date, withYear ? "EEEE d 'de' MMMM 'de' yyyy" : "EEEE d 'de' MMMM"));
 }

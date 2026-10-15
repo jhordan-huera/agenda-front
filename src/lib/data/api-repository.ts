@@ -7,6 +7,8 @@ import type {
   AdminPlanRequest,
   AdminUserSummary,
   Appointment,
+  AppointmentSeriesCreated,
+  AppointmentSeriesPreview,
   AuditLogPage,
   ImageUpload,
   PaymentReceipt,
@@ -147,6 +149,11 @@ export const apiRepository: DataRepository = {
       api.put<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}`, input),
     updateStatus: (businessId, appointmentId, status, notify = true) =>
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, { status, notify }),
+    previewSeries: (businessId, input) =>
+      api.post<AppointmentSeriesPreview>(`${business(businessId)}/appointment-series/preview`, input),
+    createSeries: (businessId, input) => api.post<AppointmentSeriesCreated>(`${business(businessId)}/appointment-series`, input),
+    cancelFollowing: (businessId, appointmentId, notify = true) =>
+      api.post<{ cancelled: Appointment[] }>(`${business(businessId)}/appointments/${id(appointmentId)}/cancel-following`, { notify }),
     logWhatsAppNotice: (businessId, appointmentId, kind, clientId) =>
       api.post<void>(`${business(businessId)}/appointments/${id(appointmentId)}/whatsapp-notice`, { kind, clientId }),
     setArrival: (businessId, appointmentId, arrived) =>
