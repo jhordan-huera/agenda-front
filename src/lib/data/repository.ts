@@ -27,6 +27,7 @@ import type {
   ProfileInput,
 } from "@/lib/validations/business";
 import type { ClientInput, ConfirmClaimInput } from "@/lib/validations/client";
+import type { ClientImportInput } from "@/lib/validations/client-import";
 import type { ImageUploadInput } from "@/lib/validations/images";
 import type { ReceiptInput } from "@/lib/validations/payment";
 import type { ProfessionalInput } from "@/lib/validations/professional";
@@ -60,6 +61,7 @@ import type {
   BusinessStatus,
   Client,
   ClientActivity,
+  ClientImportResult,
   ClientRequiredFields,
   ClinicalNote,
   ClinicalProfile,
@@ -197,6 +199,11 @@ export interface ClientRepository {
    * 009). Devuelve la ficha (con el email o el teléfono nuevos, si se pidió).
    */
   confirmClaim(businessId: string, clientId: string, input: ConfirmClaimInput): Promise<Client>;
+  /**
+   * Importa pacientes desde las filas de un Excel o un CSV (spec 012), todo o nada: crea los válidos y
+   * nuevos y no toca los que ya existían. Sin emails a los pacientes.
+   */
+  importMany(businessId: string, input: ClientImportInput): Promise<ClientImportResult>;
 }
 
 export interface ServiceRepository {

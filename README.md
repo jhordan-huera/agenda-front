@@ -53,7 +53,8 @@ igual. `vercel.json` excluye `/_vercel/` de la reescritura a `index.html`.
 ## Stack
 
 React 19 · TypeScript · Vite · React Router 8 · Tailwind CSS v4 · shadcn/ui (Radix) · Lucide ·
-TanStack Query · Zod · date-fns · Recharts · Sonner · MapLibre · Sora.
+TanStack Query · Zod · date-fns · Recharts · Sonner · MapLibre · Sora · read-excel-file (sólo en la
+pantalla de importar pacientes, con la versión fija).
 
 ## Diseño
 
@@ -371,6 +372,24 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   cliente escribe al negocio desde la página de reservas ("Escríbenos por WhatsApp", p. ej. para
   una cita con menos anticipación de la permitida). Abre la conversación con un mensaje ya escrito (enlace `wa.me`, sin API ni coste). Los números sin
   prefijo internacional toman el del país del negocio.
+- **Importar pacientes desde un Excel (.xlsx) o un CSV** (spec 012): Clientes → «Importar pacientes»
+  (`/dashboard/clients/importar`, permiso `clients.import`: propietario, administradores y super admin
+  en modo soporte; también en el estado «Aún no tienes clientes»). Tres pasos:
+  - **Archivo:** se elige o se arrastra, de hasta 10 MB y 5.000 filas, o se descarga la plantilla
+    (`public/plantilla-pacientes.xlsx`: sólo los títulos, con la cédula y el teléfono como texto para
+    que Excel no borre el 0). Se lee en el navegador y no se sube ni se guarda; nada queda en
+    `localStorage`. El lector de Excel (`read-excel-file`, versión fija) se descarga sólo al elegir un
+    .xlsx (import dinámico en `features/clients/import/read-spreadsheet.ts`); el CSV lo lee
+    `src/lib/csv.ts` (UTF-8 o Windows-1252, `;`, `,` o tabulador).
+  - **Columnas:** la hoja (se propone la primera con títulos reconocidos), la fila de títulos (entre
+    las 10 primeras) y a qué dato va cada columna, con los nombres habituales ya asignados («CI»,
+    «Correo», «Celular»…), «Añadir a las notas» y «No importar».
+  - **Revisión:** cuántos se importarán, cuántos ya existían, cuáles tienen errores (fila y motivo),
+    cuáles están repetidos y cuántos no entran por el tope del plan, con «Descargar las filas con
+    errores». Usa el mismo código que la API (`src/lib/validations/client-import.ts`, compartido).
+
+  Se importan en una sola petición, todo o nada; si se corta la conexión, la pantalla lo dice y
+  repetir no duplica. Los importados no reciben emails y no cuentan como clientes nuevos del mes.
 - Onboarding en 6 pasos, agenda día/semana/mes, clientes (con buscador en "Nueva cita"),
   servicios, horarios partidos, bloqueos, página pública de reservas sin registro, reportes y configuración.
 

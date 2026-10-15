@@ -47,6 +47,8 @@ export const router = createBrowserRouter([
           { index: true, lazy: lazyPage(() => import("@/pages/dashboard/dashboard-page")) },
           { path: "calendar", lazy: lazyPage(() => import("@/pages/dashboard/calendar-page")) },
           { path: "clients", lazy: lazyPage(() => import("@/pages/dashboard/clients-page")) },
+          // Importar pacientes desde un Excel o un CSV (spec 012). La ruta fija gana a clients/:id.
+          { path: "clients/importar", lazy: lazyPage(() => import("@/pages/dashboard/client-import-page")) },
           { path: "clients/:id", lazy: lazyPage(() => import("@/pages/dashboard/client-detail-page")) },
           { path: "clients/:id/historia-clinica", lazy: lazyPage(() => import("@/pages/dashboard/clinical-print-page")) },
           { path: "services", lazy: lazyPage(() => import("@/pages/dashboard/services-page")) },

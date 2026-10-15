@@ -1,5 +1,6 @@
-import { LayoutGrid, List, Search, UserPlus, Users, X } from "lucide-react";
+import { FileSpreadsheet, LayoutGrid, List, Search, UserPlus, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -98,9 +99,19 @@ export default function ClientsPage() {
         title="Clientes"
         description={clientsQuery.isSuccess ? `${clients.length} clientes registrados` : "Tu cartera de clientes"}
         actions={
-          <Button size="lg" onClick={openCreate}>
-            <UserPlus /> Nuevo cliente
-          </Button>
+          <>
+            {/* Importar pacientes (spec 012): puesta en marcha, del propietario y los administradores. */}
+            {can("clients.import") && (
+              <Button asChild size="lg" variant="outline">
+                <Link to="/dashboard/clients/importar">
+                  <FileSpreadsheet /> Importar pacientes
+                </Link>
+              </Button>
+            )}
+            <Button size="lg" onClick={openCreate}>
+              <UserPlus /> Nuevo cliente
+            </Button>
+          </>
         }
       />
 
@@ -116,11 +127,24 @@ export default function ClientsPage() {
         <EmptyState
           icon={Users}
           title="Aún no tienes clientes"
-          description="Registra tu primer cliente o comparte tu página de reservas para que lleguen solos."
+          description={
+            can("clients.import")
+              ? "Registra tu primer cliente, importa la lista que ya tienes en Excel o comparte tu página de reservas para que lleguen solos."
+              : "Registra tu primer cliente o comparte tu página de reservas para que lleguen solos."
+          }
           action={
-            <Button onClick={openCreate}>
-              <UserPlus /> Crear cliente
-            </Button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button onClick={openCreate}>
+                <UserPlus /> Crear cliente
+              </Button>
+              {can("clients.import") && (
+                <Button asChild variant="outline">
+                  <Link to="/dashboard/clients/importar">
+                    <FileSpreadsheet /> Importar pacientes
+                  </Link>
+                </Button>
+              )}
+            </div>
           }
         />
       ) : (
