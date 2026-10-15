@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusinessId } from "@/features/auth/use-session";
 import { data } from "@/lib/data";
-import type { ClientInput } from "@/lib/validations/client";
+import type { ClientInput, ConfirmClaimInput } from "@/lib/validations/client";
 import type { Client } from "@/types";
 import { queryKeys } from "./query-keys";
 import { useInvalidateActivity } from "./use-invalidate-activity";
@@ -50,6 +50,25 @@ export function useDeleteClient() {
   const invalidateActivity = useInvalidateActivity();
   return useMutation({
     mutationFn: (clientId: string) => data.clients.remove(businessId, clientId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.clients(businessId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.appointments(businessId) });
+      void invalidateActivity();
+    },
+  });
+}
+
+/**
+ * Une un paciente «Por verificar» a su ficha (spec 009): sus citas pasan a ella, así que se recargan
+ * los pacientes y las citas.
+ */
+export function useConfirmClaim() {
+  const businessId = useBusinessId();
+  const queryClient = useQueryClient();
+  const invalidateActivity = useInvalidateActivity();
+  return useMutation({
+    mutationFn: ({ clientId, input }: { clientId: string; input: ConfirmClaimInput }) =>
+      data.clients.confirmClaim(businessId, clientId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.clients(businessId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.appointments(businessId) });

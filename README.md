@@ -387,9 +387,12 @@ El registro (`/register`) usa el mismo widget con la Site Key de `GET /api/publi
 La API es otro proyecto de Vercel (ver agenda-backend). `middleware.ts` (Routing Middleware de
 Vercel) reenvía `/api/*` a esa API: el navegador sólo habla con el dominio del frontend, así que la
 cookie de sesión es propia y no hace falta CORS. Como Vercel reemplaza la IP del visitante al pasar
-por un proxy, el middleware la envía aparte firmada con `PROXY_SECRET` para que los límites
-anti-abuso de la API sean por visitante. El secreto va en todas las peticiones: con la API en AWS
-Lambda (Function URL pública), lo que no lo trae recibe 403.
+por un proxy, el middleware la envía aparte, firmada con `PROXY_SECRET` y la hora (HMAC-SHA256 de
+`<ip>.<segundos>`, que la API sólo acepta durante 2 minutos: spec 009), para que los límites
+anti-abuso de la API sean por visitante. La firma va en todas las peticiones: con la API en AWS
+Lambda (Function URL pública), lo que no la trae recibe 403. Fase 1: también va el secreto fijo de
+antes (`x-agendo-proxy-secret`), para que no importe si se publica antes la API o el frontend; se
+quita cuando los dos estén publicados. Las peticiones a `/api/public/*` van sin la cookie de sesión.
 
 Variables de entorno del proyecto en Vercel (no llevan el prefijo `VITE_`: sólo las lee el
 middleware, nunca llegan al navegador):
@@ -399,4 +402,5 @@ middleware, nunca llegan al navegador):
 | `API_URL` | URL de la API, p. ej. `https://agenda-backend.vercel.app` |
 | `PROXY_SECRET` | El mismo valor que en la API |
 
-En local no se usa el middleware: el proxy de Vite (`vite.config.ts`) hace lo mismo.
+En local no se usa el middleware: el proxy de Vite (`vite.config.ts`) reenvía `/api` sin firma, y la
+API usa la IP de la conexión.

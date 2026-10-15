@@ -23,6 +23,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ErrorState } from "@/components/shared/error-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VerifyBadge } from "@/components/shared/verify-badge";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,7 +47,8 @@ import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, AppointmentStatus, Client } from "@/types";
 import { AppointmentPayment } from "./appointment-payment";
-import { appointmentClientIds, getAppointmentClientNames, getServiceName } from "./appointment-utils";
+import { appointmentClientIds, clientsToVerify, getAppointmentClientNames, getServiceName } from "./appointment-utils";
+import { ClaimReview } from "./claim-review";
 
 interface AppointmentDetailsSheetProps {
   appointmentId: string | null;
@@ -119,6 +121,8 @@ function AppointmentDetails({
   const client = clientsById.get(appointment.clientId);
   const patients = appointmentClientIds(appointment).flatMap((id) => clientsById.get(id) ?? []);
   const clientName = getAppointmentClientNames(clientsById, appointment);
+  // Reserva «Por verificar» (spec 009): algún paciente escribió la cédula de otra ficha con otros datos.
+  const toVerify = clientsToVerify(clientsById, appointment).length > 0;
   // Mensaje ya escrito con los datos de la cita; el negocio lo revisa antes de enviarlo.
   const whatsAppUrlOf = (patient: Client) =>
     patient.phone && business
@@ -168,6 +172,7 @@ function AppointmentDetails({
               <DoorOpen className="size-3.5" aria-hidden /> Llegó a las {formatClockTime(appointment.arrivedAt, business?.timezone)}
             </span>
           )}
+          {toVerify && <VerifyBadge />}
         </div>
       </SheetHeader>
 
@@ -310,14 +315,16 @@ function AppointmentDetails({
                 {patients.length > 1 ? "Pacientes" : "Cliente"}
               </h3>
               {patients.map((patient) => (
-                <PatientContact
-                  key={patient.id}
-                  patient={patient}
-                  showName={patients.length > 1}
-                  whatsAppUrl={whatsAppUrlOf(patient)}
-                  clinicalAccess={clinicalAccess}
-                  onNote={() => setNoteFor(patient)}
-                />
+                <div key={patient.id} className="space-y-2">
+                  <PatientContact
+                    patient={patient}
+                    showName={patients.length > 1}
+                    whatsAppUrl={whatsAppUrlOf(patient)}
+                    clinicalAccess={clinicalAccess}
+                    onNote={() => setNoteFor(patient)}
+                  />
+                  <ClaimReview patient={patient} />
+                </div>
               ))}
             </section>
           </>

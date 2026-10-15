@@ -7,7 +7,7 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "5 de octubre de 2026";
+const LAST_UPDATED = "14 de octubre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
@@ -165,11 +165,20 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>GitHub</strong>, que ejecuta las tareas automáticas (por ejemplo, los recordatorios de las citas y
-                la copia de seguridad diaria).
+                la copia de seguridad semanal).
               </li>
               <li>
                 <strong>OpenFreeMap</strong>, que dibuja los mapas: tu navegador le pide las imágenes del mapa, así que ve tu
                 dirección IP.
+              </li>
+              <li>
+                <strong>Nominatim (Fundación OpenStreetMap)</strong>, que busca en el mapa la dirección que escribes (por
+                ejemplo, la de una cita a domicilio): recibe el texto que buscas y tu dirección IP.
+              </li>
+              <li>
+                <strong>Vercel Analytics</strong>, que mide qué páginas se visitan y cuánto tardan en cargar, sin cookies y
+                sin datos que te identifiquen: las direcciones de las páginas le llegan sin nombres, números ni enlaces de
+                pago.
               </li>
               <li>
                 <strong>Cloudflare (Turnstile)</strong>, que comprueba en la página de reservas que quien busca su cédula o
@@ -177,9 +186,9 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>ntfy y healthchecks.io</strong>, para avisos internos de funcionamiento al equipo de {APP_NAME}, con
-                datos mínimos: qué emails automáticos se enviaron, con el nombre abreviado del destinatario, su email
-                parcialmente oculto, el negocio y la fecha de la cita; y, en las alertas de seguridad, el email de la
-                cuenta parcialmente oculto.
+                datos mínimos: qué emails automáticos se enviaron y qué citas se reservaron o cambiaron, con el nombre
+                abreviado del paciente, su email y su teléfono parcialmente ocultos, el negocio y la fecha de la cita; y, en
+                las alertas de seguridad, el email de la cuenta parcialmente oculto.
               </li>
             </ul>
             <p>

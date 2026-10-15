@@ -1,5 +1,6 @@
 import { CalendarOff, ChevronRight, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { VerifyBadge } from "@/components/shared/verify-badge";
 import { ReceiptBadge } from "@/features/appointments/receipt-badge";
 import { getBlockedRanges } from "@/lib/availability";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
@@ -7,7 +8,7 @@ import { capitalize, formatDate, formatTimeRange, plural } from "@/lib/format";
 import { minutesToTime, timeToMinutes } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Client, ISODate, Professional, Service } from "@/types";
-import { getAppointmentClientNames } from "@/features/appointments/appointment-utils";
+import { clientsToVerify, getAppointmentClientNames } from "@/features/appointments/appointment-utils";
 
 interface AgendaListViewProps {
   days: ISODate[];
@@ -146,6 +147,7 @@ function DayItems({
                 <span className="flex flex-wrap gap-1.5 pt-1">
                   <StatusBadge status={appointment.status} />
                   <ReceiptBadge appointment={appointment} />
+                  {clientsToVerify(clientsById, appointment).length > 0 && <VerifyBadge />}
                 </span>
               </span>
             </button>

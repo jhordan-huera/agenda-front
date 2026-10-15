@@ -26,7 +26,7 @@ import type {
   OnboardingInput,
   ProfileInput,
 } from "@/lib/validations/business";
-import type { ClientInput } from "@/lib/validations/client";
+import type { ClientInput, ConfirmClaimInput } from "@/lib/validations/client";
 import type { ImageUploadInput } from "@/lib/validations/images";
 import type { ReceiptInput } from "@/lib/validations/payment";
 import type { ProfessionalInput } from "@/lib/validations/professional";
@@ -188,6 +188,11 @@ export interface ClientRepository {
   update(businessId: string, clientId: string, input: ClientInput): Promise<Client>;
   /** Elimina el cliente y su historial de citas. */
   remove(businessId: string, clientId: string): Promise<void>;
+  /**
+   * «Es el mismo paciente»: une un paciente «Por verificar» a la ficha cuya cédula escribió (spec
+   * 009). Devuelve la ficha (con el email o el teléfono nuevos, si se pidió).
+   */
+  confirmClaim(businessId: string, clientId: string, input: ConfirmClaimInput): Promise<Client>;
 }
 
 export interface ServiceRepository {

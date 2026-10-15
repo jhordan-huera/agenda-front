@@ -91,6 +91,8 @@ export const apiRepository: DataRepository = {
     create: (businessId, input) => api.post<Client>(`${business(businessId)}/clients`, input),
     update: (businessId, clientId, input) => api.put<Client>(`${business(businessId)}/clients/${id(clientId)}`, input),
     remove: (businessId, clientId) => api.delete(`${business(businessId)}/clients/${id(clientId)}`),
+    confirmClaim: (businessId, clientId, input) =>
+      api.post<Client>(`${business(businessId)}/clients/${id(clientId)}/confirm-claim`, input),
   },
 
   clinicalRecords: {

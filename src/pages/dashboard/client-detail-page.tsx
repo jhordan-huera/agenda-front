@@ -12,12 +12,13 @@ import {
   UserX,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageTitle } from "@/components/shared/page-title";
 import { ActiveBadge, StatusBadge } from "@/components/shared/status-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VerifyBadge } from "@/components/shared/verify-badge";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentListItem } from "@/features/appointments/appointment-list-item";
 import { getServiceName } from "@/features/appointments/appointment-utils";
+import { ClaimReview } from "@/features/appointments/claim-review";
 import { useAppointmentDialogs } from "@/features/appointments/use-appointment-dialogs";
 import { usePermissions } from "@/features/auth/use-permissions";
 import { MetricStrip } from "@/features/dashboard/metric-strip";
@@ -52,6 +54,7 @@ import { getWhatsAppUrl } from "@/lib/whatsapp";
 
 export default function ClientDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const clientQuery = useClient(id);
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
@@ -297,6 +300,7 @@ export default function ClientDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="truncate text-2xl font-semibold tracking-tight">{client.name}</h1>
               <ActiveBadge active={client.isActive} />
+              {client.claimedClientId && <VerifyBadge />}
             </div>
             <p className="text-sm text-muted-foreground">
               Cliente desde {formatShortDate(toZonedDate(client.createdAt, business?.timezone))}
@@ -326,6 +330,11 @@ export default function ClientDetailPage() {
           )}
         </div>
       </div>
+
+      {/* «Por verificar» (spec 009): al unirlo a su ficha, este paciente desaparece y se abre la ficha. */}
+      {client.claimedClientId && (
+        <ClaimReview patient={client} onMerged={(claimed) => navigate(`/dashboard/clients/${claimed.id}`, { replace: true })} />
+      )}
 
       {clinicalAccess ? (
         <Tabs value={tab} onValueChange={(value) => setSearchParams(value === "historia" ? { tab: value } : {}, { replace: true })}>

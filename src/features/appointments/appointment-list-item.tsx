@@ -1,6 +1,9 @@
 import { StatusBadge } from "@/components/shared/status-badge";
+import { VerifyBadge } from "@/components/shared/verify-badge";
+import { useLookups } from "@/hooks/queries/use-lookups";
 import { capitalize, formatShortDate } from "@/lib/format";
 import type { Appointment } from "@/types";
+import { clientsToVerify } from "./appointment-utils";
 import { ReceiptBadge } from "./receipt-badge";
 
 interface AppointmentListItemProps {
@@ -13,6 +16,8 @@ interface AppointmentListItemProps {
 
 /** Fila compacta de cita (hora, título y estado) para listas. */
 export function AppointmentListItem({ appointment, title, subtitle, showDate, onClick }: AppointmentListItemProps) {
+  const { clientsById } = useLookups();
+  const toVerify = clientsToVerify(clientsById, appointment).length > 0;
   return (
     <li>
       <button
@@ -30,9 +35,18 @@ export function AppointmentListItem({ appointment, title, subtitle, showDate, on
           {/* En el móvil el título puede ocupar dos líneas (con el estado al lado, una sola lo cortaba). */}
           <p className="font-semibold max-sm:line-clamp-2 sm:truncate">{title}</p>
           <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
+          {/* En el móvil, las marcas bajo el título: con el comprobante y el estado al lado, el título se cortaba. */}
+          {toVerify && <VerifyBadge className="mt-1 max-sm:hidden" />}
+          <span className="mt-1.5 flex flex-wrap gap-1.5 sm:hidden">
+            <StatusBadge status={appointment.status} />
+            <ReceiptBadge appointment={appointment} />
+            {toVerify && <VerifyBadge />}
+          </span>
         </div>
-        <ReceiptBadge appointment={appointment} />
-        <StatusBadge status={appointment.status} />
+        <span className="flex items-center gap-2 max-sm:hidden">
+          <ReceiptBadge appointment={appointment} />
+          <StatusBadge status={appointment.status} />
+        </span>
       </button>
     </li>
   );

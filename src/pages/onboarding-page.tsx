@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
+import { useSignOut } from "@/components/layout/use-sign-out";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { Logo } from "@/components/shared/logo";
 import { PageTitle } from "@/components/shared/page-title";
@@ -13,7 +14,8 @@ import { getHomePath } from "@/lib/auth";
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { status, session, signOut } = useSession();
+  const { status, session } = useSession();
+  const signOut = useSignOut();
   const { data: user } = useCurrentUser();
   useInstallableApp();
 
@@ -32,7 +34,7 @@ export default function OnboardingPage() {
       <PageTitle title="Configura tu negocio" />
       <header className="flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
         <Logo href="/onboarding" />
-        <Button variant="ghost" onClick={signOut}>
+        <Button variant="ghost" onClick={() => void signOut()}>
           <LogOut /> Salir
         </Button>
       </header>
