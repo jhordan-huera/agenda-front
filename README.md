@@ -390,9 +390,8 @@ cookie de sesión es propia y no hace falta CORS. Como Vercel reemplaza la IP de
 por un proxy, el middleware la envía aparte, firmada con `PROXY_SECRET` y la hora (HMAC-SHA256 de
 `<ip>.<segundos>`, que la API sólo acepta durante 2 minutos: spec 009), para que los límites
 anti-abuso de la API sean por visitante. La firma va en todas las peticiones: con la API en AWS
-Lambda (Function URL pública), lo que no la trae recibe 403. Fase 1: también va el secreto fijo de
-antes (`x-agendo-proxy-secret`), para que no importe si se publica antes la API o el frontend; se
-quita cuando los dos estén publicados. Las peticiones a `/api/public/*` van sin la cookie de sesión.
+Lambda (Function URL pública), lo que no la trae recibe 403. El secreto ya no viaja en ninguna
+cabecera (fase 2 de la spec 009). Las peticiones a `/api/public/*` van sin la cookie de sesión.
 
 Variables de entorno del proyecto en Vercel (no llevan el prefijo `VITE_`: sólo las lee el
 middleware, nunca llegan al navegador):
