@@ -44,6 +44,8 @@ import type {
   ImageUpload,
   PaymentReceipt,
   PaymentReceiptUpload,
+  PublicAppointment,
+  PublicAppointmentResult,
   PublicPayment,
   AuditEntityType,
   AuditLogPage,
@@ -284,6 +286,12 @@ export interface PublicBookingRepository {
   requestReceiptUpload(token: string, input: ReceiptInput): Promise<PaymentReceiptUpload>;
   /** Tras subir el archivo: la API comprueba que llegó y avisa al negocio. */
   completeReceiptUpload(token: string, receiptId: string): Promise<PaymentReceipt>;
+  /** Página «Tu cita» (/cita/:token, spec 010): la cita de ese enlace y lo que puede hacer quien lo abre. */
+  getAppointment(token: string): Promise<PublicAppointment>;
+  /** «Confirmo que voy»: una marca aparte, no cambia el estado de la cita. Repetirlo no cambia nada. */
+  confirmAppointment(token: string): Promise<PublicAppointmentResult>;
+  /** «Cancelar mi cita»: sólo el paciente principal, si el negocio lo permite y aún está en plazo. */
+  cancelAppointment(token: string): Promise<PublicAppointmentResult>;
 }
 
 /** Logos y fotos: URL firmada para subir la imagen al almacenamiento y su dirección pública. */

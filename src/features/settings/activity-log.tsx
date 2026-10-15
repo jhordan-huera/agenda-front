@@ -47,7 +47,8 @@ export function ActivityLog() {
 
   const people = [
     ...(team.data ?? []).map((member) => ({ value: member.userId, label: `${member.firstName} ${member.lastName}` })),
-    { value: "online", label: "Reservas online" },
+    // Lo que hacen los pacientes sin cuenta: reservar en la página y, desde su email, confirmar o cancelar (spec 010).
+    { value: "online", label: "Pacientes (página y emails)" },
     { value: "support", label: `Soporte de ${APP_NAME}` },
   ];
 

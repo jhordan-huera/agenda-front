@@ -44,7 +44,8 @@ Otros scripts: `npm run build` (typecheck + build de producción), `npm run prev
 
 Visitas por página con Vercel Web Analytics (`src/app/page-analytics.tsx`, sin cookies): se ven en
 Vercel → agenda-front → Analytics. Sólo se activa en la web publicada (no en local). Antes de enviar
-cada visita se cambian los identificadores de la ruta por `[id]` y se quitan los parámetros de la URL,
+cada visita se cambian los identificadores de la ruta por `[id]`, los tokens de los enlaces privados
+(`/pago/…`, `/cita/…`) por `[token]` y se quitan los parámetros de la URL,
 así a Vercel no llega a qué cliente o negocio se entró. El plan Hobby incluye 50.000 visitas al mes
 (entre todos los proyectos); al pasarlas, Vercel deja de contar hasta el ciclo siguiente, la web sigue
 igual. `vercel.json` excluye `/_vercel/` de la reescritura a `index.html`.
@@ -301,6 +302,21 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   pago o enviar por WhatsApp los datos de todas las cuentas con el enlace; la agenda marca
   "Comprobante" en las citas por revisar y `?appointment=<id>` en el calendario abre su ficha
   (enlace del email al negocio).
+- **«Tu cita»: el paciente confirma o cancela desde el email** (spec 010): los emails de una cita
+  activa llevan el enlace privado de cada persona a `/cita/:token` (`pages/appointment-page.tsx` y
+  `features/patient-appointment/`, sin sesión y con los colores del negocio; el del paciente principal
+  usa el mismo token que `/pago/:token`). Ahí ve el servicio, la fecha, la hora, el profesional, el
+  lugar y el contacto del negocio (nada de sus datos), pulsa «Confirmo que voy» (una marca aparte: no
+  cambia el estado; con `?confirmar=1`, el botón del recordatorio, se confirma al abrir y el parámetro
+  se quita de la dirección) y, si el negocio lo permite y aún está en plazo, «Cancelar mi cita» (pide
+  confirmarlo y ofrece «Elegir otra hora»). Si no, el WhatsApp con el aviso ya escrito y «Llamar».
+  Sólo el principal cancela y paga; las otras personas de la sesión sólo confirman. La página de pago
+  enlaza a «Tu cita». En el panel, la marca «Confirmó el paciente» (`client-confirmed-badge.tsx`) va
+  en el bloque de la agenda (icono y lector de pantalla), la lista del celular, la ficha (con la hora
+  y, con varias personas, la de cada una) y el Inicio («Confirmó»). Configuración → Agenda explica
+  que «Permitir cancelaciones» y la antelación valen también para «Tu cita» y avisa si el
+  recordatorio sale cuando ya no se puede cancelar. Un panel con un backend anterior trata
+  `clientConfirmations` como vacía.
 - **Logos y fotos**: `ImageUploadField` reduce la imagen en el navegador (WebP, 512–800 px) y la sube
   al bucket público `imagenes` de Supabase Storage (`hooks/queries/use-images.ts`, `lib/upload.ts`);
   el formulario guarda su dirección pública, no la imagen.

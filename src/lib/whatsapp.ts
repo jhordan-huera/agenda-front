@@ -61,6 +61,20 @@ export function getReceiptWhatsAppUrl(
 }
 
 /**
+ * Desde «Tu cita» (spec 010), el paciente avisa al negocio de que no podrá ir: fuera de plazo, si el
+ * negocio no permite cancelar ahí o si es otra persona de la sesión. Sin su nombre: la página no lo
+ * conoce (WhatsApp ya dice quién escribe).
+ */
+export function getCantAttendWhatsAppUrl(
+  business: Pick<Business, "phone" | "timezone">,
+  appointment: { serviceName: string; date: ISODate; startTime: string },
+): string | null {
+  if (!business.phone) return null;
+  const when = `el ${formatDate(appointment.date, "EEEE d 'de' MMMM")} a las ${appointment.startTime}`;
+  return getWhatsAppUrl(business.phone, business.timezone, `Hola, no podré ir a mi cita de ${appointment.serviceName} ${when}.`);
+}
+
+/**
  * Las cuentas de una agenda en un mensaje, una por línea ("Banco Pichincha · Ahorros · N.º 2200123456 ·
  * Titular: Ana Ruiz"), numeradas si son varias (el paciente transfiere a cualquiera).
  */

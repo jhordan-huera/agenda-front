@@ -11,6 +11,8 @@ import type {
   ImageUpload,
   PaymentReceipt,
   PaymentReceiptUpload,
+  PublicAppointment,
+  PublicAppointmentResult,
   PublicPayment,
   BlockedTime,
   BookingConfirmation,
@@ -186,6 +188,9 @@ export const apiRepository: DataRepository = {
     requestReceiptUpload: (token, input) => api.post<PaymentReceiptUpload>(`/public/payments/${id(token)}/receipts`, input),
     completeReceiptUpload: (token, receiptId) =>
       api.post<PaymentReceipt>(`/public/payments/${id(token)}/receipts/${id(receiptId)}/complete`),
+    getAppointment: (token) => api.get<PublicAppointment>(`/public/appointments/${id(token)}`),
+    confirmAppointment: (token) => api.post<PublicAppointmentResult>(`/public/appointments/${id(token)}/confirm`),
+    cancelAppointment: (token) => api.post<PublicAppointmentResult>(`/public/appointments/${id(token)}/cancel`),
   },
 
   images: {

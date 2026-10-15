@@ -12,6 +12,7 @@ import {
   Pencil,
   Phone,
   Tag,
+  UserCheck,
   Video,
   Wallet,
   XCircle,
@@ -40,14 +41,29 @@ import { useAppointment, useSetAppointmentArrival, useUpdateAppointmentStatus } 
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
-import { capitalize, formatClockTime, formatCurrency, formatDuration, formatLongDate, formatTimeRange } from "@/lib/format";
+import {
+  capitalize,
+  formatClockTime,
+  formatCurrency,
+  formatDayMonth,
+  formatDuration,
+  formatLongDate,
+  formatTimeRange,
+} from "@/lib/format";
 import { durationInMinutes } from "@/lib/time";
 import { describeHomeVisit, getDirectionsUrl } from "@/lib/maps";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, AppointmentStatus, Client } from "@/types";
 import { AppointmentPayment } from "./appointment-payment";
-import { appointmentClientIds, clientsToVerify, getAppointmentClientNames, getServiceName } from "./appointment-utils";
+import {
+  appointmentClientIds,
+  clientConfirmationSummary,
+  clientConfirmedAt,
+  clientsToVerify,
+  getAppointmentClientNames,
+  getServiceName,
+} from "./appointment-utils";
 import { ClaimReview } from "./claim-review";
 
 interface AppointmentDetailsSheetProps {
@@ -123,6 +139,19 @@ function AppointmentDetails({
   const clientName = getAppointmentClientNames(clientsById, appointment);
   // Reserva «Por verificar» (spec 009): algún paciente escribió la cédula de otra ficha con otros datos.
   const toVerify = clientsToVerify(clientsById, appointment).length > 0;
+  // «Confirmo que voy» desde el email (spec 010): con una persona, cuándo; con varias, el resumen arriba
+  // y bajo cada una si ya confirmó.
+  const confirmation = clientConfirmationSummary(appointment);
+  const mainConfirmedAt = clientConfirmedAt(appointment, appointment.clientId);
+  const showEachConfirmation =
+    patients.length > 1 && (appointment.status === "pending" || appointment.status === "confirmed" || confirmation !== null);
+  const confirmationOf = (patient: Client) => {
+    if (!showEachConfirmation) return undefined;
+    const at = clientConfirmedAt(appointment, patient.id);
+    return at
+      ? { confirmed: true, text: `Confirmó que va el ${formatDayMonth(at, business?.timezone)} a las ${formatClockTime(at, business?.timezone)}` }
+      : { confirmed: false, text: "Aún no confirma" };
+  };
   // Mensaje ya escrito con los datos de la cita; el negocio lo revisa antes de enviarlo.
   const whatsAppUrlOf = (patient: Client) =>
     patient.phone && business
@@ -170,6 +199,14 @@ function AppointmentDetails({
           {appointment.arrivedAt && (
             <span className="inline-flex items-center gap-1 rounded-full bg-highlight/60 px-2 py-0.5 text-xs font-semibold text-ink">
               <DoorOpen className="size-3.5" aria-hidden /> Llegó a las {formatClockTime(appointment.arrivedAt, business?.timezone)}
+            </span>
+          )}
+          {confirmation && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-highlight/60 px-2 py-0.5 text-xs font-semibold text-ink">
+              <UserCheck className="size-3.5" aria-hidden />
+              {confirmation.total === 1 && mainConfirmedAt
+                ? `${confirmation.label} · ${formatDayMonth(mainConfirmedAt, business?.timezone)}, ${formatClockTime(mainConfirmedAt, business?.timezone)}`
+                : confirmation.label}
             </span>
           )}
           {toVerify && <VerifyBadge />}
@@ -319,6 +356,7 @@ function AppointmentDetails({
                   <PatientContact
                     patient={patient}
                     showName={patients.length > 1}
+                    confirmation={confirmationOf(patient)}
                     whatsAppUrl={whatsAppUrlOf(patient)}
                     clinicalAccess={clinicalAccess}
                     onNote={() => setNoteFor(patient)}
@@ -372,6 +410,7 @@ function AppointmentDetails({
 function PatientContact({
   patient,
   showName,
+  confirmation,
   whatsAppUrl,
   clinicalAccess,
   onNote,
@@ -379,14 +418,23 @@ function PatientContact({
   patient: Client;
   /** Con varios pacientes, el nombre de cada uno sobre sus botones. */
   showName: boolean;
+  /** Con varios pacientes: si confirmó que va desde su email (spec 010) o «Aún no confirma». */
+  confirmation?: { confirmed: boolean; text: string };
   whatsAppUrl: string | null;
   clinicalAccess: boolean;
   onNote: () => void;
 }) {
+  const confirmationLine = confirmation && (
+    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      {confirmation.confirmed && <UserCheck className="size-3.5 shrink-0 text-ink" aria-hidden />}
+      {confirmation.text}
+    </p>
+  );
   if (patient.restricted) {
     return (
       <div className="space-y-1.5">
         {showName && <p className="text-sm font-semibold">{patient.name}</p>}
+        {confirmationLine}
         <p className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
           Es una reserva online de un paciente que ya estaba en el negocio. Podrás abrir su ficha y su historia cuando
           recepción, un administrador o el propietario confirme o gestione la cita.
@@ -397,6 +445,7 @@ function PatientContact({
   return (
     <div className={cn("space-y-2", showName && "rounded-lg border p-3")}>
       {showName && <p className="text-sm font-semibold">{patient.name}</p>}
+      {confirmationLine}
       <div className="flex flex-wrap gap-2">
         {whatsAppUrl && (
           <Button asChild variant="outline" size="sm">

@@ -1,6 +1,7 @@
 import { ChevronRight, DoorOpen, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { ClientConfirmedBadge } from "@/features/appointments/client-confirmed-badge";
 import { ReceiptBadge } from "@/features/appointments/receipt-badge";
 import { plural } from "@/lib/format";
 import { timeToMinutes, type ZonedNow } from "@/lib/time";
@@ -54,6 +55,10 @@ export function TodayList({
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-highlight/60 px-2 py-0.5 text-xs text-ink">
                 <DoorOpen className="size-3" aria-hidden /> Llegó
               </span>
+            )}
+            {/* Confirmó que va desde su email (spec 010): así se ve a quién llamar. Al llegar, ya no hace falta. */}
+            {!appointment.arrivedAt && (appointment.status === "pending" || appointment.status === "confirmed") && (
+              <ClientConfirmedBadge appointment={appointment} short className="font-normal" />
             )}
             <ReceiptBadge appointment={appointment} />
           </span>

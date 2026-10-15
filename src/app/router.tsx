@@ -76,6 +76,8 @@ export const router = createBrowserRouter([
       },
       { path: "/book/:username", lazy: lazyPage(() => import("@/pages/booking-page")) },
       { path: "/pago/:token", lazy: lazyPage(() => import("@/pages/payment-page")) },
+      // «Tu cita» (spec 010): el enlace de los emails para confirmar que va o cancelar, sin sesión.
+      { path: "/cita/:token", lazy: lazyPage(() => import("@/pages/appointment-page")) },
       { path: "/privacidad", lazy: lazyPage(() => import("@/pages/privacy-page")) },
       { path: "*", Component: NotFoundPage },
     ],

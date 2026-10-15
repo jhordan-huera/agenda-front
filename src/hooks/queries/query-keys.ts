@@ -31,6 +31,8 @@ export const queryKeys = {
   publicProfile: (slug: string) => ["public-profile", slug] as const,
   /** Enlace de pago de una cita (/pago/:token). */
   publicPayment: (token: string) => ["public-payment", token] as const,
+  /** Página «Tu cita» (/cita/:token, spec 010). */
+  publicAppointment: (token: string) => ["public-appointment", token] as const,
   /** Site Key del CAPTCHA del registro. */
   captchaSiteKey: ["captcha-site-key"] as const,
   platformSettings: ["platform-settings"] as const,

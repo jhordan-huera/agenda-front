@@ -1,6 +1,7 @@
 import { CalendarOff, ChevronRight, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { VerifyBadge } from "@/components/shared/verify-badge";
+import { ClientConfirmedBadge } from "@/features/appointments/client-confirmed-badge";
 import { ReceiptBadge } from "@/features/appointments/receipt-badge";
 import { getBlockedRanges } from "@/lib/availability";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
@@ -146,6 +147,7 @@ function DayItems({
                 )}
                 <span className="flex flex-wrap gap-1.5 pt-1">
                   <StatusBadge status={appointment.status} />
+                  <ClientConfirmedBadge appointment={appointment} />
                   <ReceiptBadge appointment={appointment} />
                   {clientsToVerify(clientsById, appointment).length > 0 && <VerifyBadge />}
                 </span>

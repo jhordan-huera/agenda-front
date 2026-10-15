@@ -123,9 +123,15 @@ export default function PaymentPage() {
             </p>
           )}
 
-          <Button asChild variant="link" className="justify-self-center">
-            <Link to={`/book/${business.slug}`}>Reservar otra cita con {business.name}</Link>
-          </Button>
+          <div className="flex flex-col items-center gap-1">
+            {/* Spec 010: el mismo token abre «Tu cita», para confirmar que va o cancelarla. */}
+            <Button asChild variant="link">
+              <Link to={`/cita/${token}`}>Ver o cancelar mi cita</Link>
+            </Button>
+            <Button asChild variant="link">
+              <Link to={`/book/${business.slug}`}>Reservar otra cita con {business.name}</Link>
+            </Button>
+          </div>
         </main>
       </div>
     </BrandThemeProvider>
