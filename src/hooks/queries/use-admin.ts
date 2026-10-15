@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { data, type AdminAuditFilters } from "@/lib/data";
 import type {
   AdminBusinessInput,
@@ -10,12 +10,25 @@ import type {
   PlatformSettingsInput,
 } from "@/lib/validations/admin";
 import { useSession } from "@/features/auth/use-session";
-import type { AdminBusinessDetail, Business, BusinessStatus, ClientRequiredFields, PlanId } from "@/types";
+import type { AdminBusinessDetail, AnalyticsPeriodDays, Business, BusinessStatus, ClientRequiredFields, PlanId } from "@/types";
 import { queryKeys } from "./query-keys";
 
 /* Panel del super admin. El backend vuelve a comprobar el rol en cada llamada. */
 
 export const useAdminStats = () => useQuery({ queryKey: queryKeys.admin.stats, queryFn: () => data.admin.getStats() });
+
+/**
+ * La analítica (spec 016): la foto que prepara el cron una vez al día. Cambia una vez por mañana, así que
+ * no se vuelve a pedir al volver a la pestaña; al cambiar de periodo se ve la anterior mientras llega.
+ */
+export const useAdminAnalytics = (days: AnalyticsPeriodDays) =>
+  useQuery({
+    queryKey: queryKeys.admin.analytics(days),
+    queryFn: () => data.admin.getAnalytics(days),
+    staleTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+  });
 
 export const useAdminBusinesses = () =>
   useQuery({ queryKey: queryKeys.admin.businesses, queryFn: () => data.admin.listBusinesses() });

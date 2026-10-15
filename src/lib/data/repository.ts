@@ -40,6 +40,8 @@ import type {
   AdminBusinessSummary,
   AdminPlanRequest,
   AdminUserSummary,
+  AnalyticsPeriodDays,
+  AnalyticsSnapshot,
   Appointment,
   AppointmentSeriesCreated,
   AppointmentSeriesPreview,
@@ -349,6 +351,11 @@ export interface AdminAuditFilters extends AuditLogFilters {
  */
 export interface PlatformAdminRepository {
   getStats(): Promise<PlatformStats>;
+  /**
+   * La analítica (spec 016): la última foto de ese periodo, que prepara el cron cada mañana (la API no
+   * calcula nada). null: todavía no hay ninguna.
+   */
+  getAnalytics(days: AnalyticsPeriodDays): Promise<AnalyticsSnapshot | null>;
   listBusinesses(): Promise<AdminBusinessSummary[]>;
   getBusiness(businessId: string): Promise<AdminBusinessDetail | null>;
   /** Crea el negocio, todavía sin propietario (se agrega después con assignBusinessOwner). */

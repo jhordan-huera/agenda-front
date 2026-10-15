@@ -6,6 +6,7 @@ import type {
   AdminBusinessSummary,
   AdminPlanRequest,
   AdminUserSummary,
+  AnalyticsSnapshot,
   Appointment,
   AppointmentSeriesCreated,
   AppointmentSeriesPreview,
@@ -217,6 +218,7 @@ export const apiRepository: DataRepository = {
 
   admin: {
     getStats: () => api.get<PlatformStats>("/admin/stats"),
+    getAnalytics: (days) => api.get<{ snapshot: AnalyticsSnapshot | null }>("/admin/analytics", { days }).then((result) => result.snapshot),
     listBusinesses: () => api.get<AdminBusinessSummary[]>("/admin/businesses"),
     getBusiness: (businessId) => api.get<AdminBusinessDetail | null>(`/admin/businesses/${id(businessId)}`),
     createBusiness: (input) => api.post<AdminCreateBusinessResult>("/admin/businesses", input),

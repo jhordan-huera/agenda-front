@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Building2,
+  ChartNoAxesCombined,
   CalendarDays,
   Clock,
   ConciergeBell,
@@ -43,6 +44,7 @@ export const NAV_ITEMS: NavItem[] = [
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: "/admin", label: "Resumen", icon: LayoutDashboard, end: true },
   { to: "/admin/businesses", label: "Negocios", icon: Building2 },
+  { to: "/admin/analytics", label: "Analítica", icon: ChartNoAxesCombined },
   { to: "/admin/users", label: "Usuarios", icon: UserCog },
   { to: "/admin/plans", label: "Planes", icon: CreditCard },
   { to: "/admin/categories", label: "Categorías", icon: Tags },
