@@ -9,9 +9,8 @@ import { ipAddress, rewrite } from "@vercel/functions";
  * la API sólo atiende lo que trae esa firma (la Function URL es pública).
  *
  * La firma (spec 009) es HMAC-SHA256 de "<ip>.<segundos>": la API sólo la acepta durante 2 minutos,
- * así que quien vea una petición reenviada no puede inventarse IPs después. Fase 1: también va el
- * PROXY_SECRET de antes, para que no importe si se publica antes el backend o el frontend; se quita
- * (fase 2) cuando los dos estén publicados.
+ * así que quien vea una petición reenviada no puede inventarse IPs después. El PROXY_SECRET ya no
+ * viaja en ninguna cabecera (fase 2).
  * En local, el proxy de Vite (vite.config.ts) reenvía sin firma: la API usa la IP de la conexión.
  */
 export const config = { matcher: "/api/:path*" };
@@ -46,7 +45,6 @@ export default async function middleware(request: Request): Promise<Response> {
     if (ip) headers.set("x-agendo-client-ip", ip);
     headers.set("x-agendo-client-ts", timestamp);
     headers.set("x-agendo-client-sig", await signClientIp(ip, timestamp, secret));
-    headers.set("x-agendo-proxy-secret", secret); // fase 1 (ver arriba)
   }
   return rewrite(new URL(pathname + search, apiUrl), { request: { headers } });
 }
