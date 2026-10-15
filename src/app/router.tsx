@@ -56,6 +56,8 @@ export const router = createBrowserRouter([
           { path: "schedule", lazy: lazyPage(() => import("@/pages/dashboard/schedule-page")) },
           { path: "reports", lazy: lazyPage(() => import("@/pages/dashboard/reports-page")) },
           { path: "settings", lazy: lazyPage(() => import("@/pages/dashboard/settings-page")) },
+          // La página «Avisos» de la campana (spec 014).
+          { path: "notices", lazy: lazyPage(() => import("@/pages/dashboard/notices-page")) },
           { path: "clinical-templates", lazy: lazyPage(() => import("@/pages/dashboard/clinical-templates-page")) },
           { path: "clinical-templates/new", lazy: lazyPage(() => import("@/pages/dashboard/clinical-template-editor-page")) },
           { path: "clinical-templates/:id", lazy: lazyPage(() => import("@/pages/dashboard/clinical-template-editor-page")) },
@@ -74,6 +76,7 @@ export const router = createBrowserRouter([
           { path: "categories", lazy: lazyPage(() => import("@/pages/admin/admin-categories-page")) },
           { path: "activity", lazy: lazyPage(() => import("@/pages/admin/admin-activity-page")) },
           { path: "settings", lazy: lazyPage(() => import("@/pages/admin/admin-settings-page")) },
+          { path: "notices", lazy: lazyPage(() => import("@/pages/admin/admin-notices-page")) },
         ],
       },
       { path: "/book/:username", lazy: lazyPage(() => import("@/pages/booking-page")) },

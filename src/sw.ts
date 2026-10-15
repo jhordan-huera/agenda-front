@@ -9,7 +9,8 @@
  * portada y la página de reservas de los clientes no descargan nada de esto.
  *
  * También muestra los avisos en el celular (spec 013): los recibe cifrados del servicio de avisos del
- * navegador y, al tocarlos, abre la pantalla que corresponde (sólo del panel o de /admin).
+ * navegador y, al tocarlos, abre la pantalla que corresponde (sólo del panel o de /admin). Al recibir uno,
+ * avisa a las ventanas abiertas para que la campana del panel se ponga al día (spec 014).
  */
 import { clientsClaim } from "workbox-core";
 import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute, type PrecacheEntry } from "workbox-precaching";
@@ -91,16 +92,31 @@ self.addEventListener("push", (event) => {
   }
   const readable = typeof payload.title === "string" && payload.title !== "";
   event.waitUntil(
-    self.registration.showNotification(readable ? (payload.title as string) : "Agenda360", {
-      body: readable ? (typeof payload.body === "string" ? payload.body : "") : "Tienes un aviso nuevo",
-      icon: "/icon-app-192.png",
-      badge: "/icon-badge-96.png",
-      tag: typeof payload.tag === "string" ? payload.tag : undefined,
-      data: { url: panelUrl(payload.url) },
-      lang: "es",
-    }),
+    Promise.all([
+      self.registration.showNotification(readable ? (payload.title as string) : "Agenda360", {
+        body: readable ? (typeof payload.body === "string" ? payload.body : "") : "Tienes un aviso nuevo",
+        icon: "/icon-app-192.png",
+        badge: "/icon-badge-96.png",
+        tag: typeof payload.tag === "string" ? payload.tag : undefined,
+        data: { url: panelUrl(payload.url) },
+        lang: "es",
+      }),
+      tellOpenWindows(),
+    ]),
   );
 });
+
+/**
+ * La campana del panel (spec 014, R11): las ventanas abiertas vuelven a pedir el número al momento, sin
+ * esperar los 3 minutos (src/hooks/queries/use-notices.ts). Sin datos: sólo «hay algo nuevo». Va aparte
+ * de mostrar el aviso: si eso fallara, la campana se pone al día igual.
+ */
+async function tellOpenWindows(): Promise<void> {
+  const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  for (const client of windows) {
+    if (new URL(client.url).origin === self.location.origin) client.postMessage({ type: "agenda360:aviso" });
+  }
+}
 
 // Al tocarlo: si la app ya está abierta, la enfoca y le pide abrir la pantalla (navega sin recargar,
 // src/features/push/notification-navigation.ts); si no, abre una ventana nueva (en el iPhone, la app).

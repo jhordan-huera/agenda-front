@@ -42,11 +42,12 @@ import type {
   TeamMember,
   User,
   PlatformAdmin,
+  PanelNoticePage,
   PushConfig,
   PushDevice,
 } from "@/types";
 import { DataError } from "./errors";
-import type { AdminCreateBusinessResult, DataRepository } from "./repository";
+import type { AdminCreateBusinessResult, DataRepository, NoticeRepository } from "./repository";
 
 /**
  * Implementación de la capa de datos sobre la API REST de agenda-backend.
@@ -264,4 +265,20 @@ export const apiRepository: DataRepository = {
     turnOff: (endpoint) => api.post<void>("/push/device/off", { endpoint }),
     sendTest: (endpoint) => api.post<{ sent: true }>("/push/device/test", { endpoint }),
   },
+
+  notices: {
+    business: (businessId) => noticesAt(`/businesses/${id(businessId)}/notices`),
+    platform: noticesAt("/admin/notices"),
+  },
 };
+
+/** Las cuatro rutas de una campana (la del negocio o la de /admin). */
+function noticesAt(base: string): NoticeRepository {
+  return {
+    unread: () => api.get<{ unread: number }>(`${base}/unread`),
+    list: (filters = {}) =>
+      api.get<PanelNoticePage>(base, { limit: filters.limit, unread: filters.unread ? 1 : undefined, cursor: filters.cursor }),
+    markRead: (noticeId) => api.post<void>(`${base}/${id(noticeId)}/read`),
+    markAllRead: () => api.post<void>(`${base}/read-all`),
+  };
+}

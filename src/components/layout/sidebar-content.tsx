@@ -1,4 +1,5 @@
 import { ExternalLink, LogOut } from "lucide-react";
+import type { ReactNode } from "react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/features/auth/use-permissions";
@@ -11,7 +12,8 @@ import { SidebarNav } from "./sidebar-nav";
 import { useSignOut } from "./use-sign-out";
 import { UserMenu } from "./user-menu";
 
-export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+/** `bell`: la campana de avisos (spec 014), junto al logo; sólo en la computadora (en el celular va en la barra). */
+export function SidebarContent({ onNavigate, bell }: { onNavigate?: () => void; bell?: ReactNode }) {
   const { data: business } = useCurrentBusiness();
   const { role, can } = usePermissions();
   const multiAgenda = useMultiAgendaAccess();
@@ -20,7 +22,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="shrink-0 px-4 pt-6 pb-4">
-        <Logo href="/dashboard" className="px-2" />
+        <div className="flex items-center justify-between gap-2">
+          <Logo href="/dashboard" className="px-2" />
+          {bell}
+        </div>
         {/* El negocio, en su recuadro (como el espacio de trabajo de una aplicación). */}
         <div className="mt-5 rounded-xl bg-muted px-3 py-2.5">
           <p className="truncate text-sm font-semibold text-foreground">{business?.name ?? "…"}</p>

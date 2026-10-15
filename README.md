@@ -96,7 +96,8 @@ src/
     shared/       Componentes reutilizables (PageHeader, EmptyState, FormField, ConfirmDialog…)
     layout/       Layouts (auth, panel con sidebar y menú móvil)
   features/       Componentes y lógica por dominio: admin, appointments, calendar, clients, services,
-                  schedule, dashboard, booking, reports, settings, onboarding, auth, landing
+                  schedule, dashboard, booking, reports, settings, onboarding, auth, landing, push,
+                  notices (la campana de avisos)
   hooks/          Hooks de datos (TanStack Query) y utilidades
   lib/
     api/          Cliente HTTP de la API (fetch con cookie de sesión y errores tipados)
@@ -109,7 +110,7 @@ src/
 ```
 
 `types/`, `lib/validations/`, `lib/availability.ts`, `lib/time.ts`, `lib/format.ts`, `lib/email/`,
-`lib/constants/` y `lib/permissions.ts` también los usa la API: después de cambiarlos, ejecuta
+`lib/constants/`, `lib/notices.ts` y `lib/permissions.ts` también los usa la API: después de cambiarlos, ejecuta
 `npm run sync:shared` en agenda-backend para copiarlos.
 
 ## Contraseñas y soporte
@@ -370,6 +371,25 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   `GET /api/push/config`: no hay variables nuevas. **Se prueban con la versión compilada**
   (`npm run build` y `npx vite preview`, con `API_PROXY_TARGET` apuntando a la API local); en
   `npm run dev` no hay service worker y la tarjeta lo dice. `vercel.json` (CSP) no cambia.
+- **Centro de avisos del panel** (spec 014): una campana con el número de avisos sin leer («9+» con
+  más de 9) en el panel del negocio y en /admin, sin activar nada. En la computadora va junto al logo
+  del menú lateral y en el celular a la derecha de la barra de arriba (`AppShell` recibe `bell`; los
+  menús la reciben sólo en la computadora). Para el lector de pantalla es «Avisos, 3 sin leer». Al
+  tocarla, un `Popover` con los últimos 20 (`src/features/notices/`): título, texto con el nombre
+  completo del paciente y hace cuánto («hace 5 min», «ayer»), los no leídos en el lila suave con un
+  punto, «Marcar todo como leído», «Ver todos» y «No tienes avisos» con qué aparecerá ahí. Tocar un
+  aviso lo marca leído y abre su pantalla (la cita en la agenda, la agenda del día o la ficha en
+  /admin). «Ver todos» lleva a `/dashboard/notices` o `/admin/notices`: los de los últimos 30 días
+  agrupados por día («Hoy», «Ayer», «Mar 13 oct»), con «Sólo los no leídos», «Marcar todo como leído»
+  y «Cargar más». Cada persona ve lo suyo (la API decide con `NOTICE_AUDIENCE`, en
+  `src/lib/constants/notices.ts`) y lleva su propio leído; el super admin en modo soporte no ve la
+  campana del negocio. El contador (`useUnreadNotices`, `src/hooks/queries/use-notices.ts`) se pide al
+  abrir el panel, al volver a la pestaña, cada 3 minutos sólo con la pestaña visible
+  (`NOTICE_REFRESH_MS`, para no gastar la CPU de Vercel) y al momento cuando el service worker recibe
+  un aviso al celular (`sw.ts` manda `agenda360:aviso` a las ventanas abiertas). Si la API todavía no
+  tiene la ruta (404, mientras se publica el backend), la campana no se muestra y nada da error. Los
+  textos salen de `src/lib/notices.ts` (`describeNotice`), los mismos del celular, que la API copia con
+  `sync:shared`.
 - **Sin reservas dobles**: nunca dos citas a la misma hora (lo garantiza la base). Cada negocio elige
   en Configuración → Agenda cuántas citas puede reservar una misma persona (por su cédula) el mismo
   día desde su página (1 por defecto, hasta 3 o sin límite). La página de reservas oculta al momento

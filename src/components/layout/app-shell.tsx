@@ -11,6 +11,8 @@ interface AppShellProps {
   renderSidebar: (onNavigate?: () => void) => ReactNode;
   /** Aviso fijo sobre el contenido (p. ej. el modo soporte del super admin). */
   banner?: ReactNode;
+  /** La campana de avisos (spec 014) en la barra de arriba del celular; en la computadora va en el menú. */
+  bell?: ReactNode;
 }
 
 /**
@@ -18,7 +20,7 @@ interface AppShellProps {
  * flotante a la izquierda y el contenido va sobre el lienzo gris claro; en el móvil, el contenido a
  * pantalla completa y el menú en un cajón.
  */
-export function AppShell({ homeHref, renderSidebar, banner }: AppShellProps) {
+export function AppShell({ homeHref, renderSidebar, banner, bell }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -43,6 +45,7 @@ export function AppShell({ homeHref, renderSidebar, banner }: AppShellProps) {
           </SheetContent>
         </Sheet>
         <Logo href={homeHref} />
+        {bell && <div className="ml-auto">{bell}</div>}
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 print:max-w-none print:p-0">

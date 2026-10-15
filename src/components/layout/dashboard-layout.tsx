@@ -7,8 +7,10 @@ import { useSession } from "@/features/auth/use-session";
 import { WhatsAppNoticeProvider } from "@/features/appointments/whatsapp-notice";
 import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { useInstallableApp } from "@/features/install/use-installable-app";
+import { NoticeBell } from "@/features/notices/notice-bell";
 import { PushPrompt } from "@/features/push/push-prompt";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
+import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { getHomePath, loginPathFor } from "@/lib/auth";
 import { AppShell } from "./app-shell";
 import { SidebarContent } from "./sidebar-content";
@@ -40,12 +42,16 @@ function DashboardShell() {
   const { session } = useSession();
   // El panel se viste con los colores del negocio (si eligió unos propios).
   const { data: business } = useCurrentBusiness();
+  // La campana de avisos (spec 014) es del equipo: el super admin en modo soporte no la ve (tiene la suya en /admin).
+  const bell = (align: "start" | "end") =>
+    session?.support ? null : <NoticeBell scope="business" timezone={business?.timezone ?? DEFAULT_TIMEZONE} align={align} />;
   return (
     <BrandThemeProvider colors={business?.brandColors}>
       <WhatsAppNoticeProvider>
         <AppShell
           homeHref="/dashboard"
-          renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} />}
+          renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} bell={onNavigate ? null : bell("start")} />}
+          bell={bell("end")}
           banner={
             session?.support ? (
               <SupportBanner businessName={session.support.businessName} />

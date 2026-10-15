@@ -88,6 +88,7 @@ import type {
   PushConfig,
   PushDevice,
   PushKind,
+  PanelNoticePage,
 } from "@/types";
 
 /**
@@ -427,6 +428,37 @@ export interface PushRepository {
   sendTest(endpoint: string): Promise<{ sent: true }>;
 }
 
+/** Qué avisos pedir (GET …/notices). */
+export interface NoticeListFilters {
+  /** De 1 a 50; 20 por defecto (la lista de la campana). */
+  limit?: number;
+  /** Sólo los no leídos. */
+  unread?: boolean;
+  /** El `nextCursor` de la página anterior («Cargar más»). */
+  cursor?: string;
+}
+
+/**
+ * La campana de una persona (spec 014): la del negocio (`/businesses/:id/notices`, cualquier rol del
+ * equipo; el super admin en modo soporte recibe `forbidden`) o la de /admin (`/admin/notices`). Cada
+ * persona recibe lo suyo y lleva su propio leído. Leer no va a la actividad.
+ */
+export interface NoticeRepository {
+  /** El contador: una consulta barata, sin textos. */
+  unread(): Promise<{ unread: number }>;
+  list(filters?: NoticeListFilters): Promise<PanelNoticePage>;
+  /** Al tocarlo. Repetirlo no cambia nada; `not_found` si no existe o no es de esta persona. */
+  markRead(noticeId: string): Promise<void>;
+  /** «Marcar todo como leído». */
+  markAllRead(): Promise<void>;
+}
+
+/** El centro de avisos del panel (spec 014): la campana del negocio y la de /admin. */
+export interface NoticesRepository {
+  business(businessId: string): NoticeRepository;
+  platform: NoticeRepository;
+}
+
 export interface DataRepository {
   users: UserRepository;
   businesses: BusinessRepository;
@@ -446,4 +478,5 @@ export interface DataRepository {
   platform: PlatformRepository;
   admin: PlatformAdminRepository;
   push: PushRepository;
+  notices: NoticesRepository;
 }
