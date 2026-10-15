@@ -1,8 +1,8 @@
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
-import { joinNames } from "@/lib/format";
+import { capitalize, formatDate, joinNames } from "@/lib/format";
 import { durationInMinutes, isPast, minutesToTime, type ZonedNow } from "@/lib/time";
 import type { AppointmentInput } from "@/lib/validations/appointment";
-import type { Appointment, Client, HomeVisitAddress, Service, ServiceMode } from "@/types";
+import type { Appointment, Client, ClientConfirmation, HomeVisitAddress, ISODate, Service, ServiceMode } from "@/types";
 
 export function getClientName(clientsById: Map<string, Client>, clientId: string): string {
   return clientsById.get(clientId)?.name ?? "Cliente eliminado";
@@ -43,6 +43,31 @@ export function clientsToVerify(
     const client = clientsById.get(id);
     return client?.claimedClientId ? [client] : [];
   });
+}
+
+type ConfirmableAppointment = Pick<Appointment, "clientId"> & { extraClientIds?: string[]; clientConfirmations?: ClientConfirmation[] };
+
+/**
+ * «Confirmo que voy» de los pacientes de la cita (spec 010), para la marca de la agenda, la ficha y el
+ * Inicio. null si nadie confirmó. Con una persona, «Confirmó el paciente»; con varias, «Confirmaron
+ * todos» o «Confirmó 1 de 2». `short`: la versión corta del Inicio. Un backend anterior no manda
+ * `clientConfirmations`: cuenta como que nadie confirmó.
+ */
+export function clientConfirmationSummary(
+  appointment: ConfirmableAppointment,
+): { label: string; short: string; confirmed: number; total: number } | null {
+  const ids = appointmentClientIds(appointment);
+  const confirmed = (appointment.clientConfirmations ?? []).filter((confirmation) => ids.includes(confirmation.clientId)).length;
+  if (confirmed === 0) return null;
+  const total = ids.length;
+  if (total === 1) return { label: "Confirmó el paciente", short: "Confirmó", confirmed, total };
+  const label = confirmed >= total ? "Confirmaron todos" : `Confirmó ${confirmed} de ${total}`;
+  return { label, short: confirmed >= total ? "Confirmaron" : label, confirmed, total };
+}
+
+/** Cuándo confirmó que va ese paciente de la cita (null: aún no). */
+export function clientConfirmedAt(appointment: ConfirmableAppointment, clientId: string): string | null {
+  return appointment.clientConfirmations?.find((confirmation) => confirmation.clientId === clientId)?.confirmedAt ?? null;
 }
 
 export function getServiceName(servicesById: Map<string, Service>, serviceId: string): string {
@@ -103,4 +128,9 @@ export function appointmentToInput(appointment: Appointment): AppointmentInput {
     isVirtual: appointment.isVirtual,
     professionalId: appointment.professionalId,
   };
+}
+
+/** «Martes 27 de octubre» (con el año si la serie pasa a otro): las fechas de una serie (spec 011). */
+export function seriesDayLabel(date: ISODate, withYear = false): string {
+  return capitalize(formatDate(date, withYear ? "EEEE d 'de' MMMM 'de' yyyy" : "EEEE d 'de' MMMM"));
 }

@@ -1,5 +1,6 @@
 import { Download, Loader2, MailCheck, MailX, ShieldAlert, UserRoundX } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
@@ -46,8 +47,19 @@ const TYPES: AuditEntityType[] = [
   "session",
 ];
 
+/** «Actividad → Seguridad» se abre directamente con ?ver=seguridad (los avisos del super admin, spec 013). */
+const scopeFromUrl = (value: string | null): AdminAuditScope | null => (value === "seguridad" ? "security" : null);
+
 export default function AdminActivityPage() {
-  const [scope, setScope] = useState<AdminAuditScope>("admin");
+  const [searchParams] = useSearchParams();
+  const requested = scopeFromUrl(searchParams.get("ver"));
+  const [scope, setScope] = useState<AdminAuditScope>(requested ?? "admin");
+  // Tocar un aviso con esta pantalla ya abierta: cambia de pestaña sin recargar.
+  const [seenRequest, setSeenRequest] = useState(requested);
+  if (requested !== seenRequest) {
+    setSeenRequest(requested);
+    if (requested) setScope(requested);
+  }
   const [filters, setFilters] = useState(EMPTY_AUDIT_FILTERS);
   const [businessId, setBusinessId] = useState("all");
   const [onlyFailed, setOnlyFailed] = useState(false);

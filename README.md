@@ -44,7 +44,8 @@ Otros scripts: `npm run build` (typecheck + build de producción), `npm run prev
 
 Visitas por página con Vercel Web Analytics (`src/app/page-analytics.tsx`, sin cookies): se ven en
 Vercel → agenda-front → Analytics. Sólo se activa en la web publicada (no en local). Antes de enviar
-cada visita se cambian los identificadores de la ruta por `[id]` y se quitan los parámetros de la URL,
+cada visita se cambian los identificadores de la ruta por `[id]`, los tokens de los enlaces privados
+(`/pago/…`, `/cita/…`) por `[token]` y se quitan los parámetros de la URL,
 así a Vercel no llega a qué cliente o negocio se entró. El plan Hobby incluye 50.000 visitas al mes
 (entre todos los proyectos); al pasarlas, Vercel deja de contar hasta el ciclo siguiente, la web sigue
 igual. `vercel.json` excluye `/_vercel/` de la reescritura a `index.html`.
@@ -52,7 +53,8 @@ igual. `vercel.json` excluye `/_vercel/` de la reescritura a `index.html`.
 ## Stack
 
 React 19 · TypeScript · Vite · React Router 8 · Tailwind CSS v4 · shadcn/ui (Radix) · Lucide ·
-TanStack Query · Zod · date-fns · Recharts · Sonner · MapLibre · Sora.
+TanStack Query · Zod · date-fns · Recharts · Sonner · MapLibre · Sora · read-excel-file (sólo en la
+pantalla de importar pacientes, con la versión fija).
 
 ## Diseño
 
@@ -94,7 +96,8 @@ src/
     shared/       Componentes reutilizables (PageHeader, EmptyState, FormField, ConfirmDialog…)
     layout/       Layouts (auth, panel con sidebar y menú móvil)
   features/       Componentes y lógica por dominio: admin, appointments, calendar, clients, services,
-                  schedule, dashboard, booking, reports, settings, onboarding, auth, landing
+                  schedule, dashboard, booking, reports, settings, onboarding, auth, landing, push,
+                  notices (la campana de avisos)
   hooks/          Hooks de datos (TanStack Query) y utilidades
   lib/
     api/          Cliente HTTP de la API (fetch con cookie de sesión y errores tipados)
@@ -107,7 +110,7 @@ src/
 ```
 
 `types/`, `lib/validations/`, `lib/availability.ts`, `lib/time.ts`, `lib/format.ts`, `lib/email/`,
-`lib/constants/` y `lib/permissions.ts` también los usa la API: después de cambiarlos, ejecuta
+`lib/constants/`, `lib/notices.ts` y `lib/permissions.ts` también los usa la API: después de cambiarlos, ejecuta
 `npm run sync:shared` en agenda-backend para copiarlos.
 
 ## Contraseñas y soporte
@@ -301,6 +304,32 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   pago o enviar por WhatsApp los datos de todas las cuentas con el enlace; la agenda marca
   "Comprobante" en las citas por revisar y `?appointment=<id>` en el calendario abre su ficha
   (enlace del email al negocio).
+- **«Tu cita»: el paciente confirma o cancela desde el email** (spec 010): los emails de una cita
+  activa llevan el enlace privado de cada persona a `/cita/:token` (`pages/appointment-page.tsx` y
+  `features/patient-appointment/`, sin sesión y con los colores del negocio; el del paciente principal
+  usa el mismo token que `/pago/:token`). Ahí ve el servicio, la fecha, la hora, el profesional, el
+  lugar y el contacto del negocio (nada de sus datos), pulsa «Confirmo que voy» (una marca aparte: no
+  cambia el estado; con `?confirmar=1`, el botón del recordatorio, se confirma al abrir y el parámetro
+  se quita de la dirección) y, si el negocio lo permite y aún está en plazo, «Cancelar mi cita» (pide
+  confirmarlo y ofrece «Elegir otra hora»). Si no, el WhatsApp con el aviso ya escrito y «Llamar».
+  Sólo el principal cancela y paga; las otras personas de la sesión sólo confirman. La página de pago
+  enlaza a «Tu cita». En el panel, la marca «Confirmó el paciente» (`client-confirmed-badge.tsx`) va
+  en el bloque de la agenda (icono y lector de pantalla), la lista del celular, la ficha (con la hora
+  y, con varias personas, la de cada una) y el Inicio («Confirmó»). Configuración → Agenda explica
+  que «Permitir cancelaciones» y la antelación valen también para «Tu cita» y avisa si el
+  recordatorio sale cuando ya no se puede cancelar. Un panel con un backend anterior trata
+  `clientConfirmations` como vacía.
+- **Citas que se repiten** (spec 011): en «Nueva cita», «Repetir» (`series-fields.tsx`) con cada
+  cuánto (cada semana, cada 2 semanas o cada mes) y cuántas citas (de 2 a 24, 8 por defecto); el
+  Estado sólo ofrece Pendiente o Confirmada y el botón pasa a «Revisar fechas». La lista de fechas
+  (`series-review.tsx`) reemplaza al formulario en el mismo diálogo: la calcula la API con
+  `lib/appointment-series.ts` (compartido) y marca cada fecha con su texto (otra cita, bloqueo, no
+  atiende, fuera de horario o el cupo del plan). En las marcadas, «Otra hora» (las horas libres de ese
+  día), «Agendar igual» (bloqueo, día sin atención o fuera del horario; desmarcada al empezar) y
+  «Quitar»; el cupo se recalcula al momento. «Crear N citas» avisa cuántas se crearon y cuáles no. La
+  ficha dice «Cita 3 de 8 · cada semana» y ofrece «Cancelar ésta y las siguientes», con la casilla
+  «Avisar al paciente» y el WhatsApp ya escrito con todas las fechas. Un panel con un backend
+  anterior trata `series` como null.
 - **Logos y fotos**: `ImageUploadField` reduce la imagen en el navegador (WebP, 512–800 px) y la sube
   al bucket público `imagenes` de Supabase Storage (`hooks/queries/use-images.ts`, `lib/upload.ts`);
   el formulario guarda su dirección pública, no la imagen.
@@ -327,6 +356,40 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   onboarding, el panel y el panel de plataforma (`useInstallableApp`); la portada y la página de
   reservas no enlazan el manifiesto ni descargan la app. Sin conexión, la app espera en la pantalla
   de carga con un aviso y sigue sola cuando vuelve (no manda al login).
+- **Avisos en el celular** (spec 013, Web Push estándar): sólo el propietario de cada negocio y el
+  super admin. Al entrar al panel, una franja ofrece «Activa los avisos en este celular» («Ahora no»
+  la deja 7 días en ese aparato; `src/features/push/push-prompt.tsx`), y Configuración → Notificaciones
+  (y Configuración en /admin) tiene la tarjeta «Avisos en este celular» (`push-settings-card.tsx`):
+  activar o desactivar en ese aparato, el aviso de prueba y un interruptor por tipo (todos encendidos
+  de fábrica). Explica qué hacer en el iPhone sin instalar (sólo llegan con la app instalada, iOS 16.4
+  o más) y con el permiso bloqueado. «Activar» llama a `pushManager.subscribe` en el mismo toque (el
+  navegador pide el permiso ahí); al abrir el panel, `usePushDevice` guarda en silencio la suscripción
+  del navegador (reanuda lo que pausó «Cerrar sesión» y se vuelve a suscribir si cambió la clave). El
+  service worker muestra cada aviso (`push`) y, al tocarlo, abre su pantalla: con la app abierta navega
+  sin recargar (`notification-navigation.ts`), si no abre una ventana, y con la sesión caducada pasa
+  por `/login?next=…` (`safeNextPath`: sólo rutas propias del panel). La clave pública llega de
+  `GET /api/push/config`: no hay variables nuevas. **Se prueban con la versión compilada**
+  (`npm run build` y `npx vite preview`, con `API_PROXY_TARGET` apuntando a la API local); en
+  `npm run dev` no hay service worker y la tarjeta lo dice. `vercel.json` (CSP) no cambia.
+- **Centro de avisos del panel** (spec 014): una campana con el número de avisos sin leer («9+» con
+  más de 9) en el panel del negocio y en /admin, sin activar nada. En la computadora va junto al logo
+  del menú lateral y en el celular a la derecha de la barra de arriba (`AppShell` recibe `bell`; los
+  menús la reciben sólo en la computadora). Para el lector de pantalla es «Avisos, 3 sin leer». Al
+  tocarla, un `Popover` con los últimos 20 (`src/features/notices/`): título, texto con el nombre
+  completo del paciente y hace cuánto («hace 5 min», «ayer»), los no leídos en el lila suave con un
+  punto, «Marcar todo como leído», «Ver todos» y «No tienes avisos» con qué aparecerá ahí. Tocar un
+  aviso lo marca leído y abre su pantalla (la cita en la agenda, la agenda del día o la ficha en
+  /admin). «Ver todos» lleva a `/dashboard/notices` o `/admin/notices`: los de los últimos 30 días
+  agrupados por día («Hoy», «Ayer», «Mar 13 oct»), con «Sólo los no leídos», «Marcar todo como leído»
+  y «Cargar más». Cada persona ve lo suyo (la API decide con `NOTICE_AUDIENCE`, en
+  `src/lib/constants/notices.ts`) y lleva su propio leído; el super admin en modo soporte no ve la
+  campana del negocio. El contador (`useUnreadNotices`, `src/hooks/queries/use-notices.ts`) se pide al
+  abrir el panel, al volver a la pestaña, cada 3 minutos sólo con la pestaña visible
+  (`NOTICE_REFRESH_MS`, para no gastar la CPU de Vercel) y al momento cuando el service worker recibe
+  un aviso al celular (`sw.ts` manda `agenda360:aviso` a las ventanas abiertas). Si la API todavía no
+  tiene la ruta (404, mientras se publica el backend), la campana no se muestra y nada da error. Los
+  textos salen de `src/lib/notices.ts` (`describeNotice`), los mismos del celular, que la API copia con
+  `sync:shared`.
 - **Sin reservas dobles**: nunca dos citas a la misma hora (lo garantiza la base). Cada negocio elige
   en Configuración → Agenda cuántas citas puede reservar una misma persona (por su cédula) el mismo
   día desde su página (1 por defecto, hasta 3 o sin límite). La página de reservas oculta al momento
@@ -344,6 +407,33 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   cliente escribe al negocio desde la página de reservas ("Escríbenos por WhatsApp", p. ej. para
   una cita con menos anticipación de la permitida). Abre la conversación con un mensaje ya escrito (enlace `wa.me`, sin API ni coste). Los números sin
   prefijo internacional toman el del país del negocio.
+- **Importar pacientes desde un Excel (.xlsx) o un CSV** (spec 012): Clientes → «Importar pacientes»
+  (`/dashboard/clients/importar`, permiso `clients.import`: propietario, administradores y super admin
+  en modo soporte; también en el estado «Aún no tienes clientes»). Tres pasos:
+  - **Archivo:** se elige o se arrastra, de hasta 10 MB y 5.000 filas, o se descarga la plantilla
+    (`public/plantilla-pacientes.xlsx`: sólo los títulos, con la cédula y el teléfono como texto para
+    que Excel no borre el 0). Se lee en el navegador y no se sube ni se guarda; nada queda en
+    `localStorage`. El lector de Excel (`read-excel-file`, versión fija) se descarga sólo al elegir un
+    .xlsx (import dinámico en `features/clients/import/read-spreadsheet.ts`); el CSV lo lee
+    `src/lib/csv.ts` (UTF-8 o Windows-1252, `;`, `,` o tabulador).
+  - **Columnas:** la hoja (se propone la primera con títulos reconocidos), la fila de títulos (entre
+    las 10 primeras) y a qué dato va cada columna, con los nombres habituales ya asignados («CI»,
+    «Correo», «Celular»…), «Añadir a las notas» y «No importar».
+  - **Revisión:** cuántos se importarán, cuántos ya existían, cuáles tienen errores (fila y motivo),
+    cuáles están repetidos y cuántos no entran por el tope del plan, con «Descargar las filas con
+    errores». Usa el mismo código que la API (`src/lib/validations/client-import.ts`, compartido).
+  - **Datos por completar** (ampliación del 2026-10-15):
+    - la casilla «Importar también los que tienen datos por completar» viene encendida;
+    - con ella basta el nombre, y las filas a las que les falta un dato obligatorio del negocio entran
+      marcadas «Por completar»;
+    - lo mal escrito sigue con error;
+    - en Clientes hay un filtro «Por completar» y la marca (`components/shared/incomplete-badge.tsx`);
+    - la ficha dice «Faltan datos: …» con «Completar»;
+    - se calcula con `missingRequiredFields` (`src/lib/validations/client.ts`): no se guarda, y
+      desaparece al completarlo.
+
+  Se importan en una sola petición, todo o nada; si se corta la conexión, la pantalla lo dice y
+  repetir no duplica. Los importados no reciben emails y no cuentan como clientes nuevos del mes.
 - Onboarding en 6 pasos, agenda día/semana/mes, clientes (con buscador en "Nueva cita"),
   servicios, horarios partidos, bloqueos, página pública de reservas sin registro, reportes y configuración.
 

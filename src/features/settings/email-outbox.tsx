@@ -38,6 +38,9 @@ const TYPE_LABELS: Record<EmailType, string> = {
   appointment_completed: "Gracias por la visita",
   appointment_no_show: "No asistió",
   account_security_changed: "Seguridad de la cuenta",
+  patient_cancelled: "Cancelación del paciente (al negocio)",
+  appointment_series: "Serie de citas",
+  appointment_series_cancelled: "Serie cancelada",
 };
 
 /** Bandeja de salida del negocio. */

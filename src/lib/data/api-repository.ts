@@ -7,10 +7,14 @@ import type {
   AdminPlanRequest,
   AdminUserSummary,
   Appointment,
+  AppointmentSeriesCreated,
+  AppointmentSeriesPreview,
   AuditLogPage,
   ImageUpload,
   PaymentReceipt,
   PaymentReceiptUpload,
+  PublicAppointment,
+  PublicAppointmentResult,
   PublicPayment,
   BlockedTime,
   BookingConfirmation,
@@ -18,6 +22,7 @@ import type {
   BusinessCategoryInfo,
   Client,
   ClientActivity,
+  ClientImportResult,
   ClinicalNote,
   ClinicalProfile,
   ClinicalAttachment,
@@ -37,8 +42,12 @@ import type {
   TeamMember,
   User,
   PlatformAdmin,
+  PanelNoticePage,
+  PushConfig,
+  PushDevice,
 } from "@/types";
-import type { AdminCreateBusinessResult, DataRepository } from "./repository";
+import { DataError } from "./errors";
+import type { AdminCreateBusinessResult, DataRepository, NoticeRepository } from "./repository";
 
 /**
  * Implementación de la capa de datos sobre la API REST de agenda-backend.
@@ -93,6 +102,7 @@ export const apiRepository: DataRepository = {
     remove: (businessId, clientId) => api.delete(`${business(businessId)}/clients/${id(clientId)}`),
     confirmClaim: (businessId, clientId, input) =>
       api.post<Client>(`${business(businessId)}/clients/${id(clientId)}/confirm-claim`, input),
+    importMany: (businessId, input) => api.post<ClientImportResult>(`${business(businessId)}/clients/import`, input),
   },
 
   clinicalRecords: {
@@ -145,6 +155,11 @@ export const apiRepository: DataRepository = {
       api.put<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}`, input),
     updateStatus: (businessId, appointmentId, status, notify = true) =>
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, { status, notify }),
+    previewSeries: (businessId, input) =>
+      api.post<AppointmentSeriesPreview>(`${business(businessId)}/appointment-series/preview`, input),
+    createSeries: (businessId, input) => api.post<AppointmentSeriesCreated>(`${business(businessId)}/appointment-series`, input),
+    cancelFollowing: (businessId, appointmentId, notify = true) =>
+      api.post<{ cancelled: Appointment[] }>(`${business(businessId)}/appointments/${id(appointmentId)}/cancel-following`, { notify }),
     logWhatsAppNotice: (businessId, appointmentId, kind, clientId) =>
       api.post<void>(`${business(businessId)}/appointments/${id(appointmentId)}/whatsapp-notice`, { kind, clientId }),
     setArrival: (businessId, appointmentId, arrived) =>
@@ -186,6 +201,9 @@ export const apiRepository: DataRepository = {
     requestReceiptUpload: (token, input) => api.post<PaymentReceiptUpload>(`/public/payments/${id(token)}/receipts`, input),
     completeReceiptUpload: (token, receiptId) =>
       api.post<PaymentReceipt>(`/public/payments/${id(token)}/receipts/${id(receiptId)}/complete`),
+    getAppointment: (token) => api.get<PublicAppointment>(`/public/appointments/${id(token)}`),
+    confirmAppointment: (token) => api.post<PublicAppointmentResult>(`/public/appointments/${id(token)}/confirm`),
+    cancelAppointment: (token) => api.post<PublicAppointmentResult>(`/public/appointments/${id(token)}/cancel`),
   },
 
   images: {
@@ -234,4 +252,33 @@ export const apiRepository: DataRepository = {
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),
     updatePanelColors: (input) => api.put<{ colors: BrandColors | null }>("/admin/panel-colors", input),
   },
+
+  push: {
+    // Un front publicado antes que la API (sin /api/push): como si no hubiera avisos, no se ve nada.
+    getConfig: () =>
+      api.get<PushConfig>("/push/config").catch((error: unknown) => {
+        if (error instanceof DataError && error.code === "not_found") return { available: false, publicKey: null, kinds: [] };
+        throw error;
+      }),
+    saveDevice: (input) => api.put<PushDevice>("/push/device", input),
+    updateKinds: (endpoint, mutedKinds) => api.patch<Pick<PushDevice, "mutedKinds">>("/push/device", { endpoint, mutedKinds }),
+    turnOff: (endpoint) => api.post<void>("/push/device/off", { endpoint }),
+    sendTest: (endpoint) => api.post<{ sent: true }>("/push/device/test", { endpoint }),
+  },
+
+  notices: {
+    business: (businessId) => noticesAt(`/businesses/${id(businessId)}/notices`),
+    platform: noticesAt("/admin/notices"),
+  },
 };
+
+/** Las cuatro rutas de una campana (la del negocio o la de /admin). */
+function noticesAt(base: string): NoticeRepository {
+  return {
+    unread: () => api.get<{ unread: number }>(`${base}/unread`),
+    list: (filters = {}) =>
+      api.get<PanelNoticePage>(base, { limit: filters.limit, unread: filters.unread ? 1 : undefined, cursor: filters.cursor }),
+    markRead: (noticeId) => api.post<void>(`${base}/${id(noticeId)}/read`),
+    markAllRead: () => api.post<void>(`${base}/read-all`),
+  };
+}

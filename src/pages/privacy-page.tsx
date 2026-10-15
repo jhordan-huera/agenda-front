@@ -190,6 +190,12 @@ export default function PrivacyPage() {
                 abreviado del paciente, su email y su teléfono parcialmente ocultos, el negocio y la fecha de la cita; y, en
                 las alertas de seguridad, el email de la cuenta parcialmente oculto.
               </li>
+              <li>
+                <strong>Avisos en el celular:</strong> si el propietario de un negocio o el super admin los activan, cada
+                aviso viaja cifrado por el servicio de avisos de su navegador (Google, Apple, Mozilla o Microsoft), que no
+                puede leer su contenido. Sólo lleva el nombre del paciente abreviado, nunca su contacto ni su historia
+                clínica.
+              </li>
             </ul>
             <p>
               Al usar {APP_NAME}, los datos se transfieren y se guardan fuera del Ecuador, principalmente en Estados Unidos.

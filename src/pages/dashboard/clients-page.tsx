@@ -1,5 +1,6 @@
-import { LayoutGrid, List, Search, UserPlus, Users, X } from "lucide-react";
+import { FileSpreadsheet, LayoutGrid, List, Search, UserPlus, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link, useLocation } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -14,6 +15,7 @@ import { ClientFormDialog } from "@/features/clients/client-form-dialog";
 import { countAppointments, getClientSummary, summariesFromActivity } from "@/features/clients/client-summary";
 import { ClientsTable } from "@/features/clients/clients-table";
 import { DeleteClientDialog } from "@/features/clients/delete-client-dialog";
+import { clientMissingFields } from "@/features/clients/missing-fields";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useClientActivity } from "@/hooks/queries/use-appointments";
 import { useClients } from "@/hooks/queries/use-clients";
@@ -23,14 +25,20 @@ import { normalizeSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/types";
 
-type ClientFilter = "all" | "active" | "inactive" | "upcoming";
+type ClientFilter = "all" | "active" | "inactive" | "upcoming" | "incomplete";
 
 const FILTERS: { value: ClientFilter; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "active", label: "Activos" },
   { value: "inactive", label: "Inactivos" },
   { value: "upcoming", label: "Con próxima cita" },
+  // Les falta algún dato obligatorio del negocio (spec 012): p. ej. los importados sin cédula o sin email.
+  { value: "incomplete", label: "Por completar" },
 ];
+
+/** Al volver de una importación con «Ver los por completar», la lista se abre con ese filtro. */
+const initialFilter = (state: unknown): ClientFilter =>
+  (state as { filter?: unknown } | null)?.filter === "incomplete" ? "incomplete" : "all";
 
 type ClientView = "cards" | "list";
 
@@ -59,7 +67,8 @@ export default function ClientsPage() {
   const clientsQuery = useClients();
   const activity = useClientActivity();
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<ClientFilter>("all");
+  const location = useLocation();
+  const [filter, setFilter] = useState<ClientFilter>(() => initialFilter(location.state));
   const [formState, setFormState] = useState<{ open: boolean; client?: Client }>({ open: false });
   const [deleting, setDeleting] = useState<Client | null>(null);
   const [view, setView] = useState<ClientView>(readView);
@@ -81,7 +90,8 @@ export default function ClientsPage() {
       filter === "all" ||
       (filter === "active" && client.isActive) ||
       (filter === "inactive" && !client.isActive) ||
-      (filter === "upcoming" && Boolean(getClientSummary(summaries, client.id).nextAppointment));
+      (filter === "upcoming" && Boolean(getClientSummary(summaries, client.id).nextAppointment)) ||
+      (filter === "incomplete" && clientMissingFields(client, business).length > 0);
     return matchesSearch && matchesFilter;
   });
 
@@ -98,9 +108,19 @@ export default function ClientsPage() {
         title="Clientes"
         description={clientsQuery.isSuccess ? `${clients.length} clientes registrados` : "Tu cartera de clientes"}
         actions={
-          <Button size="lg" onClick={openCreate}>
-            <UserPlus /> Nuevo cliente
-          </Button>
+          <>
+            {/* Importar pacientes (spec 012): puesta en marcha, del propietario y los administradores. */}
+            {can("clients.import") && (
+              <Button asChild size="lg" variant="outline">
+                <Link to="/dashboard/clients/importar">
+                  <FileSpreadsheet /> Importar pacientes
+                </Link>
+              </Button>
+            )}
+            <Button size="lg" onClick={openCreate}>
+              <UserPlus /> Nuevo cliente
+            </Button>
+          </>
         }
       />
 
@@ -116,11 +136,24 @@ export default function ClientsPage() {
         <EmptyState
           icon={Users}
           title="Aún no tienes clientes"
-          description="Registra tu primer cliente o comparte tu página de reservas para que lleguen solos."
+          description={
+            can("clients.import")
+              ? "Registra tu primer cliente, importa la lista que ya tienes en Excel o comparte tu página de reservas para que lleguen solos."
+              : "Registra tu primer cliente o comparte tu página de reservas para que lleguen solos."
+          }
           action={
-            <Button onClick={openCreate}>
-              <UserPlus /> Crear cliente
-            </Button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button onClick={openCreate}>
+                <UserPlus /> Crear cliente
+              </Button>
+              {can("clients.import") && (
+                <Button asChild variant="outline">
+                  <Link to="/dashboard/clients/importar">
+                    <FileSpreadsheet /> Importar pacientes
+                  </Link>
+                </Button>
+              )}
+            </div>
           }
         />
       ) : (
@@ -177,8 +210,12 @@ export default function ClientsPage() {
           {filtered.length === 0 ? (
             <EmptyState
               icon={Search}
-              title="Sin resultados"
-              description="No hay clientes que coincidan con la búsqueda o el filtro."
+              title={filter === "incomplete" && !search.trim() ? "Nadie por completar" : "Sin resultados"}
+              description={
+                filter === "incomplete" && !search.trim()
+                  ? "Todos tus clientes tienen los datos obligatorios de tu negocio."
+                  : "No hay clientes que coincidan con la búsqueda o el filtro."
+              }
               action={
                 <Button
                   variant="outline"
@@ -204,6 +241,7 @@ export default function ClientsPage() {
             <ClientsTable
               clients={filtered}
               summaries={summaries}
+              business={business}
               onEdit={(client) => setFormState({ open: true, client })}
               onDelete={can("clients.delete") ? setDeleting : undefined}
             />

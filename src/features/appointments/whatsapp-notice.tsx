@@ -28,6 +28,7 @@ const REASONS: Record<AppointmentNoticeKind, string> = {
   rescheduled: "Cambió la fecha, la hora, el profesional o el lugar de la cita.",
   completed: "La cita quedó completada.",
   no_show: "El cliente no asistió.",
+  series_cancelled: "Se cancelaron las citas de la serie.",
 };
 
 /** Dónde es la cita, como la compara la API: en el local, virtual o a domicilio (con la dirección). */
@@ -47,7 +48,7 @@ function sendsEmail(notice: PendingNotice, client: Client, business: Business): 
   const { kind, appointment, previous } = notice;
   if (!client.email) return false;
   const settings = { ...DEFAULT_NOTIFICATION_SETTINGS, ...business.notificationSettings };
-  if (kind === "cancelled") return settings.cancellations;
+  if (kind === "cancelled" || kind === "series_cancelled") return settings.cancellations;
   if (kind === "completed" || kind === "no_show") {
     return settings.followUps && isFollowUpDate(appointment.date, getZonedNow(business.timezone).date);
   }
@@ -79,6 +80,8 @@ interface PendingNotice {
   appointment: Appointment;
   /** La cita antes del cambio (si se conoce). */
   previous?: Appointment;
+  /** «Cancelar ésta y las siguientes» (spec 011): las citas canceladas de la serie, en orden. */
+  series?: Appointment[];
   kind: AppointmentNoticeKind;
   /** Uno por paciente con teléfono (en una sesión de pareja, los dos). */
   recipients: NoticeRecipient[];
@@ -100,12 +103,14 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
   const invalidateActivity = useInvalidateActivity();
   const [notice, setNotice] = useState<PendingNotice | null>(null);
 
-  const offer = (appointment: Appointment, kind: AppointmentNoticeKind | null, previous?: Appointment) => {
+  const offer = (appointment: Appointment, kind: AppointmentNoticeKind | null, previous?: Appointment, series?: Appointment[]) => {
     if (!kind || !business) return;
     const settings = { ...DEFAULT_NOTIFICATION_SETTINGS, ...business.notificationSettings };
     const followUp = kind === "completed" || kind === "no_show";
     if (!(followUp ? settings.whatsappFollowUps : settings.whatsappOnStatusChange)) return;
-    const patients = appointmentClientIds(appointment).flatMap((id) => clientsById.get(id) ?? []);
+    // En una serie cancelada, los pacientes de todas sus citas (cada una se pudo cambiar sola).
+    const ids = [...new Set((series ?? [appointment]).flatMap(appointmentClientIds))];
+    const patients = ids.flatMap((id) => clientsById.get(id) ?? []);
     if (patients.length === 0) return;
     const reachable = patients.filter((client) => client.phone && getWhatsAppUrl(client.phone, business.timezone, ""));
     const unreachable = patients.filter((client) => !reachable.includes(client));
@@ -132,10 +137,13 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
         virtual: appointment.isVirtual ? { meetingUrl: professional?.meetingUrl || null } : undefined,
         paymentUrl:
           professional?.bankAccounts.length && appointment.price > 0 && !appointment.paidAt ? paymentLinkOf(appointment) : undefined,
+        // Las fechas canceladas en que está esa persona.
+        dates: series?.filter((item) => appointmentClientIds(item).includes(client.id)).map((item) => item.date),
       });
     setNotice({
       appointment,
       previous,
+      series,
       kind,
       recipients: reachable.map((client) => ({ client, message: messageFor(client), opened: false })),
     });

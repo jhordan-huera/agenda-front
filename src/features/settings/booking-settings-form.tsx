@@ -1,3 +1,4 @@
+import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,12 @@ export function BookingSettingsForm({ business }: { business: Business }) {
   const agendas = useAgendas();
   const updateBusiness = useUpdateBusiness();
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(toFormValues(business.bookingSettings));
+  // Con los recordatorios encendidos y una antelación igual o mayor que sus horas, el recordatorio llega
+  // cuando ya no se puede cancelar desde «Tu cita» (spec 010). Los valores de fábrica (24 h y 24 h) no
+  // cambian: se avisa (decisión del dueño del producto, 2026-10-14).
+  const reminders = business.notificationSettings;
+  const reminderTooLate =
+    reminders.reminders && values.allowCancellations && Number(values.cancellationNoticeHours) >= reminders.reminderHoursBefore;
 
   const submit = async () => {
     const result = validate(bookingSettingsSchema, values);
@@ -160,7 +167,7 @@ export function BookingSettingsForm({ business }: { business: Business }) {
       )}
       <SwitchField
         label="Permitir cancelaciones"
-        description="Muestra tu política al reservar y en los emails de confirmación."
+        description="Tus pacientes pueden cancelar desde el enlace de sus emails («Tu cita») hasta la antelación que fijes. Tu política se muestra al reservar y en los emails."
         checked={values.allowCancellations}
         onCheckedChange={(checked) => setField("allowCancellations", checked)}
       >
@@ -169,7 +176,7 @@ export function BookingSettingsForm({ business }: { business: Business }) {
             <FormField
               label="Antelación mínima para cancelar (horas)"
               error={errors.cancellationNoticeHours}
-              hint="Pasado este plazo, la cancelación debe gestionarse contigo directamente."
+              hint="Con menos tiempo, la página de su cita le pide que te escriba por WhatsApp o te llame."
             >
               {(field) => (
                 <Input
@@ -183,6 +190,15 @@ export function BookingSettingsForm({ business }: { business: Business }) {
                 />
               )}
             </FormField>
+            {reminderTooLate && (
+              <p role="note" className="flex items-start gap-2 rounded-lg bg-accent p-3 text-sm text-ink">
+                <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+                <span>
+                  Tu recordatorio sale {reminders.reminderHoursBefore} h antes: con esta antelación ya no se podrá cancelar desde el
+                  recordatorio, sólo desde los emails anteriores. Puedes bajarla o enviar el recordatorio antes en Notificaciones.
+                </span>
+              </p>
+            )}
             <FormField label="Política de cancelación" error={errors.cancellationPolicy} hint="El cliente la ve antes de confirmar su reserva.">
               {(field) => (
                 <Textarea

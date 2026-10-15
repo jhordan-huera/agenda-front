@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { data } from "@/lib/data";
 import type { PublicBookingInput } from "@/lib/validations/booking";
 import type { ReceiptInput } from "@/lib/validations/payment";
+import type { PublicAppointmentResult } from "@/types";
 import { prepareReceipt, uploadToStorage } from "@/lib/upload";
 import { queryKeys } from "./query-keys";
 
@@ -60,3 +61,27 @@ export function useUploadReceipt(token: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.publicPayment(token) }),
   });
 }
+
+/** Página «Tu cita» de una cita (/cita/:token, spec 010). */
+export function usePublicAppointment(token: string) {
+  return useQuery({
+    queryKey: queryKeys.publicAppointment(token),
+    queryFn: () => data.publicBooking.getAppointment(token),
+    retry: false,
+  });
+}
+
+/** Al confirmar o cancelar, la respuesta ya trae la cita como queda: la página se actualiza sin pedirla otra vez. */
+function useAppointmentAction(token: string, action: (token: string) => Promise<PublicAppointmentResult>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => action(token),
+    onSuccess: (result) => queryClient.setQueryData(queryKeys.publicAppointment(token), result.appointment),
+  });
+}
+
+/** «Confirmo que voy». */
+export const useConfirmAppointment = (token: string) => useAppointmentAction(token, data.publicBooking.confirmAppointment);
+
+/** «Cancelar mi cita». */
+export const useCancelAppointment = (token: string) => useAppointmentAction(token, data.publicBooking.cancelAppointment);

@@ -10,7 +10,7 @@ import type {
   PlatformSettingsInput,
   UserPasswordInput,
 } from "@/lib/validations/admin";
-import type { AppointmentInput } from "@/lib/validations/appointment";
+import type { AppointmentInput, AppointmentSeriesInput, AppointmentSeriesPreviewInput } from "@/lib/validations/appointment";
 import type {
   ClinicalAddendumInput,
   ClinicalAttachmentInput,
@@ -27,6 +27,7 @@ import type {
   ProfileInput,
 } from "@/lib/validations/business";
 import type { ClientInput, ConfirmClaimInput } from "@/lib/validations/client";
+import type { ClientImportInput } from "@/lib/validations/client-import";
 import type { ImageUploadInput } from "@/lib/validations/images";
 import type { ReceiptInput } from "@/lib/validations/payment";
 import type { ProfessionalInput } from "@/lib/validations/professional";
@@ -40,10 +41,14 @@ import type {
   AdminPlanRequest,
   AdminUserSummary,
   Appointment,
+  AppointmentSeriesCreated,
+  AppointmentSeriesPreview,
   AppointmentStatus,
   ImageUpload,
   PaymentReceipt,
   PaymentReceiptUpload,
+  PublicAppointment,
+  PublicAppointmentResult,
   PublicPayment,
   AuditEntityType,
   AuditLogPage,
@@ -56,6 +61,7 @@ import type {
   BusinessStatus,
   Client,
   ClientActivity,
+  ClientImportResult,
   ClientRequiredFields,
   ClinicalNote,
   ClinicalProfile,
@@ -79,6 +85,10 @@ import type {
   User,
   WhatsAppNoticeKind,
   PlatformAdmin,
+  PushConfig,
+  PushDevice,
+  PushKind,
+  PanelNoticePage,
 } from "@/types";
 
 /**
@@ -193,6 +203,11 @@ export interface ClientRepository {
    * 009). Devuelve la ficha (con el email o el teléfono nuevos, si se pidió).
    */
   confirmClaim(businessId: string, clientId: string, input: ConfirmClaimInput): Promise<Client>;
+  /**
+   * Importa pacientes desde las filas de un Excel o un CSV (spec 012), todo o nada: crea los válidos y
+   * nuevos y no toca los que ya existían. Sin emails a los pacientes.
+   */
+  importMany(businessId: string, input: ClientImportInput): Promise<ClientImportResult>;
 }
 
 export interface ServiceRepository {
@@ -217,6 +232,15 @@ export interface AppointmentRepository {
   update(businessId: string, appointmentId: string, input: AppointmentInput): Promise<Appointment>;
   /** `notify: false`: corrige un error sin avisar al paciente (spec 008). */
   updateStatus(businessId: string, appointmentId: string, status: AppointmentStatus, notify?: boolean): Promise<Appointment>;
+  /** La lista de fechas de una serie, antes de crearla (spec 011): no cambia nada. */
+  previewSeries(businessId: string, input: AppointmentSeriesPreviewInput): Promise<AppointmentSeriesPreview>;
+  /**
+   * Crea la serie con las fechas que quedaron en la lista. Las que se ocuparon mientras tanto vuelven en
+   * `skipped`; si no se puede crear ninguna, falla con `conflict` (o `plan_limit`).
+   */
+  createSeries(businessId: string, input: AppointmentSeriesInput): Promise<AppointmentSeriesCreated>;
+  /** «Cancelar ésta y las siguientes» de una serie: las citas canceladas, en orden. `notify`: «Avisar al paciente». */
+  cancelFollowing(businessId: string, appointmentId: string, notify?: boolean): Promise<{ cancelled: Appointment[] }>;
   /** Registra en la actividad que se abrió WhatsApp con el aviso de un cambio de la cita. */
   /** `clientId`: a cuál de los pacientes de la cita (con varios pacientes, un registro por cada uno). */
   logWhatsAppNotice(businessId: string, appointmentId: string, kind: WhatsAppNoticeKind, clientId?: string): Promise<void>;
@@ -284,6 +308,12 @@ export interface PublicBookingRepository {
   requestReceiptUpload(token: string, input: ReceiptInput): Promise<PaymentReceiptUpload>;
   /** Tras subir el archivo: la API comprueba que llegó y avisa al negocio. */
   completeReceiptUpload(token: string, receiptId: string): Promise<PaymentReceipt>;
+  /** Página «Tu cita» (/cita/:token, spec 010): la cita de ese enlace y lo que puede hacer quien lo abre. */
+  getAppointment(token: string): Promise<PublicAppointment>;
+  /** «Confirmo que voy»: una marca aparte, no cambia el estado de la cita. Repetirlo no cambia nada. */
+  confirmAppointment(token: string): Promise<PublicAppointmentResult>;
+  /** «Cancelar mi cita»: sólo el paciente principal, si el negocio lo permite y aún está en plazo. */
+  cancelAppointment(token: string): Promise<PublicAppointmentResult>;
 }
 
 /** Logos y fotos: URL firmada para subir la imagen al almacenamiento y su dirección pública. */
@@ -373,6 +403,62 @@ export interface PlatformAdminRepository {
   updatePanelColors(input: PanelColorsInput): Promise<{ colors: BrandColors | null }>;
 }
 
+/** El aparato (este navegador) en el servicio de avisos: lo que da `PushSubscription.toJSON()`. */
+export interface PushDeviceInput {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  /** La dirección anterior, si el servicio de avisos la renovó (conserva los tipos). */
+  previousEndpoint?: string;
+}
+
+/**
+ * Avisos en el celular (spec 013): sólo el propietario de un negocio y el super admin. El aparato se
+ * identifica por su dirección, siempre en el cuerpo de la petición.
+ */
+export interface PushRepository {
+  /** La clave pública y los tipos del rol. Si la API todavía no tiene avisos (404), `available: false`. */
+  getConfig(): Promise<PushConfig>;
+  /** Activa o actualiza este aparato (y quita la pausa de «Cerrar sesión»). */
+  saveDevice(input: PushDeviceInput): Promise<PushDevice>;
+  /** Los tipos apagados en este aparato. */
+  updateKinds(endpoint: string, mutedKinds: PushKind[]): Promise<Pick<PushDevice, "mutedKinds">>;
+  /** «Desactivar en este celular». Sin error si ya no existía. */
+  turnOff(endpoint: string): Promise<void>;
+  /** El aviso de prueba, al momento. Falla con `conflict` si el aparato ya no existe y `push_failed` si no salió. */
+  sendTest(endpoint: string): Promise<{ sent: true }>;
+}
+
+/** Qué avisos pedir (GET …/notices). */
+export interface NoticeListFilters {
+  /** De 1 a 50; 20 por defecto (la lista de la campana). */
+  limit?: number;
+  /** Sólo los no leídos. */
+  unread?: boolean;
+  /** El `nextCursor` de la página anterior («Cargar más»). */
+  cursor?: string;
+}
+
+/**
+ * La campana de una persona (spec 014): la del negocio (`/businesses/:id/notices`, cualquier rol del
+ * equipo; el super admin en modo soporte recibe `forbidden`) o la de /admin (`/admin/notices`). Cada
+ * persona recibe lo suyo y lleva su propio leído. Leer no va a la actividad.
+ */
+export interface NoticeRepository {
+  /** El contador: una consulta barata, sin textos. */
+  unread(): Promise<{ unread: number }>;
+  list(filters?: NoticeListFilters): Promise<PanelNoticePage>;
+  /** Al tocarlo. Repetirlo no cambia nada; `not_found` si no existe o no es de esta persona. */
+  markRead(noticeId: string): Promise<void>;
+  /** «Marcar todo como leído». */
+  markAllRead(): Promise<void>;
+}
+
+/** El centro de avisos del panel (spec 014): la campana del negocio y la de /admin. */
+export interface NoticesRepository {
+  business(businessId: string): NoticeRepository;
+  platform: NoticeRepository;
+}
+
 export interface DataRepository {
   users: UserRepository;
   businesses: BusinessRepository;
@@ -391,4 +477,6 @@ export interface DataRepository {
   images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;
+  push: PushRepository;
+  notices: NoticesRepository;
 }

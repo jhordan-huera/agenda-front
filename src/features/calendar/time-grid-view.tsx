@@ -1,4 +1,4 @@
-import { Home, ShieldQuestion, Video } from "lucide-react";
+import { Home, ShieldQuestion, UserCheck, Video } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { toast } from "sonner";
 import { getBlockedRanges, getWorkingRanges } from "@/lib/availability";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Client, ISODate, Professional, Schedule, Service } from "@/types";
 import { layoutDayEvents } from "./calendar-utils";
 import { useAppointmentDrag, type DropTarget } from "./use-appointment-drag";
-import { clientsToVerify, getAppointmentClientNames } from "@/features/appointments/appointment-utils";
+import { clientConfirmationSummary, clientsToVerify, getAppointmentClientNames } from "@/features/appointments/appointment-utils";
 
 const HOUR_HEIGHT = 56;
 const MIN_EVENT_HEIGHT = 22;
@@ -228,6 +228,8 @@ function DayColumn({
         const shortClientName = getAppointmentClientNames(clientsById, appointment, { fallback: "Cliente", max: 2 });
         // «Por verificar» (spec 009): un icono en el bloque y el texto para el lector de pantalla.
         const toVerify = clientsToVerify(clientsById, appointment).length > 0;
+        // «Confirmo que voy» del paciente (spec 010): el icono en el bloque y el texto para el lector de pantalla.
+        const confirmation = clientConfirmationSummary(appointment);
         const serviceName = servicesById.get(appointment.serviceId)?.name ?? "";
         const status = APPOINTMENT_STATUS_CONFIG[appointment.status];
         // Con todas las agendas en la misma columna, el color del profesional junto al nombre.
@@ -244,7 +246,7 @@ function DayColumn({
             // Arrastrar: con el ratón, al moverla; en el móvil, manteniendo el dedo encima.
             onPointerDown={movable ? (e) => startDrag(e, appointment) : undefined}
             onContextMenu={movable ? (e) => e.preventDefault() : undefined}
-            aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : appointment.isVirtual ? ", virtual" : ""}${toVerify ? ", por verificar" : ""}${professional ? `, con ${professional.displayName}` : ""}`}
+            aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : appointment.isVirtual ? ", virtual" : ""}${toVerify ? ", por verificar" : ""}${confirmation ? `, ${confirmation.label.toLowerCase()}` : ""}${professional ? `, con ${professional.displayName}` : ""}`}
             className={cn(
               "absolute z-[1] overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-xs leading-tight shadow-xs transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring",
               status.event,
@@ -265,6 +267,7 @@ function DayColumn({
               {appointment.homeVisit && <Home className="size-3 shrink-0" aria-hidden />}
               {appointment.isVirtual && <Video className="size-3 shrink-0" aria-hidden />}
               {toVerify && <ShieldQuestion className="size-3 shrink-0" aria-hidden />}
+              {confirmation && <UserCheck className="size-3 shrink-0" aria-hidden />}
               <span className="truncate">{shortClientName}</span>
             </p>
             {height >= 36 && <p className="truncate opacity-80">{formatTimeRange(appointment.startTime, appointment.endTime)}</p>}

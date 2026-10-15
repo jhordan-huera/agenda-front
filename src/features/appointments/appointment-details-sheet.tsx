@@ -9,9 +9,12 @@ import {
   Home,
   Mail,
   Navigation,
+  ListX,
   Pencil,
   Phone,
+  Repeat,
   Tag,
+  UserCheck,
   Video,
   Wallet,
   XCircle,
@@ -36,18 +39,40 @@ import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
 import { ProfessionalDot } from "@/features/professionals/professional-select";
 import { meetingUrlPlace, useAgendas, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
-import { useAppointment, useSetAppointmentArrival, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
+import {
+  useAppointment,
+  useCancelFollowingAppointments,
+  useSetAppointmentArrival,
+  useUpdateAppointmentStatus,
+} from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useErrorToast } from "@/hooks/use-error-toast";
+import { seriesFrequencyText } from "@/lib/appointment-series";
 import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
-import { capitalize, formatClockTime, formatCurrency, formatDuration, formatLongDate, formatTimeRange } from "@/lib/format";
+import {
+  capitalize,
+  formatClockTime,
+  formatCurrency,
+  formatDayMonth,
+  formatDuration,
+  formatLongDate,
+  formatTimeRange,
+} from "@/lib/format";
 import { durationInMinutes } from "@/lib/time";
 import { describeHomeVisit, getDirectionsUrl } from "@/lib/maps";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, AppointmentStatus, Client } from "@/types";
 import { AppointmentPayment } from "./appointment-payment";
-import { appointmentClientIds, clientsToVerify, getAppointmentClientNames, getServiceName } from "./appointment-utils";
+import {
+  appointmentClientIds,
+  clientConfirmationSummary,
+  clientConfirmedAt,
+  clientsToVerify,
+  getAppointmentClientNames,
+  getServiceName,
+  seriesDayLabel,
+} from "./appointment-utils";
 import { ClaimReview } from "./claim-review";
 
 interface AppointmentDetailsSheetProps {
@@ -104,6 +129,7 @@ function AppointmentDetails({
   const { data: business } = useCurrentBusiness();
   const updateStatus = useUpdateAppointmentStatus();
   const setArrival = useSetAppointmentArrival();
+  const cancelFollowing = useCancelFollowingAppointments();
   const showError = useErrorToast();
   const agendas = useAgendas();
   const multiAgenda = useMultiAgendaAccess();
@@ -111,6 +137,13 @@ function AppointmentDetails({
   // La llegada se marca en citas que aún no se atendieron.
   const canMarkArrival = appointment.status === "pending" || appointment.status === "confirmed";
   const [confirmCancel, setConfirmCancel] = useState(false);
+  // Una cita de una serie (spec 011): «Cita 3 de 8» y, si sigue activa y no es la última, «Cancelar ésta y
+  // las siguientes» (la API sólo cancela las que siguen pendientes o confirmadas).
+  const series = appointment.series ?? null;
+  const showSeries = series !== null && series.total >= 2;
+  const canCancelFollowing =
+    showSeries && series.index < series.total && (appointment.status === "pending" || appointment.status === "confirmed");
+  const [confirmCancelFollowing, setConfirmCancelFollowing] = useState(false);
   // Avisar al paciente del cambio de estado (spec 008). Siempre marcada al abrir la ficha: se desmarca
   // sólo para corregir un error, y no se recuerda para que nunca quede apagada por olvido.
   const [notify, setNotify] = useState(true);
@@ -123,6 +156,19 @@ function AppointmentDetails({
   const clientName = getAppointmentClientNames(clientsById, appointment);
   // Reserva «Por verificar» (spec 009): algún paciente escribió la cédula de otra ficha con otros datos.
   const toVerify = clientsToVerify(clientsById, appointment).length > 0;
+  // «Confirmo que voy» desde el email (spec 010): con una persona, cuándo; con varias, el resumen arriba
+  // y bajo cada una si ya confirmó.
+  const confirmation = clientConfirmationSummary(appointment);
+  const mainConfirmedAt = clientConfirmedAt(appointment, appointment.clientId);
+  const showEachConfirmation =
+    patients.length > 1 && (appointment.status === "pending" || appointment.status === "confirmed" || confirmation !== null);
+  const confirmationOf = (patient: Client) => {
+    if (!showEachConfirmation) return undefined;
+    const at = clientConfirmedAt(appointment, patient.id);
+    return at
+      ? { confirmed: true, text: `Confirmó que va el ${formatDayMonth(at, business?.timezone)} a las ${formatClockTime(at, business?.timezone)}` }
+      : { confirmed: false, text: "Aún no confirma" };
+  };
   // Mensaje ya escrito con los datos de la cita; el negocio lo revisa antes de enviarlo.
   const whatsAppUrlOf = (patient: Client) =>
     patient.phone && business
@@ -140,6 +186,18 @@ function AppointmentDetails({
       toast.success(arrived ? `${clientName} llegó` : "Llegada quitada");
     } catch (error) {
       showError(error);
+    }
+  };
+
+  const cancelThisAndFollowing = async () => {
+    try {
+      const { cancelled } = await cancelFollowing.mutateAsync({ id: appointment.id, notify });
+      toast.success(cancelled.length === 1 ? "Se canceló 1 cita" : `Se cancelaron ${cancelled.length} citas`, {
+        description: notify ? undefined : "Sin avisar al paciente.",
+      });
+    } catch (error) {
+      showError(error);
+      throw error;
     }
   };
 
@@ -172,6 +230,14 @@ function AppointmentDetails({
               <DoorOpen className="size-3.5" aria-hidden /> Llegó a las {formatClockTime(appointment.arrivedAt, business?.timezone)}
             </span>
           )}
+          {confirmation && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-highlight/60 px-2 py-0.5 text-xs font-semibold text-ink">
+              <UserCheck className="size-3.5" aria-hidden />
+              {confirmation.total === 1 && mainConfirmedAt
+                ? `${confirmation.label} · ${formatDayMonth(mainConfirmedAt, business?.timezone)}, ${formatClockTime(mainConfirmedAt, business?.timezone)}`
+                : confirmation.label}
+            </span>
+          )}
           {toVerify && <VerifyBadge />}
         </div>
       </SheetHeader>
@@ -185,6 +251,11 @@ function AppointmentDetails({
             {formatTimeRange(appointment.startTime, appointment.endTime)} ·{" "}
             {formatDuration(durationInMinutes(appointment.startTime, appointment.endTime))}
           </DetailRow>
+          {showSeries && (
+            <DetailRow icon={Repeat} label="Serie">
+              Cita {series.index} de {series.total} · {seriesFrequencyText(series.frequency)}
+            </DetailRow>
+          )}
           {(agendas.multiple || (professional && agendas.all.length > 1)) && professional && (
             <DetailRow icon={Stethoscope} label="Profesional">
               <span className="inline-flex items-center gap-2">
@@ -301,7 +372,8 @@ function AppointmentDetails({
                 Avisar al paciente por email y WhatsApp
               </Label>
               <p id="notify-patient-hint" className="text-xs text-muted-foreground">
-                Desmárcala si sólo corriges un error. También vale para «Cancelar cita».
+                Desmárcala si sólo corriges un error. También vale para «Cancelar cita»
+                {canCancelFollowing ? " y «Cancelar ésta y las siguientes»" : ""}.
               </p>
             </div>
           </div>
@@ -319,6 +391,7 @@ function AppointmentDetails({
                   <PatientContact
                     patient={patient}
                     showName={patients.length > 1}
+                    confirmation={confirmationOf(patient)}
                     whatsAppUrl={whatsAppUrlOf(patient)}
                     clinicalAccess={clinicalAccess}
                     onNote={() => setNoteFor(patient)}
@@ -331,13 +404,22 @@ function AppointmentDetails({
         )}
       </div>
 
-      <div className="mt-auto flex gap-2 border-t p-5">
+      <div className="mt-auto flex flex-wrap gap-2 border-t p-5">
         <Button variant="outline" className="flex-1" onClick={() => onEdit(appointment)}>
           <Pencil /> Editar
         </Button>
         {appointment.status !== "cancelled" && (
           <Button variant="destructive" className="flex-1" onClick={() => setConfirmCancel(true)}>
             <XCircle /> Cancelar cita
+          </Button>
+        )}
+        {canCancelFollowing && (
+          <Button
+            variant="outline"
+            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => setConfirmCancelFollowing(true)}
+          >
+            <ListX /> Cancelar ésta y las siguientes
           </Button>
         )}
       </div>
@@ -352,6 +434,18 @@ function AppointmentDetails({
         destructive
         onConfirm={() => changeStatus("cancelled")}
       />
+      {canCancelFollowing && (
+        <ConfirmDialog
+          open={confirmCancelFollowing}
+          onOpenChange={setConfirmCancelFollowing}
+          title="¿Cancelar esta cita y las siguientes de la serie?"
+          description={`Se cancelarán las que sigan activas desde el ${seriesDayLabel(appointment.date).toLowerCase()} (cita ${series.index} de ${series.total} en adelante). Las atendidas no cambian.${notify ? "" : " No se avisará al paciente."}`}
+          confirmLabel="Cancelar ésta y las siguientes"
+          cancelLabel="Volver"
+          destructive
+          onConfirm={cancelThisAndFollowing}
+        />
+      )}
       {noteFor && clinicalAccess && (
         <ClinicalNoteDialog
           open
@@ -372,6 +466,7 @@ function AppointmentDetails({
 function PatientContact({
   patient,
   showName,
+  confirmation,
   whatsAppUrl,
   clinicalAccess,
   onNote,
@@ -379,14 +474,23 @@ function PatientContact({
   patient: Client;
   /** Con varios pacientes, el nombre de cada uno sobre sus botones. */
   showName: boolean;
+  /** Con varios pacientes: si confirmó que va desde su email (spec 010) o «Aún no confirma». */
+  confirmation?: { confirmed: boolean; text: string };
   whatsAppUrl: string | null;
   clinicalAccess: boolean;
   onNote: () => void;
 }) {
+  const confirmationLine = confirmation && (
+    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      {confirmation.confirmed && <UserCheck className="size-3.5 shrink-0 text-ink" aria-hidden />}
+      {confirmation.text}
+    </p>
+  );
   if (patient.restricted) {
     return (
       <div className="space-y-1.5">
         {showName && <p className="text-sm font-semibold">{patient.name}</p>}
+        {confirmationLine}
         <p className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
           Es una reserva online de un paciente que ya estaba en el negocio. Podrás abrir su ficha y su historia cuando
           recepción, un administrador o el propietario confirme o gestione la cita.
@@ -397,6 +501,7 @@ function PatientContact({
   return (
     <div className={cn("space-y-2", showName && "rounded-lg border p-3")}>
       {showName && <p className="text-sm font-semibold">{patient.name}</p>}
+      {confirmationLine}
       <div className="flex flex-wrap gap-2">
         {whatsAppUrl && (
           <Button asChild variant="outline" size="sm">

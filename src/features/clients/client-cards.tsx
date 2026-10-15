@@ -1,5 +1,6 @@
 import { Eye, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { IncompleteBadge } from "@/components/shared/incomplete-badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VerifyBadge } from "@/components/shared/verify-badge";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Business, Client } from "@/types";
 import { getClientSummary, type ClientSummary } from "./client-summary";
+import { clientMissingFields, missingDataText } from "./missing-fields";
 
 interface ClientCardsProps {
   clients: Client[];
@@ -29,8 +31,9 @@ interface ClientCardsProps {
 }
 
 /**
- * Clientes en tarjetas: quién es (nombre y cédula), cuándo vuelve (próxima cita, resaltada si es
- * hoy) y cómo contactarlo sin abrir la ficha (llamar, WhatsApp, email). Toda la tarjeta abre la ficha.
+ * Clientes en tarjetas: quién es (nombre y cédula, y si está «Por verificar» o «Por completar»), cuándo
+ * vuelve (próxima cita, resaltada si es hoy) y cómo contactarlo sin abrir la ficha (llamar, WhatsApp,
+ * email). Toda la tarjeta abre la ficha.
  */
 export function ClientCards({ clients, summaries, now, business, onEdit, onDelete }: ClientCardsProps) {
   const navigate = useNavigate();
@@ -42,6 +45,7 @@ export function ClientCards({ clients, summaries, now, business, onEdit, onDelet
         const next = summary.nextAppointment;
         const last = summary.lastAppointment;
         const nextIsToday = next?.date === now.date;
+        const missing = clientMissingFields(client, business);
         const whatsAppUrl =
           client.phone && business
             ? getWhatsAppUrl(client.phone, business.timezone, `Hola ${client.name.split(" ")[0]}, te escribimos de ${business.name}.`)
@@ -69,7 +73,12 @@ export function ClientCards({ clients, summaries, now, business, onEdit, onDelet
                   {client.documentId ? `Cédula ${client.documentId}` : "Sin cédula"}
                   {!client.isActive && ", inactivo"}
                 </p>
-                {client.claimedClientId && <VerifyBadge className="mt-1" />}
+                {(client.claimedClientId || missing.length > 0) && (
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {client.claimedClientId && <VerifyBadge />}
+                    {missing.length > 0 && <IncompleteBadge detail={missingDataText(missing)} />}
+                  </div>
+                )}
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

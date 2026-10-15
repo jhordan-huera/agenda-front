@@ -31,11 +31,27 @@ export const queryKeys = {
   publicProfile: (slug: string) => ["public-profile", slug] as const,
   /** Enlace de pago de una cita (/pago/:token). */
   publicPayment: (token: string) => ["public-payment", token] as const,
+  /** Página «Tu cita» (/cita/:token, spec 010). */
+  publicAppointment: (token: string) => ["public-appointment", token] as const,
   /** Site Key del CAPTCHA del registro. */
   captchaSiteKey: ["captcha-site-key"] as const,
   platformSettings: ["platform-settings"] as const,
   /** Verificación en dos pasos de la propia cuenta. */
   twoFactor: ["two-factor"] as const,
+  /** Avisos en el celular (spec 013): la configuración y este aparato, de la persona de la sesión. */
+  push: {
+    config: (userId: string) => ["push", userId, "config"] as const,
+    device: (userId: string) => ["push", userId, "device"] as const,
+  },
+  /**
+   * Centro de avisos del panel (spec 014): de la persona de la sesión, en un negocio (su id) o en /admin
+   * ("admin"). Todo cuelga de `all` para recargarlo de una vez (p. ej. con el aviso del service worker).
+   */
+  notices: {
+    all: (userId: string, scope: string) => ["notices", userId, scope] as const,
+    unread: (userId: string, scope: string) => ["notices", userId, scope, "unread"] as const,
+    feed: (userId: string, scope: string, filters: object) => ["notices", userId, scope, "feed", filters] as const,
+  },
   categories: ["categories"] as const,
   /** Panel del super admin: todo cuelga de "admin" para invalidarlo de una vez. */
   admin: {

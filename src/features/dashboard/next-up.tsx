@@ -1,6 +1,7 @@
 import { CalendarPlus, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
+import { ClientConfirmedBadge } from "@/features/appointments/client-confirmed-badge";
 import { Button } from "@/components/ui/button";
 import { capitalize, formatDuration, formatLongDate, joinNames } from "@/lib/format";
 import { timeToMinutes, type ZonedNow } from "@/lib/time";
@@ -86,6 +87,8 @@ export function NextUp({ appointment, clients, serviceName, business, now, onOpe
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <StatusBadge status={appointment.status} />
+          {/* Sobre la tarjeta de color, en blanco como el resto. */}
+          <ClientConfirmedBadge appointment={appointment} short className="bg-white/15 text-sm font-semibold text-white" />
           {appointment.homeVisit && (
             <span className="inline-flex items-center gap-1 text-sm font-semibold text-white">
               <Home className="size-4" aria-hidden /> A domicilio

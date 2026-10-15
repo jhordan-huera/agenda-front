@@ -75,7 +75,7 @@ export function InstallAppCard({ className }: { className?: string }) {
       <div className="min-w-0 space-y-2">
         <div>
           <p className="font-bold">Instala Agenda360 en tu celular</p>
-          <p className="text-sm text-muted-foreground">Ábrela desde un icono en tu pantalla de inicio, como cualquier aplicación.</p>
+          <p className="text-sm text-muted-foreground">Ábrela desde un icono en tu pantalla de inicio y recibe avisos, como cualquier aplicación.</p>
         </div>
         <Button size="sm" onClick={start}>
           <Download /> {mode === "ios" ? "Cómo instalarla" : "Instalar"}
@@ -89,8 +89,8 @@ export function InstallAppCard({ className }: { className?: string }) {
   );
 }
 
-/** iPhone y iPad: Apple no deja instalar con un botón; se hace desde Compartir. */
-function IosInstallDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+/** iPhone y iPad: Apple no deja instalar con un botón; se hace desde Compartir. También lo abre la tarjeta de los avisos (spec 013). */
+export function IosInstallDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">

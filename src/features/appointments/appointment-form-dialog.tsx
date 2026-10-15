@@ -22,23 +22,53 @@ import { ClientFormDialog } from "@/features/clients/client-form-dialog";
 import { ProfessionalSelect } from "@/features/professionals/professional-select";
 import { defaultAgendaId, meetingUrlPlace, useAgendas, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
-import { useAppointments, useSaveAppointment } from "@/hooks/queries/use-appointments";
+import {
+  useAppointments,
+  useCreateAppointmentSeries,
+  usePreviewAppointmentSeries,
+  useSaveAppointment,
+} from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBlockedTimes, useSchedules } from "@/hooks/queries/use-schedule";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { useErrorToast } from "@/hooks/use-error-toast";
+import { SERIES_DEFAULT_COUNT, seriesFrequencyText } from "@/lib/appointment-series";
 import { findConflictingAppointment, findOverlappingBlock, isWithinWorkingHours, offersService } from "@/lib/availability";
 import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG, BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
 import { DURATION_OPTIONS, SERVICE_MODES } from "@/lib/constants/business";
-import { capitalize, formatCurrency, formatDuration, formatShortDate, formatTimeRange } from "@/lib/format";
+import { capitalize, formatCurrency, formatDuration, formatShortDate, formatTimeRange, joinNames } from "@/lib/format";
 import { addMinutesToTime, durationInMinutes } from "@/lib/time";
-import { appointmentSchema, type AppointmentInput } from "@/lib/validations/appointment";
+import {
+  appointmentSchema,
+  seriesRepeatSchema,
+  type AppointmentInput,
+  type AppointmentSeriesPreviewInput,
+} from "@/lib/validations/appointment";
 import { dateField, timeField } from "@/lib/validations/fields";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
-import type { Appointment, AppointmentStatus, HomeVisitAddress, ISODate, Service, ServiceMode, TimeString } from "@/types";
-import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getAppointmentClientNames, getListPrice, getPlace, suggestStartTime } from "./appointment-utils";
+import type {
+  Appointment,
+  AppointmentSeriesPreview,
+  AppointmentStatus,
+  HomeVisitAddress,
+  ISODate,
+  Service,
+  ServiceMode,
+  TimeString,
+} from "@/types";
+import {
+  clearHomeVisitErrors,
+  EMPTY_HOME_VISIT,
+  getAppointmentClientNames,
+  getListPrice,
+  getPlace,
+  seriesDayLabel,
+  suggestStartTime,
+} from "./appointment-utils";
 import { ExtraClientsField } from "./extra-clients-field";
 import { HomeVisitFields } from "./home-visit-fields";
+import { SeriesFields, type SeriesRepeatValue } from "./series-fields";
+import { SeriesReview, type SeriesReviewResult } from "./series-review";
 
 export interface AppointmentDefaults {
   date?: ISODate;
@@ -56,16 +86,26 @@ interface AppointmentFormDialogProps {
 }
 
 export function AppointmentFormDialog({ open, onOpenChange, appointment, defaults }: AppointmentFormDialogProps) {
+  // La lista de fechas de una serie (spec 011) reemplaza al formulario en el mismo diálogo.
+  const [reviewing, setReviewing] = useState(false);
+  const change = (next: boolean) => {
+    if (!next) setReviewing(false);
+    onOpenChange(next);
+  };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={change}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{appointment ? "Editar cita" : "Nueva cita"}</DialogTitle>
+          <DialogTitle>{appointment ? "Editar cita" : reviewing ? "Revisa las fechas" : "Nueva cita"}</DialogTitle>
           <DialogDescription>
-            {appointment ? "Modifica los datos de la cita." : "Agenda una cita para uno de tus clientes."}
+            {appointment
+              ? "Modifica los datos de la cita."
+              : reviewing
+                ? "Cambia la hora de las que chocan o quítalas, y crea las demás."
+                : "Agenda una cita para uno de tus clientes."}
           </DialogDescription>
         </DialogHeader>
-        <AppointmentForm appointment={appointment} defaults={defaults} onDone={() => onOpenChange(false)} />
+        <AppointmentForm appointment={appointment} defaults={defaults} onDone={() => change(false)} onReviewChange={setReviewing} />
       </DialogContent>
     </Dialog>
   );
@@ -77,10 +117,13 @@ function AppointmentForm({
   appointment,
   defaults,
   onDone,
+  onReviewChange,
 }: {
   appointment?: Appointment;
   defaults?: AppointmentDefaults;
   onDone: () => void;
+  /** Se pasa a la lista de fechas de la serie (o se vuelve al formulario). */
+  onReviewChange: (reviewing: boolean) => void;
 }) {
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
@@ -95,6 +138,12 @@ function AppointmentForm({
   // pacientes (null: el principal).
   const [newClient, setNewClient] = useState<{ open: boolean; name: string; slot: number | null }>({ open: false, name: "", slot: null });
   const [errors, setErrors] = useState<FieldErrors>({});
+  // «Repetir» (spec 011): sólo en una cita nueva. `review`: la lista de fechas, con lo que se pidió.
+  const [repeat, setRepeat] = useState<SeriesRepeatValue>({ enabled: false, frequency: "weekly", count: String(SERIES_DEFAULT_COUNT) });
+  const [review, setReview] = useState<{ preview: AppointmentSeriesPreview; input: AppointmentSeriesPreviewInput; key: number } | null>(null);
+  const previewSeries = usePreviewAppointmentSeries();
+  const createSeries = useCreateAppointmentSeries();
+  const repeating = !appointment && repeat.enabled;
   // El navegador no entiende lo escrito en el precio (p. ej. "12,50" en algunos teléfonos): su valor llega vacío.
   const [priceUnreadable, setPriceUnreadable] = useState(false);
 
@@ -197,8 +246,9 @@ function AppointmentForm({
       : null;
   // Mientras se guarda (o ya guardada), la agenda recargada trae esta misma cita: no es un solape.
   const saving = saveAppointment.isPending || saveAppointment.isSuccess;
+  // Con «Repetir», un choque no bloquea: la lista de fechas lo marca y ahí se cambia la hora.
   const conflict =
-    timeWindow && BLOCKING_STATUSES.has(values.status) && !saving
+    timeWindow && BLOCKING_STATUSES.has(values.status) && !saving && !repeating
       ? findConflictingAppointment(timeWindow, appointments)
       : undefined;
   const conflictMessage = conflict
@@ -209,8 +259,54 @@ function AppointmentForm({
   const agendaBlocks = professionalId
     ? blockedTimes.filter((b) => b.professionalId === null || b.professionalId === professionalId)
     : blockedTimes;
-  const outsideHours = timeWindow ? !isWithinWorkingHours(agendaSchedules, timeWindow) : false;
-  const block = timeWindow ? findOverlappingBlock(agendaBlocks, timeWindow) : undefined;
+  const outsideHours = timeWindow && !repeating ? !isWithinWorkingHours(agendaSchedules, timeWindow) : false;
+  const block = timeWindow && !repeating ? findOverlappingBlock(agendaBlocks, timeWindow) : undefined;
+  // Una serie es de citas por venir: Pendiente o Confirmada.
+  const statusOptions = repeating ? APPOINTMENT_STATUSES.filter((status) => status === "pending" || status === "confirmed") : APPOINTMENT_STATUSES;
+  const changeRepeat = (next: SeriesRepeatValue) => {
+    setRepeat(next);
+    if (next.enabled && values.status !== "pending" && values.status !== "confirmed") set("status", "confirmed");
+  };
+
+  /** «Revisar fechas»: la lista de la serie, calculada por la API (sabe el cupo y la agenda de cada fecha). */
+  const reviewDates = async (input: AppointmentSeriesPreviewInput, key = 0) => {
+    try {
+      const preview = await previewSeries.mutateAsync(input);
+      setReview({ preview, input, key });
+      onReviewChange(true);
+    } catch (error) {
+      showError(error);
+    }
+  };
+
+  const backToForm = () => {
+    setReview(null);
+    onReviewChange(false);
+  };
+
+  /** «Crear N citas»: el aviso dice cuántas se crearon y cuáles no (las quitadas y las que se ocuparon mientras tanto). */
+  const handleCreateSeries = async ({ dates, left }: SeriesReviewResult) => {
+    if (!review) return;
+    try {
+      const result = await createSeries.mutateAsync({ ...review.input, dates });
+      const missing = [
+        ...left.map((item) => seriesDayLabel(item.date).toLowerCase()),
+        ...result.skipped.map((item) => `${seriesDayLabel(item.date).toLowerCase()} (${item.reason.charAt(0).toLowerCase()}${item.reason.slice(1)})`),
+      ];
+      const [first] = result.created;
+      toast.success(`Se ${result.created.length === 1 ? "creó 1 cita" : `crearon ${result.created.length} citas`}`, {
+        description: missing.length
+          ? `No se ${missing.length === 1 ? "creó" : "crearon"}: ${joinNames(missing)}.`
+          : `Desde el ${formatShortDate(first.date)} · ${seriesFrequencyText(result.series.frequency)} · ${formatTimeRange(first.startTime, first.endTime)}`,
+        duration: missing.length ? 10_000 : undefined,
+      });
+      onDone();
+    } catch (error) {
+      showError(error);
+      // Algo cambió mientras se revisaba (409 o 402): se vuelve a pedir la lista.
+      await reviewDates(review.input, review.key + 1);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -218,6 +314,19 @@ function AppointmentForm({
     const result = validate(appointmentSchema, { ...values, extraClientIds: extraClientIds.filter(Boolean), professionalId });
     // Vacío o ilegible no es $0: se pide (el esquema rechaza el vacío con "Escribe el precio").
     const priceError = priceUnreadable && values.price === "" ? "Escribe sólo números, p. ej. 25.50" : undefined;
+    if (repeating) {
+      const repeatResult = validate(seriesRepeatSchema, { frequency: repeat.frequency, count: repeat.count });
+      const seriesErrors: FieldErrors = {
+        ...result.errors,
+        ...(priceError ? { price: priceError } : {}),
+        ...Object.fromEntries(Object.entries(repeatResult.errors).map(([key, message]) => [`repeat.${key}`, message])),
+        ...(values.date && values.date < now.date ? { date: "La primera fecha de la serie no puede ser anterior a hoy." } : {}),
+      };
+      setErrors(seriesErrors);
+      if (!result.success || !repeatResult.success || Object.keys(seriesErrors).length > 0 || previewSeries.isPending) return;
+      await reviewDates({ appointment: result.data, repeat: repeatResult.data });
+      return;
+    }
     setErrors(priceError ? { ...result.errors, price: priceError } : result.errors);
     if (!result.success || priceError || conflict || saving) return;
 
@@ -232,6 +341,20 @@ function AppointmentForm({
       showError(error);
     }
   };
+
+  if (review) {
+    return (
+      <SeriesReview
+        key={review.key}
+        preview={review.preview}
+        frequency={review.input.repeat.frequency}
+        durationMinutes={review.input.appointment.durationMinutes}
+        creating={createSeries.isPending || previewSeries.isPending}
+        onBack={backToForm}
+        onCreate={handleCreateSeries}
+      />
+    );
+  }
 
   if (isPending) {
     return (
@@ -444,6 +567,8 @@ function AppointmentForm({
         </FormField>
       </div>
 
+      {!appointment && <SeriesFields value={repeat} onChange={changeRepeat} errors={errors} />}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <FormField label="Precio (USD)" error={errors.price}>
         {(field) => (
@@ -465,14 +590,14 @@ function AppointmentForm({
           </div>
         )}
       </FormField>
-      <FormField label="Estado">
+      <FormField label="Estado" error={errors.status} hint={repeating ? "Una serie queda pendiente o confirmada." : undefined}>
         {(field) => (
           <Select value={values.status} onValueChange={(status) => set("status", status as AppointmentStatus)}>
             <SelectTrigger {...field} className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent position="popper">
-              {APPOINTMENT_STATUSES.map((status) => (
+              {statusOptions.map((status) => (
                 <SelectItem key={status} value={status}>
                   <span className={`size-2 rounded-full ${APPOINTMENT_STATUS_CONFIG[status].dot}`} aria-hidden />
                   {APPOINTMENT_STATUS_CONFIG[status].label}
@@ -514,8 +639,8 @@ function AppointmentForm({
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
         </Button>
-        <SubmitButton loading={saving} disabled={Boolean(conflict)}>
-          {appointment ? "Guardar cambios" : "Crear cita"}
+        <SubmitButton loading={saving || previewSeries.isPending} disabled={Boolean(conflict)}>
+          {appointment ? "Guardar cambios" : repeating ? "Revisar fechas" : "Crear cita"}
         </SubmitButton>
       </DialogFooter>
     </form>

@@ -1,4 +1,5 @@
 import { LogOut, ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
 import { Logo } from "@/components/shared/logo";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -10,14 +11,16 @@ import { ADMIN_NAV_ITEMS } from "./nav-items";
 import { SidebarNav } from "./sidebar-nav";
 import { useSignOut } from "./use-sign-out";
 
-export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
+/** `bell`: la campana de avisos del super admin (spec 014), junto al logo; sólo en la computadora. */
+export function AdminSidebar({ onNavigate, bell }: { onNavigate?: () => void; bell?: ReactNode }) {
   const { data: user } = useCurrentUser();
   const signOut = useSignOut();
 
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-16 shrink-0 items-center px-5">
+      <div className="flex h-16 shrink-0 items-center justify-between gap-2 px-5 pr-3">
         <Logo href="/admin" />
+        {bell}
       </div>
 
       <div className="mx-3 mb-2 flex items-center gap-2.5 rounded-xl bg-muted px-3 py-2.5">

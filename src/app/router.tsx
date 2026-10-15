@@ -47,6 +47,8 @@ export const router = createBrowserRouter([
           { index: true, lazy: lazyPage(() => import("@/pages/dashboard/dashboard-page")) },
           { path: "calendar", lazy: lazyPage(() => import("@/pages/dashboard/calendar-page")) },
           { path: "clients", lazy: lazyPage(() => import("@/pages/dashboard/clients-page")) },
+          // Importar pacientes desde un Excel o un CSV (spec 012). La ruta fija gana a clients/:id.
+          { path: "clients/importar", lazy: lazyPage(() => import("@/pages/dashboard/client-import-page")) },
           { path: "clients/:id", lazy: lazyPage(() => import("@/pages/dashboard/client-detail-page")) },
           { path: "clients/:id/historia-clinica", lazy: lazyPage(() => import("@/pages/dashboard/clinical-print-page")) },
           { path: "services", lazy: lazyPage(() => import("@/pages/dashboard/services-page")) },
@@ -54,6 +56,8 @@ export const router = createBrowserRouter([
           { path: "schedule", lazy: lazyPage(() => import("@/pages/dashboard/schedule-page")) },
           { path: "reports", lazy: lazyPage(() => import("@/pages/dashboard/reports-page")) },
           { path: "settings", lazy: lazyPage(() => import("@/pages/dashboard/settings-page")) },
+          // La página «Avisos» de la campana (spec 014).
+          { path: "notices", lazy: lazyPage(() => import("@/pages/dashboard/notices-page")) },
           { path: "clinical-templates", lazy: lazyPage(() => import("@/pages/dashboard/clinical-templates-page")) },
           { path: "clinical-templates/new", lazy: lazyPage(() => import("@/pages/dashboard/clinical-template-editor-page")) },
           { path: "clinical-templates/:id", lazy: lazyPage(() => import("@/pages/dashboard/clinical-template-editor-page")) },
@@ -72,10 +76,13 @@ export const router = createBrowserRouter([
           { path: "categories", lazy: lazyPage(() => import("@/pages/admin/admin-categories-page")) },
           { path: "activity", lazy: lazyPage(() => import("@/pages/admin/admin-activity-page")) },
           { path: "settings", lazy: lazyPage(() => import("@/pages/admin/admin-settings-page")) },
+          { path: "notices", lazy: lazyPage(() => import("@/pages/admin/admin-notices-page")) },
         ],
       },
       { path: "/book/:username", lazy: lazyPage(() => import("@/pages/booking-page")) },
       { path: "/pago/:token", lazy: lazyPage(() => import("@/pages/payment-page")) },
+      // «Tu cita» (spec 010): el enlace de los emails para confirmar que va o cancelar, sin sesión.
+      { path: "/cita/:token", lazy: lazyPage(() => import("@/pages/appointment-page")) },
       { path: "/privacidad", lazy: lazyPage(() => import("@/pages/privacy-page")) },
       { path: "*", Component: NotFoundPage },
     ],
