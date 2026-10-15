@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, CircleHelp, CircleX, DatabaseBackup, Mail, ShieldAlert, Timer, type LucideIcon } from "lucide-react";
+import { CircleAlert, CircleCheck, CircleHelp, CircleX, DatabaseBackup, Gauge, Mail, ShieldAlert, Timer, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,8 @@ const CRON_WARN_MINUTES = 30;
 const CRON_BAD_MINUTES = 120;
 const BACKUP_WARN_DAYS = 8;
 const BACKUP_BAD_DAYS = 15;
+/** Cupo de Gmail (spec 015): en ámbar desde el 80 % del cupo; en rojo al llegar al límite del paciente. */
+const QUOTA_WARN_SHARE = 0.8;
 
 const STATUS: Record<Status, { icon: LucideIcon; label: string; className: string }> = {
   ok: { icon: CircleCheck, label: "Bien", className: "text-emerald-600" },
@@ -43,8 +45,24 @@ function ago(iso: string): string {
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
 
+/** El cupo de Gmail: los envíos de 24 h frente al cupo y los que esperan (copias y avisos, después lo del paciente). */
+function quotaTile({ quota, sent24h, patientLimit, waiting }: PlatformStats["health"]["emailQuota"]): Tile {
+  const waitingTotal = waiting.patient + waiting.business;
+  return {
+    key: "quota",
+    icon: Gauge,
+    title: "Cupo de Gmail",
+    status: sent24h >= patientLimit ? "bad" : sent24h >= quota * QUOTA_WARN_SHARE || waitingTotal > 0 ? "warn" : "ok",
+    main: `${sent24h} de ${quota} (24 h)`,
+    detail:
+      waitingTotal > 0
+        ? `${plural(waitingTotal, "espera", "esperan")} cupo: ${waiting.patient} al paciente · ${waiting.business} al negocio`
+        : "Ningún email espera cupo",
+  };
+}
+
 function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
-  const { emailsToday, cron, backup, security } = health;
+  const { emailsToday, emailQuota, cron, backup, security } = health;
   const cronMinutes = cron.lastRunAt ? (Date.now() - Date.parse(cron.lastRunAt)) / 60_000 : null;
   const backupDays = backup ? daysSince(backup.ranAt, today) : null;
   return [
@@ -56,6 +74,8 @@ function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
       main: plural(emailsToday.sent, "enviado", "enviados"),
       detail: `${plural(emailsToday.failed, "fallido", "fallidos")} · ${emailsToday.queued} en cola`,
     },
+    // Una API anterior a la spec 015 no lo trae.
+    ...(emailQuota ? [quotaTile(emailQuota)] : []),
     {
       key: "cron",
       icon: Timer,
@@ -98,8 +118,9 @@ function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
 }
 
 /**
- * «Salud del sistema» (spec 006): emails de hoy, cron, copia de seguridad e intentos fallidos de
- * inicio de sesión, cada uno en verde, ámbar o rojo (con ícono y texto), y el resumen arriba.
+ * «Salud del sistema» (spec 006): emails de hoy, el cupo de Gmail (spec 015), cron, copia de seguridad
+ * e intentos fallidos de inicio de sesión, cada uno en verde, ámbar o rojo (con ícono y texto), y el
+ * resumen arriba.
  * `unavailable`: la beta, que no tiene cron, copias ni emails reales.
  */
 export function HealthSection({
@@ -135,7 +156,7 @@ export function HealthSection({
       {unavailable ? (
         <Card className="px-5 py-4 text-sm text-muted-foreground">No disponible en la beta: no tiene cron, copias de seguridad ni emails reales.</Card>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
           {list
             ? list.map((tile) => {
                 const status = STATUS[tile.status];
@@ -154,7 +175,7 @@ export function HealthSection({
                   </Card>
                 );
               })
-            : Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)}
+            : Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)}
         </div>
       )}
       {!unavailable && health?.emailsByDay && <EmailsChart days={health.emailsByDay} />}

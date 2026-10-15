@@ -114,8 +114,13 @@ export function RegisterForm() {
           Crear cuenta
         </SubmitButton>
       </div>
+      {/* Sin términos del servicio hasta que existan (spec 015). En otra pestaña: el formulario no se pierde. */}
       <p className="text-center text-xs text-muted-foreground">
-        Al crear tu cuenta aceptas los términos del servicio y la política de privacidad.
+        Al crear tu cuenta aceptas la{" "}
+        <a href="/privacidad" target="_blank" rel="noreferrer" className="underline hover:text-foreground">
+          política de privacidad
+        </a>
+        .
       </p>
     </form>
   );
