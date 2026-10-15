@@ -34,8 +34,8 @@ window.addEventListener("appinstalled", () => {
   emit();
 });
 
-/** Ya está abierta como aplicación instalada (no en una pestaña del navegador). */
-function isStandalone(): boolean {
+/** Ya está abierta como aplicación instalada (no en una pestaña del navegador). También la usan los avisos (spec 013). */
+export function isStandalone(): boolean {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true
@@ -43,7 +43,7 @@ function isStandalone(): boolean {
 }
 
 /** iPhone o iPad (el iPad se presenta como Mac, pero con pantalla táctil). */
-function isAppleMobile(): boolean {
+export function isAppleMobile(): boolean {
   const ua = navigator.userAgent;
   return /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
 }

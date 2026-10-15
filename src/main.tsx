@@ -8,6 +8,8 @@ import { ProductionDbBanner } from "@/components/layout/production-db-banner";
 import "./index.css";
 // Guarda el aviso de "se puede instalar" aunque llegue antes de que se monte el panel.
 import "@/features/install/install-prompt";
+// Al tocar un aviso en el celular con la app abierta, abre su pantalla sin recargar (spec 013).
+import "@/features/push/notification-navigation";
 
 // Algunos navegadores (Vivaldi, Safari) siguen mostrando en la pestaña un icono anterior guardado
 // en su caché. Al volver a declararlo al arrancar, con una versión en la URL, pintan el actual.

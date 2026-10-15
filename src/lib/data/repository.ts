@@ -81,6 +81,9 @@ import type {
   User,
   WhatsAppNoticeKind,
   PlatformAdmin,
+  PushConfig,
+  PushDevice,
+  PushKind,
 } from "@/types";
 
 /**
@@ -381,6 +384,31 @@ export interface PlatformAdminRepository {
   updatePanelColors(input: PanelColorsInput): Promise<{ colors: BrandColors | null }>;
 }
 
+/** El aparato (este navegador) en el servicio de avisos: lo que da `PushSubscription.toJSON()`. */
+export interface PushDeviceInput {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  /** La dirección anterior, si el servicio de avisos la renovó (conserva los tipos). */
+  previousEndpoint?: string;
+}
+
+/**
+ * Avisos en el celular (spec 013): sólo el propietario de un negocio y el super admin. El aparato se
+ * identifica por su dirección, siempre en el cuerpo de la petición.
+ */
+export interface PushRepository {
+  /** La clave pública y los tipos del rol. Si la API todavía no tiene avisos (404), `available: false`. */
+  getConfig(): Promise<PushConfig>;
+  /** Activa o actualiza este aparato (y quita la pausa de «Cerrar sesión»). */
+  saveDevice(input: PushDeviceInput): Promise<PushDevice>;
+  /** Los tipos apagados en este aparato. */
+  updateKinds(endpoint: string, mutedKinds: PushKind[]): Promise<Pick<PushDevice, "mutedKinds">>;
+  /** «Desactivar en este celular». Sin error si ya no existía. */
+  turnOff(endpoint: string): Promise<void>;
+  /** El aviso de prueba, al momento. Falla con `conflict` si el aparato ya no existe y `push_failed` si no salió. */
+  sendTest(endpoint: string): Promise<{ sent: true }>;
+}
+
 export interface DataRepository {
   users: UserRepository;
   businesses: BusinessRepository;
@@ -399,4 +427,5 @@ export interface DataRepository {
   images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;
+  push: PushRepository;
 }

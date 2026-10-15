@@ -14,6 +14,8 @@ export type DataErrorCode =
   | "unavailable"
   /** Super admin sin la verificación en dos pasos (obligatoria): tiene que activarla para usar /admin y el modo soporte. */
   | "two_factor_required"
+  /** Aviso de prueba en el celular: el servicio de avisos del navegador lo rechazó o no respondió (spec 013). */
+  | "push_failed"
   | "server";
 
 /** Error de la capa de datos con mensaje listo para mostrar al usuario. */

@@ -39,7 +39,10 @@ import type {
   TeamMember,
   User,
   PlatformAdmin,
+  PushConfig,
+  PushDevice,
 } from "@/types";
+import { DataError } from "./errors";
 import type { AdminCreateBusinessResult, DataRepository } from "./repository";
 
 /**
@@ -238,5 +241,18 @@ export const apiRepository: DataRepository = {
     listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),
     updatePanelColors: (input) => api.put<{ colors: BrandColors | null }>("/admin/panel-colors", input),
+  },
+
+  push: {
+    // Un front publicado antes que la API (sin /api/push): como si no hubiera avisos, no se ve nada.
+    getConfig: () =>
+      api.get<PushConfig>("/push/config").catch((error: unknown) => {
+        if (error instanceof DataError && error.code === "not_found") return { available: false, publicKey: null, kinds: [] };
+        throw error;
+      }),
+    saveDevice: (input) => api.put<PushDevice>("/push/device", input),
+    updateKinds: (endpoint, mutedKinds) => api.patch<Pick<PushDevice, "mutedKinds">>("/push/device", { endpoint, mutedKinds }),
+    turnOff: (endpoint) => api.post<void>("/push/device/off", { endpoint }),
+    sendTest: (endpoint) => api.post<{ sent: true }>("/push/device/test", { endpoint }),
   },
 };

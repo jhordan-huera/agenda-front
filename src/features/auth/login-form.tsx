@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { Link } from "react-router";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getHomePath, isTwoFactorChallenge, type Session } from "@/lib/auth";
+import { getHomePath, isTwoFactorChallenge, safeNextPath, type Session } from "@/lib/auth";
 import { DataError, getErrorMessage } from "@/lib/data/errors";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import { loadAuthSchemas } from "./auth-schemas";
@@ -19,6 +19,7 @@ import { useSession } from "./use-session";
 
 export function LoginForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signIn } = useSession();
   const [values, setValues] = useState({ email: "", password: "", remember: true });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -31,9 +32,10 @@ export function LoginForm() {
     loadAuthSchemas().catch(() => undefined);
   }, []);
 
+  // Con `?next=` (la pantalla de un aviso, spec 013) vuelve allí si es de su panel; si no, al Inicio. También tras la verificación en dos pasos.
   const enter = (session: Session) => {
     toast.success("¡Bienvenido de nuevo!");
-    navigate(getHomePath(session), { replace: true });
+    navigate(safeNextPath(searchParams.get("next"), session) ?? getHomePath(session), { replace: true });
   };
 
   const handleSubmit = async (event: FormEvent) => {
