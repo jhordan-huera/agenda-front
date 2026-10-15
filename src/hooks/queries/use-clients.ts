@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusinessId } from "@/features/auth/use-session";
 import { data } from "@/lib/data";
 import type { ClientInput, ConfirmClaimInput } from "@/lib/validations/client";
+import type { ClientImportInput } from "@/lib/validations/client-import";
 import type { Client } from "@/types";
 import { queryKeys } from "./query-keys";
 import { useInvalidateActivity } from "./use-invalidate-activity";
@@ -72,6 +73,23 @@ export function useConfirmClaim() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.clients(businessId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.appointments(businessId) });
+      void invalidateActivity();
+    },
+  });
+}
+
+/**
+ * Importa pacientes desde un Excel o un CSV (spec 012). Al terminar se recargan la lista de pacientes,
+ * el uso del plan y la actividad.
+ */
+export function useImportClients() {
+  const businessId = useBusinessId();
+  const queryClient = useQueryClient();
+  const invalidateActivity = useInvalidateActivity();
+  return useMutation({
+    mutationFn: (input: ClientImportInput) => data.clients.importMany(businessId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.clients(businessId) });
       void invalidateActivity();
     },
   });

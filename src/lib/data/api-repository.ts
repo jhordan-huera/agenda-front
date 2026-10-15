@@ -20,6 +20,7 @@ import type {
   BusinessCategoryInfo,
   Client,
   ClientActivity,
+  ClientImportResult,
   ClinicalNote,
   ClinicalProfile,
   ClinicalAttachment,
@@ -95,6 +96,7 @@ export const apiRepository: DataRepository = {
     remove: (businessId, clientId) => api.delete(`${business(businessId)}/clients/${id(clientId)}`),
     confirmClaim: (businessId, clientId, input) =>
       api.post<Client>(`${business(businessId)}/clients/${id(clientId)}/confirm-claim`, input),
+    importMany: (businessId, input) => api.post<ClientImportResult>(`${business(businessId)}/clients/import`, input),
   },
 
   clinicalRecords: {

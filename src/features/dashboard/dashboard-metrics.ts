@@ -30,7 +30,8 @@ export function getDashboardMetrics(appointments: Appointment[], clients: Client
     weekCount: week.length,
     weekCompleted: week.filter((a) => a.status === "completed").length,
     activeClients: clients.filter((c) => c.isActive).length,
-    newClientsThisMonth: clients.filter((c) => c.createdAt.startsWith(month)).length,
+    // Los importados desde un archivo (spec 012) no son nuevos: son la lista que el negocio ya tenía.
+    newClientsThisMonth: clients.filter((c) => c.createdAt.startsWith(month) && c.source !== "import").length,
     monthRevenue: appointments
       .filter((a) => a.date.startsWith(month) && REVENUE_STATUSES.has(a.status))
       .reduce((total, a) => total + a.price, 0),
