@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, CircleHelp, CircleX, DatabaseBackup, Gauge, Mail, ShieldAlert, Timer, type LucideIcon } from "lucide-react";
+import { CircleAlert, CircleCheck, CircleHelp, CircleX, Database, DatabaseBackup, Gauge, Mail, ShieldAlert, Timer, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +17,9 @@ const BACKUP_WARN_DAYS = 8;
 const BACKUP_BAD_DAYS = 15;
 /** Cupo de Gmail (spec 015): en ámbar desde el 80 % del cupo; en rojo al llegar al límite del paciente. */
 const QUOTA_WARN_SHARE = 0.8;
+/** Base de datos: en ámbar desde el 70 % del tope (como el aviso de ntfy de la copia, 350 de 500 MB); en rojo desde el 90 %. */
+const DATABASE_WARN_SHARE = 0.7;
+const DATABASE_BAD_SHARE = 0.9;
 
 const STATUS: Record<Status, { icon: LucideIcon; label: string; className: string }> = {
   ok: { icon: CircleCheck, label: "Bien", className: "text-emerald-600" },
@@ -61,8 +64,27 @@ function quotaTile({ quota, sent24h, patientLimit, waiting }: PlatformStats["hea
   };
 }
 
+/** Lo que ocupa la base de datos frente al tope del plan de Supabase. */
+function databaseTile(database: PlatformStats["health"]["database"]): Tile {
+  if (!database) {
+    return { key: "database", icon: Database, title: "Base de datos", status: "unknown", main: "No se pudo medir", detail: "Vuelve a intentarlo más tarde" };
+  }
+  const share = database.sizeBytes / database.limitBytes;
+  return {
+    key: "database",
+    icon: Database,
+    title: "Base de datos",
+    status: share >= DATABASE_BAD_SHARE ? "bad" : share >= DATABASE_WARN_SHARE ? "warn" : "ok",
+    main: `${formatSize(database.sizeBytes)} de ${formatSize(database.limitBytes)}`,
+    detail:
+      share >= DATABASE_WARN_SHARE
+        ? `${Math.round(share * 100)} % del plan: toca pasar a un plan mayor de Supabase`
+        : `${Math.max(1, Math.round(share * 100))} % del plan gratuito de Supabase`,
+  };
+}
+
 function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
-  const { emailsToday, emailQuota, cron, backup, security } = health;
+  const { emailsToday, emailQuota, cron, backup, database, security } = health;
   const cronMinutes = cron.lastRunAt ? (Date.now() - Date.parse(cron.lastRunAt)) / 60_000 : null;
   const backupDays = backup ? daysSince(backup.ranAt, today) : null;
   return [
@@ -103,6 +125,8 @@ function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
           : backup.error || ago(backup.ranAt)
         : "La próxima del viernes quedará anotada",
     },
+    // Una API anterior a esta tarjeta no trae `database` (undefined): no se muestra.
+    ...(database === undefined ? [] : [databaseTile(database)]),
     {
       key: "security",
       icon: ShieldAlert,
@@ -118,9 +142,9 @@ function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
 }
 
 /**
- * «Salud del sistema» (spec 006): emails de hoy, el cupo de Gmail (spec 015), cron, copia de seguridad
- * e intentos fallidos de inicio de sesión, cada uno en verde, ámbar o rojo (con ícono y texto), y el
- * resumen arriba.
+ * «Salud del sistema» (spec 006): emails de hoy, el cupo de Gmail (spec 015), cron, copia de seguridad,
+ * lo que ocupa la base de datos frente al tope de Supabase e intentos fallidos de inicio de sesión, cada
+ * uno en verde, ámbar o rojo (con ícono y texto), y el resumen arriba. Seis tarjetas: dos filas de tres.
  * `unavailable`: la beta, que no tiene cron, copias ni emails reales.
  */
 export function HealthSection({
@@ -156,7 +180,7 @@ export function HealthSection({
       {unavailable ? (
         <Card className="px-5 py-4 text-sm text-muted-foreground">No disponible en la beta: no tiene cron, copias de seguridad ni emails reales.</Card>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list
             ? list.map((tile) => {
                 const status = STATUS[tile.status];
@@ -175,7 +199,7 @@ export function HealthSection({
                   </Card>
                 );
               })
-            : Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)}
+            : Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)}
         </div>
       )}
       {!unavailable && health?.emailsByDay && <EmailsChart days={health.emailsByDay} />}
