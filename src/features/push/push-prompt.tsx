@@ -7,11 +7,12 @@ import { getErrorMessage } from "@/lib/data";
 import { deviceLabel, isSnoozed, snooze, wasTurnedOff } from "./push-support";
 import { usePushDevice } from "./use-push-device";
 
-/** De quién son los avisos: el propietario del negocio o el super admin. */
-export type PushAudience = "owner" | "platform";
+/** De quién son los avisos: el propietario del negocio, el rol Profesional con su agenda (spec 017) o el super admin. */
+export type PushAudience = "owner" | "agenda" | "platform";
 
 const WHAT: Record<PushAudience, string> = {
   owner: "Te avisamos al momento de las reservas, los comprobantes y las cancelaciones.",
+  agenda: "Te avisamos a las 8 de la noche si te quedan citas de hoy sin cerrar.",
   platform: "Te avisamos al momento de los negocios nuevos, las solicitudes de plan y las alertas de seguridad.",
 };
 

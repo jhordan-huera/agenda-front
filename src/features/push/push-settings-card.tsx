@@ -1,14 +1,15 @@
-import { BellOff, BellRing, Loader2, Send, Smartphone, type LucideIcon } from "lucide-react";
+import { BellOff, BellRing, CalendarX2, Loader2, Send, Smartphone, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CardTitleIcon } from "@/components/shared/card-title-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSession } from "@/features/auth/use-session";
 import { IosInstallDialog } from "@/features/install/install-app";
 import { SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { SwitchField } from "@/features/settings/switch-field";
-import { PUSH_KIND_LABELS, type MutablePushKind } from "@/lib/constants/push";
+import { AGENDA_PUSH_KIND_DESCRIPTIONS, PUSH_KIND_LABELS, type MutablePushKind } from "@/lib/constants/push";
 import { getErrorMessage } from "@/lib/data";
 import type { PushKind } from "@/types";
 import type { PushAudience } from "./push-prompt";
@@ -18,6 +19,8 @@ import { usePushDevice } from "./use-push-device";
 const DESCRIPTION: Record<PushAudience, string> = {
   owner:
     "Te avisamos al momento de las reservas, los comprobantes y las cancelaciones, y de las citas que quedan sin cerrar. Sólo llevan el nombre abreviado del paciente («Juan P.»).",
+  agenda:
+    "Te avisamos a las 8 de la noche si te quedan citas de hoy sin cerrar, para que las marques Completada o No asistió. Sólo llevan cuántas son, nunca el nombre de un paciente.",
   platform: "Negocios nuevos, solicitudes de cambio de plan y alertas de seguridad, además de los avisos por ntfy.",
 };
 
@@ -32,12 +35,17 @@ const UNBLOCK_STEPS: Record<BrowserFamily, string> = {
 /**
  * «Avisos en este celular» (spec 013, RF-001 y RF-003): activar o desactivar en este aparato, el aviso
  * de prueba y un interruptor por tipo (todos vienen encendidos y cada uno se guarda al momento). Explica
- * qué hacer en el iPhone sin la app instalada y con el permiso bloqueado. Una columna a 390 px.
+ * qué hacer en el iPhone sin la app instalada y con el permiso bloqueado. Una columna a 390 px. El rol
+ * Profesional (`agenda`, spec 017) sólo tiene el resumen de las 8 de su agenda; sin agenda asignada, la
+ * tarjeta lo explica y no pregunta nada a la API.
  */
 export function PushSettingsCard({ audience, icon }: { audience: PushAudience; icon?: LucideIcon }) {
-  const push = usePushDevice(true);
+  const { session } = useSession();
+  const noAgenda = audience === "agenda" && !session?.professionalId;
+  const push = usePushDevice(!noAgenda);
   const [iosSteps, setIosSteps] = useState(false);
   const [saved, setSaved] = useState("");
+  if (noAgenda) return <NoAgendaCard icon={icon} />;
   if (push.status === "hidden") return null;
   if (push.status === "loading") return <SettingsSectionSkeleton fields={1} />;
   const { here, noun } = deviceLabel();
@@ -139,11 +147,12 @@ export function PushSettingsCard({ audience, icon }: { audience: PushAudience; i
               {push.kinds.map((kind) => {
                 const label = PUSH_KIND_LABELS[kind as MutablePushKind];
                 if (!label) return null;
+                const description = (audience === "agenda" && AGENDA_PUSH_KIND_DESCRIPTIONS[kind as MutablePushKind]) || label.description;
                 return (
                   <SwitchField
                     key={kind}
                     label={label.label}
-                    description={label.description}
+                    description={description}
                     checked={!push.device?.mutedKinds.includes(kind)}
                     onCheckedChange={(on) => toggle(kind, on)}
                   />
@@ -164,6 +173,28 @@ export function PushSettingsCard({ audience, icon }: { audience: PushAudience; i
         <p role="status" aria-live="polite" className="text-xs text-muted-foreground empty:hidden">
           {saved}
         </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** El rol Profesional sin una agenda activa: los avisos son el resumen de su agenda, así que no hay nada que activar. */
+function NoAgendaCard({ icon }: { icon?: LucideIcon }) {
+  const { here } = deviceLabel();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex flex-wrap items-center gap-2">
+          {icon && <CardTitleIcon icon={icon} />}
+          Avisos {here}
+        </CardTitle>
+        <CardDescription>{DESCRIPTION.agenda}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Notice icon={CalendarX2}>
+          Tu usuario todavía no tiene una agenda asignada, así que no hay citas de las que avisarte. Pide al propietario que te la
+          asigne en Profesionales.
+        </Notice>
       </CardContent>
     </Card>
   );

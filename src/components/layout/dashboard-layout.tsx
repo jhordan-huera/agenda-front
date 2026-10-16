@@ -55,9 +55,12 @@ function DashboardShell() {
           banner={
             session?.support ? (
               <SupportBanner businessName={session.support.businessName} />
+            ) : session?.role === "owner" ? (
+              // Avisos en el celular (spec 013): el propietario; nunca coincide con el modo soporte.
+              <PushPrompt audience="owner" />
             ) : (
-              // Avisos en el celular (spec 013): sólo el propietario; nunca coincide con el modo soporte.
-              session?.role === "owner" && <PushPrompt audience="owner" />
+              // Y el rol Profesional con su agenda (spec 017), sólo para el resumen de las 8.
+              session?.role === "professional" && session.professionalId && <PushPrompt audience="agenda" />
             )
           }
         />
