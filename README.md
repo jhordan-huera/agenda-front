@@ -386,10 +386,15 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   onboarding, el panel y el panel de plataforma (`useInstallableApp`); la portada y la página de
   reservas no enlazan el manifiesto ni descargan la app. Sin conexión, la app espera en la pantalla
   de carga con un aviso y sigue sola cuando vuelve (no manda al login).
-- **Avisos en el celular** (spec 013, Web Push estándar): sólo el propietario de cada negocio y el
-  super admin. Al entrar al panel, una franja ofrece «Activa los avisos en este celular» («Ahora no»
-  la deja 7 días en ese aparato; `src/features/push/push-prompt.tsx`), y Configuración → Notificaciones
-  (y Configuración en /admin) tiene la tarjeta «Avisos en este celular» (`push-settings-card.tsx`):
+- **Avisos en el celular** (spec 013, Web Push estándar): el propietario de cada negocio, el super
+  admin y, desde la spec 017, el rol Profesional con su agenda, sólo con el resumen de las 8 de la noche
+  de su agenda (`audience="agenda"`, `AGENDA_PUSH_KINDS` en `src/lib/constants/push.ts`); Recepción y
+  los administradores no los tienen, y en modo soporte nunca se ofrecen. Al entrar al panel, una
+  franja ofrece «Activa los avisos en este celular» («Ahora no» la deja 7 días en ese aparato;
+  `src/features/push/push-prompt.tsx`; al profesional sólo si tiene una agenda activa), y
+  Configuración → Notificaciones (Configuración → Perfil para el profesional, su única pestaña, y
+  Configuración en /admin) tiene la tarjeta «Avisos en este celular» (`push-settings-card.tsx`; al
+  profesional sin agenda le explica que pida una al propietario, sin preguntar nada a la API):
   activar o desactivar en ese aparato, el aviso de prueba y un interruptor por tipo (todos encendidos
   de fábrica). Explica qué hacer en el iPhone sin instalar (sólo llegan con la app instalada, iOS 16.4
   o más) y con el permiso bloqueado. «Activar» llama a `pushManager.subscribe` en el mismo toque (el

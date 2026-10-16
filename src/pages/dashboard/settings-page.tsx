@@ -36,8 +36,10 @@ export default function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { can } = usePermissions();
   const { session } = useSession();
-  // Avisos en el celular (spec 013): sólo el propietario, y no el super admin en modo soporte.
-  const ownsPush = session?.role === "owner" && !session.support;
+  // Avisos en el celular (spec 013): el propietario, en Notificaciones, y el rol Profesional (spec 017,
+  // sólo el resumen de las 8 de su agenda), en Perfil, que es su única pestaña. Nunca el super admin en
+  // modo soporte.
+  const pushAudience = session?.support ? null : session?.role === "owner" ? "owner" : session?.role === "professional" ? "agenda" : null;
   const userQuery = useCurrentUser();
   const businessQuery = useCurrentBusiness();
 
@@ -90,6 +92,7 @@ export default function SettingsPage() {
                 <OwnAgendaCard />
               </>
             )}
+            {pushAudience === "agenda" && <PushSettingsCard audience="agenda" />}
           </TabsContent>
           <TabsContent value="negocio" className="grid max-w-3xl gap-6">
             {withBusiness((business) => (
@@ -106,7 +109,7 @@ export default function SettingsPage() {
             {withBusiness((business) => <BrandColorsSettings business={business} />)}
           </TabsContent>
           <TabsContent value="notificaciones" className="grid max-w-3xl gap-6">
-            {ownsPush && <PushSettingsCard audience="owner" />}
+            {pushAudience === "owner" && <PushSettingsCard audience="owner" />}
             {withBusiness((business) => (
               <>
                 <NotificationSettingsForm business={business} />
