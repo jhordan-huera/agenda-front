@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarOff, ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react";
+import { CalendarCheck, CalendarOff, ChevronLeft, ChevronRight, ClipboardCheck, Loader2, Plus } from "lucide-react";
 import { useState, type ComponentProps } from "react";
 import { useSearchParams } from "react-router";
 import { ErrorState } from "@/components/shared/error-state";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToClose } from "@/features/appointments/to-close/to-close-context";
 import { useAppointmentDialogs } from "@/features/appointments/use-appointment-dialogs";
 import { usePermissions } from "@/features/auth/use-permissions";
 import {
@@ -48,6 +49,9 @@ export default function CalendarPage() {
   const [showCancelled, setShowCancelled] = useState(true);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const { can } = usePermissions();
+  // «Por cerrar (N)» (spec 018): las citas que ya terminaron y siguen pendientes o confirmadas.
+  const toClose = useToClose();
+  const toCloseTotal = toClose && !toClose.count.hidden ? toClose.count.total : 0;
 
   // La vista y la fecha viven en la URL (?view=week&date=2026-10-01): enlaces compartibles.
   const viewParam = searchParams.get("view");
@@ -139,6 +143,11 @@ export default function CalendarPage() {
         }
         actions={
           <>
+            {toCloseTotal > 0 && (
+              <Button size="lg" variant="outline" onClick={toClose?.open}>
+                <ClipboardCheck /> Por cerrar ({toCloseTotal})
+              </Button>
+            )}
             {can("schedule.manage") && (
               <Button size="lg" variant="outline" onClick={() => setBlockDialogOpen(true)}>
                 <CalendarOff /> Bloquear horario
