@@ -10,7 +10,10 @@ import type {
   Appointment,
   AppointmentSeriesCreated,
   AppointmentSeriesPreview,
+  AppointmentsToClose,
+  AppointmentsToCloseCount,
   AuditLogPage,
+  CloseAllResult,
   ImageUpload,
   PaymentReceipt,
   PaymentReceiptUpload,
@@ -154,8 +157,16 @@ export const apiRepository: DataRepository = {
     create: (businessId, input) => api.post<Appointment>(`${business(businessId)}/appointments`, input),
     update: (businessId, appointmentId, input) =>
       api.put<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}`, input),
-    updateStatus: (businessId, appointmentId, status, notify = true) =>
-      api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, { status, notify }),
+    updateStatus: (businessId, appointmentId, status, notify = true, options = {}) =>
+      api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/status`, {
+        status,
+        notify,
+        ...(options.onlyIfOpen && { onlyIfOpen: true }),
+      }),
+    listToClose: (businessId, cursor) =>
+      api.get<AppointmentsToClose>(`${business(businessId)}/appointments/to-close`, { cursor }),
+    countToClose: (businessId) => api.get<AppointmentsToCloseCount>(`${business(businessId)}/appointments/to-close/count`),
+    closeAll: (businessId, input) => api.post<CloseAllResult>(`${business(businessId)}/appointments/close-all`, input),
     previewSeries: (businessId, input) =>
       api.post<AppointmentSeriesPreview>(`${business(businessId)}/appointment-series/preview`, input),
     createSeries: (businessId, input) => api.post<AppointmentSeriesCreated>(`${business(businessId)}/appointment-series`, input),

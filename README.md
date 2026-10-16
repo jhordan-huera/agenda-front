@@ -425,6 +425,26 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   tiene la ruta (404, mientras se publica el backend), la campana no se muestra y nada da error. Los
   textos salen de `src/lib/notices.ts` (`describeNotice`), los mismos del celular, que la API copia con
   `sync:shared`.
+- **Citas por cerrar** (spec 018): las citas que ya terminaron y siguen Pendiente o Confirmada. Nada se
+  cierra solo, y cada uno ve lo suyo: el rol Profesional, su agenda; el resto del equipo, el negocio.
+  - **La lista** (`src/features/appointments/to-close/`): en la agenda, el botón «Por cerrar (N)» la
+    abre en un diálogo (en el celular, en un `Sheet` desde abajo). De la más vieja a la más nueva,
+    agrupadas por día (las de hoy al final, «Hoy · ya terminaron»), con «Completada», «No asistió» y
+    «Cancelada» en cada una, «Marcar todas como completadas» (con confirmación), «Cargar más» (tandas de
+    50) y «Todo al día» cuando no queda nada. La casilla «Avisar a los pacientes» viene **apagada**: es
+    un cierre administrativo de citas que ya pasaron; con ella sale el email del cambio de estado (spec
+    008), sin el aviso de WhatsApp. Si otra persona ya la cerró, se respeta su estado y la lista se
+    recarga (la API responde 409).
+  - **El bloqueo** (`dashboard-layout.tsx`): quien entra al panel con citas sin cerrar de **días
+    anteriores** ve primero «Antes de seguir, cierra tus citas pendientes», con la lista, en lugar del
+    panel. «Más tarde» lo deja entrar y dura 4 horas en ese aparato (`localStorage`, con `try/catch`;
+    no va a la actividad): mientras, la franja «Tienes N citas por cerrar» con «Cerrarlas». Se mira al
+    entrar y al cambiar de página, nunca en medio de un formulario. Las de hoy no bloquean. El super
+    admin en modo soporte nunca se bloquea: ve la franja («Este negocio tiene N citas por cerrar»).
+  - **El contador** (`useToCloseCount`, `src/hooks/queries/use-to-close.ts`) se pide como el de la
+    campana: al entrar, al volver a la pestaña y cada 3 minutos sólo con la pestaña visible
+    (`NOTICE_REFRESH_MS`), y al cambiar cualquier cita. Si la API todavía no tiene la ruta (404) o la
+    cuenta no tiene agenda (403), ni franja ni bloqueo.
 - **Sin reservas dobles**: nunca dos citas a la misma hora (lo garantiza la base). Cada negocio elige
   en Configuración → Agenda cuántas citas puede reservar una misma persona (por su cédula) el mismo
   día desde su página (1 por defecto, hasta 3 o sin límite). La página de reservas oculta al momento

@@ -26,6 +26,15 @@ export const queryKeys = {
     ["appointments", businessId, filters] as const,
   /** Bajo "appointments": un comprobante nuevo llega con la cita recargada. */
   receipts: (businessId: string, appointmentId: string) => ["appointments", businessId, "receipts", appointmentId] as const,
+  /**
+   * Citas por cerrar (spec 018), de la persona de la sesión (el rol Profesional ve sólo su agenda). Bajo
+   * "appointments": cerrar una cita en la ficha o moverla también pone al día la lista y el contador.
+   */
+  toClose: {
+    all: (businessId: string, userId: string) => ["appointments", businessId, "to-close", userId] as const,
+    count: (businessId: string, userId: string) => ["appointments", businessId, "to-close", userId, "count"] as const,
+    list: (businessId: string, userId: string) => ["appointments", businessId, "to-close", userId, "list"] as const,
+  },
   schedules: (businessId: string) => ["schedules", businessId] as const,
   blockedTimes: (businessId: string) => ["blocked-times", businessId] as const,
   publicProfile: (slug: string) => ["public-profile", slug] as const,

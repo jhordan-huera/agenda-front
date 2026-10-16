@@ -10,7 +10,7 @@ import type {
   PlatformSettingsInput,
   UserPasswordInput,
 } from "@/lib/validations/admin";
-import type { AppointmentInput, AppointmentSeriesInput, AppointmentSeriesPreviewInput } from "@/lib/validations/appointment";
+import type { AppointmentInput, AppointmentSeriesInput, AppointmentSeriesPreviewInput, CloseAllInput } from "@/lib/validations/appointment";
 import type {
   ClinicalAddendumInput,
   ClinicalAttachmentInput,
@@ -46,6 +46,9 @@ import type {
   AppointmentSeriesCreated,
   AppointmentSeriesPreview,
   AppointmentStatus,
+  AppointmentsToClose,
+  AppointmentsToCloseCount,
+  CloseAllResult,
   ImageUpload,
   PaymentReceipt,
   PaymentReceiptUpload,
@@ -232,8 +235,30 @@ export interface AppointmentRepository {
   /** Falla con `conflict` si se solapa con otra cita activa y con `plan_limit` si se superó el plan. */
   create(businessId: string, input: AppointmentInput): Promise<Appointment>;
   update(businessId: string, appointmentId: string, input: AppointmentInput): Promise<Appointment>;
-  /** `notify: false`: corrige un error sin avisar al paciente (spec 008). */
-  updateStatus(businessId: string, appointmentId: string, status: AppointmentStatus, notify?: boolean): Promise<Appointment>;
+  /**
+   * `notify: false`: corrige un error sin avisar al paciente (spec 008). `onlyIfOpen` (la lista «Por
+   * cerrar», spec 018): falla con `conflict` si otra persona ya la cerró, y su estado se respeta.
+   */
+  updateStatus(
+    businessId: string,
+    appointmentId: string,
+    status: AppointmentStatus,
+    notify?: boolean,
+    options?: { onlyIfOpen?: boolean },
+  ): Promise<Appointment>;
+  /**
+   * La lista «Por cerrar» (spec 018): las citas que ya terminaron y siguen Pendiente o Confirmada, de la
+   * más vieja a la más nueva, en tandas de 50 (`cursor`: el `nextCursor` de la anterior). El rol
+   * Profesional recibe sólo las de su agenda; sin agenda asignada, `forbidden`.
+   */
+  listToClose(businessId: string, cursor?: string): Promise<AppointmentsToClose>;
+  /** Sólo las cifras de la lista (el contador del panel): una consulta barata, sin nombres. */
+  countToClose(businessId: string): Promise<AppointmentsToCloseCount>;
+  /**
+   * «Marcar todas como completadas»: las que se ven en la lista, en una transacción. Las que alguien ya
+   * cerró (o no son de su agenda) vuelven en `skipped`, sin tocarlas. Al paciente sólo se le escribe con `notify`.
+   */
+  closeAll(businessId: string, input: CloseAllInput): Promise<CloseAllResult>;
   /** La lista de fechas de una serie, antes de crearla (spec 011): no cambia nada. */
   previewSeries(businessId: string, input: AppointmentSeriesPreviewInput): Promise<AppointmentSeriesPreview>;
   /**

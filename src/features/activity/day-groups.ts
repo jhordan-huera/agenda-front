@@ -10,7 +10,8 @@ export interface DayGroup<T> {
   items: T[];
 }
 
-function dayLabel(date: ISODate, today: ISODate): string {
+/** «Hoy», «Ayer» o «Martes 12 de octubre» (también la lista «Por cerrar», spec 018). */
+export function dayLabel(date: ISODate, today: ISODate): string {
   if (date === today) return "Hoy";
   if (date === addDaysISO(today, -1)) return "Ayer";
   return capitalize(formatDate(date, date.slice(0, 4) === today.slice(0, 4) ? "EEEE d 'de' MMMM" : "EEEE d 'de' MMMM 'de' yyyy"));
