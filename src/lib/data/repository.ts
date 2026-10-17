@@ -10,7 +10,13 @@ import type {
   PlatformSettingsInput,
   UserPasswordInput,
 } from "@/lib/validations/admin";
-import type { AppointmentInput, AppointmentSeriesInput, AppointmentSeriesPreviewInput, CloseAllInput } from "@/lib/validations/appointment";
+import type {
+  AppointmentCorrectionInput,
+  AppointmentInput,
+  AppointmentSeriesInput,
+  AppointmentSeriesPreviewInput,
+  CloseAllInput,
+} from "@/lib/validations/appointment";
 import type {
   ClinicalAddendumInput,
   ClinicalAttachmentInput,
@@ -246,6 +252,12 @@ export interface AppointmentRepository {
     notify?: boolean,
     options?: { onlyIfOpen?: boolean },
   ): Promise<Appointment>;
+  /**
+   * «Corregir estado» de una cita completada (spec 020): sólo el propietario (y el super admin en modo
+   * soporte), a Confirmada, No asistió o Cancelada, con un motivo que queda en la actividad. Los demás roles
+   * reciben `forbidden`; una cita que no está completada, `conflict`. `notify`, por defecto, no.
+   */
+  correctStatus(businessId: string, appointmentId: string, input: AppointmentCorrectionInput): Promise<Appointment>;
   /**
    * La lista «Por cerrar» (spec 018): las citas que ya terminaron y siguen Pendiente o Confirmada, de la
    * más vieja a la más nueva, en tandas de 50 (`cursor`: el `nextCursor` de la anterior). El rol

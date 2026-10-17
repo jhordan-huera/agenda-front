@@ -463,6 +463,21 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
     campana: al entrar, al volver a la pestaña y cada 3 minutos sólo con la pestaña visible
     (`NOTICE_REFRESH_MS`), y al cambiar cualquier cita. Si la API todavía no tiene la ruta (404) o la
     cuenta no tiene agenda (403), ni franja ni bloqueo.
+- **Las citas completadas quedan fijas** (spec 020): una cita Completada no cambia de estado ni de datos,
+  salvo el pago, los comprobantes, las notas y la historia clínica, y ninguna cita vuelve a Pendiente. La
+  regla es `canChangeStatus` de `src/lib/constants/appointment-status.ts`, la misma de la API y la beta.
+  - **La ficha** (`appointment-details-sheet.tsx`): en una completada, en lugar de los botones de estado
+    sale «Completada · ya no se puede cambiar», sin «Cancelar cita». En una confirmada (y en una «No
+    asistió» o «Cancelada»), «Pendiente» va deshabilitado, con su ayuda («Una cita confirmada no vuelve a
+    Pendiente»).
+  - **«Editar»** (`appointment-form-dialog.tsx`): en una completada sólo se editan las notas; lo demás se
+    ve deshabilitado, con el aviso arriba. Al editar, la lista de estados sólo trae los permitidos.
+  - **«Corregir estado»** (`appointment-correction-dialog.tsx`): sólo lo ve el propietario
+    (`session.role === "owner"`, también el super admin en modo soporte). Pide el estado correcto
+    (Confirmada, No asistió o Cancelada), el motivo, de 10 a 300 caracteres con su contador, y «Avisar al
+    paciente», **apagada**: es un arreglo interno. Llama a `POST …/appointments/:id/correct-status`
+    (`useCorrectAppointmentStatus`); la ficha y la agenda se actualizan al momento y la actividad dice
+    el motivo.
 - **Sin reservas dobles**: nunca dos citas a la misma hora (lo garantiza la base). Cada negocio elige
   en Configuración → Agenda cuántas citas puede reservar una misma persona (por su cédula) el mismo
   día desde su página (1 por defecto, hasta 3 o sin límite). La página de reservas oculta al momento
