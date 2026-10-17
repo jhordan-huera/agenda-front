@@ -20,8 +20,9 @@ const DESCRIPTION: Record<PushAudience, string> = {
   owner:
     "Te avisamos al momento de las reservas, los comprobantes y las cancelaciones, y de las citas que quedan sin cerrar. Sólo llevan el nombre abreviado del paciente («Juan P.»).",
   agenda:
-    "Te avisamos a las 8 de la noche si te quedan citas de hoy sin cerrar, para que las marques Completada o No asistió. Sólo llevan cuántas son, nunca el nombre de un paciente.",
-  platform: "Negocios nuevos, solicitudes de cambio de plan y alertas de seguridad, además de los avisos por ntfy.",
+    "Te avisamos a las 8 de la noche si te quedan citas de hoy sin cerrar y, al empezar tu horario, si quedan de días anteriores, para que las marques Completada o No asistió. Sólo llevan cuántas son, nunca el nombre de un paciente.",
+  platform:
+    "Negocios nuevos, solicitudes de cambio de plan, alertas de seguridad y a qué negocios salieron los recordatorios de citas por cerrar, además de los avisos por ntfy.",
 };
 
 /** Cómo volver a permitir los avisos, en el navegador de esta persona. */
@@ -36,8 +37,8 @@ const UNBLOCK_STEPS: Record<BrowserFamily, string> = {
  * «Avisos en este celular» (spec 013, RF-001 y RF-003): activar o desactivar en este aparato, el aviso
  * de prueba y un interruptor por tipo (todos vienen encendidos y cada uno se guarda al momento). Explica
  * qué hacer en el iPhone sin la app instalada y con el permiso bloqueado. Una columna a 390 px. El rol
- * Profesional (`agenda`, spec 017) sólo tiene el resumen de las 8 de su agenda; sin agenda asignada, la
- * tarjeta lo explica y no pregunta nada a la API.
+ * Profesional (`agenda`, spec 017) sólo tiene los resúmenes de su agenda (el de las 8 y, desde la spec
+ * 021, el de la mañana); sin agenda asignada, la tarjeta lo explica y no pregunta nada a la API.
  */
 export function PushSettingsCard({ audience, icon }: { audience: PushAudience; icon?: LucideIcon }) {
   const { session } = useSession();

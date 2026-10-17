@@ -1,6 +1,6 @@
 import { LifeBuoy, LogOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
@@ -18,6 +18,7 @@ import { PushPrompt } from "@/features/push/push-prompt";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useToCloseCount } from "@/hooks/queries/use-to-close";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
+import { TO_CLOSE_PARAM } from "@/lib/constants/notices";
 import { getHomePath, loginPathFor } from "@/lib/auth";
 import { AppShell } from "./app-shell";
 import { SidebarContent } from "./sidebar-content";
@@ -48,6 +49,7 @@ export default function DashboardLayout() {
 function DashboardShell() {
   const { session } = useSession();
   const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   // El panel se viste con los colores del negocio (si eligió unos propios).
   const { data: business } = useCurrentBusiness();
   // Citas por cerrar (spec 018): el contador se pide como el de la campana (al entrar, al volver a la
@@ -66,17 +68,37 @@ function DashboardShell() {
   const bell = (align: "start" | "end") =>
     session?.support ? null : <NoticeBell scope="business" timezone={business?.timezone ?? DEFAULT_TIMEZONE} align={align} />;
 
-  // Con citas de días anteriores sin cerrar y sin un «Más tarde» reciente: primero, la lista. En modo
-  // soporte nunca (sólo la franja). Mientras llega el contador, la pantalla de carga: así no se ve el
-  // panel un instante antes de bloquearlo.
-  const mayBlock = !support && !later.active && !toClose.hidden;
-  const blocked = mayBlock && toClose.loaded && toClose.overdue > 0;
-  // Cerró la última de días anteriores en la pantalla: entra al panel, y se le dice por qué.
+  // Con citas de días anteriores sin cerrar y sin un «Más tarde» reciente: primero, la lista. Con las de un
+  // mes anterior (spec 021), siempre, aunque haya un «Más tarde» guardado. En modo soporte nunca (sólo la
+  // franja). Mientras llega el contador, la pantalla de carga: así no se ve el panel un instante antes de
+  // bloquearlo (también con «Más tarde», porque las del mes anterior bloquean igual).
+  const mayBlock = !support && !toClose.hidden;
+  const monthLocked = mayBlock && toClose.loaded && toClose.previousMonth > 0;
+  const blocked = monthLocked || (mayBlock && !later.active && toClose.loaded && toClose.overdue > 0);
+  // Cerró la última de días anteriores (o del mes anterior) en la pantalla: entra al panel, y se le dice por qué.
   const wasBlocked = useRef(false);
+  const wasMonthLocked = useRef(false);
   useEffect(() => {
     if (wasBlocked.current && !blocked && toClose.overdue === 0) toast.success("Listo: ya no te quedan citas de días anteriores por cerrar.");
+    else if (wasMonthLocked.current && !monthLocked) toast.success("Listo: ya cerraste las citas del mes anterior.");
     wasBlocked.current = blocked;
-  }, [blocked, toClose.overdue]);
+    wasMonthLocked.current = monthLocked;
+  }, [blocked, monthLocked, toClose.overdue]);
+  // `?por-cerrar=1` (el aviso de la mañana, spec 021): abre la lista «Por cerrar» y se quita de la dirección.
+  // Si el panel está bloqueado, la lista ya está a la vista.
+  const openToClose = searchParams.has(TO_CLOSE_PARAM) && toClose.loaded;
+  if (openToClose && !blocked && !toClose.hidden && !listOpen) setListOpen(true);
+  useEffect(() => {
+    if (!openToClose) return;
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete(TO_CLOSE_PARAM);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [openToClose, setSearchParams]);
   if (mayBlock && !toClose.loaded) return <FullPageLoader />;
   const showBanner = !blocked && !toClose.hidden && toClose.overdue > 0;
   const toCloseValue = { count: toClose, open: () => setListOpen(true) };
@@ -90,7 +112,7 @@ function DashboardShell() {
       <WhatsAppNoticeProvider>
         <ToCloseContext.Provider value={toCloseValue}>
           {blocked ? (
-            <ToCloseScreen overdue={toClose.overdue} onLater={remindLater} />
+            <ToCloseScreen overdue={toClose.overdue} previousMonth={toClose.previousMonth} onLater={remindLater} />
           ) : (
             <AppShell
               homeHref="/dashboard"
@@ -104,7 +126,7 @@ function DashboardShell() {
                     // Avisos en el celular (spec 013): el propietario; nunca coincide con el modo soporte.
                     <PushPrompt audience="owner" />
                   ) : (
-                    // Y el rol Profesional con su agenda (spec 017), sólo para el resumen de las 8.
+                    // Y el rol Profesional con su agenda (spec 017), sólo para los resúmenes de su agenda.
                     session?.role === "professional" && session.professionalId && <PushPrompt audience="agenda" />
                   )}
                   {/* Con «Más tarde» (o en modo soporte), la franja con la cifra y el enlace a la lista. */}

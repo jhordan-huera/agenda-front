@@ -38,8 +38,8 @@ export default function SettingsPage() {
   const { can } = usePermissions();
   const { session } = useSession();
   // Avisos en el celular (spec 013): el propietario, en Notificaciones, y el rol Profesional (spec 017,
-  // sólo el resumen de las 8 de su agenda), en Perfil, que es su única pestaña. Nunca el super admin en
-  // modo soporte.
+  // sólo los resúmenes de su agenda: el de las 8 y el de la mañana), en Perfil, que es su única pestaña.
+  // Nunca el super admin en modo soporte.
   const pushAudience = session?.support ? null : session?.role === "owner" ? "owner" : session?.role === "professional" ? "agenda" : null;
   const userQuery = useCurrentUser();
   const businessQuery = useCurrentBusiness();

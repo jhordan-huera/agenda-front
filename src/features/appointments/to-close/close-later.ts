@@ -5,6 +5,10 @@ import { CLOSE_LATER_HOURS } from "@/lib/constants/appointment-status";
  * este aparato, para esta persona y este negocio, durante CLOSE_LATER_HOURS. Es una preferencia de la
  * pantalla, no un cambio de datos: no va a la actividad. Sin almacenamiento (navegación privada), vale
  * mientras la pestaña siga abierta; al volver a abrir el panel, la pantalla sale otra vez.
+ *
+ * No vale para las de un mes anterior (spec 021): con alguna, la pantalla sale igual, sin «Más tarde»,
+ * aunque haya uno guardado aquí (lo decide dashboard-layout.tsx con `previousMonth`). Lo guardado no se
+ * borra: al cerrarlas, si quedan de este mes, vuelve a valer.
  */
 const keyOf = (userId: string, businessId: string) => `agenda360:por-cerrar-mas-tarde:${userId}:${businessId}`;
 

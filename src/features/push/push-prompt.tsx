@@ -12,7 +12,7 @@ export type PushAudience = "owner" | "agenda" | "platform";
 
 const WHAT: Record<PushAudience, string> = {
   owner: "Te avisamos al momento de las reservas, los comprobantes y las cancelaciones.",
-  agenda: "Te avisamos a las 8 de la noche si te quedan citas de hoy sin cerrar.",
+  agenda: "Te avisamos al empezar tu horario y a las 8 de la noche si te quedan citas sin cerrar.",
   platform: "Te avisamos al momento de los negocios nuevos, las solicitudes de plan y las alertas de seguridad.",
 };
 
