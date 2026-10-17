@@ -156,12 +156,16 @@ export function categoryOf(snapshot: Pick<AnalyticsSnapshot, "categories">, busi
   return snapshot.categories.find((category) => category.id === business.category.id) ?? null;
 }
 
+/** La mediana del tipo para una tasa (null con «pocos datos», del negocio o del tipo: no se comparan). */
+export const typicalRate = (business: BusinessAnalytics, rateKey: AnalyticsRateKey, category: CategoryAnalytics | null) =>
+  !business.fewData && category && !category.fewData ? category.medians[rateKey] : null;
+
 /** «45 de 50» o «Sin tope». */
 export const usageLabel = ({ used, limit }: { used: number; limit: number | null }) => (limit === null ? String(used) : `${used} de ${limit}`);
 
-/** Texto de una tasa para el CSV, como se ve en la tabla: «25 % · tipo 12 %» o «40 % · pocos datos». */
+/** Texto de una tasa para el CSV: «25 % · tipo 12 %» o «40 % · pocos datos». */
 export function rateText(business: BusinessAnalytics, rateKey: AnalyticsRateKey, category: CategoryAnalytics | null): string {
-  const typical = category && !category.fewData ? category.medians[rateKey] : null;
+  const typical = typicalRate(business, rateKey, category);
   if (business.fewData) return `${formatRate(business[rateKey])} · pocos datos`;
   return typical === null ? formatRate(business[rateKey]) : `${formatRate(business[rateKey])} · tipo ${formatRate(typical)}`;
 }

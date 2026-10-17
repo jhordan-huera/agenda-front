@@ -1,47 +1,32 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, Download, Search, X } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Download, Search, X } from "lucide-react";
+import { useId, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PLANS, getPlan } from "@/lib/constants/plans";
 import { downloadCsv } from "@/lib/csv";
-import { formatCurrency, normalizeSearch, plural } from "@/lib/format";
-import { cn } from "@/lib/utils";
-import type { AnalyticsRateKey, AnalyticsSnapshot, BusinessAnalytics, BusinessStatus, CategoryAnalytics, ISODate, PlanId } from "@/types";
-import { BusinessStatusBadge, PlanBadge } from "../business-badges";
+import { normalizeSearch, plural } from "@/lib/format";
+import type { AnalyticsSnapshot, BusinessAnalytics, BusinessStatus, ISODate, PlanId } from "@/types";
 import { FilterChips } from "../filter-chips";
+import { categoryOf } from "./analytics-format";
+import { BusinessAnalyticsSheet } from "./business-analytics-sheet";
 import {
-  categoryOf,
-  formatGrowth,
-  HEALTH_LABELS,
-  lastAccessLabel,
-  RATE_KEYS,
-  RATE_HINTS,
-  RATE_SHORT_LABELS,
-  rateText,
-  usageLabel,
-} from "./analytics-format";
-import { HealthBadge, RateValue } from "./analytics-parts";
+  CSV_METRICS,
+  DEFAULT_METRIC,
+  isMetricKey,
+  METRIC_GROUPS,
+  metricOf,
+  METRICS,
+  rankRows,
+  type CompareContext,
+  type Direction,
+  type MetricKey,
+} from "./compare-metrics";
+import { CompareRanking } from "./compare-ranking";
+import { CompareSummary } from "./compare-summary";
 
-type SortKey =
-  | "name"
-  | "appointments"
-  | "growth"
-  | "unclosed"
-  | AnalyticsRateKey
-  | "activeClients"
-  | "newClients"
-  | "estimatedRevenue"
-  | "collected"
-  | "averageTicket"
-  | "planUsage"
-  | "agendas"
-  | "lastAccess"
-  | "health";
-type Direction = "asc" | "desc";
 type PlanFilter = PlanId | "all";
 type StatusFilter = BusinessStatus | "all";
 /** El tipo elegido: su id, «Sin tipo» (none) o todos. */
@@ -49,235 +34,31 @@ type TypeFilter = string;
 const ALL_TYPES = "all";
 const NO_TYPE = "none";
 
-interface Context {
-  category: (business: BusinessAnalytics) => CategoryAnalytics | null;
-  today: ISODate;
-}
-
-interface Column {
-  key: SortKey;
-  label: string;
-  /** Al tocarla la primera vez: de mayor a menor, salvo el nombre, la salud y el último acceso (los peores primero). */
-  first?: Direction;
-  /** Para ordenar; null va siempre al final. */
-  sort: (business: BusinessAnalytics, ctx: Context) => number | string | null;
-  cell: (business: BusinessAnalytics, ctx: Context) => ReactNode;
-  /** Lo mismo, en texto, para el CSV. */
-  text: (business: BusinessAnalytics, ctx: Context) => string;
-  /** Ayuda al pasar el ratón por el título. */
-  hint?: string;
-}
-
-const money = (business: BusinessAnalytics, amount: number | null) => (amount === null ? "—" : formatCurrency(amount, business.currency));
-
-/** La parte del tope que usa (la mayor entre citas del mes y pacientes); null si su plan no tiene tope. */
-function usageShare({ planUsage }: BusinessAnalytics): number | null {
-  const shares = [planUsage.appointments, planUsage.clients].filter((use) => use.limit !== null).map((use) => use.used / use.limit!);
-  return shares.length ? Math.max(...shares) : null;
-}
-
-function planUsageText(business: BusinessAnalytics): string {
-  const { appointments, clients } = business.planUsage;
-  if (appointments.limit === null && clients.limit === null) return "Sin tope";
-  return `${usageLabel(appointments)} citas · ${usageLabel(clients)} pacientes`;
-}
-
-const rateColumn = (key: AnalyticsRateKey): Column => ({
-  key,
-  label: RATE_SHORT_LABELS[key],
-  hint: RATE_HINTS[key],
-  sort: (business) => business[key],
-  cell: (business, ctx) => <RateValue business={business} rateKey={key} category={ctx.category(business)} />,
-  text: (business, ctx) => rateText(business, key, ctx.category(business)),
-});
-
-const COLUMNS: Column[] = [
-  {
-    key: "name",
-    label: "Negocio",
-    first: "asc",
-    sort: (business) => business.name,
-    cell: (business) => (
-      <span className="block max-w-36 min-w-0 sm:max-w-56">
-        <Link
-          to={`/admin/businesses/${business.id}`}
-          onClick={(event) => event.stopPropagation()}
-          className="block truncate font-medium hover:underline"
-        >
-          {business.name}
-        </Link>
-        <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="truncate">{business.category.name}</span>
-          <PlanBadge plan={business.plan} />
-        </span>
-        {business.status === "suspended" && <BusinessStatusBadge status="suspended" className="mt-1" />}
-      </span>
-    ),
-    text: (business) => business.name,
-  },
-  {
-    key: "appointments",
-    label: "Citas",
-    sort: (business) => business.appointments,
-    cell: (business) => (
-      <span className="flex flex-col items-end leading-tight">
-        <span className="font-semibold tabular-nums">{business.appointments}</span>
-        {business.fewData && <span className="text-[0.6875rem] text-muted-foreground">pocos datos</span>}
-      </span>
-    ),
-    text: (business) => String(business.appointments),
-    hint: "Citas con fecha en el periodo, sin las canceladas",
-  },
-  {
-    key: "growth",
-    label: "Crecimiento",
-    sort: (business) => (business.growth === "new" ? null : business.growth),
-    cell: (business) => (
-      <span
-        className={cn(
-          "font-semibold tabular-nums",
-          business.growth === "new" ? "text-muted-foreground" : business.growth > 0 ? "text-emerald-700 dark:text-emerald-300" : business.growth < 0 ? "text-rose-700 dark:text-rose-300" : "",
-        )}
-      >
-        {formatGrowth(business.growth)}
-        <span className="block text-[0.6875rem] font-normal text-muted-foreground">antes {business.previousAppointments}</span>
-      </span>
-    ),
-    text: (business) => formatGrowth(business.growth),
-    hint: "Citas frente al periodo anterior de la misma duración",
-  },
-  {
-    key: "unclosed",
-    label: "Sin cerrar",
-    sort: (business) => business.unclosed,
-    cell: (business) => (
-      <span className={cn("tabular-nums", business.unclosed > 0 ? "font-semibold text-amber-700 dark:text-amber-300" : "text-muted-foreground")}>
-        {business.unclosed}
-      </span>
-    ),
-    text: (business) => String(business.unclosed),
-    hint: "Citas del periodo que ya pasaron y siguen Pendientes o Confirmadas: nadie marcó cómo terminaron",
-  },
-  ...RATE_KEYS.map(rateColumn),
-  {
-    key: "activeClients",
-    label: "Pacientes activos",
-    sort: (business) => business.activeClients,
-    cell: (business) => <span className="tabular-nums">{business.activeClients}</span>,
-    text: (business) => String(business.activeClients),
-    hint: "Con alguna cita en el periodo",
-  },
-  {
-    key: "newClients",
-    label: "Pacientes nuevos",
-    sort: (business) => business.newClients,
-    cell: (business) => <span className="tabular-nums">{business.newClients}</span>,
-    text: (business) => String(business.newClients),
-    hint: "Registrados en el periodo (sin los importados)",
-  },
-  {
-    key: "estimatedRevenue",
-    label: "Ingresos estimados",
-    sort: (business) => business.estimatedRevenue,
-    cell: (business) => <span className="tabular-nums">{money(business, business.estimatedRevenue)}</span>,
-    text: (business) => money(business, business.estimatedRevenue),
-    hint: "El precio de las citas atendidas",
-  },
-  {
-    key: "collected",
-    label: "Cobrado",
-    sort: (business) => business.collected,
-    cell: (business) => <span className="tabular-nums">{money(business, business.collected)}</span>,
-    text: (business) => money(business, business.collected),
-    hint: "El precio de las citas marcadas como pagadas",
-  },
-  {
-    key: "averageTicket",
-    label: "Ticket promedio",
-    sort: (business) => business.averageTicket,
-    cell: (business) => <span className="tabular-nums">{money(business, business.averageTicket)}</span>,
-    text: (business) => money(business, business.averageTicket),
-    hint: "Ingresos estimados entre las atendidas con precio",
-  },
-  {
-    key: "planUsage",
-    label: "Uso del plan",
-    sort: usageShare,
-    cell: (business) => {
-      const share = usageShare(business);
-      return (
-        <span
-          className={cn(
-            "text-xs tabular-nums",
-            share === null ? "text-muted-foreground" : share >= 1 ? "font-semibold text-rose-700 dark:text-rose-300" : share >= 0.8 ? "font-semibold text-amber-700 dark:text-amber-300" : "",
-          )}
-        >
-          {planUsageText(business)}
-        </span>
-      );
-    },
-    text: planUsageText,
-    hint: "Citas del mes y pacientes frente al tope del plan",
-  },
-  {
-    key: "agendas",
-    label: "Agendas",
-    sort: (business) => business.agendas.active,
-    cell: (business) => (
-      <span className="tabular-nums">{business.agendas.contracted === null ? business.agendas.active : `${business.agendas.active} de ${business.agendas.contracted}`}</span>
-    ),
-    text: (business) => (business.agendas.contracted === null ? String(business.agendas.active) : `${business.agendas.active} de ${business.agendas.contracted}`),
-  },
-  {
-    key: "lastAccess",
-    label: "Último acceso",
-    first: "asc",
-    sort: (business) => (business.lastTeamLoginAt ? Date.parse(business.lastTeamLoginAt) : null),
-    cell: (business, ctx) => <span className="text-xs">{lastAccessLabel(business, ctx.today)}</span>,
-    text: (business, ctx) => lastAccessLabel(business, ctx.today),
-    hint: "La última vez que alguien del equipo inició sesión o usó el panel",
-  },
-  {
-    key: "health",
-    label: "Salud",
-    first: "asc",
-    sort: (business) => business.health.score,
-    cell: (business) => <HealthBadge score={business.health.score} group={business.health.group} />,
-    text: (business) => `${business.health.score} · ${HEALTH_LABELS[business.health.group]}`,
-    hint: "De 0 a 100: sano, en riesgo o crítico (motivos en «Salud y ventas»)",
-  },
-];
-
-const isRate = (key: SortKey): key is AnalyticsRateKey => (RATE_KEYS as string[]).includes(key);
-
-/** Ordena por la columna; los nulos al final y, en las tasas, también los de «pocos datos». */
-function sortRows(rows: BusinessAnalytics[], column: Column, direction: Direction, ctx: Context): BusinessAnalytics[] {
-  return [...rows].sort((a, b) => {
-    if (isRate(column.key) && a.fewData !== b.fewData) return a.fewData ? 1 : -1;
-    const x = column.sort(a, ctx);
-    const y = column.sort(b, ctx);
-    if (x === null || y === null) return x === y ? a.name.localeCompare(b.name, "es") : x === null ? 1 : -1;
-    const order = typeof x === "string" ? x.localeCompare(String(y), "es") : x - Number(y);
-    return (direction === "asc" ? order : -order) || a.name.localeCompare(b.name, "es");
-  });
-}
-
 const typeKey = (business: BusinessAnalytics) => business.category.id ?? NO_TYPE;
 
 /**
- * Pestaña «Comparar» (Historia 1): todos los negocios con sus cifras del periodo. Se ordena tocando una
- * columna (otra vez, al revés), se filtra por tipo, plan y estado (por defecto, los activos), se busca por
- * nombre y se descarga en CSV tal como se ve. A 390 px se desplaza dentro de su recuadro, con el negocio fijo.
+ * Pestaña «Comparar» (Historia 1): arriba, el resumen de los negocios que se ven; debajo, el ranking por
+ * la cifra elegida («Comparar por»), con su barra. Se filtra por tipo, plan y estado (por defecto, los
+ * activos), se busca por nombre y se descarga en CSV con todas las cifras, sea cual sea la elegida. Tocar
+ * un negocio abre su detalle. La cifra va en la dirección (`?cifra=`) para poder compartirla.
  */
 export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; today: ISODate }) {
-  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [type, setType] = useState<TypeFilter>(ALL_TYPES);
   const [plan, setPlan] = useState<PlanFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("active");
-  const [sort, setSort] = useState<{ key: SortKey; direction: Direction }>({ key: "appointments", direction: "desc" });
+  const [order, setOrder] = useState<{ metric: MetricKey; direction: Direction }>(() => {
+    const requested = params.get("cifra");
+    return { metric: isMetricKey(requested) ? requested : DEFAULT_METRIC, direction: "desc" };
+  });
+  const [selected, setSelected] = useState<{ id: string; open: boolean } | null>(null);
+  const rankingTop = useRef<HTMLDivElement>(null);
+  // El negocio que abrió el panel: al cerrarlo, el foco vuelve a él.
+  const opener = useRef<HTMLLIElement | null>(null);
+  const labelId = useId();
 
-  const ctx = useMemo<Context>(() => ({ category: (business) => categoryOf(snapshot, business), today }), [snapshot, today]);
+  const ctx = useMemo<CompareContext>(() => ({ category: (business) => categoryOf(snapshot, business), today }), [snapshot, today]);
   const all = snapshot.businesses;
   const types = useMemo(() => {
     const seen = new Map<string, string>();
@@ -294,20 +75,37 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
   const searched = all.filter((business) => matchesSearch(business) && matchesType(business));
   const planCount = (value: PlanFilter) => searched.filter((business) => matchesStatus(business, status) && matchesPlan(business, value)).length;
   const statusCount = (value: StatusFilter) => searched.filter((business) => matchesPlan(business, plan) && matchesStatus(business, value)).length;
-  const column = COLUMNS.find((candidate) => candidate.key === sort.key)!;
-  const rows = sortRows(
-    searched.filter((business) => matchesPlan(business, plan) && matchesStatus(business, status)),
-    column,
-    sort.direction,
-    ctx,
-  );
+  const visible = searched.filter((business) => matchesPlan(business, plan) && matchesStatus(business, status));
+  const metric = metricOf(order.metric);
+  const rows = rankRows(visible, metric, order.direction, ctx);
+  const selectedBusiness = selected ? (all.find((business) => business.id === selected.id) ?? null) : null;
 
-  const toggle = (next: Column) =>
-    setSort((current) =>
-      current.key === next.key
-        ? { key: next.key, direction: current.direction === "asc" ? "desc" : "asc" }
-        : { key: next.key, direction: next.first ?? "desc" },
+  const rememberMetric = (value: MetricKey) =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set("cifra", value);
+        return next;
+      },
+      { replace: true },
     );
+  /** Otra cifra: de mayor a menor. */
+  const changeMetric = (value: string) => {
+    if (!isMetricKey(value)) return;
+    setOrder({ metric: value, direction: "desc" });
+    rememberMetric(value);
+  };
+  /** Desde el resumen: la cifra y el orden y, si el ranking queda lejos (en el celular), lo lleva a la vista. */
+  const showInRanking = (value: MetricKey, direction: Direction) => {
+    setOrder({ metric: value, direction });
+    rememberMetric(value);
+    const top = rankingTop.current;
+    if (top && top.getBoundingClientRect().top > window.innerHeight * 0.6) {
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      top.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+    }
+  };
+  const toggleDirection = () => setOrder((current) => ({ ...current, direction: current.direction === "desc" ? "asc" : "desc" }));
   const clear = () => {
     setSearch("");
     setType(ALL_TYPES);
@@ -317,13 +115,13 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
   const exportCsv = () =>
     downloadCsv(
       [
-        ["Negocio", "Tipo", "Plan", "Estado", ...COLUMNS.slice(1).map((col) => col.label)],
+        ["Negocio", "Tipo", "Plan", "Estado", ...CSV_METRICS.map((key) => metricOf(key).label)],
         ...rows.map((business) => [
           business.name,
           business.category.name,
           getPlan(business.plan).name,
           business.status === "active" ? "Activo" : "Suspendido",
-          ...COLUMNS.slice(1).map((col) => col.text(business, ctx)),
+          ...CSV_METRICS.map((key) => metricOf(key).text(business, ctx)),
         ]),
       ],
       `analitica-${snapshot.periodDays}-dias-${snapshot.to}.csv`,
@@ -331,6 +129,12 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
 
   return (
     <div className="space-y-4">
+      <CompareSummary
+        rows={visible}
+        onUnclosed={() => showInRanking("sin-cerrar", "desc")}
+        onHealth={() => showInRanking("salud", "asc")}
+      />
+
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
@@ -384,6 +188,46 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
         </div>
       </div>
 
+      <div ref={rankingTop} className="scroll-mt-20 space-y-2 lg:scroll-mt-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <span id={labelId} className="text-sm font-medium">
+            Comparar por
+          </span>
+          <div className="flex gap-2">
+            <Select value={metric.key} onValueChange={changeMetric}>
+              <SelectTrigger aria-labelledby={labelId} className="min-w-0 flex-1 bg-background sm:w-60 sm:flex-none">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                {METRIC_GROUPS.map((group) => (
+                  <SelectGroup key={group}>
+                    <SelectLabel>{group}</SelectLabel>
+                    {METRICS.filter((candidate) => candidate.group === group).map((candidate) => (
+                      <SelectItem key={candidate.key} value={candidate.key}>
+                        {candidate.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={toggleDirection} title="Cambiar el orden" className="shrink-0">
+              {order.direction === "desc" ? <ArrowDownWideNarrow /> : <ArrowUpNarrowWide />}
+              {order.direction === "desc" ? "Mayor primero" : "Menor primero"}
+              <span className="sr-only">. Cambiar a {order.direction === "desc" ? "menor" : "mayor"} primero</span>
+            </Button>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {metric.worse && (
+            <span className="mr-1.5 inline-flex h-4 items-center rounded-full bg-amber-50 px-1.5 text-[0.6875rem] font-semibold text-amber-800 ring-1 ring-amber-600/25 ring-inset dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/40">
+              Mayor es peor
+            </span>
+          )}
+          {metric.hint}.
+        </p>
+      </div>
+
       {rows.length === 0 ? (
         <EmptyState
           icon={Search}
@@ -396,70 +240,36 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
           }
         />
       ) : (
-        <>
+        <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            {plural(rows.length, "negocio", "negocios")} · toca una columna para ordenar. «Pocos datos»: menos de 10 citas en el
-            periodo; no cuentan para su tipo y, al ordenar por una tasa, van al final.
+            {plural(rows.length, "negocio", "negocios")} · toca uno para ver su detalle.
+            {rows.some((business) => business.fewData) &&
+              " «Pocos datos»: menos de 10 citas en el periodo; no cuentan para su tipo y, al comparar por una tasa, van al final."}
           </p>
-          <div className="overflow-hidden rounded-xl border bg-background">
-            <Table className="min-w-max">
-              <caption className="sr-only">Negocios con sus cifras de los últimos {snapshot.periodDays} días</caption>
-              <TableHeader>
-                <TableRow className="bg-muted hover:bg-muted">
-                  {COLUMNS.map((col) => {
-                    const active = sort.key === col.key;
-                    const Icon = !active ? ArrowUpDown : sort.direction === "asc" ? ArrowUp : ArrowDown;
-                    return (
-                      <TableHead
-                        key={col.key}
-                        aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
-                        className={cn(
-                          "px-3",
-                          col.key === "name"
-                            ? "sticky left-0 z-10 bg-muted pl-4 shadow-[inset_-1px_0_0_var(--border)]"
-                            : "text-right",
-                        )}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => toggle(col)}
-                          title={col.hint}
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-sm font-medium outline-none hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50",
-                            active && "text-ink",
-                          )}
-                        >
-                          {col.label}
-                          <Icon className={cn("size-3.5", !active && "opacity-40")} aria-hidden />
-                        </button>
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((business) => (
-                  <TableRow key={business.id} className="group cursor-pointer" onClick={() => navigate(`/admin/businesses/${business.id}`)}>
-                    {COLUMNS.map((col) => (
-                      <TableCell
-                        key={col.key}
-                        className={cn(
-                          "px-3",
-                          col.key === "name"
-                            ? "sticky left-0 z-10 bg-background pl-4 shadow-[inset_-1px_0_0_var(--border)] group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--background))]"
-                            : "text-right",
-                        )}
-                      >
-                        {col.cell(business, ctx)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </>
+          <CompareRanking
+            rows={rows}
+            metric={metric}
+            direction={order.direction}
+            ctx={ctx}
+            onOpen={(business, item) => {
+              opener.current = item;
+              setSelected({ id: business.id, open: true });
+            }}
+          />
+        </div>
       )}
+
+      <BusinessAnalyticsSheet
+        business={selectedBusiness}
+        ctx={ctx}
+        periodDays={snapshot.periodDays}
+        open={Boolean(selected?.open)}
+        onOpenChange={(open) => setSelected((current) => (current ? { ...current, open } : null))}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (opener.current?.isConnected) opener.current.focus();
+        }}
+      />
     </div>
   );
 }
