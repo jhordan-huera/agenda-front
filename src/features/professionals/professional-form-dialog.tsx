@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ImageUploadField } from "@/features/settings/image-upload-field";
+import { useThemeMode } from "@/features/theme/use-theme-mode";
 import { useProfessionals, useSaveProfessional } from "@/hooks/queries/use-professionals";
 import { useServices } from "@/hooks/queries/use-services";
 import { useTeam } from "@/hooks/queries/use-team";
@@ -18,7 +19,7 @@ import { getInitials } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { BankAccountsFields } from "./bank-account-fields";
-import { PROFESSIONAL_COLORS } from "./colors";
+import { PROFESSIONAL_COLORS, professionalColor } from "./colors";
 import { professionalSchema, type ProfessionalInput } from "@/lib/validations/professional";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { Professional } from "@/types";
@@ -52,6 +53,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
   const { data: team = [] } = useTeam();
   const { data: services = [] } = useServices();
   const { data: professionals = [] } = useProfessionals();
+  const { resolved } = useThemeMode();
   const save = useSaveProfessional();
   const showError = useErrorToast();
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -153,11 +155,12 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
                 aria-checked={values.color === color}
                 aria-label={`Color ${color}`}
                 onClick={() => set("color", color)}
+                // El check, blanco a propósito: va sobre el color de la agenda, que es de tono medio en los dos modos.
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-full text-white ring-offset-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                  "flex size-8 items-center justify-center rounded-full text-white ring-offset-2 ring-offset-background outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                   values.color === color && "ring-2 ring-ink",
                 )}
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: professionalColor(color, resolved) }}
               >
                 {values.color === color && <Check className="size-4" aria-hidden />}
               </button>

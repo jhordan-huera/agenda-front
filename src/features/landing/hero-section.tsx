@@ -19,6 +19,7 @@ export function HeroSection() {
       <div className="mx-auto grid grid-cols-1 max-w-6xl gap-16 px-4 pt-32 pb-16 sm:px-6 sm:pt-36 lg:grid-cols-[1fr_minmax(0,30rem)] lg:items-center lg:pb-20">
         <div className="max-w-xl">
           <Eyebrow>
+            {/* El punto verde de «en línea», igual en los dos modos: se ve sobre los dos fondos (spec 019). */}
             <span aria-hidden className="size-2 rounded-full bg-emerald-500" />
             Agenda y reservas online
           </Eyebrow>
@@ -35,7 +36,7 @@ export function HeroSection() {
                 Crear mi agenda gratis <ArrowRight />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 border-ink/40 bg-white/70 px-5 text-base text-ink hover:bg-white hover:text-ink">
+            <Button asChild size="lg" variant="outline" className="h-12 border-ink/40 bg-background/70 px-5 text-base text-ink hover:bg-background hover:text-ink dark:border-ink/40">
               <Link to="/book/jhordan">
                 <CalendarCheck /> Probar una página de reservas
               </Link>

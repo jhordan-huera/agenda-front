@@ -17,10 +17,23 @@ const VIEWS: { view: BodyMapMark["view"]; label: string }[] = [
   { view: "back", label: "Espalda" },
 ];
 
-/** Silueta humana sencilla (cabeza, tronco, brazos y piernas). */
+/**
+ * Los colores de la silueta como variables CSS, para el contenedor (spec 019): un gris claro en el
+ * claro y uno oscuro, que se distingue del fondo, en el oscuro. La variante `dark:` sólo vale en
+ * pantalla: lo impreso sale siempre con los claros.
+ */
+const BODY_MAP_COLORS = "[--body-fill:#e2e8f0] [--body-line:#94a3b8] dark:[--body-fill:#334155] dark:[--body-line:#64748b]";
+
+/**
+ * Las marcas van en un rojo fijo (el mismo en los dos modos, como el número blanco encima) y con un
+ * borde del color de la tarjeta, que las separa de la silueta.
+ */
+const MARK_RED = "#dc2626";
+
+/** Silueta humana sencilla (cabeza, tronco, brazos y piernas). Los colores, en `style`: ver odontogram.tsx. */
 function Silhouette() {
   return (
-    <g fill="#e2e8f0" stroke="#94a3b8" strokeWidth={1}>
+    <g style={{ fill: "var(--body-fill)", stroke: "var(--body-line)" }} strokeWidth={1}>
       <circle cx={50} cy={18} r={12} />
       <rect x={45} y={29} width={10} height={8} rx={2} />
       <path d="M30 38 Q50 33 70 38 L72 92 Q72 108 64 112 L36 112 Q28 108 28 92 Z" />
@@ -35,8 +48,8 @@ function Silhouette() {
 function MarkDot({ index, mark }: { index: number; mark: BodyMapMark }) {
   return (
     <g transform={`translate(${mark.x * VIEW_WIDTH}, ${mark.y * VIEW_HEIGHT})`}>
-      <circle r={5.5} fill="#dc2626" stroke="#fff" strokeWidth={1.2} />
-      <text y={2.6} textAnchor="middle" fontSize={7} fontWeight={700} fill="#fff">
+      <circle r={5.5} fill={MARK_RED} style={{ stroke: "var(--card)" }} strokeWidth={1.2} />
+      <text y={2.6} textAnchor="middle" fontSize={7} fontWeight={700} fill="#ffffff">
         {index + 1}
       </text>
     </g>
@@ -52,7 +65,7 @@ function BodyFigures({ marks, onAdd, className }: { marks: BodyMapMark[]; onAdd?
     onAdd({ view, x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)), note: "" });
   };
   return (
-    <div className={cn("grid grid-cols-2 gap-3", className)}>
+    <div className={cn("grid grid-cols-2 gap-3", BODY_MAP_COLORS, className)}>
       {VIEWS.map(({ view, label }) => (
         <figure key={view} className="grid justify-items-center gap-1">
           <svg
@@ -101,6 +114,7 @@ export function BodyMapInput({ value, onChange }: { value: BodyMapMark[]; onChan
         <ol className="grid gap-2">
           {value.map((mark, index) => (
             <li key={index} className="flex items-center gap-2">
+              {/* El mismo rojo fijo de las marcas del dibujo, con su número blanco, en los dos modos. */}
               <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
                 {index + 1}
               </span>

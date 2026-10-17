@@ -71,7 +71,7 @@ export function SalesSection({ businesses, loading, today }: { businesses: Admin
         <List title="Los que más crecen" description="Citas agendadas frente al mes pasado." empty="Ninguno crece todavía este mes." loading={loading}>
           {topGrowing(businesses).map(({ summary, change }) => (
             <Row key={summary.business.id} summary={summary}>
-              <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-300">
                 {change.kind === "new" ? <Sparkles className="size-3.5" aria-hidden /> : <ArrowUpRight className="size-3.5" aria-hidden />}
                 {change.kind === "new" ? "Empezó este mes" : `+${change.percent} %`}
               </span>{" "}

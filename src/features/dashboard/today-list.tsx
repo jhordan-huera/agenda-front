@@ -3,6 +3,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { ClientConfirmedBadge } from "@/features/appointments/client-confirmed-badge";
 import { ReceiptBadge } from "@/features/appointments/receipt-badge";
+import { ProfessionalDot } from "@/features/professionals/professional-select";
 import { plural } from "@/lib/format";
 import { timeToMinutes, type ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -69,7 +70,7 @@ export function TodayList({
             {professionalOf?.(appointment) && (
               <>
                 {" · "}
-                <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: professionalOf(appointment)!.color }} />
+                <ProfessionalDot color={professionalOf(appointment)!.color} className="size-2" />
                 <span className="truncate">{professionalOf(appointment)!.displayName}</span>
               </>
             )}

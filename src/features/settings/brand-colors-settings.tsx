@@ -1,11 +1,11 @@
 import { ExternalLink } from "lucide-react";
-import { type CSSProperties } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BrandColorsPicker } from "@/features/branding/brand-colors-picker";
+import { ModePreviews } from "@/features/branding/mode-previews";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
-import { brandThemeVariables, DEFAULT_BRAND_COLORS, resolveBrandPalette } from "@/lib/brand-theme";
+import { DEFAULT_BRAND_COLORS, resolveBrandPalette } from "@/lib/brand-theme";
 import { getErrorMessage } from "@/lib/data";
 import type { BrandColors, Business } from "@/types";
 import { SettingsSection } from "./settings-section";
@@ -44,7 +44,7 @@ export function BrandColorsSettings({ business }: { business: Business }) {
       onSubmit={submit}
       onDiscard={() => reset()}
     >
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+      <div className="grid grid-cols-1 gap-6">
         <BrandColorsPicker colors={colors} onChange={(next) => setField("colors", next)} />
 
         <BrandPreview colors={effective} slug={business.slug} />
@@ -54,15 +54,12 @@ export function BrandColorsSettings({ business }: { business: Business }) {
 }
 
 /**
- * Cómo se verán el panel y la página de reservas con estos colores. Lleva su propia paleta, así
- * que no depende de los colores guardados.
+ * Cómo se verán el panel y la página de reservas con estos colores, en claro y en oscuro (spec 019).
+ * Lleva su propia paleta, así que no depende de los colores guardados.
  */
 function BrandPreview({ colors, slug }: { colors: BrandColors; slug: string }) {
-  const palette = resolveBrandPalette(colors);
-  const style = brandThemeVariables(palette) as CSSProperties;
-
   return (
-    <figure className="grid gap-2 lg:sticky lg:top-6">
+    <figure className="grid gap-2">
       <figcaption className="flex items-center justify-between gap-2 text-sm font-semibold">
         Vista previa
         <Button asChild variant="link" size="sm" className="h-auto px-0">
@@ -71,14 +68,9 @@ function BrandPreview({ colors, slug }: { colors: BrandColors; slug: string }) {
           </a>
         </Button>
       </figcaption>
-      <div
-        style={style}
-        className="overflow-hidden rounded-xl border bg-muted text-foreground"
-        data-testid="brand-preview"
-        aria-hidden
-      >
+      <ModePreviews palettes={resolveBrandPalette(colors)} className="bg-muted" testId="brand-preview">
         {/* El menú del panel: lo activo, en el azul pastel de la marca */}
-        <div className="flex gap-1 border-b bg-sidebar p-2 text-xs font-medium text-sidebar-foreground">
+        <div className="flex flex-wrap gap-1 border-b bg-sidebar p-2 text-xs font-medium text-sidebar-foreground">
           <span className="rounded-lg bg-sidebar-accent px-2.5 py-1.5 font-semibold text-sidebar-accent-foreground">
             Inicio
           </span>
@@ -119,7 +111,7 @@ function BrandPreview({ colors, slug }: { colors: BrandColors; slug: string }) {
             <span className="rounded-md bg-accent py-1.5 text-ink">11:30</span>
           </div>
         </div>
-      </div>
+      </ModePreviews>
     </figure>
   );
 }

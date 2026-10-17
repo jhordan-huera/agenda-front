@@ -68,7 +68,7 @@ export function ToCloseList({ className }: { className?: string }) {
   if (items.length === 0) {
     return (
       <div className={cn("flex flex-col items-center rounded-xl border border-dashed bg-background px-6 py-10 text-center", className)}>
-        <span className="mb-3 flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+        <span className="mb-3 flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
           <CircleCheckBig className="size-6" aria-hidden />
         </span>
         <p className="font-semibold">Todo al día</p>

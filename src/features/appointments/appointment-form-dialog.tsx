@@ -429,7 +429,7 @@ function AppointmentForm({
         />
       )}
       {missingPatients > 0 && (
-        <p className="-mt-2 flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="-mt-2 flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           Este servicio es para {sessionPeople} personas: {missingPatients === 1 ? "falta un paciente" : `faltan ${missingPatients} pacientes`}.
           Puedes guardar igual.
@@ -627,7 +627,7 @@ function AppointmentForm({
         </p>
       )}
       {!conflictMessage && (outsideHours || block) && (
-        <p className="flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           {block
             ? `Este horario está bloqueado (${block.reason}). Puedes guardarla igualmente.`

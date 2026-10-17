@@ -340,7 +340,7 @@ export default function ClientDetailPage() {
       {missing.length > 0 && (
         <div
           role="status"
-          className="flex flex-col gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 sm:flex-row sm:items-center sm:justify-between dark:border-sky-500/40 dark:bg-sky-500/15 dark:text-sky-200"
         >
           <p className="flex min-w-0 items-start gap-2">
             <UserPen className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -349,7 +349,7 @@ export default function ClientDetailPage() {
               paciente.
             </span>
           </p>
-          <Button size="sm" variant="outline" className="self-start bg-white sm:self-auto" onClick={() => setEditing(true)}>
+          <Button size="sm" variant="outline" className="self-start bg-card sm:self-auto" onClick={() => setEditing(true)}>
             <Pencil /> Completar
           </Button>
         </div>

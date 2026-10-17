@@ -21,12 +21,18 @@ interface NextUpProps {
   onCreate: () => void;
 }
 
-/** El botón principal sobre la tarjeta de color: blanco, para que destaque. */
-const LIGHT_BUTTON = "bg-white text-ink hover:bg-white/90";
+/**
+ * El botón principal sobre la tarjeta de color: del color del texto del degradado, para que destaque (en el
+ * claro, blanco con el principal; en el oscuro, claro con el degradado oscuro: 4,5:1 por la paleta).
+ */
+const LIGHT_BUTTON = "bg-hero-foreground text-hero hover:bg-hero-foreground/90";
 
-/** La tarjeta destacada: un degradado del color de la marca a su lila (con los colores de cada negocio). */
+/**
+ * La tarjeta destacada: un degradado del color de la marca a su lila (con los colores de cada negocio). Con los
+ * tokens del degradado (spec 019): en el claro son el principal y el lila de siempre; en el oscuro, más oscuros.
+ */
 const FEATURED_CARD =
-  "rounded-2xl bg-[linear-gradient(135deg,var(--ink),color-mix(in_oklch,var(--ink)_40%,var(--lilac-ink)))] text-white shadow-[0_16px_32px_-18px_color-mix(in_oklch,var(--ink)_70%,transparent)]";
+  "rounded-2xl bg-[linear-gradient(135deg,var(--hero),color-mix(in_oklch,var(--hero)_40%,var(--hero-end)))] text-hero-foreground shadow-[0_16px_32px_-18px_color-mix(in_oklch,var(--hero)_70%,transparent)]";
 
 /**
  * Lo primero del Inicio: quién sigue y a qué hora, en la tarjeta destacada. La hora va grande; al
@@ -37,8 +43,8 @@ export function NextUp({ appointment, clients, serviceName, business, now, onOpe
     return (
       <section className={cn("flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7", FEATURED_CARD)}>
         <div>
-          <h2 className="text-xl font-bold text-white">No tienes citas próximas</h2>
-          <p className="mt-1 text-white/80">Agenda una cita o comparte tu página de reservas para que te reserven.</p>
+          <h2 className="text-xl font-bold text-hero-foreground">No tienes citas próximas</h2>
+          <p className="mt-1 text-hero-foreground/80">Agenda una cita o comparte tu página de reservas para que te reserven.</p>
         </div>
         <Button size="lg" className={LIGHT_BUTTON} onClick={onCreate}>
           <CalendarPlus /> Nueva cita
@@ -71,35 +77,36 @@ export function NextUp({ appointment, clients, serviceName, business, now, onOpe
       className={cn("grid gap-6 p-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-7", FEATURED_CARD)}
     >
       <div>
-        <h2 id="next-up-heading" className="text-sm font-semibold text-white/85">
+        <h2 id="next-up-heading" className="text-sm font-semibold text-hero-foreground/85">
           {started ? "Ahora mismo" : "Tu siguiente cita"}
         </h2>
-        <p className="mt-2 text-6xl leading-none font-extrabold tracking-[-0.03em] text-white tabular-nums">{appointment.startTime}</p>
-        <p className="mt-3 inline-flex rounded-full bg-white/15 px-2.5 py-0.5 text-sm font-semibold text-white">{when}</p>
+        <p className="mt-2 text-6xl leading-none font-extrabold tracking-[-0.03em] text-hero-foreground tabular-nums">{appointment.startTime}</p>
+        <p className="mt-3 inline-flex rounded-full bg-hero-foreground/15 px-2.5 py-0.5 text-sm font-semibold text-hero-foreground">{when}</p>
       </div>
 
-      <div className="min-w-0 sm:border-l sm:border-white/20 sm:pl-8">
-        <p className="text-2xl leading-tight font-bold tracking-[-0.01em] text-white">
+      <div className="min-w-0 sm:border-l sm:border-hero-foreground/20 sm:pl-8">
+        <p className="text-2xl leading-tight font-bold tracking-[-0.01em] text-hero-foreground">
           {clients.length > 0 ? joinNames(clients.map((client) => client.name)) : "Cliente"}
         </p>
-        <p className="mt-0.5 text-white/80">
+        <p className="mt-0.5 text-hero-foreground/80">
           {serviceName}, {formatDuration(minutes)}, hasta las {appointment.endTime}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <StatusBadge status={appointment.status} />
-          {/* Sobre la tarjeta de color, en blanco como el resto. */}
-          <ClientConfirmedBadge appointment={appointment} short className="bg-white/15 text-sm font-semibold text-white" />
+          {/* En el oscuro, su fondo translúcido no se leería sobre el degradado: va sobre el de las tarjetas. */}
+          <StatusBadge status={appointment.status} className="dark:bg-card" />
+          {/* Sobre la tarjeta de color, del color del texto como el resto. */}
+          <ClientConfirmedBadge appointment={appointment} short className="bg-hero-foreground/15 text-sm font-semibold text-hero-foreground" />
           {appointment.homeVisit && (
-            <span className="inline-flex items-center gap-1 text-sm font-semibold text-white">
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-hero-foreground">
               <Home className="size-4" aria-hidden /> A domicilio
             </span>
           )}
           {appointment.isVirtual && (
-            <span className="inline-flex items-center gap-1 text-sm font-semibold text-white">
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-hero-foreground">
               <Video className="size-4" aria-hidden /> Virtual
             </span>
           )}
-          {appointment.source === "booking_page" && <span className="text-sm text-white/75">Reserva online</span>}
+          {appointment.source === "booking_page" && <span className="text-sm text-hero-foreground/75">Reserva online</span>}
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button size="lg" className={LIGHT_BUTTON} onClick={() => onOpen(appointment)}>
@@ -111,7 +118,8 @@ export function NextUp({ appointment, clients, serviceName, business, now, onOpe
               asChild
               size="lg"
               variant="outline"
-              className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              // Las clases dark: pisan las del botón outline en el oscuro (dark:bg-input/30…).
+              className="border-hero-foreground/25 bg-hero-foreground/10 text-hero-foreground hover:bg-hero-foreground/20 hover:text-hero-foreground dark:border-hero-foreground/25 dark:bg-hero-foreground/10 dark:hover:bg-hero-foreground/20"
             >
               <a href={url} target="_blank" rel="noreferrer" aria-label={`Escribir a ${client.name} por WhatsApp`}>
                 <WhatsAppIcon /> {whatsApp.length > 1 ? client.name.split(" ")[0] : "WhatsApp"}

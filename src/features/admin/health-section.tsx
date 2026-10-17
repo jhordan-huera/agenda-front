@@ -22,9 +22,9 @@ const DATABASE_WARN_SHARE = 0.7;
 const DATABASE_BAD_SHARE = 0.9;
 
 const STATUS: Record<Status, { icon: LucideIcon; label: string; className: string }> = {
-  ok: { icon: CircleCheck, label: "Bien", className: "text-emerald-600" },
-  warn: { icon: CircleAlert, label: "Revisar", className: "text-amber-600" },
-  bad: { icon: CircleX, label: "Problema", className: "text-rose-600" },
+  ok: { icon: CircleCheck, label: "Bien", className: "text-emerald-600 dark:text-emerald-400" },
+  warn: { icon: CircleAlert, label: "Revisar", className: "text-amber-600 dark:text-amber-400" },
+  bad: { icon: CircleX, label: "Problema", className: "text-rose-600 dark:text-rose-400" },
   unknown: { icon: CircleHelp, label: "Sin datos", className: "text-muted-foreground" },
 };
 
@@ -169,7 +169,11 @@ export function HealthSection({
           <span
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-semibold",
-              worst === "ok" ? "bg-emerald-50 text-emerald-700" : worst === "warn" ? "bg-amber-50 text-amber-800" : "bg-rose-50 text-rose-700",
+              worst === "ok"
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                : worst === "warn"
+                  ? "bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+                  : "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
             )}
           >
             {worst === "ok" ? <CircleCheck className="size-4" aria-hidden /> : <CircleAlert className="size-4" aria-hidden />}
@@ -185,7 +189,7 @@ export function HealthSection({
             ? list.map((tile) => {
                 const status = STATUS[tile.status];
                 return (
-                  <Card key={tile.key} className={cn("gap-1.5 px-5 py-4", tile.status === "bad" && "ring-2 ring-rose-200", tile.status === "warn" && "ring-2 ring-amber-200")}>
+                  <Card key={tile.key} className={cn("gap-1.5 px-5 py-4", tile.status === "bad" && "ring-2 ring-rose-200 dark:ring-rose-500/40", tile.status === "warn" && "ring-2 ring-amber-200 dark:ring-amber-500/40")}>
                     <p className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
                       <span className="inline-flex items-center gap-1.5">
                         <tile.icon className="size-4" aria-hidden /> {tile.title}

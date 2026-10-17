@@ -8,11 +8,11 @@ const LINKS = [
   { href: "#como-funciona", label: "Cómo empezar" },
 ];
 
-/** Menú de la portada: una barra blanca flotante y redondeada, con efecto cristal. */
+/** Menú de la portada: una barra flotante y redondeada, del fondo del modo, con efecto cristal. */
 export function LandingNavbar() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-4 sm:pt-4">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 rounded-2xl border border-border/70 bg-white/80 px-4 shadow-[0_8px_30px_-14px_rgb(29_36_51/0.22)] backdrop-blur-md sm:px-5">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/80 px-4 shadow-[0_8px_30px_-14px_rgb(29_36_51/0.22)] backdrop-blur-md sm:px-5">
         <Logo />
         <nav aria-label="Principal" className="hidden items-center gap-1 md:flex">
           {LINKS.map((link) => (

@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SessionProvider } from "@/features/auth/session-provider";
+import { ThemeModeProvider } from "@/features/theme/theme-mode-provider";
+import { useThemeMode } from "@/features/theme/use-theme-mode";
 
 const MINUTE = 60_000;
 
@@ -32,11 +34,20 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <TooltipProvider delayDuration={300}>
-          {children}
-          <Toaster position="bottom-right" richColors closeButton />
-        </TooltipProvider>
+        {/* El modo de pantalla (spec 019) sale de la sesión: va debajo de ella y encima de todo lo que se ve. */}
+        <ThemeModeProvider>
+          <TooltipProvider delayDuration={300}>
+            {children}
+            <ThemedToaster />
+          </TooltipProvider>
+        </ThemeModeProvider>
       </SessionProvider>
     </QueryClientProvider>
   );
+}
+
+/** Los avisos, en el modo de la pantalla. */
+function ThemedToaster() {
+  const { resolved } = useThemeMode();
+  return <Toaster position="bottom-right" richColors closeButton theme={resolved} />;
 }

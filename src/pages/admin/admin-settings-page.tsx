@@ -1,4 +1,4 @@
-import { BellRing, KeyRound, Settings2, ShieldCheck } from "lucide-react";
+import { BellRing, KeyRound, Settings2, ShieldCheck, SunMoon } from "lucide-react";
 import { toast } from "sonner";
 import { ErrorState } from "@/components/shared/error-state";
 import { FormField } from "@/components/shared/form-field";
@@ -11,6 +11,7 @@ import { PushSettingsCard } from "@/features/push/push-settings-card";
 import { ChangePasswordForm } from "@/features/settings/change-password-form";
 import { SettingsSection, SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { SwitchField } from "@/features/settings/switch-field";
+import { ThemeModeCard } from "@/features/settings/theme-mode-card";
 import { TwoFactorSettings } from "@/features/settings/two-factor-settings";
 import { useSettingsForm } from "@/features/settings/use-settings-form";
 import { usePlatformSettings, useUpdatePlatformSettings } from "@/hooks/queries/use-admin";
@@ -41,6 +42,7 @@ export default function AdminSettingsPage() {
         </div>
         <div className="grid min-w-0 gap-6">
           <PanelColorsCard />
+          <ThemeModeCard icon={SunMoon} />
           <TwoFactorSettings icon={ShieldCheck} />
           <PushSettingsCard audience="platform" icon={BellRing} />
           <ChangePasswordForm icon={KeyRound} />

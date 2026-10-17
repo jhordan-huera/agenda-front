@@ -189,7 +189,7 @@ export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, 
             ))}
           {nowVisible && (
             <span
-              className="absolute -translate-x-1/2 rounded bg-ink px-1 text-[11px] font-bold text-white tabular-nums"
+              className="absolute -translate-x-1/2 rounded bg-ink px-1 text-[11px] font-bold text-primary-foreground tabular-nums"
               style={{ left: pct(now.minutes) }}
             >
               {minutesToTime(now.minutes)}

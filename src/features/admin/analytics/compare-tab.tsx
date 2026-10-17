@@ -133,7 +133,7 @@ const COLUMNS: Column[] = [
       <span
         className={cn(
           "font-semibold tabular-nums",
-          business.growth === "new" ? "text-muted-foreground" : business.growth > 0 ? "text-emerald-700" : business.growth < 0 ? "text-rose-700" : "",
+          business.growth === "new" ? "text-muted-foreground" : business.growth > 0 ? "text-emerald-700 dark:text-emerald-300" : business.growth < 0 ? "text-rose-700 dark:text-rose-300" : "",
         )}
       >
         {formatGrowth(business.growth)}
@@ -194,7 +194,7 @@ const COLUMNS: Column[] = [
         <span
           className={cn(
             "text-xs tabular-nums",
-            share === null ? "text-muted-foreground" : share >= 1 ? "font-semibold text-rose-700" : share >= 0.8 ? "font-semibold text-amber-700" : "",
+            share === null ? "text-muted-foreground" : share >= 1 ? "font-semibold text-rose-700 dark:text-rose-300" : share >= 0.8 ? "font-semibold text-amber-700 dark:text-amber-300" : "",
           )}
         >
           {planUsageText(business)}

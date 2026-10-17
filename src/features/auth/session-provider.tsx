@@ -42,6 +42,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return next;
   }, []);
 
+  const updateSession = useCallback((changes: Partial<Pick<Session, "themeMode">>) => {
+    setSession((current) => (current ? { ...current, ...changes } : current));
+  }, []);
+
   const refresh = useCallback(async () => {
     const current = await authService.getSession().catch(() => null);
     if (!current) queryClient.clear();
@@ -127,6 +131,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       status,
       session: effectiveSession,
       refresh,
+      updateSession,
       enterSupport: (business) => updateSupport({ id: business.id, name: business.name }),
       exitSupport: () => updateSupport(null),
       signIn: async (input) => {
@@ -142,7 +147,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         applySession(null);
       },
     }),
-    [status, effectiveSession, refresh, applySession, queryClient, updateSupport],
+    [status, effectiveSession, refresh, updateSession, applySession, queryClient, updateSupport],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

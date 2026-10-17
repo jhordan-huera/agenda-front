@@ -86,9 +86,9 @@ export const HEALTH_LABELS: Record<HealthGroup, string> = { healthy: "Sano", ris
 
 /** Colores de estado (siempre con su texto al lado). */
 export const HEALTH_TONES: Record<HealthGroup, string> = {
-  healthy: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-  risk: "bg-amber-50 text-amber-800 ring-amber-600/25",
-  critical: "bg-rose-50 text-rose-700 ring-rose-600/20",
+  healthy: "bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/40",
+  risk: "bg-amber-50 text-amber-800 ring-amber-600/25 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/40",
+  critical: "bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/15 dark:text-rose-300 dark:ring-rose-500/40",
 };
 
 const DAY_NAMES: Record<DayOfWeek, string> = {

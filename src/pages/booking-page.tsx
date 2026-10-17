@@ -19,7 +19,7 @@ export default function BookingPage() {
 
   if (profileQuery.isPending) {
     return (
-      <div className="min-h-screen bg-muted" role="status" aria-label="Cargando">
+      <div className="min-h-screen bg-muted dark:bg-canvas" role="status" aria-label="Cargando">
         <div className="border-b bg-background">
           <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-8">
             <Skeleton className="size-16 rounded-2xl" />
@@ -72,7 +72,8 @@ export default function BookingPage() {
   // La página de reservas lleva los colores del negocio.
   return (
     <BrandThemeProvider colors={profile.business.brandColors}>
-      <div className="flex min-h-screen flex-col bg-muted">
+      {/* En el oscuro, el fondo es el lienzo: así las tarjetas quedan más claras que él, como en el claro (spec 019). */}
+      <div className="flex min-h-screen flex-col bg-muted dark:bg-canvas">
         <PageTitle title={`Reservar con ${profile.business.name}`} />
         <BookingHeader business={profile.business} professionals={profile.professionals} />
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">

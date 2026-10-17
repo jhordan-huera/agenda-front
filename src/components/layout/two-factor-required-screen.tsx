@@ -21,7 +21,7 @@ export function TwoFactorRequiredScreen() {
       <Logo />
       <div className="grid w-full max-w-lg gap-4">
         <div className="rounded-2xl border bg-background p-6 text-center shadow-sm sm:p-8">
-          <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
             <ShieldAlert className="size-6" aria-hidden />
           </span>
           <h1 className="mt-4 text-xl font-semibold tracking-tight">Activa la verificación en dos pasos</h1>

@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
+import { toast } from "sonner";
 import { useBusinessId, useSession } from "@/features/auth/use-session";
-import { data, type UpdateBusinessInput } from "@/lib/data";
+import { authService } from "@/lib/auth";
+import { data, getErrorMessage, type UpdateBusinessInput } from "@/lib/data";
 import type { ProfileInput } from "@/lib/validations/business";
+import type { ThemeMode } from "@/types";
 import { queryKeys } from "./query-keys";
 
 export function useCurrentUser() {
@@ -25,6 +29,36 @@ export function useUpdateProfile() {
       // Su nombre y su foto son los de su agenda: también cambian en la lista de profesionales y en la página pública.
       queryClient.invalidateQueries({ queryKey: ["professionals"] });
       queryClient.invalidateQueries({ queryKey: ["public-profile"] });
+    },
+  });
+}
+
+/**
+ * Modo de pantalla de la propia cuenta (spec 019). Optimista: la sesión cambia al momento (y con ella
+ * la pantalla) y, si no se guarda, vuelve al modo de antes con un aviso. Lo usa ThemeModeProvider
+ * (useThemeMode().setMode), que vive fuera del router.
+ */
+export function useSetThemeMode() {
+  const { session, updateSession } = useSession();
+  const queryClient = useQueryClient();
+  // El último modo pedido: si se eligen dos seguidos y falla el primero, no pisa al segundo.
+  const latest = useRef<ThemeMode | null>(null);
+  return useMutation({
+    mutationFn: (mode: ThemeMode) => authService.setThemeMode({ mode }),
+    onMutate: (mode) => {
+      latest.current = mode;
+      const previous = session?.themeMode ?? "auto";
+      updateSession({ themeMode: mode });
+      return { previous };
+    },
+    onError: (error, mode, context) => {
+      if (context && latest.current === mode) updateSession({ themeMode: context.previous });
+      toast.error("No se pudo cambiar el modo de pantalla", { description: getErrorMessage(error) });
+    },
+    onSuccess: () => {
+      // El cambio queda en la actividad: la del negocio o, para el super admin, la de la plataforma.
+      void queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin", "audit-logs"] });
     },
   });
 }

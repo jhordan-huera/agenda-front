@@ -142,7 +142,7 @@ export function UsageTab({ snapshot }: { snapshot: AnalyticsSnapshot }) {
                     {FEATURE_KEYS.map((key) => (
                       <TableCell key={key} className="px-3 text-center">
                         {business.features[key] ? (
-                          <Check className="mx-auto size-4 text-emerald-700" aria-label="Sí" />
+                          <Check className="mx-auto size-4 text-emerald-700 dark:text-emerald-300" aria-label="Sí" />
                         ) : (
                           <Minus className="mx-auto size-4 text-muted-foreground/60" aria-label="No" />
                         )}
@@ -192,7 +192,7 @@ export function UsageTab({ snapshot }: { snapshot: AnalyticsSnapshot }) {
                           {formatCount(amount)}
                         </TableCell>
                       ))}
-                      <TableCell className={cn("px-3 text-right tabular-nums", improved && "font-semibold text-emerald-700")}>
+                      <TableCell className={cn("px-3 text-right tabular-nums", improved && "font-semibold text-emerald-700 dark:text-emerald-300")}>
                         {beforeAfter(business)}
                         {value.since && value.noShowBefore !== null && (
                           <span className="block text-[0.6875rem] font-normal text-muted-foreground">desde el {formatDate(value.since, "d MMM")}</span>

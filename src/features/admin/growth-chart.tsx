@@ -15,6 +15,9 @@ const METRICS: { value: Metric; label: string }[] = [
   { value: "newClients", label: "Pacientes nuevos" },
 ];
 
+/** El punto activo, con el borde del color de la tarjeta (Recharts lo pone blanco). */
+const ACTIVE_DOT = { style: { stroke: "var(--card)" } };
+
 interface Point {
   day: number;
   current: number | null;
@@ -105,8 +108,18 @@ export function GrowthChart({ growth }: { growth: PlatformStats["growth"] }) {
               <XAxis dataKey="day" tick={axisTick} tickLine={false} axisLine={{ stroke: colors.axis }} interval="preserveStartEnd" minTickGap={12} />
               <YAxis allowDecimals={false} tick={axisTick} tickLine={false} axisLine={false} width={40} />
               <Tooltip content={GrowthTooltip} cursor={{ stroke: colors.axis }} />
-              <Line type="monotone" dataKey="previous" stroke={colors.previous} strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} />
-              <Line type="monotone" dataKey="current" stroke={colors.series} strokeWidth={3} dot={false} isAnimationActive={false} />
+              {/* El punto activo lleva un borde blanco de Recharts: con el color de la tarjeta, también en el oscuro. */}
+              <Line
+                type="monotone"
+                dataKey="previous"
+                stroke={colors.previous}
+                strokeWidth={2}
+                strokeDasharray="5 4"
+                dot={false}
+                activeDot={ACTIVE_DOT}
+                isAnimationActive={false}
+              />
+              <Line type="monotone" dataKey="current" stroke={colors.series} strokeWidth={3} dot={false} activeDot={ACTIVE_DOT} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

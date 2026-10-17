@@ -24,8 +24,8 @@ export function ActiveBadge({ active }: { active: boolean }) {
       className={cn(
         "inline-flex h-5 items-center rounded-full px-2 text-xs font-medium",
         active
-          ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
-          : "bg-zinc-100 text-zinc-600 ring-1 ring-inset ring-zinc-500/20",
+          ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/40"
+          : "bg-zinc-100 text-zinc-600 ring-1 ring-inset ring-zinc-500/20 dark:bg-zinc-500/15 dark:text-zinc-400 dark:ring-zinc-500/40",
       )}
     >
       {active ? "Activo" : "Inactivo"}

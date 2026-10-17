@@ -7,7 +7,11 @@ import type { BrandColors } from "@/types";
  * y gráficos, en el mismo tono. Los cálculos se hacen en OKLCH (claridad, croma y tono), que
  * reparte la claridad como la percibe el ojo.
  *
- * Sin colores propios (null) se usan los de Agenda360, definidos en src/index.css.
+ * Cada paleta tiene dos modos (spec 019): el claro y el oscuro salen de los mismos dos colores, con
+ * el mismo tono y la claridad justa para que todo se lea. `npm run check:contrast` mide los dos.
+ *
+ * Sin colores propios (null) se usan los de Agenda360, definidos en src/index.css (sus tokens
+ * oscuros salen de esta misma fórmula).
  */
 
 export const DEFAULT_BRAND_COLORS: BrandColors = {
@@ -76,18 +80,26 @@ export function normalizeHex(value: string): string | null {
 export const sameColors = (a: BrandColors | null, b: BrandColors | null) =>
   a?.primary === b?.primary && a?.highlight === b?.highlight;
 
-/** Paleta que sale de un negocio con colores propios. */
+/** Paleta de un modo (claro u oscuro) que sale de los dos colores. */
 export interface BrandPalette {
-  /** Botones, títulos y lo activo (ya legible con texto blanco encima). */
+  /**
+   * Botones, títulos y lo activo. En el claro, legible con texto blanco encima; en el oscuro, aclarado
+   * para leerse sobre el fondo (sus botones llevan el texto oscuro).
+   */
   ink: string;
-  /** El principal se oscureció para que el texto blanco se lea (contraste 4,5:1). */
+  /** El principal se movió para que se lea (contraste 4,5:1): en el claro, se oscureció. */
   inkAdjusted: boolean;
+  /** El texto sobre el principal (`--primary-foreground`): blanco en el claro, el fondo en el oscuro. */
+  inkText: string;
+  /** Tarjetas, menús y diálogos: blanco en el claro, casi negro con el tono del principal en el oscuro. */
+  paper: string;
   accent: string;
   desk: string;
-  /** El lienzo del panel, donde van las tarjetas blancas: un poco más oscuro que `desk`. */
+  /** El lienzo del panel, donde van las tarjetas: un poco más oscuro que ellas. */
   canvas: string;
   /** El menú lateral y el marco del panel: casi negro, con el tono del principal. */
   shell: string;
+  shellText: string;
   text: string;
   graphite: string;
   highlight: string;
@@ -95,9 +107,26 @@ export interface BrandPalette {
   /** Tono suave del resaltado (insignias, botones secundarios) y su texto. */
   secondary: string;
   secondaryText: string;
+  /** Errores y lo que borra: no cambia con la marca, sólo con el modo. */
+  destructive: string;
+  /**
+   * Los degradados con texto encima (las cabeceras, la portada): del principal al lila y su texto.
+   * En el claro, `ink` → `secondaryText` con texto blanco; en el oscuro, más oscuros y con el texto claro.
+   */
+  hero: string;
+  heroEnd: string;
+  heroText: string;
   chart: ChartColors;
   /** Bordes y campos: el color del texto con transparencia. */
-  textRgb: string;
+  rule: string;
+  ruleStrong: string;
+  field: string;
+}
+
+/** Las dos versiones de la paleta: la clara y la oscura. */
+export interface BrandPalettes {
+  light: BrandPalette;
+  dark: BrandPalette;
 }
 
 /* ------------------------------ Conversiones ------------------------------ */
@@ -206,21 +235,49 @@ function adjustLightness(
 /* -------------------------------- Paleta ---------------------------------- */
 
 const WHITE = "#ffffff";
+/** El rojo de los errores (`--red-pen`): en el oscuro se aclara hasta leerse. */
+const RED_PEN = "#b4453c";
+/** El texto sobre `shell` en el claro (`--shell-foreground`). */
+const SHELL_TEXT = "#eef1f8";
 /** Croma del azul de Agenda360: las superficies se calibraron con él. */
 const BASE_PRIMARY_CHROMA = 0.114;
 const BASE_HIGHLIGHT_CHROMA = 0.05;
+/** En el oscuro, un principal o un resaltado muy chillón brillaría sobre el fondo: se le baja el croma. */
+const DARK_MAX_CHROMA = { ink: 0.16, highlight: 0.12 };
 
-export function resolveBrandPalette(colors: BrandColors): BrandPalette {
+const rgbAlpha = (hex: string, alpha: number) => {
+  const [r, g, b] = hexToRgb(hex).map((c) => Math.round(c * 255));
+  return `rgb(${r} ${g} ${b} / ${alpha})`;
+};
+
+/** El color con su croma recortado, o tal cual si no pasa del tope (así no cambia ni un dígito). */
+const capChroma = (hex: string, color: Oklch, max: number) =>
+  color.c > max ? oklchToHex({ ...color, c: max }) : hex;
+
+type Tone = (l: number, c: number) => string;
+
+export function resolveBrandPalette(colors: BrandColors): BrandPalettes {
   const primary = rgbToOklch(hexToRgb(colors.primary));
   const highlight = rgbToOklch(hexToRgb(colors.highlight));
   // Un principal gris da superficies grises; uno muy saturado no las vuelve chillonas.
   const k = Math.min(primary.c / BASE_PRIMARY_CHROMA, 1.25);
   const kh = Math.min(highlight.c / BASE_HIGHLIGHT_CHROMA, 1.25);
-  const tone = (l: number, c: number) =>
-    oklchToHex({ l, c: c * k, h: primary.h });
-  const highlightTone = (l: number, c: number) =>
+  const tone: Tone = (l, c) => oklchToHex({ l, c: c * k, h: primary.h });
+  const highlightTone: Tone = (l, c) =>
     oklchToHex({ l, c: c * kh, h: highlight.h });
 
+  return {
+    light: lightPalette(colors, primary, tone, highlightTone),
+    dark: darkPalette(colors, primary, highlight, tone, highlightTone),
+  };
+}
+
+function lightPalette(
+  colors: BrandColors,
+  primary: Oklch,
+  tone: Tone,
+  highlightTone: Tone,
+): BrandPalette {
   const text = tone(0.261, 0.0301);
   const ink = adjustLightness(
     colors.primary,
@@ -233,16 +290,23 @@ export function resolveBrandPalette(colors: BrandColors): BrandPalette {
     (hex) => contrastRatio(hex, text) >= 4.5,
   );
   const secondary = highlightTone(0.948, 0.0231);
+  const secondaryText = adjustLightness(
+    highlightTone(0.479, 0.1322),
+    -0.01,
+    (hex) => contrastRatio(hex, secondary) >= 4.5,
+  );
   const desk = tone(0.976, 0.007);
-  const [r, g, b] = hexToRgb(text).map((c) => Math.round(c * 255));
 
   return {
     ink,
     inkAdjusted: ink !== colors.primary,
+    inkText: WHITE,
+    paper: WHITE,
     accent: tone(0.948, 0.0187),
     desk,
     canvas: tone(0.962, 0.008),
     shell: tone(0.235, 0.045),
+    shellText: SHELL_TEXT,
     text,
     graphite: adjustLightness(
       tone(0.503, 0.0338),
@@ -252,11 +316,11 @@ export function resolveBrandPalette(colors: BrandColors): BrandPalette {
     highlight: highlightHex,
     highlightAdjusted: highlightHex !== colors.highlight,
     secondary,
-    secondaryText: adjustLightness(
-      highlightTone(0.479, 0.1322),
-      -0.01,
-      (hex) => contrastRatio(hex, secondary) >= 4.5,
-    ),
+    secondaryText,
+    destructive: RED_PEN,
+    hero: ink,
+    heroEnd: secondaryText,
+    heroText: WHITE,
     chart: {
       series: adjustLightness(
         oklchToHex({ l: 0.652, c: primary.c * 0.93, h: primary.h }),
@@ -270,21 +334,136 @@ export function resolveBrandPalette(colors: BrandColors): BrandPalette {
       tick: tone(0.503, 0.0338),
       cursor: desk,
     },
-    textRgb: `${r} ${g} ${b}`,
+    rule: rgbAlpha(text, 0.1),
+    ruleStrong: rgbAlpha(text, 0.18),
+    field: rgbAlpha(text, 0.025),
   };
 }
 
 /**
- * Variables CSS de la paleta. Se dan todas (no sólo las de base) porque `--primary: var(--ink)`
- * se resuelve donde se declara: así también sirven en un contenedor (la vista previa).
+ * La paleta oscura (research R4): fondos de 0,17 a 0,27 de claridad con un toque del principal y el
+ * texto a 0,93. Los dos colores conservan su tono y se mueven hacia el otro lado que en el claro: el
+ * principal se aclara hasta leerse sobre el fondo y el resaltado se oscurece hasta que el texto
+ * claro se lea encima.
+ */
+function darkPalette(
+  colors: BrandColors,
+  primary: Oklch,
+  highlight: Oklch,
+  tone: Tone,
+  highlightTone: Tone,
+): BrandPalette {
+  const paper = tone(0.21, 0.014);
+  const canvas = tone(0.17, 0.012);
+  const desk = tone(0.24, 0.016);
+  // Lo activo del menú y los recuadros suaves: la superficie más clara, donde el principal se lee peor.
+  const accent = tone(0.27, 0.035);
+  const text = tone(0.93, 0.012);
+  const ink = adjustLightness(
+    capChroma(colors.primary, primary, DARK_MAX_CHROMA.ink),
+    0.01,
+    (hex) => contrastRatio(hex, accent) >= 4.5,
+  );
+  // Un resaltado muy oscuro no se vería sobre el fondo: parte, como mínimo, de 0,4 de claridad. Va
+  // detrás del texto (4,5:1) y de horas en el principal (la hora actual de la agenda: 3:1, como en el claro).
+  const highlightBase = { ...highlight, l: Math.max(highlight.l, 0.4) };
+  const highlightHex = adjustLightness(
+    highlightBase.l === highlight.l
+      ? capChroma(colors.highlight, highlight, DARK_MAX_CHROMA.highlight)
+      : oklchToHex({
+          ...highlightBase,
+          c: Math.min(highlight.c, DARK_MAX_CHROMA.highlight),
+        }),
+    -0.01,
+    (hex) => contrastRatio(hex, text) >= 4.5 && contrastRatio(hex, ink) >= 3,
+  );
+  const secondary = highlightTone(0.29, 0.04);
+  const graphite = adjustLightness(
+    tone(0.72, 0.03),
+    0.01,
+    (hex) => contrastRatio(hex, desk) >= 4.5,
+  );
+
+  return {
+    ink,
+    inkAdjusted: ink !== colors.primary,
+    inkText: paper,
+    paper,
+    accent,
+    desk,
+    canvas,
+    shell: tone(0.15, 0.03),
+    shellText: text,
+    text,
+    graphite,
+    highlight: highlightHex,
+    highlightAdjusted: highlightHex !== colors.highlight,
+    secondary,
+    secondaryText: adjustLightness(
+      highlightTone(0.8, 0.09),
+      0.01,
+      (hex) => contrastRatio(hex, secondary) >= 4.5,
+    ),
+    destructive: adjustLightness(
+      RED_PEN,
+      0.01,
+      (hex) => contrastRatio(hex, desk) >= 4.5,
+    ),
+    // Los degradados no pueden ir del principal aclarado al lila claro: el texto claro no se leería.
+    hero: adjustLightness(
+      oklchToHex({
+        l: 0.5,
+        c: Math.min(primary.c, DARK_MAX_CHROMA.ink),
+        h: primary.h,
+      }),
+      -0.01,
+      (hex) => contrastRatio(text, hex) >= 4.5,
+    ),
+    heroEnd: adjustLightness(
+      highlightTone(0.47, 0.11),
+      -0.01,
+      (hex) => contrastRatio(text, hex) >= 4.5,
+    ),
+    heroText: text,
+    chart: {
+      series: adjustLightness(
+        oklchToHex({
+          l: 0.68,
+          c: Math.min(primary.c * 0.93, DARK_MAX_CHROMA.ink),
+          h: primary.h,
+        }),
+        0.01,
+        (hex) => contrastRatio(hex, paper) >= 3,
+      ),
+      soft: tone(0.47, 0.06),
+      highlight: highlightTone(0.56, 0.09),
+      grid: tone(0.29, 0.016),
+      axis: tone(0.36, 0.02),
+      tick: graphite,
+      cursor: desk,
+    },
+    rule: rgbAlpha(text, 0.12),
+    ruleStrong: rgbAlpha(text, 0.22),
+    field: rgbAlpha(text, 0.04),
+  };
+}
+
+/**
+ * Variables CSS de un modo de la paleta. Se dan todas (no sólo las de base) porque `--primary:
+ * var(--ink)` se resuelve donde se declara: así también sirven en un contenedor (la vista previa,
+ * con un modo distinto del de la página).
  */
 export function brandThemeVariables(
   palette: BrandPalette,
 ): Record<string, string> {
-  const rule = (alpha: number) => `rgb(${palette.textRgb} / ${alpha})`;
   return {
+    "--paper": palette.paper,
+    "--background": palette.paper,
+    "--card": palette.paper,
+    "--popover": palette.paper,
     "--ink": palette.ink,
     "--primary": palette.ink,
+    "--primary-foreground": palette.inkText,
     "--ring": palette.ink,
     "--chart-1": palette.ink,
     "--accent": palette.accent,
@@ -297,26 +476,41 @@ export function brandThemeVariables(
     "--popover-foreground": palette.text,
     "--graphite": palette.graphite,
     "--muted-foreground": palette.graphite,
-    "--rule": rule(0.1),
-    "--border": rule(0.1),
-    "--rule-strong": rule(0.18),
-    "--input": rule(0.18),
-    "--field": rule(0.025),
+    "--rule": palette.rule,
+    "--border": palette.rule,
+    "--rule-strong": palette.ruleStrong,
+    "--input": palette.ruleStrong,
+    "--field": palette.field,
     "--highlight": palette.highlight,
     "--highlight-foreground": palette.text,
     "--secondary": palette.secondary,
     "--secondary-foreground": palette.secondaryText,
     "--lilac-ink": palette.secondaryText,
+    "--red-pen": palette.destructive,
+    "--destructive": palette.destructive,
+    "--hero": palette.hero,
+    "--hero-end": palette.heroEnd,
+    "--hero-foreground": palette.heroText,
     "--chart-2": palette.chart.soft,
     "--chart-3": palette.chart.highlight,
     "--canvas": palette.canvas,
     "--shell": palette.shell,
-    // El menú es blanco con cualquier color; su texto, lo activo y sus bordes toman los de la marca.
+    "--shell-foreground": palette.shellText,
+    // El menú es una tarjeta con cualquier color; su texto, lo activo y sus bordes toman los de la marca.
+    "--sidebar": palette.paper,
     "--sidebar-foreground": palette.graphite,
     "--sidebar-primary": palette.ink,
+    "--sidebar-primary-foreground": palette.inkText,
     "--sidebar-accent": palette.accent,
     "--sidebar-accent-foreground": palette.ink,
-    "--sidebar-border": rule(0.1),
+    "--sidebar-border": palette.rule,
     "--sidebar-ring": palette.ink,
   };
+}
+
+/** Las variables de un modo como bloque de CSS (para el `<style>` de BrandThemeProvider). */
+export function brandThemeCss(palette: BrandPalette): string {
+  return Object.entries(brandThemeVariables(palette))
+    .map(([name, value]) => `${name}: ${value};`)
+    .join(" ");
 }

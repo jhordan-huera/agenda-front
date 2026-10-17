@@ -37,17 +37,17 @@ export function LandingFooter() {
         </div>
         {COLUMNS.map((column) => (
           <nav key={column.title} aria-label={column.title}>
-            <p className="text-sm font-semibold text-white">{column.title}</p>
+            <p className="text-sm font-semibold text-shell-foreground">{column.title}</p>
             <ul className="mt-4 space-y-3 text-sm">
               {column.links.map((link) => (
                 <li key={link.label}>
                   {/* Las secciones de la portada son anclas de esta misma página. */}
                   {link.to.startsWith("/#") ? (
-                    <a href={link.to.slice(1)} className="text-shell-foreground/70 transition-colors hover:text-white">
+                    <a href={link.to.slice(1)} className="text-shell-foreground/70 transition-colors hover:text-shell-foreground">
                       {link.label}
                     </a>
                   ) : (
-                    <Link to={link.to} className="text-shell-foreground/70 transition-colors hover:text-white">
+                    <Link to={link.to} className="text-shell-foreground/70 transition-colors hover:text-shell-foreground">
                       {link.label}
                     </Link>
                   )}
@@ -57,7 +57,7 @@ export function LandingFooter() {
           </nav>
         ))}
       </div>
-      <div className="border-t border-white/10">
+      <div className="border-t border-shell-foreground/10">
         <p className="mx-auto max-w-6xl px-4 py-6 text-sm text-shell-foreground/60 sm:px-6">
           © {CURRENT_YEAR} {APP_NAME}
         </p>

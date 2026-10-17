@@ -16,7 +16,9 @@ export function BookingHeader({ business, professionals }: { business: PublicBus
         {/* En el móvil el logo va encima del nombre: así el texto usa todo el ancho. */}
         <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:gap-5">
           {business.logoUrl && (
-            // Entero (sin recortar): misma altura y el ancho que pida su forma, cuadrado o alargado.
+            // Entero (sin recortar): misma altura y el ancho que pida su forma, cuadrado o alargado. Sobre
+            // su placa blanca a propósito, también en el oscuro: un logo oscuro con fondo transparente no
+            // desaparece (spec 019).
             <img
               src={business.logoUrl}
               alt={`Logo de ${business.name}`}

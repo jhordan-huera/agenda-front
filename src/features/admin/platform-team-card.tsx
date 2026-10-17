@@ -90,11 +90,11 @@ export function PlatformTeamCard() {
                     <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                     <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       {admin.twoFactorEnabled ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-700">
+                        <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
                           <ShieldCheck className="size-3.5" aria-hidden /> Verificación en dos pasos
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-amber-700">
+                        <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300">
                           <ShieldAlert className="size-3.5" aria-hidden /> Sin verificación en dos pasos (la activará al entrar)
                         </span>
                       )}

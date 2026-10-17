@@ -12,7 +12,7 @@ const KIND_STYLES: Record<ImportIssue["kind"], string> = {
   existing: "bg-accent text-ink",
   repeated: "bg-muted text-muted-foreground",
   overLimit: "bg-highlight/15 text-ink",
-  incomplete: "bg-sky-50 text-sky-800",
+  incomplete: "bg-sky-50 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300",
 };
 
 /**

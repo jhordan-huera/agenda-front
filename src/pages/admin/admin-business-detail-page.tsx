@@ -177,7 +177,10 @@ export default function AdminBusinessDetailPage() {
       />
 
       {suspended && (
-        <p role="status" className="rounded-lg border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p
+          role="status"
+          className="rounded-lg border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300"
+        >
           Este negocio está suspendido: su equipo no puede entrar al panel y su página de reservas no está disponible.
         </p>
       )}

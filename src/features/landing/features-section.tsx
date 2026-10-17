@@ -4,7 +4,11 @@ import { cn } from "@/lib/utils";
 import { SectionHeading } from "./section-heading";
 
 /** El color de cada icono, alternando como en una cuadrícula de funciones: marca, lila y verde. */
-const TONES = ["bg-accent text-ink", "bg-secondary text-secondary-foreground", "bg-emerald-50 text-emerald-700"];
+const TONES = [
+  "bg-accent text-ink",
+  "bg-secondary text-secondary-foreground",
+  "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+];
 
 /** Lo que hace la app, para quién es cada cosa: el profesional y sus clientes. */
 const FEATURES: { audience: string; icon: LucideIcon; title: string; description: string }[] = [

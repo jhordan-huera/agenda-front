@@ -7,7 +7,7 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "15 de octubre de 2026";
+const LAST_UPDATED = "16 de octubre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
   );
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 dark:bg-canvas">
       <PageTitle title="Política de privacidad" />
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
@@ -219,6 +219,10 @@ export default function PrivacyPage() {
               </li>
               <li>
                 Comprobantes de pago que sube el paciente: 3 meses después de la cita. La cita y si está pagada se conservan.
+              </li>
+              <li>
+                Contenido de los emails enviados: 30 días. Después queda sólo el registro: a quién se envió, el asunto, la
+                fecha y si se entregó.
               </li>
               <li>
                 El negocio decide cuánto tiempo conserva las historias clínicas de sus pacientes, según la normativa de salud

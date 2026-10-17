@@ -351,9 +351,10 @@ function AppointmentDetails({
                   aria-pressed={active}
                   disabled={active || updateStatus.isPending}
                   onClick={() => changeStatus(status).catch(() => {})}
-                  className={cn("justify-start", active && "border-primary bg-accent disabled:opacity-100")}
+                  // El estado actual, marcado: en el oscuro también hay que pisar el fondo y el borde del botón outline.
+                  className={cn("justify-start", active && "border-primary bg-accent disabled:opacity-100 dark:border-primary dark:bg-accent")}
                 >
-                  <span className={cn("size-2 rounded-full", APPOINTMENT_STATUS_CONFIG[status].dot)} aria-hidden />
+                  <span className={cn("size-2 shrink-0 rounded-full", APPOINTMENT_STATUS_CONFIG[status].dot)} aria-hidden />
                   {APPOINTMENT_STATUS_CONFIG[status].label}
                 </Button>
               );
@@ -416,7 +417,7 @@ function AppointmentDetails({
         {canCancelFollowing && (
           <Button
             variant="outline"
-            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive dark:border-destructive/40"
             onClick={() => setConfirmCancelFollowing(true)}
           >
             <ListX /> Cancelar ésta y las siguientes

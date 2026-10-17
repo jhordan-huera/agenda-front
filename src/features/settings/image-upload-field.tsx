@@ -85,7 +85,16 @@ export function ImageUploadField({
               shape === "circle" ? "rounded-full" : "rounded-xl",
             )}
           >
-            {value ? <img src={value} alt={`Vista previa: ${label}`} className="size-full object-cover" /> : fallback}
+            {value ? (
+              <img
+                src={value}
+                alt={`Vista previa: ${label}`}
+                // La placa clara del logo (spec 019): un logo oscuro con fondo transparente no desaparece en el oscuro.
+                className={cn("size-full object-cover", target === "logo" && "dark:rounded-md dark:bg-white dark:p-1")}
+              />
+            ) : (
+              fallback
+            )}
             {upload.isPending && (
               <span className="absolute inset-0 flex items-center justify-center bg-background/70">
                 <Loader2 className="size-5 animate-spin" aria-hidden />

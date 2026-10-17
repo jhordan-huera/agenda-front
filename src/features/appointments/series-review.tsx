@@ -26,14 +26,16 @@ export interface SeriesReviewResult {
   left: { date: ISODate; startTime: TimeString }[];
 }
 
+const AMBER_MARK = "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/40";
+
 /** La marca de cada fila: siempre con su texto (no sólo el color) y los colores del tema. */
 const MARKS: Record<SeriesDateStatus | "anyway" | "removed", { label: string; icon: typeof Check; className: string }> = {
   free: { label: "Se crea", icon: Check, className: "bg-highlight/60 text-ink" },
-  anyway: { label: "Se agenda igual", icon: Check, className: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20" },
+  anyway: { label: "Se agenda igual", icon: Check, className: AMBER_MARK },
   busy: { label: "Ocupada", icon: Ban, className: "bg-destructive/10 text-destructive" },
-  blocked: { label: "Bloqueada", icon: CalendarX2, className: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20" },
-  day_off: { label: "No atiende", icon: CalendarX2, className: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20" },
-  outside_hours: { label: "Fuera de horario", icon: Clock, className: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20" },
+  blocked: { label: "Bloqueada", icon: CalendarX2, className: AMBER_MARK },
+  day_off: { label: "No atiende", icon: CalendarX2, className: AMBER_MARK },
+  outside_hours: { label: "Fuera de horario", icon: Clock, className: AMBER_MARK },
   plan_limit: { label: "Supera el cupo", icon: AlertTriangle, className: "bg-destructive/10 text-destructive" },
   removed: { label: "Quitada", icon: X, className: "bg-muted text-muted-foreground" },
 };
@@ -185,7 +187,7 @@ export function SeriesReview({
       </ol>
 
       {toCreate.length < 2 && (
-        <p role="status" className="flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p role="status" className="flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           {toCreate.length === 1
             ? "Para una sola cita, quita «Repetir»."
