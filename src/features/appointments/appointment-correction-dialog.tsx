@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useCorrectAppointmentStatus } from "@/hooks/queries/use-appointments";
 import { useErrorToast } from "@/hooks/use-error-toast";
-import { APPOINTMENT_STATUS_CONFIG, CORRECTABLE_FROM_COMPLETED, type CorrectableStatus } from "@/lib/constants/appointment-status";
+import { APPOINTMENT_STATUS_CONFIG, correctionTargets, type CorrectableStatus } from "@/lib/constants/appointment-status";
+import { getZonedNow, isPast } from "@/lib/time";
 import { appointmentCorrectionSchema, CORRECTION_REASON_MAX, CORRECTION_REASON_MIN } from "@/lib/validations/appointment";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { Appointment } from "@/types";
@@ -18,6 +19,8 @@ import type { Appointment } from "@/types";
 interface AppointmentCorrectionDialogProps {
   appointment: Appointment;
   clientName: string;
+  /** Zona del negocio: para saber si la cita ya terminó. */
+  timezone: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -27,7 +30,7 @@ interface AppointmentCorrectionDialogProps {
  * soporte: el estado correcto, el motivo (de 10 a 300 caracteres, queda en la actividad) y «Avisar al
  * paciente», apagada: es un arreglo interno.
  */
-export function AppointmentCorrectionDialog({ appointment, clientName, open, onOpenChange }: AppointmentCorrectionDialogProps) {
+export function AppointmentCorrectionDialog({ appointment, clientName, timezone, open, onOpenChange }: AppointmentCorrectionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -38,13 +41,16 @@ export function AppointmentCorrectionDialog({ appointment, clientName, open, onO
           </DialogDescription>
         </DialogHeader>
         {/* Cada vez que se abre, de cero: nada del intento anterior. */}
-        {open && <CorrectionForm appointment={appointment} onDone={() => onOpenChange(false)} />}
+        {open && <CorrectionForm appointment={appointment} timezone={timezone} onDone={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
   );
 }
 
-function CorrectionForm({ appointment, onDone }: { appointment: Appointment; onDone: () => void }) {
+function CorrectionForm({ appointment, timezone, onDone }: { appointment: Appointment; timezone: string; onDone: () => void }) {
+  // Si ya terminó, «Confirmada» no se ofrece: volvería a quedar por cerrar.
+  const ended = isPast(appointment.date, appointment.endTime, getZonedNow(timezone));
+  const options = correctionTargets(ended);
   const correct = useCorrectAppointmentStatus();
   const showError = useErrorToast();
   const [status, setStatus] = useState<CorrectableStatus | "">("");
@@ -77,7 +83,11 @@ function CorrectionForm({ appointment, onDone }: { appointment: Appointment; onD
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-4">
-      <FormField label="Estado correcto" error={errors.status}>
+      <FormField
+        label="Estado correcto"
+        error={errors.status}
+        hint={ended ? "La cita ya pasó: «Confirmada» no se ofrece, porque volvería a quedar por cerrar." : undefined}
+      >
         {(field) => (
           <Select
             value={status}
@@ -90,7 +100,7 @@ function CorrectionForm({ appointment, onDone }: { appointment: Appointment; onD
               <SelectValue placeholder="Elige el estado" />
             </SelectTrigger>
             <SelectContent position="popper">
-              {CORRECTABLE_FROM_COMPLETED.map((option) => (
+              {options.map((option) => (
                 <SelectItem key={option} value={option}>
                   <span className={`size-2 rounded-full ${APPOINTMENT_STATUS_CONFIG[option].dot}`} aria-hidden />
                   {APPOINTMENT_STATUS_CONFIG[option].label}

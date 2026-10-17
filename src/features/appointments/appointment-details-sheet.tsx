@@ -72,6 +72,7 @@ import { describeHomeVisit, getDirectionsUrl } from "@/lib/maps";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, AppointmentStatus, Client } from "@/types";
+import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { AppointmentCorrectionDialog } from "./appointment-correction-dialog";
 import { AppointmentPayment } from "./appointment-payment";
 import {
@@ -497,7 +498,13 @@ function AppointmentDetails({
         />
       )}
       {canCorrect && (
-        <AppointmentCorrectionDialog appointment={appointment} clientName={clientName} open={correcting} onOpenChange={setCorrecting} />
+        <AppointmentCorrectionDialog
+          appointment={appointment}
+          clientName={clientName}
+          timezone={business?.timezone ?? DEFAULT_TIMEZONE}
+          open={correcting}
+          onOpenChange={setCorrecting}
+        />
       )}
       {noteFor && clinicalAccess && (
         <ClinicalNoteDialog
