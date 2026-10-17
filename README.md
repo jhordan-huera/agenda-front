@@ -466,6 +466,8 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
 - **Las citas completadas quedan fijas** (spec 020): una cita Completada no cambia de estado ni de datos,
   salvo el pago, los comprobantes, las notas y la historia clínica, y ninguna cita vuelve a Pendiente. La
   regla es `canChangeStatus` de `src/lib/constants/appointment-status.ts`, la misma de la API y la beta.
+  - **Al crear** (2026-10-17), «Nueva cita» no ofrece «Pendiente»: las citas del panel nacen
+    Confirmadas, y una serie sólo Confirmada. Sólo las reservas online nacen Pendientes.
   - **La ficha** (`appointment-details-sheet.tsx`): en una completada, en lugar de los botones de estado
     sale «Completada · ya no se puede cambiar», sin «Cancelar cita». En una confirmada (y en una «No
     asistió» o «Cancelada»), «Pendiente» va deshabilitado, con su ayuda («Una cita confirmada no vuelve a
