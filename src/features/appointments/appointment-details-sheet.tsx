@@ -10,7 +10,9 @@ import {
   Mail,
   Navigation,
   ListX,
+  Lock,
   Pencil,
+  PencilLine,
   Phone,
   Repeat,
   Tag,
@@ -34,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/features/auth/use-session";
 import { ClinicalNoteDialog } from "@/features/clinical/clinical-note-dialog";
 import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
 import { ProfessionalDot } from "@/features/professionals/professional-select";
@@ -48,7 +51,13 @@ import {
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { seriesFrequencyText } from "@/lib/appointment-series";
-import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
+import {
+  APPOINTMENT_STATUSES,
+  APPOINTMENT_STATUS_CONFIG,
+  LOCKED_STATUS,
+  canChangeStatus,
+  statusChangeError,
+} from "@/lib/constants/appointment-status";
 import {
   capitalize,
   formatClockTime,
@@ -63,6 +72,8 @@ import { describeHomeVisit, getDirectionsUrl } from "@/lib/maps";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, AppointmentStatus, Client } from "@/types";
+import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
+import { AppointmentCorrectionDialog } from "./appointment-correction-dialog";
 import { AppointmentPayment } from "./appointment-payment";
 import {
   appointmentClientIds,
@@ -137,6 +148,14 @@ function AppointmentDetails({
   // La llegada se marca en citas que aún no se atendieron.
   const canMarkArrival = appointment.status === "pending" || appointment.status === "confirmed";
   const [confirmCancel, setConfirmCancel] = useState(false);
+  // Una cita completada queda fija (spec 020): sin los botones de estado ni «Cancelar cita». Sólo el
+  // propietario (también el super admin en modo soporte, que entra como propietario) la corrige, con un motivo.
+  const { session } = useSession();
+  const locked = appointment.status === LOCKED_STATUS;
+  const canCorrect = locked && session?.role === "owner";
+  const [correcting, setCorrecting] = useState(false);
+  // Ninguna cita vuelve a Pendiente: el botón va deshabilitado, con su ayuda.
+  const pendingHint = appointment.status === "pending" ? null : statusChangeError(appointment.status, "pending");
   // Una cita de una serie (spec 011): «Cita 3 de 8» y, si sigue activa y no es la última, «Cancelar ésta y
   // las siguientes» (la API sólo cancela las que siguen pendientes o confirmadas).
   const series = appointment.series ?? null;
@@ -339,45 +358,76 @@ function AppointmentDetails({
 
         <section aria-labelledby="status-heading" className="space-y-2">
           <h3 id="status-heading" className="text-sm font-semibold text-muted-foreground">
-            Cambiar estado
+            {locked ? "Estado" : "Cambiar estado"}
           </h3>
-          <div className="grid grid-cols-2 gap-2">
-            {APPOINTMENT_STATUSES.filter((s) => s !== "cancelled").map((status) => {
-              const active = appointment.status === status;
-              return (
-                <Button
-                  key={status}
-                  variant="outline"
-                  aria-pressed={active}
-                  disabled={active || updateStatus.isPending}
-                  onClick={() => changeStatus(status).catch(() => {})}
-                  // El estado actual, marcado: en el oscuro también hay que pisar el fondo y el borde del botón outline.
-                  className={cn("justify-start", active && "border-primary bg-accent disabled:opacity-100 dark:border-primary dark:bg-accent")}
-                >
-                  <span className={cn("size-2 shrink-0 rounded-full", APPOINTMENT_STATUS_CONFIG[status].dot)} aria-hidden />
-                  {APPOINTMENT_STATUS_CONFIG[status].label}
+          {locked ? (
+            <div className="grid gap-3 rounded-lg border bg-muted/40 p-3">
+              <div className="grid gap-0.5">
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  <Lock className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  Completada · ya no se puede cambiar
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {canCorrect
+                    ? "Si es un error, corrígela con un motivo: queda en la actividad."
+                    : "Si es un error, el propietario puede corregirla con un motivo."}
+                </p>
+              </div>
+              {canCorrect && (
+                <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setCorrecting(true)}>
+                  <PencilLine /> Corregir estado
                 </Button>
-              );
-            })}
-          </div>
-          <div className="flex items-start gap-2 pt-1">
-            <Checkbox
-              id="notify-patient"
-              checked={notify}
-              onCheckedChange={(checked) => setNotify(checked === true)}
-              aria-describedby="notify-patient-hint"
-              className="mt-0.5"
-            />
-            <div className="grid gap-0.5">
-              <Label htmlFor="notify-patient" className="font-normal">
-                Avisar al paciente por email y WhatsApp
-              </Label>
-              <p id="notify-patient-hint" className="text-xs text-muted-foreground">
-                Desmárcala si sólo corriges un error. También vale para «Cancelar cita»
-                {canCancelFollowing ? " y «Cancelar ésta y las siguientes»" : ""}.
-              </p>
+              )}
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                {APPOINTMENT_STATUSES.filter((s) => s !== "cancelled").map((status) => {
+                  const active = appointment.status === status;
+                  const blocked = !active && !canChangeStatus(appointment.status, status);
+                  return (
+                    <Button
+                      key={status}
+                      variant="outline"
+                      aria-pressed={active}
+                      disabled={active || blocked || updateStatus.isPending}
+                      aria-describedby={blocked && pendingHint ? "pending-hint" : undefined}
+                      title={blocked ? (statusChangeError(appointment.status, status) ?? undefined) : undefined}
+                      onClick={() => changeStatus(status).catch(() => {})}
+                      // El estado actual, marcado: en el oscuro también hay que pisar el fondo y el borde del botón outline.
+                      className={cn("justify-start", active && "border-primary bg-accent disabled:opacity-100 dark:border-primary dark:bg-accent")}
+                    >
+                      <span className={cn("size-2 shrink-0 rounded-full", APPOINTMENT_STATUS_CONFIG[status].dot)} aria-hidden />
+                      {APPOINTMENT_STATUS_CONFIG[status].label}
+                    </Button>
+                  );
+                })}
+              </div>
+              {pendingHint && (
+                <p id="pending-hint" className="text-xs text-muted-foreground">
+                  {pendingHint}
+                </p>
+              )}
+              <div className="flex items-start gap-2 pt-1">
+                <Checkbox
+                  id="notify-patient"
+                  checked={notify}
+                  onCheckedChange={(checked) => setNotify(checked === true)}
+                  aria-describedby="notify-patient-hint"
+                  className="mt-0.5"
+                />
+                <div className="grid gap-0.5">
+                  <Label htmlFor="notify-patient" className="font-normal">
+                    Avisar al paciente por email y WhatsApp
+                  </Label>
+                  <p id="notify-patient-hint" className="text-xs text-muted-foreground">
+                    Desmárcala si sólo corriges un error. También vale para «Cancelar cita»
+                    {canCancelFollowing ? " y «Cancelar ésta y las siguientes»" : ""}.
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </section>
 
         {patients.length > 0 && (
@@ -409,7 +459,7 @@ function AppointmentDetails({
         <Button variant="outline" className="flex-1" onClick={() => onEdit(appointment)}>
           <Pencil /> Editar
         </Button>
-        {appointment.status !== "cancelled" && (
+        {appointment.status !== "cancelled" && !locked && (
           <Button variant="destructive" className="flex-1" onClick={() => setConfirmCancel(true)}>
             <XCircle /> Cancelar cita
           </Button>
@@ -445,6 +495,15 @@ function AppointmentDetails({
           cancelLabel="Volver"
           destructive
           onConfirm={cancelThisAndFollowing}
+        />
+      )}
+      {canCorrect && (
+        <AppointmentCorrectionDialog
+          appointment={appointment}
+          clientName={clientName}
+          timezone={business?.timezone ?? DEFAULT_TIMEZONE}
+          open={correcting}
+          onOpenChange={setCorrecting}
         />
       )}
       {noteFor && clinicalAccess && (

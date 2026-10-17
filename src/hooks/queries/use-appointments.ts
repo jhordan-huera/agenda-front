@@ -5,7 +5,12 @@ import { useOfferWhatsAppNotice } from "@/features/appointments/whatsapp-notice-
 import { useBusinessId } from "@/features/auth/use-session";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { data, type AppointmentFilters } from "@/lib/data";
-import type { AppointmentInput, AppointmentSeriesInput, AppointmentSeriesPreviewInput } from "@/lib/validations/appointment";
+import type {
+  AppointmentCorrectionInput,
+  AppointmentInput,
+  AppointmentSeriesInput,
+  AppointmentSeriesPreviewInput,
+} from "@/lib/validations/appointment";
 import { noticeForChange, noticeForStatus } from "@/lib/whatsapp";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { queryKeys } from "./query-keys";
@@ -336,6 +341,27 @@ export function useUpdateAppointmentStatus() {
       if (notify) offerWhatsApp(appointment, previous ? noticeForChange(previous, appointment) : noticeForStatus(status), previous);
       // Sin esperar la recarga: "¿Cancelar esta cita?" se cierra al responder la API (no queda
       // apilada con el aviso de WhatsApp) y la cita ya se ve con su nuevo estado.
+      applySaved(appointment);
+    },
+  });
+}
+
+/**
+ * «Corregir estado» de una cita completada (spec 020), sólo del propietario: la cita corregida se ve al
+ * momento en la ficha y en la agenda, que se recarga con la actividad. Con «Avisar al paciente», el WhatsApp
+ * ya escrito, como en un cambio de estado.
+ */
+export function useCorrectAppointmentStatus() {
+  const businessId = useBusinessId();
+  const applySaved = useApplySavedAppointment();
+  const findCached = useCachedAppointment();
+  const offerWhatsApp = useOfferWhatsAppNotice();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: AppointmentCorrectionInput }) => data.appointments.correctStatus(businessId, id, input),
+    onMutate: ({ id }) => ({ previous: findCached(id) }),
+    onSuccess: (appointment, { input }, context) => {
+      const previous = context?.previous;
+      if (input.notify) offerWhatsApp(appointment, previous ? noticeForChange(previous, appointment) : noticeForStatus(input.status), previous);
       applySaved(appointment);
     },
   });

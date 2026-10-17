@@ -163,6 +163,8 @@ export const apiRepository: DataRepository = {
         notify,
         ...(options.onlyIfOpen && { onlyIfOpen: true }),
       }),
+    correctStatus: (businessId, appointmentId, input) =>
+      api.post<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/correct-status`, input),
     listToClose: (businessId, cursor) =>
       api.get<AppointmentsToClose>(`${business(businessId)}/appointments/to-close`, { cursor }),
     countToClose: (businessId) => api.get<AppointmentsToCloseCount>(`${business(businessId)}/appointments/to-close/count`),

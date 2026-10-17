@@ -78,7 +78,8 @@ export function BookingQrDialog({ open, onOpenChange, url, businessName, slug }:
         <p className="text-xs text-muted-foreground">
           Si cambias el enlace de reservas, el QR anterior deja de funcionar: vuelve a descargarlo.
         </p>
-        <DialogFooter className="gap-2 sm:justify-between">
+        {/* Uno debajo del otro: en el diálogo angosto, «Descargar para imprimir (PNG)» no cabe al lado. */}
+        <DialogFooter className="gap-2 sm:flex-col-reverse">
           <Button type="button" variant="outline" onClick={downloadSvg}>
             <FileImage aria-hidden /> Descargar SVG
           </Button>

@@ -8,12 +8,13 @@ export function BusinessMark({ name, logoUrl, className }: { name: string; logoU
       className={cn(
         "flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent text-sm font-bold text-ink",
         className,
-        // En el oscuro, el logo va sobre su placa clara: uno oscuro con fondo transparente no se perdería (spec 019).
-        logoUrl && "dark:bg-white dark:p-1",
+        // El logo entero sobre una placa blanca, también en el oscuro: un logo ancho no se recorta y uno
+        // oscuro con fondo transparente no se pierde (spec 019).
+        logoUrl && "border bg-white p-1 dark:bg-white",
       )}
       aria-hidden
     >
-      {logoUrl ? <img src={logoUrl} alt="" className="size-full object-cover dark:rounded-md" /> : getInitials(name)}
+      {logoUrl ? <img src={logoUrl} alt="" className="size-full rounded-md object-contain" /> : getInitials(name)}
     </span>
   );
 }

@@ -64,7 +64,7 @@ export function WeeklyScheduleEditor({ value, onChange, errors = {} }: WeeklySch
                       type="time"
                       step={900}
                       aria-label={`${label}: hora inicial del intervalo ${index + 1}`}
-                      className="w-28"
+                      className="w-32 shrink-0"
                       value={interval.start}
                       onChange={(e) => updateInterval(day, index, { start: e.target.value })}
                     />
@@ -73,7 +73,7 @@ export function WeeklyScheduleEditor({ value, onChange, errors = {} }: WeeklySch
                       type="time"
                       step={900}
                       aria-label={`${label}: hora final del intervalo ${index + 1}`}
-                      className="w-28"
+                      className="w-32 shrink-0"
                       value={interval.end}
                       onChange={(e) => updateInterval(day, index, { end: e.target.value })}
                     />

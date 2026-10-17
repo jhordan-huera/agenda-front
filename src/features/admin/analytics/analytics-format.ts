@@ -31,7 +31,19 @@ export const RATE_SHORT_LABELS: Record<AnalyticsRateKey, string> = {
   onlineRate: "% online",
   noShowRate: "% inasistencias",
   cancelRate: "% cancelaciones",
-  confirmRate: "% confirmadas",
+  confirmRate: "% confirmó el paciente",
+};
+
+/**
+ * Qué mide cada tasa (la ayuda del título de su columna). La de confirmaciones no es el estado
+ * «Confirmada» que pone el negocio: es el botón «Confirmo que voy» del paciente (spec 010).
+ */
+export const RATE_HINTS: Record<AnalyticsRateKey, string> = {
+  onlineRate: "Reservas hechas desde la página de reservas, entre las citas del periodo",
+  noShowRate: "«No asistió» entre las citas ya cerradas (completadas y no asistió); las que siguen sin cerrar no cuentan",
+  cancelRate: "Canceladas entre todas las citas del periodo",
+  confirmRate:
+    "Pacientes que pulsaron «Confirmo que voy» en el email o el recordatorio, entre las citas que lo recibieron. No es el estado «Confirmada» de la agenda",
 };
 
 /** Subir la tasa es bueno (reservas online, confirmaciones) o malo (inasistencias, cancelaciones). */
@@ -144,12 +156,16 @@ export function categoryOf(snapshot: Pick<AnalyticsSnapshot, "categories">, busi
   return snapshot.categories.find((category) => category.id === business.category.id) ?? null;
 }
 
+/** La mediana del tipo para una tasa (null con «pocos datos», del negocio o del tipo: no se comparan). */
+export const typicalRate = (business: BusinessAnalytics, rateKey: AnalyticsRateKey, category: CategoryAnalytics | null) =>
+  !business.fewData && category && !category.fewData ? category.medians[rateKey] : null;
+
 /** «45 de 50» o «Sin tope». */
 export const usageLabel = ({ used, limit }: { used: number; limit: number | null }) => (limit === null ? String(used) : `${used} de ${limit}`);
 
-/** Texto de una tasa para el CSV, como se ve en la tabla: «25 % · tipo 12 %» o «40 % · pocos datos». */
+/** Texto de una tasa para el CSV: «25 % · tipo 12 %» o «40 % · pocos datos». */
 export function rateText(business: BusinessAnalytics, rateKey: AnalyticsRateKey, category: CategoryAnalytics | null): string {
-  const typical = category && !category.fewData ? category.medians[rateKey] : null;
+  const typical = typicalRate(business, rateKey, category);
   if (business.fewData) return `${formatRate(business[rateKey])} · pocos datos`;
   return typical === null ? formatRate(business[rateKey]) : `${formatRate(business[rateKey])} · tipo ${formatRate(typical)}`;
 }
