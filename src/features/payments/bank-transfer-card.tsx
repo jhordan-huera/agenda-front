@@ -199,8 +199,8 @@ const MAX_PHOTO_BYTES = 30 * 1024 * 1024;
 /** Aviso en verde: el comprobante se envió o el pago ya está confirmado. */
 function SuccessNote({ title, text }: { title: string; text: string }) {
   return (
-    <div className="mt-5 flex items-start gap-3 rounded-lg bg-emerald-50 p-3 text-emerald-900" role="status">
-      <CircleCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" aria-hidden />
+    <div className="mt-5 flex items-start gap-3 rounded-lg bg-emerald-50 p-3 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-300" role="status">
+      <CircleCheck className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
       <p className="text-sm">
         <span className="block font-semibold">{title}</span>
         {text}

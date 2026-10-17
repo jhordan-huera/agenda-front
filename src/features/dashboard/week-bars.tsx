@@ -32,7 +32,7 @@ export function WeekBars({ appointments, now }: { appointments: Appointment[]; n
                 <span
                   className={cn(
                     "mb-1 text-[11px] leading-none font-bold tabular-nums",
-                    today ? "rounded-md bg-shell px-1.5 py-1 text-white" : "text-muted-foreground",
+                    today ? "rounded-md bg-shell px-1.5 py-1 text-shell-foreground" : "text-muted-foreground",
                   )}
                 >
                   {day.count || ""}

@@ -28,7 +28,7 @@ export function PhoneBooking() {
           </span>
         ))}
       </div>
-      <span aria-hidden className="mt-4 flex h-9 items-center justify-center rounded-md bg-ink text-sm font-semibold text-white">
+      <span aria-hidden className="mt-4 flex h-9 items-center justify-center rounded-md bg-ink text-sm font-semibold text-primary-foreground">
         Continuar
       </span>
       <p aria-hidden className="mt-2 text-center text-[11px] text-muted-foreground">

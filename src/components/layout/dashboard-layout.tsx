@@ -130,14 +130,14 @@ function SupportBanner({ businessName }: { businessName: string }) {
     navigate(businessId ? `/admin/businesses/${businessId}` : "/admin", { replace: true });
   };
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-600/25 bg-amber-50 px-4 py-2 text-sm text-amber-950 sm:px-6 lg:px-8">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-600/25 bg-amber-50 px-4 py-2 text-sm text-amber-950 sm:px-6 lg:px-8 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200">
       <p className="flex items-center gap-2">
         <LifeBuoy className="size-4 shrink-0" aria-hidden />
         <span>
           Modo soporte: estás gestionando <strong>{businessName}</strong> como super admin. Todo queda en su actividad.
         </span>
       </p>
-      <Button size="sm" variant="outline" className="bg-white" onClick={exit}>
+      <Button size="sm" variant="outline" className="bg-card" onClick={exit}>
         <LogOut /> Salir del modo soporte
       </Button>
     </div>

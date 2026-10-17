@@ -24,7 +24,7 @@ export default function PaymentPage() {
 
   if (query.isPending) {
     return (
-      <div className="min-h-screen bg-muted p-4" role="status" aria-label="Cargando">
+      <div className="min-h-screen bg-muted p-4 dark:bg-canvas" role="status" aria-label="Cargando">
         <div className="mx-auto grid max-w-xl gap-4 py-8">
           <Skeleton className="h-10 w-56" />
           <Skeleton className="h-40 rounded-2xl" />
@@ -62,10 +62,12 @@ export default function PaymentPage() {
 
   return (
     <BrandThemeProvider colors={business.brandColors}>
-      <div className="flex min-h-screen flex-col bg-muted">
+      {/* En el oscuro, el fondo es el lienzo: así las tarjetas quedan más claras que él, como en el claro (spec 019). */}
+      <div className="flex min-h-screen flex-col bg-muted dark:bg-canvas">
         <PageTitle title={`Pago de tu cita · ${business.name}`} />
         <header className="border-b bg-background">
           <div className="mx-auto flex max-w-xl items-center gap-4 px-4 py-6">
+            {/* Sobre su placa blanca a propósito, también en el oscuro: un logo oscuro con fondo transparente no desaparece (spec 019). */}
             {business.logoUrl && (
               <img
                 src={business.logoUrl}

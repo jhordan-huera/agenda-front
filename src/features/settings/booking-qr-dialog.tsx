@@ -1,21 +1,27 @@
 import { Download, FileImage } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { encode, renderSVG } from "uqr";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BrandPaletteContext } from "@/features/branding/brand-palette-context";
+import type { BrandPalettes } from "@/lib/brand-theme";
+
+interface SheetColors {
+  qr: string;
+  ink: string;
+  muted: string;
+  paper: string;
+}
 
 /**
- * Colores de la lámina: los del negocio (o los de Agenda360), leídos de las variables CSS. El QR va
- * con el color del texto, casi negro, para que lo lea cualquier cámara.
+ * Colores de la lámina: los del negocio (o los de Agenda360), siempre los del modo claro, también con la
+ * pantalla en oscuro (spec 019): el QR va sobre blanco y con el color del texto, casi negro, para que lo lea
+ * cualquier cámara, y la lámina se imprime. Sin colores propios, los de src/index.css.
  */
-function brandColors() {
-  const style = getComputedStyle(document.documentElement);
-  const read = (name: string, fallback: string) => {
-    const value = style.getPropertyValue(name).trim();
-    return /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
-  };
-  return { qr: read("--text", "#1d2433"), ink: read("--ink", "#4a6cb0"), muted: read("--graphite", "#5b6478"), paper: "#ffffff" };
+function sheetColors(palettes: BrandPalettes | null): SheetColors {
+  const light = palettes?.light;
+  return { qr: light?.text ?? "#1d2433", ink: light?.ink ?? "#4a6cb0", muted: light?.graphite ?? "#5b6478", paper: "#ffffff" };
 }
 const FONT = '"Sora Variable", ui-sans-serif, system-ui, sans-serif';
 
@@ -30,15 +36,16 @@ interface BookingQrDialogProps {
 /** Código QR del enlace de reservas, para mostrarlo en el local, en tarjetas o en redes. */
 export function BookingQrDialog({ open, onOpenChange, url, businessName, slug }: BookingQrDialogProps) {
   const [pending, setPending] = useState(false);
+  const colors = sheetColors(useContext(BrandPaletteContext));
   const preview = useMemo(
-    () => `data:image/svg+xml;utf8,${encodeURIComponent(renderSVG(url, { pixelSize: 8, border: 2, blackColor: brandColors().qr }))}`,
-    [url],
+    () => `data:image/svg+xml;utf8,${encodeURIComponent(renderSVG(url, { pixelSize: 8, border: 2, blackColor: colors.qr }))}`,
+    [url, colors.qr],
   );
 
   const downloadPng = async () => {
     setPending(true);
     try {
-      download(await renderPrintablePng(url, businessName), `qr-reservas-${slug}.png`);
+      download(await renderPrintablePng(url, businessName, colors), `qr-reservas-${slug}.png`);
     } catch {
       toast.error("No se pudo generar la imagen. Prueba con la versión SVG.");
     } finally {
@@ -47,7 +54,7 @@ export function BookingQrDialog({ open, onOpenChange, url, businessName, slug }:
   };
 
   const downloadSvg = () => {
-    const svg = renderSVG(url, { pixelSize: 10, border: 4, blackColor: brandColors().qr });
+    const svg = renderSVG(url, { pixelSize: 10, border: 4, blackColor: colors.qr });
     download(new Blob([svg], { type: "image/svg+xml" }), `qr-reservas-${slug}.svg`);
   };
 
@@ -62,7 +69,8 @@ export function BookingQrDialog({ open, onOpenChange, url, businessName, slug }:
           </DialogDescription>
         </DialogHeader>
         <div className="grid justify-items-center gap-3 rounded-xl border bg-background p-5">
-          <img src={preview} alt={`Código QR del enlace ${url}`} className="size-56" data-testid="booking-qr" />
+          {/* Blanco a propósito: el QR necesita fondo blanco para escanearse (spec 019). */}
+          <img src={preview} alt={`Código QR del enlace ${url}`} className="size-56 rounded-lg bg-white" data-testid="booking-qr" />
           <p className="max-w-full truncate text-sm font-semibold text-ink" title={url}>
             {displayUrl(url)}
           </p>
@@ -113,13 +121,12 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, weight: number, si
  * Lámina para imprimir (1200 px de ancho): "Reserva tu cita", el nombre del negocio, el QR y el
  * enlace escrito, por si alguien prefiere teclearlo.
  */
-async function renderPrintablePng(url: string, businessName: string): Promise<Blob> {
+async function renderPrintablePng(url: string, businessName: string, colors: SheetColors): Promise<Blob> {
   await Promise.all([
     document.fonts.load(`800 72px ${FONT}`),
     document.fonts.load(`600 40px ${FONT}`),
   ]).catch(() => undefined);
 
-  const colors = brandColors();
   const qr = encode(url, { border: 0 });
   const width = 1200;
   const margin = 100;

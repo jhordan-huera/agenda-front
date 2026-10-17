@@ -37,7 +37,7 @@ export function HeroAgenda() {
       <div aria-hidden className="absolute inset-0 translate-x-3 translate-y-3 rotate-3 rounded-2xl bg-background/60 ring-1 ring-ink/10" />
 
       <figure
-        className="relative -rotate-[1.5deg] rounded-2xl bg-white p-5 text-foreground shadow-[0_32px_64px_-32px_rgb(29_36_51/0.35)] animate-in fill-mode-both duration-700 fade-in slide-in-from-bottom-6 ease-out-soft motion-reduce:animate-none sm:p-7"
+        className="relative -rotate-[1.5deg] rounded-2xl bg-card p-5 text-foreground shadow-[0_32px_64px_-32px_rgb(29_36_51/0.35)] animate-in fill-mode-both duration-700 fade-in slide-in-from-bottom-6 ease-out-soft motion-reduce:animate-none sm:p-7"
         style={delay(SCENE.sheet)}
       >
         <figcaption className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-4">
@@ -101,7 +101,7 @@ export function HeroAgenda() {
                         <span className="block truncate font-semibold">{row.name}</span>
                         <span className="block truncate text-sm text-muted-foreground">Reservó {row.service.toLowerCase()} desde su celular</span>
                       </span>
-                      <span className="hidden shrink-0 rounded-full bg-ink px-2 py-0.5 text-xs font-semibold text-white sm:inline">Nueva</span>
+                      <span className="hidden shrink-0 rounded-full bg-ink px-2 py-0.5 text-xs font-semibold text-primary-foreground sm:inline">Nueva</span>
                     </span>
                   </>
                 )}
@@ -114,7 +114,7 @@ export function HeroAgenda() {
       {/* El aviso que recibe el profesional cuando alguien reserva. */}
       <div
         aria-hidden
-        className="absolute -bottom-7 -left-3 flex max-w-[17rem] items-start gap-3 rounded-xl bg-white p-3.5 text-foreground shadow-[0_20px_40px_-20px_rgb(29_36_51/0.35)] ring-1 ring-ink/10 animate-in fill-mode-both duration-500 fade-in slide-in-from-bottom-4 ease-out-soft motion-reduce:animate-none sm:-left-10"
+        className="absolute -bottom-7 -left-3 flex max-w-[17rem] items-start gap-3 rounded-xl bg-popover p-3.5 text-foreground shadow-[0_20px_40px_-20px_rgb(29_36_51/0.35)] ring-1 ring-ink/10 animate-in fill-mode-both duration-500 fade-in slide-in-from-bottom-4 ease-out-soft motion-reduce:animate-none sm:-left-10"
         style={delay(SCENE.notice)}
       >
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-highlight text-ink">

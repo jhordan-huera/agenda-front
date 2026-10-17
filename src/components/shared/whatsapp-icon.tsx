@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** Logotipo de WhatsApp (lucide no incluye logotipos de marca). */
+/** Logotipo de WhatsApp (lucide no incluye logotipos de marca). Su verde, a propósito igual en los dos modos (spec 019). */
 export function WhatsAppIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={cn("text-[#1fa855]", className)}>

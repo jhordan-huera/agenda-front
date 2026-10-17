@@ -6,12 +6,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { reverseGeocode, searchAddress, searchAddressLeniently, type GeocodeResult, type GeoPoint } from "@/lib/geocoding";
 import { cn } from "@/lib/utils";
-import { BASE_MAP_OPTIONS, canShowMap, collapseAttribution, createPinElement } from "./map-base";
+import { BASE_MAP_OPTIONS, canShowMap, collapseAttribution, createMap, createPinElement, MAP_CONTAINER_CLASS, useMapTheme } from "./map-base";
 
 /**
  * Selector de ubicación exacta: el usuario toca el mapa, arrastra el pin, usa su GPS
  * o busca una dirección. Mapa vectorial (MapLibre + OpenFreeMap, gratis y sin clave de API).
  * Se carga bajo demanda (React.lazy) para no sumar el peso del mapa a toda la app.
+ * Sigue al modo de pantalla (spec 019): al cambiar, cambia el estilo y el pin y la vista se quedan.
  */
 
 export interface LocationPickerProps {
@@ -60,6 +61,9 @@ export default function LocationPicker({
   const [locating, setLocating] = useState(false);
   const reverseRequest = useRef<AbortController | null>(null);
   const initial = useRef({ value, center: defaultCenter });
+  const theme = useMapTheme(mapRef);
+  // El modo al crear el mapa; después lo cambia useMapTheme, sin rehacerlo.
+  const currentTheme = useEffectEvent(() => theme);
 
   const flyTo = (point: GeoPoint, zoom: number) =>
     mapRef.current?.flyTo({ center: [point.lng, point.lat], zoom, duration: 700 });
@@ -82,13 +86,16 @@ export default function LocationPicker({
   useEffect(() => {
     if (!mapSupported) return;
     const { value: start, center } = initial.current;
-    const map = new maplibregl.Map({
-      ...BASE_MAP_OPTIONS,
-      container: containerRef.current!,
-      center: start ? [start.lng, start.lat] : [center[1], center[0]],
-      zoom: start ? PICKED_ZOOM : 12,
-      cooperativeGestures: true,
-    });
+    const map = createMap(
+      {
+        ...BASE_MAP_OPTIONS,
+        container: containerRef.current!,
+        center: start ? [start.lng, start.lat] : [center[1], center[0]],
+        zoom: start ? PICKED_ZOOM : 12,
+        cooperativeGestures: true,
+      },
+      currentTheme(),
+    );
     collapseAttribution(map);
     map.touchZoomRotate.disableRotation();
     map.on("click", (event) => pickFromMap({ lat: event.lngLat.lat, lng: event.lngLat.lng }));
@@ -195,6 +202,7 @@ export default function LocationPicker({
     <div
       className={cn(
         "relative isolate h-80 overflow-hidden rounded-2xl border bg-muted shadow-sm sm:h-96",
+        MAP_CONTAINER_CLASS,
         invalid && "border-destructive ring-3 ring-destructive/20",
       )}
     >
@@ -294,6 +302,8 @@ export default function LocationPicker({
         role="status"
         className={cn(
           "pointer-events-none absolute bottom-3 left-3 z-10 flex max-w-[calc(100%-8rem)] items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-md",
+          // Verde fijo con texto blanco a propósito, en los dos modos: va sobre el mapa y necesita un fondo
+          // opaco que se distinga de él (spec 019).
           value ? "bg-emerald-600 text-white" : "bg-background/95 text-foreground",
         )}
       >

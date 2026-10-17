@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { OdontogramValue, ToothState, ToothSurface, ToothSurfaceState, ToothWholeState } from "@/types";
-import { describeTooth, SURFACE_STATES, WHOLE_STATES } from "./odontogram-labels";
+import { describeTooth, ODONTOGRAM_COLORS, SURFACE_STATES, WHOLE_STATES } from "./odontogram-labels";
 
 /*
  * Odontograma con numeración FDI. Cada pieza es un cuadrado de 5 superficies: el centro es la
@@ -34,6 +34,7 @@ function surfaceAt(tooth: string, position: Position): ToothSurface {
 }
 
 const SURFACE_COLOR = Object.fromEntries(SURFACE_STATES.map((state) => [state.value, state.color])) as Record<ToothSurfaceState, string>;
+const WHOLE_COLOR = Object.fromEntries(WHOLE_STATES.map((state) => [state.value, state.color])) as Record<ToothWholeState, string>;
 
 function polygons(size: number) {
   const a = size * 0.3;
@@ -47,7 +48,11 @@ function polygons(size: number) {
   } satisfies Record<Position, string>;
 }
 
-/** Una pieza dibujada en SVG (en el origen; el llamador la posiciona). */
+/**
+ * Una pieza dibujada en SVG (en el origen; el llamador la posiciona). Los colores van en `style`, con
+ * las variables de ODONTOGRAM_COLORS: algunos navegadores no pintan `fill="var(--x)"` en el atributo.
+ * Una superficie sana lleva el fondo de la tarjeta: blanca en el claro y al imprimir.
+ */
 function ToothShape({
   tooth,
   state,
@@ -71,8 +76,7 @@ function ToothShape({
           <polygon
             key={position}
             points={shapes[position]}
-            fill={surfaceState && !faded ? SURFACE_COLOR[surfaceState] : "#ffffff"}
-            stroke="#94a3b8"
+            style={{ fill: surfaceState && !faded ? SURFACE_COLOR[surfaceState] : "var(--card)", stroke: "var(--tooth-line)" }}
             strokeWidth={1}
             className={onSurface ? "cursor-pointer hover:opacity-80" : undefined}
             onClick={onSurface ? () => onSurface(surface) : undefined}
@@ -81,15 +85,17 @@ function ToothShape({
           </polygon>
         );
       })}
-      {whole === "corona" && <circle cx={size / 2} cy={size / 2} r={size * 0.62} fill="none" stroke="#2563eb" strokeWidth={2} />}
-      {whole === "endodoncia" && <rect x={-2} y={-2} width={size + 4} height={size + 4} fill="none" stroke="#9333ea" strokeWidth={2.5} />}
+      {whole === "corona" && <circle cx={size / 2} cy={size / 2} r={size * 0.62} fill="none" style={{ stroke: WHOLE_COLOR.corona }} strokeWidth={2} />}
+      {whole === "endodoncia" && (
+        <rect x={-2} y={-2} width={size + 4} height={size + 4} fill="none" style={{ stroke: WHOLE_COLOR.endodoncia }} strokeWidth={2.5} />
+      )}
       {whole === "implante" && (
-        <text x={size / 2} y={size / 2 + 4} textAnchor="middle" fontSize={size * 0.35} fontWeight={700} fill="#2563eb">
+        <text x={size / 2} y={size / 2 + 4} textAnchor="middle" fontSize={size * 0.35} fontWeight={700} style={{ fill: WHOLE_COLOR.implante }}>
           I
         </text>
       )}
       {(whole === "extraccion" || whole === "ausente") && (
-        <g stroke={whole === "extraccion" ? "#dc2626" : "#475569"} strokeWidth={2.5} strokeLinecap="round">
+        <g style={{ stroke: WHOLE_COLOR[whole] }} strokeWidth={2.5} strokeLinecap="round">
           <line x1={2} y1={2} x2={size - 2} y2={size - 2} />
           <line x1={size - 2} y1={2} x2={2} y2={size - 2} />
         </g>
@@ -124,7 +130,7 @@ function OdontogramChart({
   const height = rows.length * rowHeight + (showPrimary ? 6 : 10);
 
   return (
-    <svg viewBox={`-4 -2 ${width + 8} ${height + 4}`} className={cn("w-full", className)} role="img" aria-label="Odontograma">
+    <svg viewBox={`-4 -2 ${width + 8} ${height + 4}`} className={cn("w-full", ODONTOGRAM_COLORS, className)} role="img" aria-label="Odontograma">
       {rows.map((halves, rowIndex) => {
         const upperRow = rowIndex < rows.length / 2;
         const y = rowIndex * rowHeight + (rowIndex >= rows.length / 2 ? (showPrimary ? 6 : 10) : 0);
@@ -185,14 +191,21 @@ function OdontogramChart({
           </g>
         );
       })}
-      <line x1={8 * (TOOTH + GAP) - GAP + MIDLINE / 2} y1={0} x2={8 * (TOOTH + GAP) - GAP + MIDLINE / 2} y2={height} stroke="#cbd5e1" strokeDasharray="3 3" />
+      <line
+        x1={8 * (TOOTH + GAP) - GAP + MIDLINE / 2}
+        y1={0}
+        x2={8 * (TOOTH + GAP) - GAP + MIDLINE / 2}
+        y2={height}
+        style={{ stroke: "var(--tooth-midline)" }}
+        strokeDasharray="3 3"
+      />
     </svg>
   );
 }
 
 export function OdontogramLegend() {
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-label="Leyenda del odontograma">
+    <ul className={cn("flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground", ODONTOGRAM_COLORS)} aria-label="Leyenda del odontograma">
       {SURFACE_STATES.map((state) => (
         <li key={state.value} className="flex items-center gap-1.5">
           <span className="size-3 rounded-sm border" style={{ background: state.color }} aria-hidden /> {state.label}
@@ -258,7 +271,7 @@ export function OdontogramInput({ value, onChange }: { value: OdontogramValue; o
   };
 
   return (
-    <div className="grid gap-3">
+    <div className={cn("grid gap-3", ODONTOGRAM_COLORS)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           Toca una pieza para marcar sus hallazgos.

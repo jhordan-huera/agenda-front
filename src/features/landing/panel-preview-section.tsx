@@ -40,7 +40,7 @@ export function PanelPreviewSection() {
                 <dt className="text-sm text-muted-foreground">{kpi.label}</dt>
                 <dd className="mt-1 flex items-baseline gap-2">
                   <span className="text-2xl font-bold tracking-[-0.02em] tabular-nums">{kpi.value}</span>
-                  {kpi.trend && <span className="text-xs font-semibold text-emerald-600">{kpi.trend}</span>}
+                  {kpi.trend && <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{kpi.trend}</span>}
                 </dd>
               </div>
             ))}

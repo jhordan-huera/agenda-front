@@ -14,9 +14,10 @@ export function ProductionDbBanner() {
   }, []);
   if (!production) return null;
   return (
+    // Texto blanco sobre el rojo en el claro; en el oscuro el rojo se aclara y el texto va oscuro (spec 019).
     <div
       role="status"
-      className="pointer-events-none fixed top-2 left-1/2 z-[100] -translate-x-1/2 rounded-full bg-destructive px-4 py-1.5 text-xs font-semibold text-white shadow-lg"
+      className="pointer-events-none fixed top-2 left-1/2 z-[100] -translate-x-1/2 rounded-full bg-destructive px-4 py-1.5 text-xs font-semibold text-white shadow-lg dark:text-background"
     >
       Base de PRODUCCIÓN: lo que hagas aquí es real
     </div>

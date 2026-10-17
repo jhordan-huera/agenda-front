@@ -1,10 +1,19 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useThemeMode } from "@/features/theme/use-theme-mode";
 import { cn } from "@/lib/utils";
 import type { Professional } from "@/types";
+import { professionalColor } from "./colors";
 
-/** Punto con el color de la agenda (calendario, listas, selectores). */
+/** Punto con el color de la agenda (calendario, listas, selectores), en el modo de la pantalla (spec 019). */
 export function ProfessionalDot({ color, className }: { color: string; className?: string }) {
-  return <span aria-hidden className={cn("inline-block size-2.5 shrink-0 rounded-full", className)} style={{ backgroundColor: color }} />;
+  const { resolved } = useThemeMode();
+  return (
+    <span
+      aria-hidden
+      className={cn("inline-block size-2.5 shrink-0 rounded-full", className)}
+      style={{ backgroundColor: professionalColor(color, resolved) }}
+    />
+  );
 }
 
 export const ALL_AGENDAS = "all";

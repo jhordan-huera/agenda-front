@@ -2,6 +2,7 @@ import type {
   ChangePasswordInput,
   LoginInput,
   RegisterInput,
+  ThemeModeInput,
   TwoFactorDisableInput,
   TwoFactorLoginInput,
 } from "@/lib/validations/auth";
@@ -11,6 +12,7 @@ import type {
   BusinessStatus,
   PlatformRole,
   RecoveryCodes,
+  ThemeMode,
   TwoFactorChallenge,
   TwoFactorSetup,
   TwoFactorStatus,
@@ -43,6 +45,11 @@ export interface Session {
    */
   panelColors: BrandColors | null;
   /**
+   * Modo de pantalla de la cuenta (spec 019): lo elige cada persona en Configuración → Perfil y lo ve
+   * igual en todos sus equipos. Un backend anterior no lo manda: se toma como "auto".
+   */
+  themeMode: ThemeMode;
+  /**
    * Sólo en el frontend: el super admin está gestionando un negocio ("Gestionar negocio").
    * Mientras tanto, businessId/role apuntan a ese negocio con permisos de propietario.
    */
@@ -64,6 +71,11 @@ export interface AuthService {
   signOut(): Promise<void>;
   /** Sólo el super admin: las contraseñas de los usuarios las pone él desde el panel /admin. */
   changePassword(input: ChangePasswordInput): Promise<void>;
+  /**
+   * Modo de pantalla de la propia cuenta (spec 019), con cualquier rol. Queda en la actividad; el mismo
+   * modo otra vez no cambia nada.
+   */
+  setThemeMode(input: ThemeModeInput): Promise<{ mode: ThemeMode }>;
   /** Verificación en dos pasos de la propia cuenta (hoy, sólo el super admin, para quien es obligatoria). */
   twoFactor: {
     status(): Promise<TwoFactorStatus>;

@@ -15,6 +15,8 @@ export interface SessionContextValue {
   signOut: () => Promise<void>;
   /** Vuelve a leer la sesión (p. ej. tras crear el negocio en el onboarding). */
   refresh: () => Promise<Session | null>;
+  /** Cambia la sesión en memoria, sin pedirla otra vez: el modo de pantalla al elegirlo (spec 019). */
+  updateSession: (changes: Partial<Pick<Session, "themeMode">>) => void;
   /** Super admin: empieza a gestionar un negocio como si fuera su propietario. */
   enterSupport: (business: { id: string; name: string }) => void;
   exitSupport: () => void;

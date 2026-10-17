@@ -37,9 +37,10 @@ export function NoticeBell({ scope, timezone, align = "end", className }: Notice
         <Button type="button" variant="ghost" size="icon" aria-label={bellLabel(unread)} className={cn("relative shrink-0 rounded-xl", className)}>
           <Bell className="size-[1.15rem]" aria-hidden />
           {unread > 0 && (
+            // La cifra, blanca sobre el rojo en el claro; en el oscuro el rojo se aclara y va oscura (spec 019).
             <span
               aria-hidden
-              className="absolute -top-0.5 -right-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-destructive px-1 text-[0.6875rem] leading-none font-semibold text-white tabular-nums ring-2 ring-background"
+              className="absolute -top-0.5 -right-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-destructive px-1 text-[0.6875rem] leading-none font-semibold text-white tabular-nums ring-2 ring-background dark:text-background"
             >
               {unreadBadge(unread)}
             </span>

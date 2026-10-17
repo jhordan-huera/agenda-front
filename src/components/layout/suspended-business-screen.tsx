@@ -21,7 +21,7 @@ export function SuspendedBusinessScreen() {
       <PageTitle title="Negocio suspendido" />
       <Logo />
       <div className="w-full max-w-md rounded-2xl border bg-background p-8 text-center shadow-sm">
-        <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+        <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
           <PauseCircle className="size-6" aria-hidden />
         </span>
         <h1 className="mt-4 text-xl font-semibold tracking-tight">Tu negocio está suspendido</h1>

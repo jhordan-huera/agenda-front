@@ -11,6 +11,7 @@ interface UsageMeterProps {
 /** Medidor de uso del plan: el relleno indica la severidad (normal → aviso → límite). */
 export function UsageMeter({ label, used, limit, className }: UsageMeterProps) {
   const ratio = limit ? Math.min(used / limit, 1) : 0;
+  // El ámbar de «casi lleno» sirve igual en los dos modos: es una barra, sin texto encima (spec 019).
   const tone = ratio >= 1 ? "bg-destructive" : ratio >= 0.8 ? "bg-amber-500" : "bg-primary";
 
   return (

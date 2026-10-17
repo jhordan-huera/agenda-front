@@ -111,7 +111,7 @@ export function TeamSettings() {
                       ) : (
                         multiAgenda &&
                         member.role === "professional" && (
-                          <p className="text-xs font-medium text-amber-700">
+                          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
                             Sin agenda: asígnasela en{" "}
                             <Link to="/dashboard/professionals" className="underline underline-offset-2">
                               Profesionales

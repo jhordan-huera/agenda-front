@@ -57,11 +57,11 @@ export function CategoryCard({ category, onEdit, onDelete }: CategoryCardProps) 
 
       <div className="flex flex-wrap gap-1.5 px-4 pb-4">
         {category.isActive ? (
-          <span className="inline-flex h-5 items-center rounded-full bg-emerald-50 px-2 text-xs font-medium text-emerald-700 ring-1 ring-emerald-600/20 ring-inset">
+          <span className="inline-flex h-5 items-center rounded-full bg-emerald-50 px-2 text-xs font-medium text-emerald-700 ring-1 ring-emerald-600/20 ring-inset dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/40">
             Activa
           </span>
         ) : (
-          <span className="inline-flex h-5 items-center rounded-full bg-zinc-100 px-2 text-xs font-medium text-zinc-600 ring-1 ring-zinc-500/20 ring-inset">
+          <span className="inline-flex h-5 items-center rounded-full bg-zinc-100 px-2 text-xs font-medium text-zinc-600 ring-1 ring-zinc-500/20 ring-inset dark:bg-zinc-500/15 dark:text-zinc-300 dark:ring-zinc-500/40">
             Inactiva
           </span>
         )}

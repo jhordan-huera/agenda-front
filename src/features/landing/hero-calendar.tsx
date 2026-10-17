@@ -53,7 +53,7 @@ const time = (hour: number) => `${String(Math.floor(hour)).padStart(2, "0")}:${h
 
 export function HeroCalendar() {
   return (
-    <figure className="relative rounded-2xl border border-border/70 bg-white p-4 text-foreground shadow-[0_32px_64px_-32px_rgb(29_36_51/0.35)] animate-in fill-mode-both duration-700 fade-in slide-in-from-bottom-6 ease-out-soft motion-reduce:animate-none sm:p-5">
+    <figure className="relative rounded-2xl border border-border/70 bg-card p-4 text-foreground shadow-[0_32px_64px_-32px_rgb(29_36_51/0.35)] animate-in fill-mode-both duration-700 fade-in slide-in-from-bottom-6 ease-out-soft motion-reduce:animate-none sm:p-5">
       <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <span className="text-base font-bold">
           <span className="sm:hidden">7 – 10 de octubre</span>
@@ -62,7 +62,7 @@ export function HeroCalendar() {
         {/* Las vistas de la Agenda, con «Semana» elegida (decorativo). */}
         <span aria-hidden className="flex rounded-lg bg-muted p-0.5 text-xs font-medium text-muted-foreground">
           <span className="px-2.5 py-1">Día</span>
-          <span className="rounded-md bg-white px-2.5 py-1 font-semibold text-foreground shadow-sm">Semana</span>
+          <span className="rounded-md bg-card px-2.5 py-1 font-semibold text-foreground shadow-sm">Semana</span>
           <span className="px-2.5 py-1">Mes</span>
         </span>
       </figcaption>
@@ -96,7 +96,7 @@ export function HeroCalendar() {
             <span
               className={cn(
                 "mx-auto mt-0.5 flex size-6 items-center justify-center rounded-full text-sm font-bold tabular-nums",
-                day.today ? "bg-ink text-white" : "text-foreground/80",
+                day.today ? "bg-ink text-primary-foreground" : "text-foreground/80",
               )}
             >
               {day.date}

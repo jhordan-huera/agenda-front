@@ -10,6 +10,7 @@ import { minutesToTime, timeToMinutes } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Client, ISODate, Professional, Service } from "@/types";
 import { clientsToVerify, getAppointmentClientNames } from "@/features/appointments/appointment-utils";
+import { ProfessionalDot } from "@/features/professionals/professional-select";
 
 interface AgendaListViewProps {
   days: ISODate[];
@@ -141,7 +142,7 @@ function DayItems({
                 {serviceName && <span className="block truncate text-sm text-muted-foreground">{serviceName}</span>}
                 {professional && (
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: professional.color }} />
+                    <ProfessionalDot color={professional.color} className="size-2" />
                     <span className="truncate">{professional.displayName}</span>
                   </span>
                 )}

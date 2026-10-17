@@ -50,7 +50,7 @@ export function TwoFactorSettings({ onEnabled, icon }: { onEnabled?: () => void;
           {icon && <CardTitleIcon icon={icon} />}
           Verificación en dos pasos
           {enabled ? (
-            <Badge className="bg-emerald-100 text-emerald-800">Activada</Badge>
+            <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">Activada</Badge>
           ) : (
             <Badge variant="destructive">Desactivada</Badge>
           )}
@@ -165,11 +165,12 @@ function EnableFlow({ onDone, onEnabled }: { onDone: () => void; onEnabled?: () 
         <ErrorState title="No pudimos generar el código QR" description={getErrorMessage(setup.error)} onRetry={() => startSetup()} />
       ) : (
         <div className="grid justify-items-center gap-3">
+          {/* Blanco a propósito: el QR necesita fondo blanco para escanearse (spec 019). */}
           <div className="flex size-52 items-center justify-center rounded-xl border bg-white p-2">
             {qr ? (
               <img src={qr} alt="Código QR para la app de autenticación" className="size-full" />
             ) : (
-              <span className="text-sm text-muted-foreground">Generando…</span>
+              <span className="text-sm text-muted-foreground dark:text-zinc-600">Generando…</span>
             )}
           </div>
           {setup.data && <SecretKey secret={setup.data.secret} />}

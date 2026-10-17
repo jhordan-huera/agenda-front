@@ -15,7 +15,7 @@ export function Trend({ comparison, previousLabel, className }: { comparison: Co
     return <span className={cn("text-xs text-muted-foreground", className)}>Sin datos para comparar</span>;
   }
   const { delta, favorable } = comparison;
-  const color = favorable === null ? "text-muted-foreground" : favorable ? "text-emerald-700" : "text-red-700";
+  const color = favorable === null ? "text-muted-foreground" : favorable ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300";
   if (delta === 0 || (delta !== null && Math.round(Math.abs(delta) * 100) === 0)) {
     return (
       <span className={cn("text-xs font-semibold text-muted-foreground", className)}>

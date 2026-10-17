@@ -2,7 +2,18 @@
 @import "tw-animate-css";
 @import "@fontsource-variable/sora";
 
-@custom-variant dark (&:is(.dark *));
+/*
+ * Modo oscuro (spec 019): la clase `dark` en <html>, que ponen public/theme-boot.js y
+ * ThemeModeProvider. Sólo en pantalla: al imprimir no vale, así lo impreso sale claro. Un contenedor
+ * con la clase `light` dentro del oscuro vuelve al claro (la vista previa de los colores).
+ */
+@custom-variant dark {
+  @media screen {
+    &:where(.dark, .dark *):not(:where(.light, .light *)) {
+      @slot;
+    }
+  }
+}
 
 /* Variantes de estado usadas por los componentes shadcn/ui (Radix: data-state, data-orientation…) */
 @custom-variant data-open {
@@ -67,6 +78,9 @@
   --color-ink: var(--ink);
   --color-shell: var(--shell);
   --color-shell-foreground: var(--shell-foreground);
+  --color-hero: var(--hero);
+  --color-hero-end: var(--hero-end);
+  --color-hero-foreground: var(--hero-foreground);
   --color-canvas: var(--canvas);
   --color-lilac-ink: var(--lilac-ink);
   --color-field: var(--field);
@@ -125,8 +139,10 @@
  *   --shell y --canvas salen de su principal (lib/brand-theme.ts).
  * Los estados de las citas (pendiente, confirmada…) usan sus colores en
  * lib/constants/appointment-status.ts.
+ * El modo oscuro (spec 019) tiene sus tokens en el bloque `:root.dark`, más abajo.
  */
 :root {
+  color-scheme: light;
   /* Mundo del consultorio: papel, bruma azul, tinta azul suave, grafito, renglones y marcador lila. */
   --paper: #ffffff;
   --desk: #f5f7fc;
@@ -146,6 +162,13 @@
   --shell: #131e33;
   --shell-foreground: #eef1f8;
   --canvas: #f0f3f8;
+  /*
+   * Degradados con texto encima (cabeceras, la portada): `from-hero to-hero-end text-hero-foreground`.
+   * En el claro, del principal al lila con texto blanco; en el oscuro, más oscuros (spec 019).
+   */
+  --hero: var(--ink);
+  --hero-end: var(--lilac-ink);
+  --hero-foreground: #ffffff;
 
   --background: var(--paper);
   --foreground: var(--text);
@@ -180,6 +203,45 @@
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--rule);
   --sidebar-ring: var(--ink);
+}
+
+/*
+ * Modo oscuro de Agenda360 (spec 019): los valores de `resolveBrandPalette(DEFAULT_BRAND_COLORS).dark`
+ * (lib/brand-theme.ts), los mismos dos colores con la claridad del oscuro. Si cambia la fórmula, se
+ * vuelven a sacar de allí. Lo que se apoya en otro token (--background: var(--paper), --primary…)
+ * cambia solo. Sólo en pantalla: al imprimir valen siempre las claras. Un negocio o un super admin
+ * con colores propios pone encima los suyos (BrandThemeProvider).
+ */
+@media screen {
+  :root.dark {
+    color-scheme: dark;
+    /* Fondos de 0,17 a 0,27 de claridad, de más oscuro a más claro: lienzo, tarjetas, bruma y lo activo. */
+    --canvas: #0d0f15;
+    --paper: #15181f;
+    --desk: #1b1f27;
+    --accent: #1d2638;
+    /* El principal, aclarado hasta 4,5:1 sobre lo activo del menú: sus botones llevan el texto oscuro (--paper). */
+    --ink: #698dd4;
+    --graphite: #9ba5b8;
+    --text: #e4e8f0;
+    --rule: rgb(228 232 240 / 0.12);
+    --rule-strong: rgb(228 232 240 / 0.22);
+    --field: rgb(228 232 240 / 0.04);
+    /* El lila, oscurecido hasta que se lean encima el texto claro (4,5:1) y las horas en el principal (3:1). */
+    --highlight: #443c59;
+    --secondary: #2d273d;
+    --lilac-ink: #c3b2f1;
+    --red-pen: #d66459;
+    --shell: #050b18;
+    --shell-foreground: #e4e8f0;
+    /* Los degradados, más oscuros que el principal y el lila: su texto es el claro. */
+    --hero: #4061a4;
+    --hero-end: #624c90;
+    --hero-foreground: #e4e8f0;
+    --chart-2: #495b7d;
+    --chart-3: #7a69a3;
+    --chart-4: #754d5e;
+  }
 }
 
 @layer base {

@@ -118,7 +118,15 @@ export function ClinicalEvolutionChart({ record }: { record: ClinicalRecord }) {
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: colors.tick }} tickLine={false} axisLine={{ stroke: colors.axis }} />
               <YAxis tick={{ fontSize: 11, fill: colors.tick }} tickLine={false} axisLine={false} width={44} domain={["auto", "auto"]} />
               <Tooltip content={(props) => <PointTooltip {...props} unit={current.unit} />} />
-              <Line type="monotone" dataKey="value" stroke={colors.series} strokeWidth={2} dot={{ r: 3.5, fill: colors.series }} />
+              {/* El punto activo lleva un borde blanco de Recharts: con el color de la tarjeta, también en el oscuro. */}
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={colors.series}
+                strokeWidth={2}
+                dot={{ r: 3.5, fill: colors.series }}
+                activeDot={{ style: { stroke: "var(--card)" } }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

@@ -15,14 +15,14 @@ export function PlanLimitBanner() {
   return (
     <div
       role="status"
-      className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 sm:flex-row sm:items-center"
+      className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 sm:flex-row sm:items-center dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200"
     >
-      <CalendarClock className="size-5 shrink-0 text-amber-600" aria-hidden />
+      <CalendarClock className="size-5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
       <div className="flex-1 text-sm">
         <p className="font-medium">
           {reached ? "Llegaste al límite de citas de este mes." : `Llevas ${usage.appointmentsThisMonth} de ${limit} citas este mes.`}
         </p>
-        <p className="text-amber-800/80">
+        <p className="text-amber-800/80 dark:text-amber-300/90">
           {reached
             ? "No podrás crear nuevas citas ni recibir reservas online hasta el próximo mes. "
             : "Al llegar al límite no podrás crear nuevas citas este mes. "}

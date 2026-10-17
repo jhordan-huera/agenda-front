@@ -1,12 +1,12 @@
 import { Building2, LayoutDashboard, Palette, Plus, UsersRound } from "lucide-react";
-import type { CSSProperties } from "react";
 import { toast } from "sonner";
 import { useSession } from "@/features/auth/use-session";
 import { BrandColorsPicker } from "@/features/branding/brand-colors-picker";
+import { ModePreviews } from "@/features/branding/mode-previews";
 import { SettingsSection } from "@/features/settings/settings-section";
 import { useSettingsForm } from "@/features/settings/use-settings-form";
 import { useUpdatePanelColors } from "@/hooks/queries/use-admin";
-import { brandThemeVariables, DEFAULT_BRAND_COLORS, resolveBrandPalette } from "@/lib/brand-theme";
+import { DEFAULT_BRAND_COLORS, resolveBrandPalette } from "@/lib/brand-theme";
 import { getErrorMessage } from "@/lib/data";
 import type { BrandColors } from "@/types";
 
@@ -57,14 +57,16 @@ export function PanelColorsCard() {
   );
 }
 
-/** Cómo se verá el panel con estos colores, con su propia paleta (no depende de lo guardado). */
+/**
+ * Cómo se verá el panel con estos colores, en claro y en oscuro (spec 019), con su propia paleta (no
+ * depende de lo guardado).
+ */
 function PanelPreview({ colors }: { colors: BrandColors }) {
-  const style = brandThemeVariables(resolveBrandPalette(colors)) as CSSProperties;
   return (
     <figure className="grid gap-2">
       <figcaption className="text-sm font-semibold">Vista previa</figcaption>
-      <div style={style} className="overflow-hidden rounded-xl border bg-canvas text-foreground" data-testid="panel-preview" aria-hidden>
-        <div className="flex gap-1 border-b bg-sidebar p-2 text-xs font-medium text-sidebar-foreground">
+      <ModePreviews palettes={resolveBrandPalette(colors)} className="bg-canvas" testId="panel-preview">
+        <div className="flex flex-wrap gap-1 border-b bg-sidebar p-2 text-xs font-medium text-sidebar-foreground">
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-sidebar-accent px-2.5 py-1.5 font-semibold text-sidebar-accent-foreground">
             <LayoutDashboard className="size-3.5" /> Resumen
           </span>
@@ -76,9 +78,9 @@ function PanelPreview({ colors }: { colors: BrandColors }) {
           </span>
         </div>
         <div className="grid gap-3 p-3">
-          <div className="rounded-lg bg-linear-to-br from-ink to-lilac-ink px-3 py-2.5 text-white">
+          <div className="rounded-lg bg-linear-to-br from-hero to-hero-end px-3 py-2.5 text-hero-foreground">
             <p className="text-sm font-bold">Clínica Dental Sonrisa</p>
-            <p className="text-xs text-white/85">Odontología · Business</p>
+            <p className="text-xs opacity-85">Odontología · Business</p>
           </div>
           <div className="flex items-end gap-1.5 rounded-lg bg-card p-3 ring-1 ring-foreground/10">
             <div className="min-w-0 flex-1">
@@ -101,7 +103,7 @@ function PanelPreview({ colors }: { colors: BrandColors }) {
             </span>
           </div>
         </div>
-      </div>
+      </ModePreviews>
     </figure>
   );
 }

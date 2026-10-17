@@ -16,7 +16,7 @@ export function HealthBadge({ score, group, className }: { score: number; group:
 
 /** «Pocos datos»: menos de 10 citas en el periodo (el negocio) o menos de 3 negocios con datos (el tipo). */
 export function FewDataTag({ className }: { className?: string }) {
-  return <span className={cn(BADGE, "bg-zinc-100 text-zinc-600 ring-zinc-500/20", className)}>Pocos datos</span>;
+  return <span className={cn(BADGE, "bg-zinc-100 text-zinc-600 ring-zinc-500/20 dark:bg-zinc-500/15 dark:text-zinc-300 dark:ring-zinc-500/40", className)}>Pocos datos</span>;
 }
 
 /**
@@ -47,7 +47,11 @@ export function RateValue({
           <span
             className={cn(
               "inline-flex items-center gap-0.5 text-[0.6875rem] tabular-nums",
-              tone === "good" ? "font-semibold text-emerald-700" : tone === "bad" ? "font-semibold text-rose-700" : "text-muted-foreground",
+              tone === "good"
+                ? "font-semibold text-emerald-700 dark:text-emerald-300"
+                : tone === "bad"
+                  ? "font-semibold text-rose-700 dark:text-rose-300"
+                  : "text-muted-foreground",
             )}
           >
             {tone && <Arrow className="size-3" aria-hidden />}

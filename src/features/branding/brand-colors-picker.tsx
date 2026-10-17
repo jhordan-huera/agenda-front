@@ -29,7 +29,8 @@ const BUSINESS_TEXTS = {
 export function BrandColorsPicker({ colors, onChange, texts = BUSINESS_TEXTS, presetsClassName }: BrandColorsPickerProps) {
   const name = useId();
   const effective = colors ?? DEFAULT_BRAND_COLORS;
-  const palette = resolveBrandPalette(effective);
+  // Los avisos de «se ajustó» hablan del claro: en el oscuro los dos colores siempre se ajustan.
+  const palette = resolveBrandPalette(effective).light;
   // Elegir a mano los colores de Agenda360 es lo mismo que no tener colores propios.
   const setColors = (next: BrandColors | null) => onChange(next && sameColors(next, DEFAULT_BRAND_COLORS) ? null : next);
 

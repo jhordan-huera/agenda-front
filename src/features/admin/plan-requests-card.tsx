@@ -41,11 +41,11 @@ export function PlanRequestsCard({ businessId }: { businessId?: string }) {
   if (businessId && pending.length === 0) return null;
 
   return (
-    <Card className={pending.length > 0 ? "ring-2 ring-amber-400" : undefined}>
+    <Card className={pending.length > 0 ? "ring-2 ring-amber-400 dark:ring-amber-500/60" : undefined}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           Solicitudes de cambio de plan
-          {pending.length > 0 && <Badge className="bg-amber-100 text-amber-900">{pending.length} pendiente(s)</Badge>}
+          {pending.length > 0 && <Badge className="bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-300">{pending.length} pendiente(s)</Badge>}
         </CardTitle>
         <CardDescription>
           Los propietarios piden el cambio desde su suscripción. Al aprobarlo se aplica el plan y se les avisa por email.

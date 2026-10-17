@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useThemeMode } from "@/features/theme/use-theme-mode";
 import type { DayOfWeek } from "@/types";
 import { heatmapKey, type Heatmap } from "./report-insights";
 
@@ -15,11 +16,20 @@ const DAY_NAMES: Record<DayOfWeek, { short: string; long: string }> = {
 const hourLabel = (hour: number) => `${String(hour).padStart(2, "0")}:00`;
 
 /**
+ * Cuánto del color principal lleva la celda con más citas. En el claro, el número es oscuro y el
+ * principal, intenso: hasta un 55 %. En el oscuro (spec 019), el número es claro y el principal está
+ * aclarado: hasta un 40 %, para que el número se lea también con un color de marca muy claro. Esta
+ * tabla no se imprime (el papel lleva la suya, en report-print-document.tsx).
+ */
+const MAX_INTENSITY = { light: 55, dark: 40 } as const;
+
+/**
  * Cuándo piden citas: una tabla (accesible tal cual) con las horas en filas y los días en columnas;
  * cuanto más intenso el color, más citas empiezan a esa hora. El número siempre se ve.
  */
 export function DemandHeatmap({ heatmap }: { heatmap: Heatmap }) {
   const { days, hours, counts, max } = heatmap;
+  const top = MAX_INTENSITY[useThemeMode().resolved];
   return (
     <Card>
       <CardHeader>
@@ -54,8 +64,8 @@ export function DemandHeatmap({ heatmap }: { heatmap: Heatmap }) {
                   </th>
                   {days.map((day) => {
                     const count = counts.get(heatmapKey(day, hour)) ?? 0;
-                    // Hasta un 55 % del color principal: el número (oscuro) se lee con cualquier color de marca.
-                    const intensity = count === 0 ? 0 : 10 + Math.round((count / max) * 45);
+                    // Del 10 % al tope del color principal: el número se lee con cualquier color de marca.
+                    const intensity = count === 0 ? 0 : 10 + Math.round((count / max) * (top - 10));
                     return (
                       <td
                         key={day}

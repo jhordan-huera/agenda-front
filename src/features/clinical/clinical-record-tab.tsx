@@ -37,7 +37,7 @@ export function ClinicalRecordTab({ client }: { client: Client }) {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden />
+          <ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
           Sólo la ven tú y las personas autorizadas. Cada acceso queda registrado.
         </p>
         <div className="flex gap-2">

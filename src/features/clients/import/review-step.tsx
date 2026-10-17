@@ -66,7 +66,7 @@ export function ReviewStep({
       <MetricStrip metrics={metrics} className="xl:grid-cols-6 2xl:grid-cols-6" />
 
       {remaining !== null && review.overLimit.length > 0 && (
-        <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200">
           {remaining === 0
             ? "Llegaste al tope de pacientes de tu plan: no se puede importar ninguno. "
             : remaining === 1

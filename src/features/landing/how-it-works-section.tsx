@@ -23,14 +23,15 @@ const STEPS: { title: string; description: string; sample: ReactNode }[] = [
     title: "Comparte tu enlace",
     description: "Ponlo en tu estado de WhatsApp, en Instagram o mándalo a quien te pida una cita.",
     sample: (
-      // Burbuja de WhatsApp: es por donde los profesionales ya hablan con sus clientes.
-      <div className="ml-auto max-w-[17rem] rounded-xl rounded-tr-sm bg-[#d9fdd3] px-3.5 py-2.5 text-sm text-[#111b21] shadow-sm">
+      // Burbuja de WhatsApp: es por donde los profesionales ya hablan con sus clientes. Sus colores son
+      // los de WhatsApp a propósito (los hex), los de su tema claro y los de su tema oscuro (spec 019).
+      <div className="ml-auto max-w-[17rem] rounded-xl rounded-tr-sm bg-[#d9fdd3] px-3.5 py-2.5 text-sm text-[#111b21] shadow-sm dark:bg-[#005c4b] dark:text-[#e9edef]">
         Hola, ya puedes reservar tu cita aquí:{" "}
-        <span className="font-semibold break-all text-[#027eb5]">
+        <span className="font-semibold break-all text-[#027eb5] dark:text-[#53bdeb]">
           {typeof window === "undefined" ? "" : window.location.host}
           {BOOKING_PATH}
         </span>
-        <span className="mt-1 flex items-center justify-end gap-1 text-[11px] text-[#667781]">
+        <span className="mt-1 flex items-center justify-end gap-1 text-[11px] text-[#667781] dark:text-[#e9edef]/60">
           09:41 <CheckCheck className="size-3.5 text-[#53bdeb]" aria-label="Leído" />
         </span>
       </div>
@@ -64,7 +65,7 @@ export function HowItWorksSection() {
               key={title}
               className="flex flex-col rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgb(16_24_40/0.04)]"
             >
-              <span className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-ink to-lilac-ink text-lg font-extrabold text-white tabular-nums">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-hero to-hero-end text-lg font-extrabold text-hero-foreground tabular-nums">
                 {index + 1}
               </span>
               <h3 className="mt-5 text-lg font-bold">{title}</h3>

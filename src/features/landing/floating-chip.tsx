@@ -12,7 +12,7 @@ export function FloatingChip({ className, delay, children }: { className: string
       aria-hidden
       style={{ animationDelay: `${delay}s` }}
       className={cn(
-        "absolute z-10 hidden items-center gap-2.5 rounded-xl border border-border/70 bg-white/95 px-3.5 py-2.5 shadow-[0_14px_30px_-14px_rgb(29_36_51/0.35)] backdrop-blur animate-in fill-mode-both duration-500 fade-in slide-in-from-bottom-2 motion-reduce:animate-none sm:flex",
+        "absolute z-10 hidden items-center gap-2.5 rounded-xl border border-border/70 bg-popover/95 px-3.5 py-2.5 shadow-[0_14px_30px_-14px_rgb(29_36_51/0.35)] backdrop-blur animate-in fill-mode-both duration-500 fade-in slide-in-from-bottom-2 motion-reduce:animate-none sm:flex",
         className,
       )}
     >
@@ -39,7 +39,7 @@ export function CalendarChips() {
         </span>
       </FloatingChip>
       <FloatingChip className="-top-6 right-0 sm:-right-5" delay={2.2}>
-        <CheckCircle2 className="size-5 text-emerald-600" aria-hidden />
+        <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" aria-hidden />
         <span className="text-sm font-semibold">Confirmación enviada</span>
       </FloatingChip>
       <FloatingChip className="-right-2 -bottom-8 sm:-right-6" delay={2.6}>

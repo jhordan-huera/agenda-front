@@ -90,7 +90,7 @@ export function PushSettingsCard({ audience, icon }: { audience: PushAudience; i
           {icon && <CardTitleIcon icon={icon} />}
           Avisos {here}
           {push.status === "on" ? (
-            <Badge className="bg-emerald-100 text-emerald-800">Activados</Badge>
+            <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">Activados</Badge>
           ) : (
             push.status === "off" && <Badge variant="outline">Desactivados</Badge>
           )}
@@ -128,7 +128,7 @@ export function PushSettingsCard({ audience, icon }: { audience: PushAudience; i
         {push.status === "ios-old" && <Notice>Tu iPhone necesita iOS 16.4 o más reciente para recibir avisos.</Notice>}
         {push.status === "unsupported" && <Notice>Este navegador no permite avisos. Ábrela en Chrome, Safari, Edge o Firefox.</Notice>}
         {push.status === "denied" && (
-          <div className="grid gap-1.5 rounded-lg border border-amber-600/25 bg-amber-50 p-3 text-sm text-amber-950">
+          <div className="grid gap-1.5 rounded-lg border border-amber-600/25 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200">
             <p className="font-semibold">Bloqueaste los avisos en este navegador</p>
             <p>{UNBLOCK_STEPS[browserFamily()]}</p>
           </div>

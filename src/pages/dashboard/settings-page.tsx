@@ -18,6 +18,7 @@ import { OwnAgendaCard } from "@/features/settings/own-agenda-card";
 import { ProfileSettingsForm } from "@/features/settings/profile-settings-form";
 import { SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { TeamSettings } from "@/features/settings/team-settings";
+import { ThemeModeCard } from "@/features/settings/theme-mode-card";
 import { useCurrentBusiness, useCurrentUser } from "@/hooks/queries/use-account";
 import type { Permission } from "@/lib/permissions";
 import type { Business } from "@/types";
@@ -92,6 +93,8 @@ export default function SettingsPage() {
                 <OwnAgendaCard />
               </>
             )}
+            {/* El modo de pantalla es de cada persona (spec 019): lo ve cada rol, también en modo soporte. */}
+            <ThemeModeCard />
             {pushAudience === "agenda" && <PushSettingsCard audience="agenda" />}
           </TabsContent>
           <TabsContent value="negocio" className="grid max-w-3xl gap-6">

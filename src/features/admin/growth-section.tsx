@@ -36,8 +36,8 @@ const METRICS: { key: keyof Pick<PlatformStats["growth"], "appointments" | "onli
 function Change({ pair }: { pair: GrowthPair }) {
   const { kind, percent } = growthChange(pair);
   const styles = {
-    up: { icon: ArrowUpRight, text: `+${percent} %`, className: "bg-emerald-50 text-emerald-700" },
-    down: { icon: ArrowDownRight, text: `${percent} %`, className: "bg-rose-50 text-rose-700" },
+    up: { icon: ArrowUpRight, text: `+${percent} %`, className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" },
+    down: { icon: ArrowDownRight, text: `${percent} %`, className: "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300" },
     same: { icon: Minus, text: "igual", className: "bg-muted text-muted-foreground" },
     new: { icon: Sparkles, text: "nuevo", className: "bg-accent text-primary" },
   }[kind];

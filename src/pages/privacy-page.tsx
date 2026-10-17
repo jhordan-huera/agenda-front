@@ -25,7 +25,7 @@ export default function PrivacyPage() {
   );
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 dark:bg-canvas">
       <PageTitle title="Política de privacidad" />
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">

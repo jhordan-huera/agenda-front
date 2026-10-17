@@ -63,7 +63,7 @@ export default function ClinicalPrintPage() {
   return (
     <div className="space-y-6">
       <PageTitle title={`Historia clínica · ${client.name}`} />
-      <div className="flex items-center justify-between gap-3 print:hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Button asChild variant="ghost">
           <Link to={`/dashboard/clients/${client.id}?tab=historia`}>
             <ArrowLeft /> Volver a la ficha

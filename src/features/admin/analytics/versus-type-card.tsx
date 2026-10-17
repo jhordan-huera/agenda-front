@@ -76,7 +76,7 @@ export function VersusTypeCard({ analytics }: { analytics: AdminBusinessAnalytic
                 <div key={key} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
                   <dt className="min-w-0 truncate text-muted-foreground">{RATE_LABELS[key]}</dt>
                   <dd className="flex shrink-0 items-center gap-2 tabular-nums">
-                    <span className={cn("font-semibold", tone === "good" && "text-emerald-700", tone === "bad" && "text-rose-700")}>
+                    <span className={cn("font-semibold", tone === "good" && "text-emerald-700 dark:text-emerald-300", tone === "bad" && "text-rose-700 dark:text-rose-300")}>
                       {tone && <Arrow className="mr-0.5 inline size-3.5" aria-hidden />}
                       {formatRate(business[key])}
                     </span>
@@ -108,7 +108,7 @@ export function VersusTypeCard({ analytics }: { analytics: AdminBusinessAnalytic
             <ul className="space-y-0.5 text-sm">
               {business.upsell.map((reason) => (
                 <li key={reason} className="flex items-start gap-1.5">
-                  <TrendingUp className="mt-0.5 size-3.5 shrink-0 text-emerald-700" aria-hidden />
+                  <TrendingUp className="mt-0.5 size-3.5 shrink-0 text-emerald-700 dark:text-emerald-300" aria-hidden />
                   {reason}
                 </li>
               ))}

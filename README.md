@@ -78,6 +78,24 @@ el beta):
   oscurece solo hasta un contraste de 4,5:1 (y el resaltado se aclara si hace falta). Se guardan en
   `business.brandColors` (columna `brand_colors`, migración 018; null = los de Agenda360) y los
   aplica `BrandThemeProvider`.
+- **Modo oscuro (spec 019).** Cada persona elige su modo en Configuración → Perfil (también en la
+  Configuración de /admin): «Claro», «Oscuro» o «Automático», que sigue al celular o la computadora y
+  es el valor por defecto.
+  - **Dónde se guarda:** en la cuenta (`users.theme_mode`, migración 044 del backend). Llega con
+    `GET /auth/session` y se cambia con `PUT /auth/theme-mode`, que deja su entrada en la actividad.
+    El aparato recuerda la última elección (`localStorage["agenda360:modo-pantalla"]`), pero sólo
+    para el arranque y para las pantallas de antes de iniciar sesión.
+  - **Las páginas de los pacientes** (`/book`, `/pago` y `/cita`) siguen siempre al aparato.
+  - **Sin destello al abrir:** `public/theme-boot.js` pone la clase `dark` en `<html>` antes de
+    pintar. Es un archivo aparte porque el CSP no deja scripts dentro del HTML.
+  - **Los colores:** `src/features/theme/` aplica el modo y escucha los cambios del aparato.
+    `resolveBrandPalette` devuelve `{ light, dark }`: la oscura sale de los mismos dos colores y la
+    inyecta `BrandThemeProvider` en un `<style>`. La variante `dark:` y los tokens oscuros sólo
+    valen en pantalla, así que lo impreso sale claro.
+  - **Siguen claros a propósito:** los emails, el QR y la placa del logo del negocio.
+  - **El contraste:** `npm run check:contrast` mide la paleta de Agenda360, cada paleta de la lista y
+    cuatro colores extremos, en los dos modos. Exige 4,5:1 en los textos y 3:1 en lo demás, y falla si
+    algo no llega.
 - **Tipografía** Sora; las horas, grandes, gruesas y con cifras tabulares.
 - **Pestañas de agenda** (`TabsList variant="folder"`): el menú lateral, los pasos de la reserva y
   las pestañas de Configuración y de la ficha del cliente.

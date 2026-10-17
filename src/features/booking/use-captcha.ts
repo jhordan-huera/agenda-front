@@ -1,4 +1,5 @@
-import { useCallback, useRef, type RefObject } from "react";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
+import { useThemeMode } from "@/features/theme/use-theme-mode";
 import { DataError } from "@/lib/data";
 
 /**
@@ -6,6 +7,7 @@ import { DataError } from "@/lib/data";
  * falta": casi nadie lo ve; si Cloudflare duda, aparece una casilla para marcar. Cada token sirve
  * para una sola petición, así que `getToken` pide uno nuevo cada vez (cada intento de reservar).
  * Sin `siteKey` (la API no lo pide) no carga nada y `getToken` devuelve undefined.
+ * La casilla va en el modo de la pantalla (spec 019): en la página de reservas, el del celular.
  */
 
 interface TurnstileApi {
@@ -70,6 +72,13 @@ function settle(pending: RefObject<PendingToken | null>, outcome: { token: strin
 }
 
 export function useCaptcha(siteKey: string | null) {
+  const { resolved } = useThemeMode();
+  // El modo con el que se crea cada casilla. Si cambia mientras se ve, no se rehace (se perdería la
+  // verificación en curso): la próxima ya sale con el nuevo.
+  const theme = useRef(resolved);
+  useEffect(() => {
+    theme.current = resolved;
+  }, [resolved]);
   const widget = useRef<Promise<{ api: TurnstileApi; id: string }> | null>(null);
   const pending = useRef<PendingToken | null>(null);
   const used = useRef(false);
@@ -90,6 +99,7 @@ export function useCaptcha(siteKey: string | null) {
           execution: "execute",
           appearance: "interaction-only",
           language: "es",
+          theme: theme.current,
           callback: (token: string) => settle(pending, { token }),
           "error-callback": () => settle(pending, { error: captchaError() }),
           "timeout-callback": () => settle(pending, { error: captchaError(TIMEOUT_MESSAGE) }),

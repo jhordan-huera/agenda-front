@@ -33,7 +33,7 @@ export function ClaimReview({ patient, onMerged }: { patient: Client; /** Tras u
   const claimed = clientsById.get(patient.claimedClientId);
   const canMerge = role !== "professional" && can("clients.manage");
   return (
-    <div role="note" className="space-y-2 rounded-lg border border-amber-600/20 bg-amber-50 p-3 text-sm text-amber-950">
+    <div role="note" className="space-y-2 rounded-lg border border-amber-600/20 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200">
       <p className="flex items-center gap-1.5 font-semibold">
         <ShieldQuestion className="size-4 shrink-0" aria-hidden /> Por verificar
       </p>

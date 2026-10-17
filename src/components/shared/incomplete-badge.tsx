@@ -11,7 +11,7 @@ export function IncompleteBadge({ detail, className }: { detail?: string; classN
     <span
       title={detail}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800 ring-1 ring-inset ring-sky-600/20",
+        "inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800 ring-1 ring-inset ring-sky-600/20 dark:bg-sky-500/15 dark:text-sky-300 dark:ring-sky-500/40",
         className,
       )}
     >

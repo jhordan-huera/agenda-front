@@ -58,7 +58,7 @@ export function MaxProfessionalsField({ businessId, value, active }: MaxProfessi
         {active === 1 ? "1 profesional activo" : `${active} profesionales activos`}. Vacío: sin tope.
       </p>
       {value !== null && active > value && (
-        <p className="text-xs font-medium text-amber-700">
+        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
           Tiene más agendas activas de las contratadas: no podrá sumar ni reactivar profesionales hasta desactivar las que
           sobran.
         </p>

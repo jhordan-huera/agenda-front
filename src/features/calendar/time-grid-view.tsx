@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { Appointment, BlockedTime, Client, ISODate, Professional, Schedule, Service } from "@/types";
 import { layoutDayEvents } from "./calendar-utils";
 import { useAppointmentDrag, type DropTarget } from "./use-appointment-drag";
+import { ProfessionalDot } from "@/features/professionals/professional-select";
 import { clientConfirmationSummary, clientsToVerify, getAppointmentClientNames } from "@/features/appointments/appointment-utils";
 
 const HOUR_HEIGHT = 56;
@@ -94,7 +95,7 @@ export function TimeGridView(props: TimeGridViewProps) {
             if (heading) {
               return (
                 <div key={key} className="flex min-w-0 items-center justify-center gap-1.5 border-l px-2 py-3 text-sm font-semibold">
-                  <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: heading.color }} />
+                  <ProfessionalDot color={heading.color} />
                   <span className="truncate">{heading.displayName}</span>
                 </div>
               );
@@ -262,7 +263,7 @@ function DayColumn({
           >
             <p className="flex items-center gap-1 truncate font-semibold">
               {professional && (
-                <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: professional.color }} />
+                <ProfessionalDot color={professional.color} className="size-2" />
               )}
               {appointment.homeVisit && <Home className="size-3 shrink-0" aria-hidden />}
               {appointment.isVirtual && <Video className="size-3 shrink-0" aria-hidden />}
