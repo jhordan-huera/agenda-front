@@ -31,7 +31,19 @@ export const RATE_SHORT_LABELS: Record<AnalyticsRateKey, string> = {
   onlineRate: "% online",
   noShowRate: "% inasistencias",
   cancelRate: "% cancelaciones",
-  confirmRate: "% confirmadas",
+  confirmRate: "% confirmó el paciente",
+};
+
+/**
+ * Qué mide cada tasa (la ayuda del título de su columna). La de confirmaciones no es el estado
+ * «Confirmada» que pone el negocio: es el botón «Confirmo que voy» del paciente (spec 010).
+ */
+export const RATE_HINTS: Record<AnalyticsRateKey, string> = {
+  onlineRate: "Reservas hechas desde la página de reservas, entre las citas del periodo",
+  noShowRate: "«No asistió» entre las citas ya cerradas (completadas y no asistió); las que siguen sin cerrar no cuentan",
+  cancelRate: "Canceladas entre todas las citas del periodo",
+  confirmRate:
+    "Pacientes que pulsaron «Confirmo que voy» en el email o el recordatorio, entre las citas que lo recibieron. No es el estado «Confirmada» de la agenda",
 };
 
 /** Subir la tasa es bueno (reservas online, confirmaciones) o malo (inasistencias, cancelaciones). */

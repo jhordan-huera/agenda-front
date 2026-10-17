@@ -19,6 +19,7 @@ import {
   HEALTH_LABELS,
   lastAccessLabel,
   RATE_KEYS,
+  RATE_HINTS,
   RATE_SHORT_LABELS,
   rateText,
   usageLabel,
@@ -29,6 +30,7 @@ type SortKey =
   | "name"
   | "appointments"
   | "growth"
+  | "unclosed"
   | AnalyticsRateKey
   | "activeClients"
   | "newClients"
@@ -83,6 +85,7 @@ function planUsageText(business: BusinessAnalytics): string {
 const rateColumn = (key: AnalyticsRateKey): Column => ({
   key,
   label: RATE_SHORT_LABELS[key],
+  hint: RATE_HINTS[key],
   sort: (business) => business[key],
   cell: (business, ctx) => <RateValue business={business} rateKey={key} category={ctx.category(business)} />,
   text: (business, ctx) => rateText(business, key, ctx.category(business)),
@@ -142,6 +145,18 @@ const COLUMNS: Column[] = [
     ),
     text: (business) => formatGrowth(business.growth),
     hint: "Citas frente al periodo anterior de la misma duración",
+  },
+  {
+    key: "unclosed",
+    label: "Sin cerrar",
+    sort: (business) => business.unclosed,
+    cell: (business) => (
+      <span className={cn("tabular-nums", business.unclosed > 0 ? "font-semibold text-amber-700 dark:text-amber-300" : "text-muted-foreground")}>
+        {business.unclosed}
+      </span>
+    ),
+    text: (business) => String(business.unclosed),
+    hint: "Citas del periodo que ya pasaron y siguen Pendientes o Confirmadas: nadie marcó cómo terminaron",
   },
   ...RATE_KEYS.map(rateColumn),
   {
@@ -220,7 +235,7 @@ const COLUMNS: Column[] = [
     sort: (business) => (business.lastTeamLoginAt ? Date.parse(business.lastTeamLoginAt) : null),
     cell: (business, ctx) => <span className="text-xs">{lastAccessLabel(business, ctx.today)}</span>,
     text: (business, ctx) => lastAccessLabel(business, ctx.today),
-    hint: "El último inicio de sesión de alguien del equipo",
+    hint: "La última vez que alguien del equipo inició sesión o usó el panel",
   },
   {
     key: "health",
