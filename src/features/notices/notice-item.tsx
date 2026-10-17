@@ -1,6 +1,7 @@
 import {
   ArrowUpDown,
   Bell,
+  BellRing,
   CalendarCheck,
   CalendarClock,
   CalendarPlus,
@@ -10,6 +11,7 @@ import {
   Receipt,
   ShieldAlert,
   Store,
+  Sunrise,
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -26,10 +28,12 @@ const ICONS: Record<NoticeKind, LucideIcon> = {
   new_appointment: CalendarPlus,
   unclosed: CalendarClock,
   evening_summary: MoonStar,
+  morning_summary: Sunrise,
   new_business: Store,
   plan_request: ArrowUpDown,
   account_security: ShieldAlert,
   login_attack: KeyRound,
+  reminders_sent: BellRing,
 };
 
 interface NoticeItemProps {
@@ -44,7 +48,7 @@ interface NoticeItemProps {
 /**
  * Un aviso de la campana: título, texto (con el nombre completo del paciente) y hace cuánto. Los no
  * leídos van resaltados, con un punto. Al tocarlo queda leído y se abre lo suyo (la cita en la agenda,
- * la agenda del día o la pantalla de /admin).
+ * la agenda del día, la lista «Por cerrar» o la pantalla de /admin).
  */
 export function NoticeItem({ notice, scope, time, onOpen }: NoticeItemProps) {
   const navigate = useNavigate();

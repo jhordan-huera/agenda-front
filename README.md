@@ -405,8 +405,9 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   reservas no enlazan el manifiesto ni descargan la app. Sin conexión, la app espera en la pantalla
   de carga con un aviso y sigue sola cuando vuelve (no manda al login).
 - **Avisos en el celular** (spec 013, Web Push estándar): el propietario de cada negocio, el super
-  admin y, desde la spec 017, el rol Profesional con su agenda, sólo con el resumen de las 8 de la noche
-  de su agenda (`audience="agenda"`, `AGENDA_PUSH_KINDS` en `src/lib/constants/push.ts`); Recepción y
+  admin y, desde la spec 017, el rol Profesional con su agenda, sólo con los resúmenes de su agenda (el
+  de las 8 de la noche y, desde la spec 021, «Resumen al empezar el día»; `audience="agenda"`,
+  `AGENDA_PUSH_KINDS` en `src/lib/constants/push.ts`); Recepción y
   los administradores no los tienen, y en modo soporte nunca se ofrecen. Al entrar al panel, una
   franja ofrece «Activa los avisos en este celular» («Ahora no» la deja 7 días en ese aparato;
   `src/features/push/push-prompt.tsx`; al profesional sólo si tiene una agenda activa), y
@@ -414,7 +415,9 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   Configuración en /admin) tiene la tarjeta «Avisos en este celular» (`push-settings-card.tsx`; al
   profesional sin agenda le explica que pida una al propietario, sin preguntar nada a la API):
   activar o desactivar en ese aparato, el aviso de prueba y un interruptor por tipo (todos encendidos
-  de fábrica). Explica qué hacer en el iPhone sin instalar (sólo llegan con la app instalada, iOS 16.4
+  de fábrica; los tipos nuevos llegan encendidos solos, porque el aparato guarda los apagados). Desde la
+  spec 021, el propietario y el profesional tienen «Resumen al empezar el día» y el super admin,
+  «Recordatorios de citas por cerrar enviados». Explica qué hacer en el iPhone sin instalar (sólo llegan con la app instalada, iOS 16.4
   o más) y con el permiso bloqueado. «Activar» llama a `pushManager.subscribe` en el mismo toque (el
   navegador pide el permiso ahí); al abrir el panel, `usePushDevice` guarda en silencio la suscripción
   del navegador (reanuda lo que pausó «Cerrar sesión» y se vuelve a suscribir si cambió la clave). El
@@ -431,8 +434,8 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   tocarla, un `Popover` con los últimos 20 (`src/features/notices/`): título, texto con el nombre
   completo del paciente y hace cuánto («hace 5 min», «ayer»), los no leídos en el lila suave con un
   punto, «Marcar todo como leído», «Ver todos» y «No tienes avisos» con qué aparecerá ahí. Tocar un
-  aviso lo marca leído y abre su pantalla (la cita en la agenda, la agenda del día o la ficha en
-  /admin). «Ver todos» lleva a `/dashboard/notices` o `/admin/notices`: los de los últimos 30 días
+  aviso lo marca leído y abre su pantalla (la cita en la agenda, la agenda del día, la lista «Por
+  cerrar» —el aviso de la mañana, spec 021, con `?por-cerrar=1`— o la ficha en /admin). «Ver todos» lleva a `/dashboard/notices` o `/admin/notices`: los de los últimos 30 días
   agrupados por día («Hoy», «Ayer», «Mar 13 oct»), con «Sólo los no leídos», «Marcar todo como leído»
   y «Cargar más». Cada persona ve lo suyo (la API decide con `NOTICE_AUDIENCE`, en
   `src/lib/constants/notices.ts`) y lleva su propio leído; el super admin en modo soporte no ve la
@@ -459,6 +462,13 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
     no va a la actividad): mientras, la franja «Tienes N citas por cerrar» con «Cerrarlas». Se mira al
     entrar y al cambiar de página, nunca en medio de un formulario. Las de hoy no bloquean. El super
     admin en modo soporte nunca se bloquea: ve la franja («Este negocio tiene N citas por cerrar»).
+  - **El mes anterior** (spec 021): con citas sin cerrar de un mes anterior (`previousMonth` del
+    contador), la pantalla dice «Empezó un nuevo mes: cierra las citas del mes anterior para seguir» y
+    no tiene «Más tarde», aunque haya uno guardado en el aparato (por eso el panel espera al contador
+    también con «Más tarde»). Al cerrarlas entra al panel o, si le quedan de este mes, vuelve la de
+    siempre. El modo soporte sigue con la franja. Si la API no trae `previousMonth`, cuenta como 0.
+  - **`?por-cerrar=1`** en cualquier ruta del panel abre la lista y se quita de la dirección (el aviso
+    de la mañana lleva ahí); si el panel está bloqueado, la lista ya está a la vista.
   - **El contador** (`useToCloseCount`, `src/hooks/queries/use-to-close.ts`) se pide como el de la
     campana: al entrar, al volver a la pestaña y cada 3 minutos sólo con la pestaña visible
     (`NOTICE_REFRESH_MS`), y al cambiar cualquier cita. Si la API todavía no tiene la ruta (404) o la

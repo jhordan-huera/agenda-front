@@ -18,6 +18,9 @@ import { useInvalidateActivity } from "./use-invalidate-activity";
  * Y cuando cambia cualquier cita (cuelga de "appointments"). Si la API todavía no tiene la lista (404, en
  * la ventana de publicación) o no es para esta cuenta (403: el rol Profesional sin agenda asignada), no
  * hay nada que cerrar: ni franja ni bloqueo, y no se vuelve a preguntar.
+ *
+ * Desde la spec 021 el contador trae `previousMonth`, las de un mes anterior (bloquean sin «Más tarde»).
+ * Una API que todavía no lo trae cuenta como 0: el panel sigue como en la spec 018.
  */
 
 /** La API no tiene la ruta (404) o no es para esta cuenta (403). */
@@ -29,7 +32,7 @@ function useTarget() {
   return { businessId: session?.businessId ?? "", userId: session?.userId ?? "" };
 }
 
-export interface ToCloseCount extends AppointmentsToCloseCount {
+export interface ToCloseCount extends Required<AppointmentsToCloseCount> {
   /** Las de la lista: las de días anteriores más las de hoy que ya terminaron. */
   total: number;
   /** Ya respondió la API (antes, no se sabe si hay que bloquear el panel). */
@@ -38,7 +41,10 @@ export interface ToCloseCount extends AppointmentsToCloseCount {
   hidden: boolean;
 }
 
-/** El contador del panel: cuántas hay de días anteriores (bloquean) y de hoy (no bloquean). */
+/**
+ * El contador del panel: cuántas hay de días anteriores (bloquean), de ellas cuántas de un mes anterior
+ * (bloquean sin «Más tarde») y de hoy (no bloquean).
+ */
 export function useToCloseCount(): ToCloseCount {
   const { businessId, userId } = useTarget();
   const enabled = Boolean(businessId && userId);
@@ -58,6 +64,7 @@ export function useToCloseCount(): ToCloseCount {
   return {
     overdue,
     today,
+    previousMonth: query.data?.previousMonth ?? 0,
     total: overdue + today,
     // Si falló (p. ej. sin conexión), se sigue sin bloquear: el panel funciona igual.
     loaded: !enabled || query.data !== undefined || query.isError,
@@ -76,6 +83,7 @@ export function useToCloseList(enabled = true) {
       queryClient.setQueryData<AppointmentsToCloseCount>(queryKeys.toClose.count(businessId, userId), {
         overdue: page.overdue,
         today: page.today,
+        previousMonth: page.previousMonth,
       });
       return page;
     },
@@ -97,6 +105,7 @@ function useRemoveFromCache() {
       const gone = new Set(ids);
       let overdue = 0;
       let today = 0;
+      let previousMonth = 0;
       queryClient.setQueryData<InfiniteData<AppointmentsToClose>>(queryKeys.toClose.list(businessId, userId), (list) => {
         if (!list) return list;
         for (const page of list.pages) {
@@ -104,6 +113,7 @@ function useRemoveFromCache() {
             if (!gone.has(item.id)) continue;
             if (item.overdue) overdue++;
             else today++;
+            if (item.previousMonth) previousMonth++;
           }
         }
         return {
@@ -113,11 +123,18 @@ function useRemoveFromCache() {
             appointments: page.appointments.filter((item) => !gone.has(item.id)),
             overdue: Math.max(0, page.overdue - overdue),
             today: Math.max(0, page.today - today),
+            previousMonth: page.previousMonth === undefined ? undefined : Math.max(0, page.previousMonth - previousMonth),
           })),
         };
       });
       queryClient.setQueryData<AppointmentsToCloseCount>(queryKeys.toClose.count(businessId, userId), (current) =>
-        current ? { overdue: Math.max(0, current.overdue - overdue), today: Math.max(0, current.today - today) } : current,
+        current
+          ? {
+              overdue: Math.max(0, current.overdue - overdue),
+              today: Math.max(0, current.today - today),
+              previousMonth: current.previousMonth === undefined ? undefined : Math.max(0, current.previousMonth - previousMonth),
+            }
+          : current,
       );
     },
     /** La agenda, la lista, el contador y la actividad, como tras cualquier cambio de una cita. */
