@@ -1,4 +1,4 @@
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, Lock, Plus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -34,9 +34,16 @@ import { useBusinessNow } from "@/hooks/use-business-now";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { SERIES_DEFAULT_COUNT, seriesFrequencyText } from "@/lib/appointment-series";
 import { findConflictingAppointment, findOverlappingBlock, isWithinWorkingHours, offersService } from "@/lib/availability";
-import { APPOINTMENT_STATUSES, APPOINTMENT_STATUS_CONFIG, BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
+import {
+  APPOINTMENT_STATUSES,
+  APPOINTMENT_STATUS_CONFIG,
+  BLOCKING_STATUSES,
+  LOCKED_STATUS,
+  canChangeStatus,
+} from "@/lib/constants/appointment-status";
 import { DURATION_OPTIONS, SERVICE_MODES } from "@/lib/constants/business";
 import { capitalize, formatCurrency, formatDuration, formatShortDate, formatTimeRange, joinNames } from "@/lib/format";
+import { describeHomeVisit } from "@/lib/maps";
 import { addMinutesToTime, durationInMinutes } from "@/lib/time";
 import {
   appointmentSchema,
@@ -98,7 +105,9 @@ export function AppointmentFormDialog({ open, onOpenChange, appointment, default
         <DialogHeader>
           <DialogTitle>{appointment ? "Editar cita" : reviewing ? "Revisa las fechas" : "Nueva cita"}</DialogTitle>
           <DialogDescription>
-            {appointment
+            {appointment?.status === LOCKED_STATUS
+              ? "Está completada: sólo se cambian sus notas."
+              : appointment
               ? "Modifica los datos de la cita."
               : reviewing
                 ? "Cambia la hora de las que chocan o quítalas, y crea las demás."
@@ -144,6 +153,8 @@ function AppointmentForm({
   const previewSeries = usePreviewAppointmentSeries();
   const createSeries = useCreateAppointmentSeries();
   const repeating = !appointment && repeat.enabled;
+  // Una cita completada queda fija (spec 020): sólo se editan sus notas; lo demás se ve deshabilitado.
+  const locked = appointment?.status === LOCKED_STATUS;
   // El navegador no entiende lo escrito en el precio (p. ej. "12,50" en algunos teléfonos): su valor llega vacío.
   const [priceUnreadable, setPriceUnreadable] = useState(false);
 
@@ -248,7 +259,7 @@ function AppointmentForm({
   const saving = saveAppointment.isPending || saveAppointment.isSuccess;
   // Con «Repetir», un choque no bloquea: la lista de fechas lo marca y ahí se cambia la hora.
   const conflict =
-    timeWindow && BLOCKING_STATUSES.has(values.status) && !saving && !repeating
+    timeWindow && BLOCKING_STATUSES.has(values.status) && !saving && !repeating && !locked
       ? findConflictingAppointment(timeWindow, appointments)
       : undefined;
   const conflictMessage = conflict
@@ -259,10 +270,15 @@ function AppointmentForm({
   const agendaBlocks = professionalId
     ? blockedTimes.filter((b) => b.professionalId === null || b.professionalId === professionalId)
     : blockedTimes;
-  const outsideHours = timeWindow && !repeating ? !isWithinWorkingHours(agendaSchedules, timeWindow) : false;
-  const block = timeWindow && !repeating ? findOverlappingBlock(agendaBlocks, timeWindow) : undefined;
-  // Una serie es de citas por venir: Pendiente o Confirmada.
-  const statusOptions = repeating ? APPOINTMENT_STATUSES.filter((status) => status === "pending" || status === "confirmed") : APPOINTMENT_STATUSES;
+  const outsideHours = timeWindow && !repeating && !locked ? !isWithinWorkingHours(agendaSchedules, timeWindow) : false;
+  const block = timeWindow && !repeating && !locked ? findOverlappingBlock(agendaBlocks, timeWindow) : undefined;
+  // Una serie es de citas por venir: Pendiente o Confirmada. Al editar, sólo los estados a los que puede pasar
+  // (spec 020: una confirmada no vuelve a Pendiente).
+  const statusOptions = repeating
+    ? APPOINTMENT_STATUSES.filter((status) => status === "pending" || status === "confirmed")
+    : appointment
+      ? APPOINTMENT_STATUSES.filter((status) => status === appointment.status || canChangeStatus(appointment.status, status))
+      : APPOINTMENT_STATUSES;
   const changeRepeat = (next: SeriesRepeatValue) => {
     setRepeat(next);
     if (next.enabled && values.status !== "pending" && values.status !== "confirmed") set("status", "confirmed");
@@ -381,6 +397,17 @@ function AppointmentForm({
   return (
     <>
     <form onSubmit={handleSubmit} noValidate className="grid gap-4">
+      {locked && (
+        <p role="note" className="flex gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+          <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span>
+            <span className="font-medium">Completada · ya no se puede cambiar.</span> Sólo puedes editar sus notas; el pago y los
+            comprobantes, desde la ficha.
+          </span>
+        </p>
+      )}
+      {/* Completada: todo menos las notas, deshabilitado (los Select de Radix lo reciben también a mano). */}
+      <fieldset disabled={locked} className="grid min-w-0 gap-4">
       {professionalOptions.length > 1 && (
         <FormField
           label="Profesional"
@@ -393,6 +420,7 @@ function AppointmentForm({
               professionals={professionalOptions}
               value={professionalId}
               onValueChange={(value) => set("professionalId", value)}
+              disabled={locked}
             />
           )}
         </FormField>
@@ -449,6 +477,7 @@ function AppointmentForm({
         {(field) => (
           <Select
             value={values.serviceId}
+            disabled={locked}
             onValueChange={(serviceId) => {
               const service = services.find((s) => s.id === serviceId);
               setValues((current) => {
@@ -503,7 +532,7 @@ function AppointmentForm({
             {(field) => (
               <Select
                 value={place}
-                disabled={placeOptions.length === 1}
+                disabled={placeOptions.length === 1 || locked}
                 onValueChange={(next) => setValues((current) => applyPlace(current, selectedService, next as ServiceMode))}
               >
                 <SelectTrigger {...field} className="w-full sm:w-60">
@@ -519,7 +548,8 @@ function AppointmentForm({
               </Select>
             )}
           </FormField>
-          {values.homeVisit && (
+          {values.homeVisit && locked && <p className="text-sm text-muted-foreground">{describeHomeVisit(values.homeVisit)}</p>}
+          {values.homeVisit && !locked && (
             <HomeVisitFields
               value={values.homeVisit}
               onChange={updateHomeVisit}
@@ -550,6 +580,7 @@ function AppointmentForm({
           {(field) => (
             <Select
               value={String(values.durationMinutes)}
+              disabled={locked}
               onValueChange={(minutes) => set("durationMinutes", Number(minutes))}
             >
               <SelectTrigger {...field} className="w-full">
@@ -592,7 +623,7 @@ function AppointmentForm({
       </FormField>
       <FormField label="Estado" error={errors.status} hint={repeating ? "Una serie queda pendiente o confirmada." : undefined}>
         {(field) => (
-          <Select value={values.status} onValueChange={(status) => set("status", status as AppointmentStatus)}>
+          <Select value={values.status} disabled={locked} onValueChange={(status) => set("status", status as AppointmentStatus)}>
             <SelectTrigger {...field} className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -608,6 +639,7 @@ function AppointmentForm({
         )}
       </FormField>
       </div>
+      </fieldset>
 
       <FormField label="Notas" error={errors.notes} optional>
         {(field) => (
