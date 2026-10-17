@@ -127,7 +127,7 @@ export function ReportPrintDocument({
       {/* Encabezado */}
       <header className="flex items-start justify-between gap-6 border-b-2 border-primary pb-3">
         <div className="flex items-center gap-3">
-          {business.logoUrl && <img src={business.logoUrl} alt="" className="size-12 rounded-lg object-cover" />}
+          {business.logoUrl && <img src={business.logoUrl} alt="" className="h-12 w-auto max-w-32 rounded-lg object-contain" />}
           <div>
             <p className="text-[10px] font-semibold tracking-wide text-primary uppercase">Reporte de actividad</p>
             <h1 className="text-xl leading-tight font-extrabold">{business.name}</h1>

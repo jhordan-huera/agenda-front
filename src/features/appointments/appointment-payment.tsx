@@ -90,10 +90,11 @@ export function AppointmentPayment({
       {appointment.receiptAt && (
         <ul className="grid gap-1.5">
           {(receipts.data ?? []).map((receipt) => (
-            <li key={receipt.id}>
-              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => open(receipt.id)}>
-                <FileText /> Ver comprobante
-                <span className="ml-auto text-xs font-normal text-muted-foreground">
+            <li key={receipt.id} className="min-w-0">
+              {/* A 390 px la fecha se acorta con «…» en vez de sacar el botón de la ficha. */}
+              <Button variant="outline" size="sm" className="w-full min-w-0 justify-start" onClick={() => open(receipt.id)}>
+                <FileText /> <span className="shrink-0">Ver comprobante</span>
+                <span className="ml-auto min-w-0 truncate text-xs font-normal text-muted-foreground">
                   {formatDateTime(receipt.createdAt, business?.timezone)}
                 </span>
               </Button>

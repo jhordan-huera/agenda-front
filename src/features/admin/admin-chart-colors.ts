@@ -1,5 +1,6 @@
 import { useChartColors } from "@/features/branding/brand-palette-context";
 import { useThemeMode } from "@/features/theme/use-theme-mode";
+import { similarHue } from "@/lib/brand-theme";
 
 /**
  * Lo que significa algo y no cambia con la marca: el periodo con el que se compara y lo que falló.
@@ -22,11 +23,20 @@ const FIXED = {
 };
 
 /**
+ * Lo que falló, cuando la serie del panel ya es rojiza (por ejemplo, la paleta Rosa): ámbar, para que
+ * «Enviados» y «Fallidos» no se confundan. ≥ 3:1 sobre el fondo de cada modo.
+ */
+const FAILED_ON_RED = { light: "#c26a08", dark: "#f0a43a" };
+
+/**
  * Colores de los gráficos del inicio del super admin, en el modo de la pantalla: los de la paleta del
  * panel (los que eligió cada super admin, spec 007, o los de Agenda360), más los dos fijos.
  */
 export function useAdminChartColors() {
   const { resolved } = useThemeMode();
-  const colors = { ...useChartColors(), ...FIXED[resolved] };
+  const chart = useChartColors();
+  const fixed = FIXED[resolved];
+  const failed = similarHue(chart.series, fixed.failed) ? FAILED_ON_RED[resolved] : fixed.failed;
+  const colors = { ...chart, ...fixed, failed };
   return { colors, axisTick: { fontSize: 11, fill: colors.tick } };
 }

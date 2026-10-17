@@ -216,6 +216,17 @@ export function contrastRatio(a: string, b: string): number {
   return (light + 0.05) / (dark + 0.05);
 }
 
+/**
+ * ¿Tienen dos colores casi el mismo tono? Los dos deben tener color (un gris no se confunde con un
+ * rojo) y su tono, a menos de `degrees` grados en el círculo OKLCH.
+ */
+export function similarHue(a: string, b: string, degrees = 40): boolean {
+  const [x, y] = [rgbToOklch(hexToRgb(a)), rgbToOklch(hexToRgb(b))];
+  if (x.c < 0.04 || y.c < 0.04) return false;
+  const distance = Math.abs(x.h - y.h) % 360;
+  return Math.min(distance, 360 - distance) < degrees;
+}
+
 /** Si `hex` no cumple `ok`, mueve su claridad (`step` < 0 oscurece) hasta que cumpla. */
 function adjustLightness(
   hex: string,
