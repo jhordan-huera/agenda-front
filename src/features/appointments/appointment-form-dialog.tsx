@@ -272,16 +272,17 @@ function AppointmentForm({
     : blockedTimes;
   const outsideHours = timeWindow && !repeating && !locked ? !isWithinWorkingHours(agendaSchedules, timeWindow) : false;
   const block = timeWindow && !repeating && !locked ? findOverlappingBlock(agendaBlocks, timeWindow) : undefined;
-  // Una serie es de citas por venir: Pendiente o Confirmada. Al editar, sólo los estados a los que puede pasar
-  // (spec 020: una confirmada no vuelve a Pendiente).
-  const statusOptions = repeating
-    ? APPOINTMENT_STATUSES.filter((status) => status === "pending" || status === "confirmed")
-    : appointment
-      ? APPOINTMENT_STATUSES.filter((status) => status === appointment.status || canChangeStatus(appointment.status, status))
-      : APPOINTMENT_STATUSES;
+  // Al editar, sólo los estados a los que puede pasar (spec 020: una confirmada no vuelve a Pendiente). Al crear,
+  // nunca «Pendiente»: las citas del panel nacen confirmadas (2026-10-17); una serie, de citas por venir, sólo
+  // confirmada.
+  const statusOptions = appointment
+    ? APPOINTMENT_STATUSES.filter((status) => status === appointment.status || canChangeStatus(appointment.status, status))
+    : repeating
+      ? APPOINTMENT_STATUSES.filter((status) => status === "confirmed")
+      : APPOINTMENT_STATUSES.filter((status) => status !== "pending");
   const changeRepeat = (next: SeriesRepeatValue) => {
     setRepeat(next);
-    if (next.enabled && values.status !== "pending" && values.status !== "confirmed") set("status", "confirmed");
+    if (next.enabled && values.status !== "confirmed") set("status", "confirmed");
   };
 
   /** «Revisar fechas»: la lista de la serie, calculada por la API (sabe el cupo y la agenda de cada fecha). */
@@ -621,7 +622,7 @@ function AppointmentForm({
           </div>
         )}
       </FormField>
-      <FormField label="Estado" error={errors.status} hint={repeating ? "Una serie queda pendiente o confirmada." : undefined}>
+      <FormField label="Estado" error={errors.status} hint={repeating ? "Una serie se crea confirmada." : undefined}>
         {(field) => (
           <Select value={values.status} disabled={locked} onValueChange={(status) => set("status", status as AppointmentStatus)}>
             <SelectTrigger {...field} className="w-full">
