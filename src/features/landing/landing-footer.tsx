@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import { Logo } from "@/components/shared/logo";
 import { APP_NAME } from "@/lib/constants/app";
+import { SignupLink } from "./signup-link";
+import type { SignupContact } from "./use-signup-contact";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -18,6 +20,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
     title: "Cuenta",
     links: [
       { label: "Iniciar sesión", to: "/login" },
+      // Con el registro cerrado, «Quiero mi agenda» (spec 022).
       { label: "Crear cuenta", to: "/register" },
     ],
   },
@@ -25,7 +28,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
 ];
 
 /** Pie de la portada, oscuro (el casi negro de la marca). */
-export function LandingFooter() {
+export function LandingFooter({ signup }: { signup: SignupContact }) {
   return (
     <footer className="bg-shell text-shell-foreground">
       <div className="mx-auto grid grid-cols-1 max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
@@ -46,6 +49,12 @@ export function LandingFooter() {
                     <a href={link.to.slice(1)} className="text-shell-foreground/70 transition-colors hover:text-shell-foreground">
                       {link.label}
                     </a>
+                  ) : link.to === "/register" ? (
+                    <SignupLink
+                      contact={signup}
+                      registerLabel={link.label}
+                      className="text-shell-foreground/70 transition-colors hover:text-shell-foreground"
+                    />
                   ) : (
                     <Link to={link.to} className="text-shell-foreground/70 transition-colors hover:text-shell-foreground">
                       {link.label}

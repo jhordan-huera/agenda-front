@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
+import { SignupLink } from "./signup-link";
+import type { SignupContact } from "./use-signup-contact";
 
 const LINKS = [
   { href: "#caracteristicas", label: "Qué hace" },
@@ -9,7 +11,7 @@ const LINKS = [
 ];
 
 /** Menú de la portada: una barra flotante y redondeada, del fondo del modo, con efecto cristal. */
-export function LandingNavbar() {
+export function LandingNavbar({ signup }: { signup: SignupContact }) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-4 sm:pt-4">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/80 px-4 shadow-[0_8px_30px_-14px_rgb(29_36_51/0.22)] backdrop-blur-md sm:px-5">
@@ -30,7 +32,7 @@ export function LandingNavbar() {
             <Link to="/login">Iniciar sesión</Link>
           </Button>
           <Button asChild size="lg" className="px-4">
-            <Link to="/register">Crear mi agenda</Link>
+            <SignupLink contact={signup} registerLabel="Crear mi agenda" />
           </Button>
         </div>
       </div>

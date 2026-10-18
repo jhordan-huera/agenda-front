@@ -38,6 +38,10 @@ export const queryKeys = {
   schedules: (businessId: string) => ["schedules", businessId] as const,
   blockedTimes: (businessId: string) => ["blocked-times", businessId] as const,
   publicProfile: (slug: string) => ["public-profile", slug] as const,
+  /** El programa de referidos de un negocio (spec 023): la tarjeta del propietario. */
+  referrals: (businessId: string) => ["referrals", businessId] as const,
+  /** El nombre del negocio de un código de referidos (la portada con `?ref=`). */
+  referrer: (code: string) => ["referrer", code] as const,
   /** Enlace de pago de una cita (/pago/:token). */
   publicPayment: (token: string) => ["public-payment", token] as const,
   /** Página «Tu cita» (/cita/:token, spec 010). */
@@ -76,5 +80,7 @@ export const queryKeys = {
     categories: ["admin", "categories"] as const,
     auditLogs: (filters: object) => ["admin", "audit-logs", filters] as const,
     emails: ["admin", "emails"] as const,
+    /** «Descuentos por referidos» del Inicio (spec 023). */
+    referralRewards: ["admin", "referral-rewards"] as const,
   },
 };

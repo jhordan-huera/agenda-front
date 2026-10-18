@@ -1,12 +1,15 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import { SignupLink } from "./signup-link";
+import type { SignupContact } from "./use-signup-contact";
 
 /**
  * Cierre: una tarjeta en el degradado de la marca (del azul al lila), con una cuadrícula sutil. Las
- * líneas de la cuadrícula van en blanco translúcido a propósito: sólo aclaran el degradado.
+ * líneas de la cuadrícula van en blanco translúcido a propósito: sólo aclaran el degradado. Con el registro
+ * cerrado, el botón es «Quiero mi agenda» (spec 022).
  */
-export function CtaSection() {
+export function CtaSection({ signup }: { signup: SignupContact }) {
   return (
     <section className="bg-canvas py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -22,9 +25,7 @@ export function CtaSection() {
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" className="h-12 bg-hero-foreground px-6 text-base text-hero hover:bg-hero-foreground/90">
-                <Link to="/register">
-                  Crear mi agenda gratis <ArrowRight />
-                </Link>
+                <SignupLink contact={signup} registerLabel="Crear mi agenda gratis" after={<ArrowRight />} />
               </Button>
               <Button
                 asChild

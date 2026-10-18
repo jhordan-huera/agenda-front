@@ -8,6 +8,7 @@ import { CreateBusinessDialog } from "@/features/admin/create-business-dialog";
 import { GrowthSection } from "@/features/admin/growth-section";
 import { HealthSection } from "@/features/admin/health-section";
 import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
+import { ReferralRewardsSection } from "@/features/admin/referral-rewards-section";
 import { SalesSection } from "@/features/admin/sales-section";
 import { getGreeting } from "@/features/dashboard/dashboard-metrics";
 import { useCurrentUser } from "@/hooks/queries/use-account";
@@ -19,8 +20,8 @@ import { getZonedNow } from "@/lib/time";
 
 /**
  * Inicio del super admin con los datos importantes (spec 006): el crecimiento del mes, la salud del
- * sistema y los negocios para vender. Arriba, el saludo, los negocios por plan y las solicitudes de
- * cambio de plan pendientes (sólo si hay).
+ * sistema, los negocios para vender y los descuentos por referidos (spec 023). Arriba, el saludo, los
+ * negocios por plan y las solicitudes de cambio de plan pendientes (sólo si hay).
  */
 export default function AdminOverviewPage() {
   const stats = useAdminStats();
@@ -72,6 +73,8 @@ export default function AdminOverviewPage() {
       ) : (
         <SalesSection businesses={businesses.data ?? []} loading={businesses.isPending} today={now.date} />
       )}
+
+      <ReferralRewardsSection />
 
       <CreateBusinessDialog open={creating} onOpenChange={setCreating} />
     </div>

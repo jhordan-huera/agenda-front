@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { Logo } from "@/components/shared/logo";
+import { MadeWithAgenda360 } from "@/components/shared/made-with";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -100,19 +101,22 @@ export default function AppointmentPage() {
     // Lo mismo si no existe, si caducó o si el negocio está suspendido: la API no los distingue.
     const notFound = query.error instanceof DataError && query.error.code === "not_found";
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
-        <PageTitle title={notFound ? "Enlace no disponible" : "Tu cita"} />
-        <Logo />
-        {notFound ? (
-          <EmptyState
-            icon={LinkIcon}
-            className="w-full max-w-md"
-            title="Este enlace no está disponible"
-            description="Revisa que el enlace esté completo o escríbele al negocio."
-          />
-        ) : (
-          <ErrorState className="w-full max-w-md" onRetry={() => refetch()} />
-        )}
+      <div className="flex min-h-screen flex-col">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4">
+          <PageTitle title={notFound ? "Enlace no disponible" : "Tu cita"} />
+          <Logo />
+          {notFound ? (
+            <EmptyState
+              icon={LinkIcon}
+              className="w-full max-w-md"
+              title="Este enlace no está disponible"
+              description="Revisa que el enlace esté completo o escríbele al negocio."
+            />
+          ) : (
+            <ErrorState className="w-full max-w-md" onRetry={() => refetch()} />
+          )}
+        </div>
+        <MadeWithAgenda360 />
       </div>
     );
   }
@@ -177,6 +181,7 @@ export default function AppointmentPage() {
             outcome !== "cancelled" && <ClosedNotice appointment={appointment} />
           )}
         </main>
+        <MadeWithAgenda360 slug={business.slug} />
       </div>
     </BrandThemeProvider>
   );

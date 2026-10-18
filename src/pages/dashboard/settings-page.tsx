@@ -16,6 +16,7 @@ import { EmailOutbox } from "@/features/settings/email-outbox";
 import { NotificationSettingsForm, WhatsAppNoticeSettingsForm } from "@/features/settings/notification-settings-form";
 import { OwnAgendaCard } from "@/features/settings/own-agenda-card";
 import { ProfileSettingsForm } from "@/features/settings/profile-settings-form";
+import { ReferralCard } from "@/features/settings/referral-card";
 import { SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { TeamSettings } from "@/features/settings/team-settings";
 import { ThemeModeCard } from "@/features/settings/theme-mode-card";
@@ -102,6 +103,8 @@ export default function SettingsPage() {
               <>
                 <BusinessSettingsForm business={business} />
                 <ClinicalSettingsCard business={business} />
+                {/* El programa de referidos (spec 023): sólo el propietario. */}
+                <ReferralCard />
               </>
             ))}
           </TabsContent>

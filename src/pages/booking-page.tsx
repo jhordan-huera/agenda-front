@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { Logo } from "@/components/shared/logo";
+import { MadeWithAgenda360 } from "@/components/shared/made-with";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +11,6 @@ import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { BookingFlow } from "@/features/booking/booking-flow";
 import { BookingHeader } from "@/features/booking/booking-header";
 import { usePublicProfile } from "@/hooks/queries/use-public-booking";
-import { APP_NAME } from "@/lib/constants/app";
 
 /** Página pública de reservas: /book/:username (sin sesión ni panel). */
 export default function BookingPage() {
@@ -51,20 +51,24 @@ export default function BookingPage() {
   const profile = profileQuery.data;
   if (!profile) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
-        <PageTitle title="Página no encontrada" />
-        <Logo />
-        <EmptyState
-          icon={SearchX}
-          className="w-full max-w-md"
-          title="No encontramos esta página de reservas"
-          description="Revisa que el enlace sea correcto o contacta con el profesional."
-          action={
-            <Button asChild variant="outline">
-              <Link to="/">Ir al inicio</Link>
-            </Button>
-          }
-        />
+      <div className="flex min-h-screen flex-col">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4">
+          <PageTitle title="Página no encontrada" />
+          <Logo />
+          <EmptyState
+            icon={SearchX}
+            className="w-full max-w-md"
+            title="No encontramos esta página de reservas"
+            description="Revisa que el enlace sea correcto o contacta con el profesional."
+            action={
+              <Button asChild variant="outline">
+                <Link to="/">Ir al inicio</Link>
+              </Button>
+            }
+          />
+        </div>
+        {/* También en la de un negocio suspendido o que no existe (la API no los distingue). */}
+        <MadeWithAgenda360 />
       </div>
     );
   }
@@ -87,16 +91,13 @@ export default function BookingPage() {
             <BookingFlow slug={username} profile={profile} />
           )}
         </main>
-        <footer className="py-6 text-center text-xs text-muted-foreground">
-          Reservas gestionadas con{" "}
-          <Link to="/" className="font-medium text-foreground hover:underline">
-            {APP_NAME}
-          </Link>
+        {/* «Hecho con Agenda360» (spec 022): en todos los pasos y en «¡Cita reservada!». */}
+        <MadeWithAgenda360 slug={username}>
           {" · "}
           <a href="/privacidad" target="_blank" rel="noreferrer" className="hover:text-foreground hover:underline">
             Privacidad
           </a>
-        </footer>
+        </MadeWithAgenda360>
       </div>
     </BrandThemeProvider>
   );

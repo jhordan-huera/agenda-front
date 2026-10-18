@@ -40,6 +40,7 @@ import { ClientRequiredFieldsCard } from "@/features/admin/client-required-field
 import { MultiClientAppointmentsCard } from "@/features/admin/multi-client-appointments-card";
 import { DeleteBusinessDialog } from "@/features/admin/delete-business-dialog";
 import { PlanRequestsCard } from "@/features/admin/plan-requests-card";
+import { ReferralsCard } from "@/features/admin/referrals-card";
 import { NEAR_LIMIT } from "@/features/admin/sales-lists";
 import { StatGrid, type StatItem } from "@/features/admin/stat-cards";
 import { useSetPasswordDialog } from "@/features/admin/use-set-password-dialog";
@@ -359,6 +360,11 @@ export default function AdminBusinessDetailPage() {
                   </dl>
                 </CardContent>
               </Card>
+
+              {/* El programa de referidos (spec 023); una API anterior no lo trae. */}
+              {detail.data.referrals && (
+                <ReferralsCard business={business} code={detail.data.referralCode} referrals={detail.data.referrals} />
+              )}
             </div>
           </div>
         </TabsContent>

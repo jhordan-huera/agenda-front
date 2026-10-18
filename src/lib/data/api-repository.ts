@@ -3,6 +3,7 @@ import type {
   AdminAuditLog,
   AdminBusinessDetail,
   AdminBusinessCategory,
+  AdminBusinessReferrals,
   AdminBusinessSummary,
   AdminPlanRequest,
   AdminUserSummary,
@@ -24,6 +25,7 @@ import type {
   BookingConfirmation,
   Business,
   BusinessCategoryInfo,
+  BusinessReferrals,
   Client,
   ClientActivity,
   ClientImportResult,
@@ -40,6 +42,7 @@ import type {
   PlatformStats,
   Professional,
   PublicBusinessProfile,
+  ReferralReward,
   Schedule,
   Service,
   Subscription,
@@ -74,6 +77,7 @@ export const apiRepository: DataRepository = {
     isSlugAvailable: async (slug, excludeBusinessId) =>
       (await api.get<{ available: boolean }>("/businesses/slug-availability", { slug, exclude: excludeBusinessId }))
         .available,
+    getReferrals: (businessId) => api.get<BusinessReferrals>(`${business(businessId)}/referrals`),
   },
 
   professionals: {
@@ -227,6 +231,12 @@ export const apiRepository: DataRepository = {
   platform: {
     getSettings: () => api.get<PlatformSettings>("/public/platform-settings"),
     listCategories: () => api.get<BusinessCategoryInfo[]>("/public/categories"),
+    // 404: el código no existe o su negocio está suspendido (o la API aún no tiene la ruta): sin nombre.
+    getReferrer: (code) =>
+      api.get<{ name: string }>(`/public/referrals/${id(code)}`).catch((error: unknown) => {
+        if (error instanceof DataError && error.code === "not_found") return null;
+        throw error;
+      }),
   },
 
   admin: {
@@ -245,6 +255,10 @@ export const apiRepository: DataRepository = {
       api.put<Business>(`/admin/businesses/${id(businessId)}/client-required-fields`, fields),
     setMultiClientAppointments: (businessId, enabled) =>
       api.put<Business>(`/admin/businesses/${id(businessId)}/multi-client-appointments`, { enabled }),
+    setReferredBy: (businessId, referredBy) =>
+      api.put<AdminBusinessReferrals>(`/admin/businesses/${id(businessId)}/referred-by`, { referredBy }),
+    listReferralRewards: () => api.get<ReferralReward[]>("/admin/referral-rewards"),
+    applyReferralReward: (businessId) => api.post<void>(`/admin/referral-rewards/${id(businessId)}/apply`),
     deleteBusiness: (businessId, input) => api.delete(`/admin/businesses/${id(businessId)}`, input),
     listCategories: () => api.get<AdminBusinessCategory[]>("/admin/categories"),
     createCategory: (input) => api.post<BusinessCategoryInfo>("/admin/categories", input),

@@ -178,6 +178,39 @@ Hay dos caminos, y el super admin decide cuáles están abiertos:
    propietario": cuenta nueva, o una existente sin negocio, con la contraseña que elige el super
    admin). Le llega un email con su acceso; si el negocio tiene una sola agenda, pasa a ser la suya.
 
+### «Hecho con Agenda360» y «Quiero mi agenda» (spec 022)
+
+- **El pie de las páginas de los pacientes** (`components/shared/made-with.tsx`): la de reservas (en
+  todos sus pasos, en «¡Cita reservada!» y también si el negocio no existe o está suspendido), la de
+  pago y «Tu cita» terminan con «Agenda online con Agenda360 · ¿Eres profesional? Crea tu agenda». Es
+  un solo enlace, pequeño, que abre la portada en otra pestaña con `/?desde=<slug>`. Siempre visible:
+  ningún negocio ni plan lo oculta.
+- **La portada con el registro cerrado** (`features/landing/use-signup-contact.ts` y `signup-link.tsx`):
+  los «Crear mi agenda» del menú, de la portada, del cierre y del pie pasan a «Quiero mi agenda» y abren
+  un WhatsApp al teléfono de soporte (`/admin/settings`) con «Hola, quiero mi agenda en Agenda360». Si
+  se llegó con `?desde=<slug>`, el nombre sale del perfil público (que va en la CDN) y el mensaje es
+  «Hola, vi la página de reservas de <negocio> y quiero mi agenda en Agenda360». Sin teléfono, un
+  `mailto:` al email de soporte con el mismo texto. Con el registro abierto, todo sigue llevando a
+  `/register`. La página `/register` cerrada suma el mismo botón bajo su aviso.
+
+### El programa de referidos (spec 023)
+
+- **La tarjeta del propietario** (`features/settings/referral-card.tsx`), en Configuración → Negocio:
+  «Recomienda Agenda360», con su enlace (`<portada>/?ref=<código>`), «Copiar», «Compartir por WhatsApp»
+  («Te recomiendo Agenda360 para manejar tu agenda y tus reservas online: <enlace>», sin número: elige a
+  quién), cuántos recomendó y cuántos se quedaron, y «Por cada colega que se quede, $1,50 menos en tu
+  siguiente mensualidad» (la única cifra de dinero que ve un negocio). Sólo `session.role === "owner"`
+  (también el super admin en modo soporte); los demás roles no la ven y la API les responde 403.
+- **La portada con `?ref=<código>`**: «Quiero mi agenda» suma «Me recomendó <negocio> (código ABC234).»,
+  con el nombre de `GET /public/referrals/:code` (`useSignupContact`).
+- **/admin**: «Recomendado por» (`features/admin/referrer-combobox.tsx`, busca por nombre, enlace o
+  código) en «Nuevo negocio» y en la ficha (pestaña Resumen, tarjeta «Referidos», que se guarda al elegir
+  y lista «Recomendó a» con cómo va cada uno); en el Inicio, «Descuentos por referidos»
+  (`features/admin/referral-rewards-section.tsx`), con los de cada negocio sumados y «Marcar como
+  aplicado», que se confirma ahí mismo. Las reglas (`REFERRAL_DISCOUNT`, `REFERRAL_QUALIFY_DAYS` y
+  `formatReferralAmount`) están en `src/lib/constants/business.ts`, compartido con la API.
+- **La beta** sólo lleva la tarjeta, con datos simulados.
+
 Jerarquía de roles:
 
 ```
