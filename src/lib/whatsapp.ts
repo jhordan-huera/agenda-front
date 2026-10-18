@@ -35,6 +35,11 @@ export function getSupportWhatsAppUrl(phone: string, message: string): string | 
   return getWhatsAppUrl(phone, DEFAULT_TIMEZONE, message);
 }
 
+/** Enlace para compartir un mensaje por WhatsApp eligiendo a quién (sin número): «Compartir por WhatsApp». */
+export function getShareWhatsAppUrl(message: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
 /** Enlace para que un cliente escriba al negocio desde la página pública de reservas. */
 export function getBusinessWhatsAppUrl(business: Pick<Business, "name" | "phone" | "timezone">): string | null {
   return business.phone

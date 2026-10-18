@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuthCardHeader } from "@/features/auth/auth-card-header";
 import { RegisterForm } from "@/features/auth/register-form";
+import { SignupLink } from "@/features/landing/signup-link";
+import { useSignupContact } from "@/features/landing/use-signup-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME } from "@/lib/constants/app";
 
 export default function RegisterPage() {
   const settings = usePlatformSettings();
+  const signup = useSignupContact();
 
   if (settings.isPending) {
     return (
@@ -44,9 +47,17 @@ export default function RegisterPage() {
               </>
             }
           />
-          <Button asChild variant="outline">
-            <Link to="/login">Ya tengo cuenta</Link>
-          </Button>
+          {/* El mismo «Quiero mi agenda» de la portada (spec 022): el WhatsApp o el email de soporte, ya escrito. */}
+          <div className="flex flex-wrap gap-2">
+            {signup.kind !== "register" && (
+              <Button asChild>
+                <SignupLink contact={signup} registerLabel={null} />
+              </Button>
+            )}
+            <Button asChild variant="outline">
+              <Link to="/login">Ya tengo cuenta</Link>
+            </Button>
+          </div>
         </div>
       </>
     );

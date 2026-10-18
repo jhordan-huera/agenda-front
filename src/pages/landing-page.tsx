@@ -6,20 +6,23 @@ import { HowItWorksSection } from "@/features/landing/how-it-works-section";
 import { LandingFooter } from "@/features/landing/landing-footer";
 import { LandingNavbar } from "@/features/landing/landing-navbar";
 import { PanelPreviewSection } from "@/features/landing/panel-preview-section";
+import { useSignupContact } from "@/features/landing/use-signup-contact";
 
 export default function LandingPage() {
+  // Con el registro cerrado, cada «Crear cuenta» pasa a «Quiero mi agenda» (spec 022).
+  const signup = useSignupContact();
   return (
     <>
       <PageTitle />
-      <LandingNavbar />
+      <LandingNavbar signup={signup} />
       <main>
-        <HeroSection />
+        <HeroSection signup={signup} />
         <FeaturesSection />
         <PanelPreviewSection />
         <HowItWorksSection />
-        <CtaSection />
+        <CtaSection signup={signup} />
       </main>
-      <LandingFooter />
+      <LandingFooter signup={signup} />
     </>
   );
 }

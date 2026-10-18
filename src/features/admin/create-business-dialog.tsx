@@ -21,6 +21,7 @@ import { slugify } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { adminBusinessSchema } from "@/lib/validations/admin";
 import type { ScheduleDayInput } from "@/lib/validations/schedule";
+import { ReferrerCombobox } from "./referrer-combobox";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { BusinessCategory, BusinessCategoryInfo, PlanId } from "@/types";
 
@@ -44,6 +45,8 @@ interface FormValues {
   plan: PlanId;
   services: ServiceRow[];
   schedules: ScheduleDayInput[];
+  /** «Recomendado por» (spec 023): el negocio que lo recomendó, o null. */
+  referredBy: string | null;
 }
 
 let nextKey = 1;
@@ -69,6 +72,7 @@ const initialValues = (): FormValues => ({
   plan: "free",
   services: [serviceRow()],
   schedules: initialWeek(),
+  referredBy: null,
 });
 
 export function CreateBusinessDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -299,6 +303,14 @@ function CreateBusinessForm({ onDone }: { onDone: () => void }) {
             )}
           </FormField>
         </div>
+        <FormField
+          label="Recomendado por"
+          optional
+          error={errors.referredBy}
+          hint="Si llegó por el enlace de otro negocio: búscalo por su nombre o por el código que trae su mensaje."
+        >
+          {(field) => <ReferrerCombobox {...field} value={values.referredBy} onChange={(referredBy) => set("referredBy", referredBy)} />}
+        </FormField>
       </fieldset>
 
       <fieldset className="grid gap-3">

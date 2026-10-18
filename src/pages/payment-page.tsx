@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { Logo } from "@/components/shared/logo";
+import { MadeWithAgenda360 } from "@/components/shared/made-with";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,19 +41,22 @@ export default function PaymentPage() {
   if (!payment) {
     const notFound = query.error instanceof DataError && query.error.code === "not_found";
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
-        <PageTitle title={notFound ? "Enlace no disponible" : "Pago de tu cita"} />
-        <Logo />
-        {notFound ? (
-          <EmptyState
-            icon={LinkIcon}
-            className="w-full max-w-md"
-            title="Este enlace de pago no está disponible"
-            description="Revisa que el enlace esté completo o escríbele al negocio."
-          />
-        ) : (
-          <ErrorState className="w-full max-w-md" onRetry={() => query.refetch()} />
-        )}
+      <div className="flex min-h-screen flex-col">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4">
+          <PageTitle title={notFound ? "Enlace no disponible" : "Pago de tu cita"} />
+          <Logo />
+          {notFound ? (
+            <EmptyState
+              icon={LinkIcon}
+              className="w-full max-w-md"
+              title="Este enlace de pago no está disponible"
+              description="Revisa que el enlace esté completo o escríbele al negocio."
+            />
+          ) : (
+            <ErrorState className="w-full max-w-md" onRetry={() => query.refetch()} />
+          )}
+        </div>
+        <MadeWithAgenda360 />
       </div>
     );
   }
@@ -135,6 +139,7 @@ export default function PaymentPage() {
             </Button>
           </div>
         </main>
+        <MadeWithAgenda360 slug={business.slug} />
       </div>
     </BrandThemeProvider>
   );

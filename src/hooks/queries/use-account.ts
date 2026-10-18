@@ -71,6 +71,16 @@ export function useCurrentBusiness() {
   });
 }
 
+/** La tarjeta «Recomienda Agenda360» (spec 023): sólo la pide el propietario (la API rechaza a los demás). */
+export function useBusinessReferrals(enabled: boolean) {
+  const businessId = useBusinessId();
+  return useQuery({
+    queryKey: queryKeys.referrals(businessId),
+    queryFn: () => data.businesses.getReferrals(businessId),
+    enabled: enabled && Boolean(businessId),
+  });
+}
+
 export function useUpdateBusiness() {
   const businessId = useBusinessId();
   const queryClient = useQueryClient();

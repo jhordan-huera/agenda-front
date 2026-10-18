@@ -43,6 +43,7 @@ import type {
   AdminAuditLog,
   AdminBusinessDetail,
   AdminBusinessCategory,
+  AdminBusinessReferrals,
   AdminBusinessSummary,
   AdminPlanRequest,
   AdminUserSummary,
@@ -68,6 +69,7 @@ import type {
   BrandColors,
   Business,
   BusinessCategoryInfo,
+  BusinessReferrals,
   BusinessRole,
   BusinessStatus,
   Client,
@@ -89,6 +91,7 @@ import type {
   Professional,
   ProfessionalScope,
   PublicBusinessProfile,
+  ReferralReward,
   Schedule,
   Service,
   Subscription,
@@ -143,6 +146,8 @@ export interface BusinessRepository {
   create(input: CreateBusinessInput): Promise<Business>;
   update(businessId: string, input: UpdateBusinessInput): Promise<Business>;
   isSlugAvailable(slug: string, excludeBusinessId?: string): Promise<boolean>;
+  /** El programa de referidos (spec 023): sólo el propietario (`forbidden` a los demás roles). */
+  getReferrals(businessId: string): Promise<BusinessReferrals>;
 }
 
 /**
@@ -365,6 +370,8 @@ export interface PlatformRepository {
   getSettings(): Promise<PlatformSettings>;
   /** Categorías de negocio (todas, con `isActive`). */
   listCategories(): Promise<BusinessCategoryInfo[]>;
+  /** El negocio de un código de referidos (spec 023), sólo si está activo; null si no. */
+  getReferrer(code: string): Promise<{ name: string } | null>;
 }
 
 /** El negocio recién creado, aún sin propietario (se agrega con assignBusinessOwner). */
@@ -412,6 +419,12 @@ export interface PlatformAdminRepository {
    * el negocio no lo cambia.
    */
   setMultiClientAppointments(businessId: string, enabled: boolean): Promise<Business>;
+  /** «Recomendado por» (spec 023): otro negocio o null. Queda en la actividad. */
+  setReferredBy(businessId: string, referredBy: string | null): Promise<AdminBusinessReferrals>;
+  /** «Descuentos por referidos» (spec 023): los ganados y pendientes de aplicar. */
+  listReferralRewards(): Promise<ReferralReward[]>;
+  /** «Marcar como aplicado» (`conflict` si no se ganó o ya se aplicó). Queda en la actividad. */
+  applyReferralReward(businessId: string): Promise<void>;
   /** Para siempre: sus datos, sus archivos y las cuentas de su equipo. Hay que escribir su nombre. */
   deleteBusiness(businessId: string, input: BusinessDeletionInput): Promise<void>;
   listCategories(): Promise<AdminBusinessCategory[]>;

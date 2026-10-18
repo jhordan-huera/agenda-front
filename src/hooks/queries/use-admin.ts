@@ -83,6 +83,10 @@ export const useAdminAuditFeed = (filters: Omit<AdminAuditFilters, "cursor">) =>
 
 export const useAdminEmails = () => useQuery({ queryKey: queryKeys.admin.emails, queryFn: () => data.admin.listEmails() });
 
+/** «Descuentos por referidos» del Inicio (spec 023): los ganados y pendientes de aplicar. */
+export const useReferralRewards = () =>
+  useQuery({ queryKey: queryKeys.admin.referralRewards, queryFn: () => data.admin.listReferralRewards() });
+
 /** Pública: la usan el registro y la pantalla de negocio suspendido. */
 export const usePlatformSettings = () =>
   useQuery({ queryKey: queryKeys.platformSettings, queryFn: () => data.platform.getSettings() });
@@ -102,6 +106,15 @@ function useAdminMutation<TVariables, TResult>(mutationFn: (variables: TVariable
 }
 
 export const useCreateBusiness = () => useAdminMutation((input: AdminBusinessInput) => data.admin.createBusiness(input));
+
+/** «Recomendado por» en la ficha (spec 023): recarga el panel (la ficha, la del otro negocio y los descuentos). */
+export const useSetReferredBy = () =>
+  useAdminMutation(({ businessId, referredBy }: { businessId: string; referredBy: string | null }) =>
+    data.admin.setReferredBy(businessId, referredBy),
+  );
+
+/** «Marcar como aplicado» un descuento por referido (spec 023). */
+export const useApplyReferralReward = () => useAdminMutation((businessId: string) => data.admin.applyReferralReward(businessId));
 
 export const useSetBusinessStatus = () =>
   useAdminMutation(({ businessId, status }: { businessId: string; status: BusinessStatus }) =>
