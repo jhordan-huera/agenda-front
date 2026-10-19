@@ -10,3 +10,23 @@ export function useClinicalAccess(): boolean {
   const { data: business } = useCurrentBusiness();
   return Boolean(business?.clinicalRecordsEnabled && session?.clinicalAccess);
 }
+
+/**
+ * ¿Es el modo soporte en un negocio con la historia clínica activada? Ahí, en lugar de la historia,
+ * se muestra el aviso de privacidad (spec 025): el soporte no la ve.
+ */
+export function useClinicalSupportBlocked(): boolean {
+  const { session } = useSession();
+  const { data: business } = useCurrentBusiness();
+  return Boolean(business?.clinicalRecordsEnabled && session?.support);
+}
+
+/**
+ * ¿Puede gestionar los formatos de historia clínica? Como `useClinicalAccess`, y además el soporte:
+ * son plantillas, no datos de pacientes (spec 025).
+ */
+export function useClinicalTemplatesAccess(): boolean {
+  const { session } = useSession();
+  const { data: business } = useCurrentBusiness();
+  return Boolean(business?.clinicalRecordsEnabled && (session?.clinicalAccess || session?.support));
+}

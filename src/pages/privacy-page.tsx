@@ -7,7 +7,7 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "16 de octubre de 2026";
+const LAST_UPDATED = "19 de octubre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
@@ -135,8 +135,12 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>El soporte de {APP_NAME}</strong> puede entrar al panel de un negocio para darle asistencia, y ahí ve
-                lo mismo que su propietario, también la historia clínica. Todo lo que cambie queda en el registro de
-                actividad del negocio.
+                lo mismo que su propietario, <strong>salvo la historia clínica</strong>: no puede abrirla, ni sus archivos, ni
+                cambiarla. Todo lo que cambie queda en el registro de actividad del negocio.
+              </li>
+              <li>
+                <strong>El acceso técnico a la base de datos</strong> queda reservado al mantenimiento del servicio y a las
+                copias de seguridad (cifradas), y no se usa para leer historias clínicas.
               </li>
               <li>
                 <strong>Los inicios de sesión, las IP y los navegadores</strong> sólo los ve el equipo de {APP_NAME}, para la

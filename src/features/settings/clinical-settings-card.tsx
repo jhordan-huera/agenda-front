@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBusinessTemplate } from "@/features/clinical/use-business-template";
-import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
+import { useClinicalTemplatesAccess } from "@/features/clinical/use-clinical-access";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
 import { useCategories } from "@/hooks/queries/use-categories";
 import { getErrorMessage } from "@/lib/data";
@@ -15,7 +15,8 @@ import { SwitchField } from "./switch-field";
 export function ClinicalSettingsCard({ business }: { business: Business }) {
   const updateBusiness = useUpdateBusiness();
   const isHealth = Boolean(useCategories().find(business.category)?.isHealth);
-  const { template } = useBusinessTemplate(useClinicalAccess());
+  // También en modo soporte: los formatos son plantillas, no datos de pacientes (spec 025).
+  const { template } = useBusinessTemplate(useClinicalTemplatesAccess());
 
   const toggle = async (enabled: boolean) => {
     try {
@@ -41,7 +42,7 @@ export function ClinicalSettingsCard({ business }: { business: Business }) {
       <CardContent className="grid gap-4">
         <SwitchField
           label="Registrar historias clínicas de mis pacientes"
-          description="Antecedentes y evoluciones de cada consulta en la ficha del cliente. Sólo la ves tú y las personas que autorices en Equipo; cada acceso queda registrado y nada se puede borrar."
+          description="Antecedentes y evoluciones de cada consulta en la ficha del cliente. Sólo la ves tú y las personas que autorices en Equipo (ni el soporte de Agenda360 puede verla); cada acceso queda registrado y nada se puede borrar."
           checked={business.clinicalRecordsEnabled}
           disabled={updateBusiness.isPending}
           onCheckedChange={toggle}

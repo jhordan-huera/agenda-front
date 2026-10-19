@@ -32,6 +32,7 @@ const SCOPES: { value: AdminAuditScope; label: string; description: string }[] =
   { value: "all", label: "Todo", description: "Toda la actividad de todos los negocios." },
 ];
 
+// Sin «Historias clínicas»: sus eventos no salen en /admin (spec 025).
 const TYPES: AuditEntityType[] = [
   "appointment",
   "client",
@@ -41,7 +42,6 @@ const TYPES: AuditEntityType[] = [
   "business",
   "team",
   "subscription",
-  "clinical_record",
   "user",
   "platform",
   "session",

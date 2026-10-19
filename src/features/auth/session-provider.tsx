@@ -117,8 +117,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             businessId: support.id,
             role: "owner",
             businessStatus: "active",
-            // En modo soporte el super admin tiene el acceso del propietario, también a la historia clínica.
-            clinicalAccess: true,
+            // En modo soporte el super admin tiene el acceso del propietario, salvo la historia clínica
+            // (spec 025): no la ve ni la cambia, y la API también lo rechaza.
+            clinicalAccess: false,
             professionalId: null,
             support: { businessName: support.name },
           }

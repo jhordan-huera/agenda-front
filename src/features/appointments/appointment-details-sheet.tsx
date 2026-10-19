@@ -38,7 +38,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/features/auth/use-session";
 import { ClinicalNoteDialog } from "@/features/clinical/clinical-note-dialog";
-import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
+import { useClinicalAccess, useClinicalSupportBlocked } from "@/features/clinical/use-clinical-access";
 import { ProfessionalDot } from "@/features/professionals/professional-select";
 import { meetingUrlPlace, useAgendas, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
@@ -169,6 +169,8 @@ function AppointmentDetails({
   // Para qué paciente se registra la evolución (con varios pacientes, cada uno tiene la suya).
   const [noteFor, setNoteFor] = useState<Client | null>(null);
   const clinicalAccess = useClinicalAccess();
+  // En modo soporte, una línea en lugar de «Registrar evolución» y «Ver historia» (spec 025).
+  const clinicalSupportBlocked = useClinicalSupportBlocked();
   // El paciente principal (el del pago) y, en una sesión de pareja o de familia, los demás.
   const client = clientsById.get(appointment.clientId);
   const patients = appointmentClientIds(appointment).flatMap((id) => clientsById.get(id) ?? []);
@@ -445,6 +447,7 @@ function AppointmentDetails({
                     confirmation={confirmationOf(patient)}
                     whatsAppUrl={whatsAppUrlOf(patient)}
                     clinicalAccess={clinicalAccess}
+                    clinicalSupportBlocked={clinicalSupportBlocked}
                     onNote={() => setNoteFor(patient)}
                   />
                   <ClaimReview patient={patient} />
@@ -529,6 +532,7 @@ function PatientContact({
   confirmation,
   whatsAppUrl,
   clinicalAccess,
+  clinicalSupportBlocked,
   onNote,
 }: {
   patient: Client;
@@ -538,6 +542,8 @@ function PatientContact({
   confirmation?: { confirmed: boolean; text: string };
   whatsAppUrl: string | null;
   clinicalAccess: boolean;
+  /** Modo soporte con la historia activada: la línea del candado en lugar de los botones (spec 025). */
+  clinicalSupportBlocked: boolean;
   onNote: () => void;
 }) {
   const confirmationLine = confirmation && (
@@ -601,6 +607,12 @@ function PatientContact({
             </Link>
           </Button>
         </div>
+      )}
+      {clinicalSupportBlocked && (
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Lock className="size-3.5 shrink-0" aria-hidden />
+          La historia clínica no se ve en modo soporte
+        </p>
       )}
     </div>
   );

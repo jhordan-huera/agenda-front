@@ -1,4 +1,4 @@
-import { Trash2, UserPlus } from "lucide-react";
+import { Lock, Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -130,9 +130,10 @@ export function TeamSettings() {
                             <Switch
                               size="sm"
                               checked={member.clinicalAccess}
-                              disabled={setClinicalAccess.isPending}
+                              disabled={inSupport || setClinicalAccess.isPending}
                               onCheckedChange={(checked) => changeClinicalAccess(member, checked)}
                               aria-label={`Acceso de ${name} a historias clínicas`}
+                              aria-describedby={inSupport ? "clinical-owner-only" : undefined}
                             />
                             Historia clínica
                           </label>
@@ -162,6 +163,13 @@ export function TeamSettings() {
                 );
               })}
             </ul>
+          )}
+          {/* En modo soporte el acceso clínico no se cambia (spec 025): el interruptor se ve, deshabilitado. */}
+          {inSupport && clinicalEnabled && team.data?.some((member) => member.role !== "owner") && (
+            <p id="clinical-owner-only" className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+              <Lock className="mt-px size-3.5 shrink-0" aria-hidden />
+              Sólo el propietario puede dar o quitar el acceso a la historia clínica.
+            </p>
           )}
           <p className="mt-3 text-xs text-muted-foreground">
             {atLimit

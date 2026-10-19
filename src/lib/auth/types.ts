@@ -30,7 +30,7 @@ export interface Session {
   platformRole: PlatformRole | null;
   /** Super admin principal: gestiona el equipo de super admins (los demás no). */
   platformOwner: boolean;
-  /** Puede ver historias clínicas (propietario, miembro autorizado o el super admin en modo soporte). */
+  /** Puede ver historias clínicas (propietario o miembro autorizado; nunca el super admin en modo soporte). */
   clinicalAccess: boolean;
   /** Su agenda en el negocio, si atiende citas (null: no tiene; también en modo soporte). */
   professionalId: string | null;
