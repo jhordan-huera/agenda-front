@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { usePermissions } from "@/features/auth/use-permissions";
-import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
+import { useClinicalTemplatesAccess } from "@/features/clinical/use-clinical-access";
 import {
   FIELD_TYPES,
   fromDraft,
@@ -52,13 +52,14 @@ export default function ClinicalTemplateEditorPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const from = searchParams.get("from") ?? undefined;
-  const clinicalAccess = useClinicalAccess();
+  // También el soporte: los formatos son plantillas, no datos de pacientes (spec 025).
+  const templatesAccess = useClinicalTemplatesAccess();
   const { can } = usePermissions();
   const subscription = useSubscription();
   const source = useClinicalTemplate(id ?? from);
-  const all = useClinicalTemplates(clinicalAccess, true);
+  const all = useClinicalTemplates(templatesAccess, true);
 
-  if (!clinicalAccess || !can("business.manage")) {
+  if (!templatesAccess || !can("business.manage")) {
     return (
       <EmptyState
         icon={ShieldAlert}

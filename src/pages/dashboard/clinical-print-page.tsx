@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getServiceName } from "@/features/appointments/appointment-utils";
 import { HISTORY_FIELDS, SEX_OPTIONS } from "@/features/clinical/clinical-labels";
 import { ClinicalNoteContent } from "@/features/clinical/clinical-note-content";
-import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
+import { ClinicalSupportNotice } from "@/features/clinical/clinical-support-notice";
+import { useClinicalAccess, useClinicalSupportBlocked } from "@/features/clinical/use-clinical-access";
 import { useCurrentBusiness, useCurrentUser } from "@/hooks/queries/use-account";
 import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useClient } from "@/hooks/queries/use-clients";
@@ -21,6 +22,7 @@ import { capitalize, formatDateTime, formatLongDate, formatNumericDate, getFullN
 export default function ClinicalPrintPage() {
   const { id = "" } = useParams<{ id: string }>();
   const clinicalAccess = useClinicalAccess();
+  const supportBlocked = useClinicalSupportBlocked();
   const { data: business } = useCurrentBusiness();
   const { data: user } = useCurrentUser();
   const clientQuery = useClient(id);
@@ -29,6 +31,8 @@ export default function ClinicalPrintPage() {
   const { servicesById } = useLookups();
   const [generatedAt] = useState(() => new Date().toISOString());
 
+  // En modo soporte, el aviso de privacidad y ningún dato clínico (spec 025).
+  if (supportBlocked) return <ClinicalSupportNotice />;
   if (!clinicalAccess) {
     return (
       <EmptyState

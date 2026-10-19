@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { usePermissions } from "@/features/auth/use-permissions";
 import { TemplatePreview } from "@/features/clinical/templates/template-preview";
 import { useBusinessTemplate } from "@/features/clinical/use-business-template";
-import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
+import { useClinicalTemplatesAccess } from "@/features/clinical/use-clinical-access";
 import { useSubscription } from "@/hooks/queries/use-account";
 import { useSetClinicalTemplateActive, useSetDefaultClinicalTemplate } from "@/hooks/queries/use-clinical";
 import { getPlan } from "@/lib/constants/plans";
@@ -34,15 +34,16 @@ const countFields = (template: ClinicalTemplate) =>
  * (planes de pago) y los de la plataforma.
  */
 export default function ClinicalTemplatesPage() {
-  const clinicalAccess = useClinicalAccess();
+  // También el soporte: los formatos son plantillas, no datos de pacientes (spec 025).
+  const templatesAccess = useClinicalTemplatesAccess();
   const { can } = usePermissions();
-  const { templates, template: current, chosen } = useBusinessTemplate(clinicalAccess);
+  const { templates, template: current, chosen } = useBusinessTemplate(templatesAccess);
   const subscription = useSubscription();
   const setActive = useSetClinicalTemplateActive();
   const setDefault = useSetDefaultClinicalTemplate();
   const [previewing, setPreviewing] = useState<ClinicalTemplate | null>(null);
 
-  if (!clinicalAccess || !can("business.manage")) {
+  if (!templatesAccess || !can("business.manage")) {
     return (
       <EmptyState
         icon={ShieldAlert}

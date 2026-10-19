@@ -39,7 +39,8 @@ import { useAppointmentDialogs } from "@/features/appointments/use-appointment-d
 import { usePermissions } from "@/features/auth/use-permissions";
 import { MetricStrip } from "@/features/dashboard/metric-strip";
 import { ClinicalRecordTab } from "@/features/clinical/clinical-record-tab";
-import { useClinicalAccess } from "@/features/clinical/use-clinical-access";
+import { ClinicalSupportNotice } from "@/features/clinical/clinical-support-notice";
+import { useClinicalAccess, useClinicalSupportBlocked } from "@/features/clinical/use-clinical-access";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
 import { ClientNotesCard } from "@/features/clients/client-notes-card";
 import { getClientSummary, summarizeByClient } from "@/features/clients/client-summary";
@@ -65,8 +66,11 @@ export default function ClientDetailPage() {
   const dialogs = useAppointmentDialogs();
   const { can } = usePermissions();
   const clinicalAccess = useClinicalAccess();
+  // En modo soporte la pestaña sigue, con el aviso de privacidad en lugar de la historia (spec 025).
+  const supportBlocked = useClinicalSupportBlocked();
+  const clinicalTab = clinicalAccess || supportBlocked;
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = clinicalAccess && searchParams.get("tab") === "historia" ? "historia" : "resumen";
+  const tab = clinicalTab && searchParams.get("tab") === "historia" ? "historia" : "resumen";
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -360,7 +364,7 @@ export default function ClientDetailPage() {
         <ClaimReview patient={client} onMerged={(claimed) => navigate(`/dashboard/clients/${claimed.id}`, { replace: true })} />
       )}
 
-      {clinicalAccess ? (
+      {clinicalTab ? (
         <Tabs value={tab} onValueChange={(value) => setSearchParams(value === "historia" ? { tab: value } : {}, { replace: true })}>
           <TabsList variant="folder">
             <TabsTrigger value="resumen" className="px-3">
@@ -374,7 +378,7 @@ export default function ClientDetailPage() {
             {overview}
           </TabsContent>
           <TabsContent value="historia" className="mt-4">
-            <ClinicalRecordTab client={client} />
+            {clinicalAccess ? <ClinicalRecordTab client={client} /> : <ClinicalSupportNotice />}
           </TabsContent>
         </Tabs>
       ) : (

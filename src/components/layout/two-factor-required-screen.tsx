@@ -26,7 +26,7 @@ export function TwoFactorRequiredScreen() {
           </span>
           <h1 className="mt-4 text-xl font-semibold tracking-tight">Activa la verificación en dos pasos</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Es obligatoria para las cuentas de super admin: con ellas se ven todos los negocios y sus historias clínicas.
+            Es obligatoria para las cuentas de super admin: con ellas se ven todos los negocios y sus pacientes.
             Necesitas una app de autenticación en tu celular (Google Authenticator, Microsoft Authenticator…). Son un par de
             minutos y luego entras al panel.
           </p>

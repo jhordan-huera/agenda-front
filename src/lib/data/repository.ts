@@ -179,8 +179,8 @@ export interface SubscriptionRepository {
 
 /**
  * Historia clínica. Exige que el negocio la tenga activada y que el usuario sea el
- * propietario, un miembro autorizado o el super admin en modo soporte. No hay borrado: las
- * evoluciones sólo admiten aclaraciones.
+ * propietario o un miembro autorizado; el super admin en modo soporte sólo gestiona los formatos
+ * (spec 025). No hay borrado: las evoluciones sólo admiten aclaraciones.
  */
 export interface ClinicalRecordRepository {
   /**
