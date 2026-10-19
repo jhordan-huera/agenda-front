@@ -163,8 +163,8 @@ export default function PrivacyPage() {
             <p>Para funcionar usamos estos proveedores, que tratan los datos sólo para prestarnos su servicio:</p>
             <ul>
               <li>
-                <strong>Supabase</strong> (base de datos y archivos) y <strong>Vercel</strong> (servidores de la aplicación),
-                en Estados Unidos.
+                <strong>Supabase</strong> (base de datos y archivos), <strong>Amazon Web Services</strong> (el servidor de
+                la aplicación) y <strong>Vercel</strong> (la página web), en Estados Unidos.
               </li>
               <li>
                 <strong>Google (Gmail)</strong>, para enviar los emails y guardar las copias de seguridad (cifradas).
