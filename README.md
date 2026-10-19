@@ -279,6 +279,18 @@ active con una app de autenticación. Después, el panel aparece solo.
   su salud. Las cifras son la foto que prepara el cron cada mañana (la API no calcula nada al abrir la
   página): arriba dice «Datos de hoy a las 06:10» y, sin foto todavía, «Las cifras se preparan cada
   mañana». Sin datos de pacientes. La beta no la lleva.
+- **Base de datos** (spec 024, `pages/admin/admin-database-page.tsx` y `features/admin/database/`): sólo
+  el super admin principal, desde «Ver detalle» de la tarjeta «Base de datos» de Salud (los demás super
+  admins no ven el enlace, y la ruta les dice «No tienes acceso»). Arriba, la base frente al tope del
+  plan (Bien, Atención o Alto, como la tarjeta) y los archivos de Supabase Storage frente a su tope de
+  1 GB, aparte; después «Cómo crece» (el gráfico de los últimos 90 días y la frase «Crece unos X MB por
+  mes. A este ritmo, llega al 70 % en N meses y se llena en M»), «Qué ocupa» (cada tabla en palabras,
+  con sus datos, índices y textos largos, sus filas y si se borra sola; «Lo que trae Supabase»,
+  plegado), «Qué la hace trabajar» (el total, por quién y las 10 consultas que más tiempo consumen, sin
+  valores) y «Mantenimiento» (escrituras, filas muertas, índices sin uso y conexiones; las tablas se
+  desplazan dentro de su recuadro en el celular). Cada sección lleva una frase de qué hacer, y «No
+  disponible» o «No se pudo leer ahora» donde toque. Se mide al abrirla y con «Actualizar» (la API tiene
+  un límite de 20 cada 15 minutos). La beta no la lleva.
 - **Usuarios**: todas las cuentas con su negocio y rol; desactivar/reactivar acceso y
   restablecer contraseña (contraseña temporal enviada por email).
 - **Planes**: los límites de cada plan y cuántos negocios y agendas activas tiene (los precios se

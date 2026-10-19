@@ -56,6 +56,7 @@ import type {
   AppointmentsToClose,
   AppointmentsToCloseCount,
   CloseAllResult,
+  DatabaseStats,
   ImageUpload,
   PaymentReceipt,
   PaymentReceiptUpload,
@@ -400,6 +401,11 @@ export interface PlatformAdminRepository {
    * calcula nada). null: todavía no hay ninguna.
    */
   getAnalytics(days: AnalyticsPeriodDays): Promise<AnalyticsSnapshot | null>;
+  /**
+   * La pantalla «Base de datos» (spec 024): qué ocupa la base, qué la hace trabajar, su mantenimiento y
+   * cómo crece. Sólo el super admin principal (los demás reciben `forbidden`); se calcula al pedirla.
+   */
+  getDatabaseStats(): Promise<DatabaseStats>;
   listBusinesses(): Promise<AdminBusinessSummary[]>;
   getBusiness(businessId: string): Promise<AdminBusinessDetail | null>;
   /** Crea el negocio, todavía sin propietario (se agrega después con assignBusinessOwner). */
