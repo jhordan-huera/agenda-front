@@ -19,6 +19,7 @@ import { getInitials } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { BankAccountsFields } from "./bank-account-fields";
+import { CalendarInvitesField } from "./calendar-invites-field";
 import { PROFESSIONAL_COLORS, professionalColor } from "./colors";
 import { professionalSchema, type ProfessionalInput } from "@/lib/validations/professional";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
@@ -73,6 +74,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
     serviceIds: professional?.serviceIds ?? [],
     notifyNewAppointments: professional?.notifyNewAppointments ?? true,
     dailyAgenda: professional?.dailyAgenda ?? true,
+    calendarInvites: professional?.calendarInvites ?? false,
     isActive: professional?.isActive ?? true,
   }));
   const set = <K extends keyof ProfessionalInput>(key: K, value: ProfessionalInput[K]) =>
@@ -88,6 +90,8 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
   const takenUserIds = new Set(professionals.filter((p) => p.id !== professional?.id && p.userId).map((p) => p.userId));
   const members = team.filter((member) => !takenUserIds.has(member.userId) || member.userId === values.userId);
   const activeServices = services.filter((service) => service.isActive || values.serviceIds.includes(service.id));
+  // A dónde le llegarían las invitaciones de calendario (spec 027): su email de avisos o el de su usuario.
+  const calendarEmail = values.email.trim() || team.find((member) => member.userId === values.userId)?.email || "";
 
   const chooseMember = (userId: string) => {
     const member = team.find((m) => m.userId === userId);
@@ -106,7 +110,8 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (uploading || save.isPending) return;
-    const result = validate(professionalSchema, values);
+    // Sin email no hay invitaciones: el interruptor se ve apagado y se guarda apagado.
+    const result = validate(professionalSchema, { ...values, calendarInvites: Boolean(values.calendarInvites && calendarEmail) });
     setErrors(result.errors);
     if (!result.success) return;
     try {
@@ -225,6 +230,12 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
       >
         {(field) => <Input {...field} type="email" value={values.email} onChange={(e) => set("email", e.target.value)} />}
       </FormField>
+      <CalendarInvitesField
+        person="other"
+        email={calendarEmail}
+        checked={values.calendarInvites ?? false}
+        onCheckedChange={(checked) => set("calendarInvites", checked)}
+      />
       <FormField
         label="Enlace de videollamada"
         error={errors.meetingUrl}

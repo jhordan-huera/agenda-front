@@ -52,6 +52,19 @@ export function useSaveProfessional() {
   });
 }
 
+/** El interruptor de las invitaciones de calendario de una agenda, solo (spec 027): se guarda al cambiarlo. */
+export function useSetCalendarInvites() {
+  const businessId = useBusinessId();
+  const invalidate = useInvalidateProfessionals();
+  return useMutation({
+    mutationFn: ({ professionalId, calendarInvites }: { professionalId: string; calendarInvites: boolean }) =>
+      data.professionals.setCalendarInvites(businessId, professionalId, calendarInvites),
+    onSuccess: () => {
+      void invalidate();
+    },
+  });
+}
+
 export function useDeleteProfessional() {
   const businessId = useBusinessId();
   const invalidate = useInvalidateProfessionals();
