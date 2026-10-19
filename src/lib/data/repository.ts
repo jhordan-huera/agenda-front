@@ -159,6 +159,11 @@ export interface ProfessionalRepository {
   list(businessId: string): Promise<Professional[]>;
   create(businessId: string, input: ProfessionalInput): Promise<Professional>;
   update(businessId: string, professionalId: string, input: ProfessionalInput): Promise<Professional>;
+  /**
+   * Sólo el interruptor de las invitaciones de calendario (spec 027): el profesional, en su agenda; quien
+   * gestiona los profesionales, en cualquiera. Sin email responde `validation`.
+   */
+  setCalendarInvites(businessId: string, professionalId: string, calendarInvites: boolean): Promise<Professional>;
   /** Sólo sin citas (`conflict`): con historial, se desactiva. */
   remove(businessId: string, professionalId: string): Promise<void>;
 }

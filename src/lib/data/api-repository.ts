@@ -86,6 +86,8 @@ export const apiRepository: DataRepository = {
     create: (businessId, input) => api.post<Professional>(`${business(businessId)}/professionals`, input),
     update: (businessId, professionalId, input) =>
       api.put<Professional>(`${business(businessId)}/professionals/${id(professionalId)}`, input),
+    setCalendarInvites: (businessId, professionalId, calendarInvites) =>
+      api.patch<Professional>(`${business(businessId)}/professionals/${id(professionalId)}/calendar-invites`, { calendarInvites }),
     remove: (businessId, professionalId) => api.delete(`${business(businessId)}/professionals/${id(professionalId)}`),
   },
 

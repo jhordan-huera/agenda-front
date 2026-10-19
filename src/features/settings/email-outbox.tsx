@@ -41,6 +41,7 @@ const TYPE_LABELS: Record<EmailType, string> = {
   patient_cancelled: "Cancelación del paciente (al negocio)",
   appointment_series: "Serie de citas",
   appointment_series_cancelled: "Serie cancelada",
+  calendar_invite: "Invitación de calendario (al profesional)",
 };
 
 /** Bandeja de salida del negocio. */
