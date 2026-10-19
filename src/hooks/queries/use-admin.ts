@@ -1,5 +1,5 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { data, type AdminAuditFilters } from "@/lib/data";
+import { data, DataError, type AdminAuditFilters } from "@/lib/data";
 import type {
   AdminBusinessInput,
   AdminMemberInput,
@@ -28,6 +28,21 @@ export const useAdminAnalytics = (days: AnalyticsPeriodDays) =>
     staleTime: 10 * 60_000,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
+  });
+
+/**
+ * La pantalla «Base de datos» (spec 024): se calcula en la API cada vez que se pide (y la ruta tiene un
+ * límite de 20 cada 15 minutos), así que sólo se vuelve a pedir con «Actualizar». `enabled`: sólo el super
+ * admin principal la pide; con 403 no se reintenta.
+ */
+export const useAdminDatabase = (enabled: boolean) =>
+  useQuery({
+    queryKey: queryKeys.admin.database,
+    queryFn: () => data.admin.getDatabaseStats(),
+    enabled,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    retry: (failures, error) => !(error instanceof DataError && ["forbidden", "rate_limited", "two_factor_required"].includes(error.code)) && failures < 1,
   });
 
 export const useAdminBusinesses = () =>

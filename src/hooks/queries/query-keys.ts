@@ -72,6 +72,8 @@ export const queryKeys = {
     stats: ["admin", "stats"] as const,
     /** La foto de la analítica de 30 o de 90 días (spec 016). */
     analytics: (days: number) => ["admin", "analytics", days] as const,
+    /** La pantalla «Base de datos» (spec 024). */
+    database: ["admin", "database"] as const,
     businesses: ["admin", "businesses"] as const,
     business: (businessId: string) => ["admin", "businesses", businessId] as const,
     users: ["admin", "users"] as const,

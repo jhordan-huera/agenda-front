@@ -1,7 +1,22 @@
-import { CircleAlert, CircleCheck, CircleHelp, CircleX, Database, DatabaseBackup, Gauge, Mail, ShieldAlert, Timer, type LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  CircleAlert,
+  CircleCheck,
+  CircleHelp,
+  CircleX,
+  Database,
+  DatabaseBackup,
+  Gauge,
+  Mail,
+  ShieldAlert,
+  Timer,
+  type LucideIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
+import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/features/auth/use-session";
 import { capitalize, formatShortDate, plural, toZonedDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ISODate, PlatformStats } from "@/types";
@@ -35,6 +50,8 @@ interface Tile {
   status: Status;
   main: ReactNode;
   detail: ReactNode;
+  /** «Ver detalle»: la pantalla con el detalle de la tarjeta (la de la base, sólo para el super admin principal). */
+  link?: string;
 }
 
 /** "hace 4 min", "hace 3 h", "hace 2 días". */
@@ -64,16 +81,20 @@ function quotaTile({ quota, sent24h, patientLimit, waiting }: PlatformStats["hea
   };
 }
 
-/** Lo que ocupa la base de datos frente al tope del plan de Supabase. */
-function databaseTile(database: PlatformStats["health"]["database"]): Tile {
+/**
+ * Lo que ocupa la base de datos frente al tope del plan de Supabase. `link`: «Ver detalle» lleva a la
+ * pantalla «Base de datos» (spec 024), sólo para el super admin principal.
+ */
+function databaseTile(database: PlatformStats["health"]["database"], link: string | undefined): Tile {
   if (!database) {
-    return { key: "database", icon: Database, title: "Base de datos", status: "unknown", main: "No se pudo medir", detail: "Vuelve a intentarlo más tarde" };
+    return { key: "database", icon: Database, title: "Base de datos", status: "unknown", main: "No se pudo medir", detail: "Vuelve a intentarlo más tarde", link };
   }
   const share = database.sizeBytes / database.limitBytes;
   return {
     key: "database",
     icon: Database,
     title: "Base de datos",
+    link,
     status: share >= DATABASE_BAD_SHARE ? "bad" : share >= DATABASE_WARN_SHARE ? "warn" : "ok",
     main: `${formatSize(database.sizeBytes)} de ${formatSize(database.limitBytes)}`,
     detail:
@@ -83,7 +104,7 @@ function databaseTile(database: PlatformStats["health"]["database"]): Tile {
   };
 }
 
-function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
+function tiles(health: PlatformStats["health"], today: ISODate, databaseLink: string | undefined): Tile[] {
   const { emailsToday, emailQuota, cron, backup, database, security } = health;
   const cronMinutes = cron.lastRunAt ? (Date.now() - Date.parse(cron.lastRunAt)) / 60_000 : null;
   const backupDays = backup ? daysSince(backup.ranAt, today) : null;
@@ -126,7 +147,7 @@ function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
         : "La próxima del viernes quedará anotada",
     },
     // Una API anterior a esta tarjeta no trae `database` (undefined): no se muestra.
-    ...(database === undefined ? [] : [databaseTile(database)]),
+    ...(database === undefined ? [] : [databaseTile(database, databaseLink)]),
     {
       key: "security",
       icon: ShieldAlert,
@@ -145,6 +166,7 @@ function tiles(health: PlatformStats["health"], today: ISODate): Tile[] {
  * «Salud del sistema» (spec 006): emails de hoy, el cupo de Gmail (spec 015), cron, copia de seguridad,
  * lo que ocupa la base de datos frente al tope de Supabase e intentos fallidos de inicio de sesión, cada
  * uno en verde, ámbar o rojo (con ícono y texto), y el resumen arriba. Seis tarjetas: dos filas de tres.
+ * La de la base lleva «Ver detalle» a /admin/database sólo para el super admin principal (spec 024).
  * `unavailable`: la beta, que no tiene cron, copias ni emails reales.
  */
 export function HealthSection({
@@ -156,7 +178,8 @@ export function HealthSection({
   today: ISODate;
   unavailable?: boolean;
 }) {
-  const list = health && !unavailable ? tiles(health, today) : null;
+  const { session } = useSession();
+  const list = health && !unavailable ? tiles(health, today, session?.platformOwner ? "/admin/database" : undefined) : null;
   const warnings = list?.filter((tile) => tile.status === "warn" || tile.status === "bad").length ?? 0;
   const worst = list?.some((tile) => tile.status === "bad") ? "bad" : warnings > 0 ? "warn" : "ok";
   return (
@@ -200,6 +223,11 @@ export function HealthSection({
                     </p>
                     <p className="text-lg font-bold">{tile.main}</p>
                     {tile.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{tile.detail}</p>}
+                    {tile.link && (
+                      <Link to={tile.link} className="mt-0.5 inline-flex w-fit items-center gap-1 text-sm font-medium text-ink hover:underline">
+                        Ver detalle <ArrowRight className="size-3.5" aria-hidden />
+                      </Link>
+                    )}
                   </Card>
                 );
               })

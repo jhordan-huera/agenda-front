@@ -72,6 +72,8 @@ export const router = createBrowserRouter([
           { path: "businesses", lazy: lazyPage(() => import("@/pages/admin/admin-businesses-page")) },
           { path: "businesses/:id", lazy: lazyPage(() => import("@/pages/admin/admin-business-detail-page")) },
           { path: "analytics", lazy: lazyPage(() => import("@/pages/admin/admin-analytics-page")) },
+          // La pantalla «Base de datos» (spec 024): sólo el super admin principal (la página y la API lo comprueban).
+          { path: "database", lazy: lazyPage(() => import("@/pages/admin/admin-database-page")) },
           { path: "users", lazy: lazyPage(() => import("@/pages/admin/admin-users-page")) },
           { path: "plans", lazy: lazyPage(() => import("@/pages/admin/admin-plans-page")) },
           { path: "categories", lazy: lazyPage(() => import("@/pages/admin/admin-categories-page")) },
