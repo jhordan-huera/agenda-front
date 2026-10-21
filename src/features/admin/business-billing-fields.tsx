@@ -10,7 +10,7 @@ import { formatUsdAmount } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
 import { formatDate, plural } from "@/lib/format";
 import { addMonthsISO, dayOfMonthISO, getZonedNow } from "@/lib/time";
-import { businessBillingSchema } from "@/lib/validations/admin";
+import { businessBillingSchema, proposedBilling } from "@/lib/validations/admin";
 import { validate } from "@/lib/validations/validate";
 import type { AdminBusinessBilling, ISODate, PlanId } from "@/types";
 
@@ -18,8 +18,10 @@ interface BusinessBillingFieldsProps {
   businessId: string;
   billing: AdminBusinessBilling;
   plan: PlanId;
-  /** La zona del negocio: de ella salen «hoy» y el día propuesto. */
+  /** La zona del negocio: de ella salen «hoy» y el día en que empezó su plan. */
   timezone: string;
+  /** Desde cuándo tiene su plan (la creación del negocio, o el último cambio de plan): de ahí sale el día de pago. */
+  planSince: string | null;
 }
 
 /** El primer día de pago después de hoy: el de este mes si todavía no llegó; si no, el del mes siguiente. */
@@ -27,6 +29,15 @@ function nextOccurrence(day: number, today: ISODate): ISODate {
   const thisMonth = dayOfMonthISO(today, day);
   return thisMonth > today ? thisMonth : dayOfMonthISO(addMonthsISO(today, 1), day);
 }
+
+/** La fecha (en la zona del negocio) de un instante ISO, como «desde cuándo tiene su plan». */
+const dateIn = (timezone: string, iso: string) => {
+  try {
+    return getZonedNow(timezone, new Date(iso)).date;
+  } catch {
+    return getZonedNow(DEFAULT_TIMEZONE, new Date(iso)).date;
+  }
+};
 
 const todayIn = (timezone: string) => {
   try {
@@ -42,9 +53,12 @@ const todayIn = (timezone: string) => {
  * cobro al cumplirse el mes; elegir otra fecha cambia el día de pago, y otro día mueve la fecha a ese día.
  * Queda en la actividad de la plataforma; el propietario la ve en su configuración.
  */
-export function BusinessBillingFields({ businessId, billing, plan, timezone }: BusinessBillingFieldsProps) {
+export function BusinessBillingFields({ businessId, billing, plan, timezone, planSince }: BusinessBillingFieldsProps) {
   const save = useSetBusinessBilling();
   const today = todayIn(timezone);
+  // El día en que empezó su plan, en la zona del negocio (sin dato, hoy).
+  const planStart = planSince ? dateIn(timezone, planSince) : today;
+  const [automatic, setAutomatic] = useState(false);
   const [fee, setFee] = useState(billing.monthlyFee > 0 ? String(billing.monthlyFee) : "");
   const [day, setDay] = useState(billing.billingDay === null ? "" : String(billing.billingDay));
   const [start, setStart] = useState(billing.billingStart ?? "");
@@ -60,14 +74,17 @@ export function BusinessBillingFields({ businessId, billing, plan, timezone }: B
 
   const changeFee = (next: string) => {
     setFee(next);
-    // La primera mensualidad: se propone el día de hoy, con el primer cobro al cumplirse el mes.
+    // La primera mensualidad, automática: el día en que empezó su plan, con el primer cobro al cumplirse el
+    // mes (o el siguiente día de pago, si ése ya pasó). Se puede cambiar a mano.
     if (day === "" && start === "" && next.trim() !== "" && Number(next.replace(",", ".")) > 0) {
-      const proposed = Number(today.slice(8));
-      setDay(String(proposed));
-      setStart(nextOccurrence(proposed, today));
+      const proposed = proposedBilling(planStart, today);
+      setDay(String(proposed.billingDay));
+      setStart(proposed.billingStart);
+      setAutomatic(true);
     }
   };
   const changeDay = (next: string) => {
+    setAutomatic(false);
     setDay(next);
     const value = Number(next);
     if (!Number.isInteger(value) || value < 1 || value > 31) return;
@@ -76,6 +93,7 @@ export function BusinessBillingFields({ businessId, billing, plan, timezone }: B
     setStart(moved && moved > today ? moved : nextOccurrence(value, today));
   };
   const changeStart = (next: string) => {
+    setAutomatic(false);
     setStart(next);
     if (next) setDay(String(Number(next.slice(8))));
   };
@@ -141,6 +159,11 @@ export function BusinessBillingFields({ businessId, billing, plan, timezone }: B
           Guardar
         </Button>
       </div>
+      {automatic && (
+        <p className="text-xs text-muted-foreground">
+          Automático: el {day} de cada mes, el día en que empezó su plan ({formatDate(planStart, "d 'de' MMMM")}). Puedes cambiarlo.
+        </p>
+      )}
       <p className="text-xs text-muted-foreground">Un cambio vale desde el siguiente cobro: los ya creados no cambian.</p>
     </div>
   );

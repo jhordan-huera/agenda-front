@@ -262,6 +262,7 @@ export default function AdminBusinessDetailPage() {
                         billing={detail.data.billing}
                         plan={plan.id}
                         timezone={business.timezone}
+                        planSince={subscription?.planSince ?? null}
                       />
                     )}
                   </div>

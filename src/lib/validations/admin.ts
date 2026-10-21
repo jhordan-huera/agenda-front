@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { dayOfMonthISO } from "@/lib/time";
+import { addMonthsISO, dayOfMonthISO } from "@/lib/time";
 import { brandColorsSchema, businessCategorySchema, slugSchema, timezoneField } from "./business";
 import { dateField, emailField, moneyField, optionalEmailField, optionalText, passwordField, phoneField, requiredText } from "./fields";
 import { bankAccountsSchema } from "./payment";
@@ -135,6 +135,8 @@ export const businessBillingSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.monthlyFee === 0) return;
+    // Sin los dos, la API los pone sola desde el día en que empezó su plan (ver proposedBilling).
+    if (data.billingDay === null && data.billingStart === null) return;
     if (data.billingDay === null) ctx.addIssue({ code: "custom", path: ["billingDay"], message: "Elige el día de pago" });
     if (data.billingStart === null) {
       ctx.addIssue({ code: "custom", path: ["billingStart"], message: "Elige la fecha del primer cobro" });
@@ -142,6 +144,19 @@ export const businessBillingSchema = z
       ctx.addIssue({ code: "custom", path: ["billingStart"], message: `El primer cobro tiene que caer en su día de pago (el ${data.billingDay})` });
     }
   });
+
+/**
+ * La mensualidad, automática (spec 029, pedido del dueño del producto el 2026-10-20): el día de pago es el
+ * día del mes en que empezó su plan (`planStart`, en la zona del negocio), y el primer cobro, al cumplirse
+ * el mes (creado el 8 de septiembre, el 8 de octubre). Si ese día ya pasó, el siguiente día de pago desde
+ * hoy. En los meses cortos, el último día.
+ */
+export function proposedBilling(planStart: string, today: string): { billingDay: number; billingStart: string } {
+  const billingDay = Number(planStart.slice(8, 10));
+  let billingStart = dayOfMonthISO(addMonthsISO(planStart, 1), billingDay);
+  while (billingStart < today) billingStart = dayOfMonthISO(addMonthsISO(billingStart, 1), billingDay);
+  return { billingDay, billingStart };
+}
 
 /** El motivo de rechazar un comprobante o de anular un cobro: le llega al propietario por email. */
 export const billingReasonSchema = z.object({ reason: requiredText("El motivo", 3, 300) });
