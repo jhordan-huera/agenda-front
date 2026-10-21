@@ -1,3 +1,4 @@
+import { formatCount } from "@/lib/format";
 import {
   findHeaderRow,
   guessColumns,
@@ -9,8 +10,8 @@ import type { ClientImportResult, ClientImportRow, ClientRequiredFields } from "
 import { missingRowText } from "../missing-fields";
 import type { SpreadsheetSheet } from "./read-spreadsheet";
 
-/** «5.000»: las cifras de los mensajes, con el punto de los miles. */
-export const formatCount = (count: number) => String(count).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+/** «5.000»: ahora en lib/format.ts (también lo usa la API, spec 028). */
+export { formatCount };
 
 /** «Se importaron 190 pacientes» (o «Se importó 1 paciente»): el aviso y el resumen del resultado. */
 export const importedText = (created: number) =>

@@ -11,11 +11,13 @@ import { ToCloseContext } from "@/features/appointments/to-close/to-close-contex
 import { ToCloseScreen } from "@/features/appointments/to-close/to-close-screen";
 import { ToCloseSheet } from "@/features/appointments/to-close/to-close-sheet";
 import { WhatsAppNoticeProvider } from "@/features/appointments/whatsapp-notice";
+import { BillingScreen } from "@/features/billing/billing-screen";
 import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { useInstallableApp } from "@/features/install/use-installable-app";
 import { NoticeBell } from "@/features/notices/notice-bell";
 import { PushPrompt } from "@/features/push/push-prompt";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
+import { isBillingUnavailable, useBusinessBilling } from "@/hooks/queries/use-billing";
 import { useToCloseCount } from "@/hooks/queries/use-to-close";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { TO_CLOSE_PARAM } from "@/lib/constants/notices";
@@ -64,6 +66,19 @@ function DashboardShell() {
   const [later, setLater] = useState(() => ({ path: pathname, active: isClosingLater(userId, businessId) }));
   if (later.path !== pathname) setLater({ path: pathname, active: isClosingLater(userId, businessId) });
 
+  // La mensualidad (spec 029): sólo el propietario, nunca en modo soporte (ni el resto del equipo, que sigue
+  // trabajando). Desde el día de pago de un cobro sin comprobante, su pantalla va antes que todo, también que
+  // la del cierre de mes, y no se cierra hasta subirlo: no hay «Más tarde» ni días de gracia (pedido del
+  // dueño del producto, 2026-10-20). Si la API no la tiene o falla, no se bloquea.
+  const isOwner = session?.role === "owner" && !support;
+  const billing = useBusinessBilling(isOwner);
+  // El cobro cuyo comprobante acaba de subir: la pantalla se cierra sin esperar a que la mensualidad se recargue.
+  const [sentCharge, setSentCharge] = useState<string | null>(null);
+  const billingHidden = !isOwner || isBillingUnavailable(billing.error);
+  const billingLoaded = billingHidden || billing.data !== undefined || billing.isError;
+  const pendingCharge = billingHidden ? null : (billing.data?.pending ?? null);
+  const billingScreen = pendingCharge !== null && pendingCharge.id !== sentCharge;
+
   // La campana de avisos (spec 014) es del equipo: el super admin en modo soporte no la ve (tiene la suya en /admin).
   const bell = (align: "start" | "end") =>
     session?.support ? null : <NoticeBell scope="business" timezone={business?.timezone ?? DEFAULT_TIMEZONE} align={align} />;
@@ -99,7 +114,7 @@ function DashboardShell() {
       { replace: true },
     );
   }, [openToClose, setSearchParams]);
-  if (mayBlock && !toClose.loaded) return <FullPageLoader />;
+  if ((mayBlock && !toClose.loaded) || !billingLoaded) return <FullPageLoader />;
   const showBanner = !blocked && !toClose.hidden && toClose.overdue > 0;
   const toCloseValue = { count: toClose, open: () => setListOpen(true) };
   const remindLater = () => {
@@ -111,7 +126,13 @@ function DashboardShell() {
     <BrandThemeProvider colors={business?.brandColors}>
       <WhatsAppNoticeProvider>
         <ToCloseContext.Provider value={toCloseValue}>
-          {blocked ? (
+          {billingScreen && pendingCharge ? (
+            <BillingScreen
+              billing={{ ...billing.data!, pending: pendingCharge }}
+              timezone={business?.timezone ?? DEFAULT_TIMEZONE}
+              onSent={() => setSentCharge(pendingCharge.id)}
+            />
+          ) : blocked ? (
             <ToCloseScreen overdue={toClose.overdue} previousMonth={toClose.previousMonth} onLater={remindLater} />
           ) : (
             <AppShell
@@ -135,7 +156,7 @@ function DashboardShell() {
               }
             />
           )}
-          {!blocked && <ToCloseSheet open={listOpen} onOpenChange={setListOpen} />}
+          {!blocked && !billingScreen && <ToCloseSheet open={listOpen} onOpenChange={setListOpen} />}
         </ToCloseContext.Provider>
       </WhatsAppNoticeProvider>
     </BrandThemeProvider>

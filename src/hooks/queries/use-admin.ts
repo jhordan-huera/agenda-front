@@ -3,14 +3,26 @@ import { data, DataError, type AdminAuditFilters } from "@/lib/data";
 import type {
   AdminBusinessInput,
   AdminMemberInput,
+  BillingPaidInput,
+  BusinessBillingInput,
   BusinessOwnerInput,
   BusinessCategoryInput,
   PanelColorsInput,
   PlatformAdminInput,
+  PlanPricesInput,
+  PlatformBankAccountsInput,
   PlatformSettingsInput,
 } from "@/lib/validations/admin";
 import { useSession } from "@/features/auth/use-session";
-import type { AdminBusinessDetail, AnalyticsPeriodDays, Business, BusinessStatus, ClientRequiredFields, PlanId } from "@/types";
+import type {
+  AdminBillingFilter,
+  AdminBusinessDetail,
+  AnalyticsPeriodDays,
+  Business,
+  BusinessStatus,
+  ClientRequiredFields,
+  PlanId,
+} from "@/types";
 import { queryKeys } from "./query-keys";
 
 /* Panel del super admin. El backend vuelve a comprobar el rol en cada llamada. */
@@ -102,6 +114,21 @@ export const useAdminEmails = () => useQuery({ queryKey: queryKeys.admin.emails,
 export const useReferralRewards = () =>
   useQuery({ queryKey: queryKeys.admin.referralRewards, queryFn: () => data.admin.listReferralRewards() });
 
+/** «Cobros» (spec 029): los cobros de un filtro y cuántos hay en cada uno. Al cambiar de filtro se ve el anterior mientras llega. */
+export const useAdminBilling = (filter: AdminBillingFilter) =>
+  useQuery({
+    queryKey: queryKeys.admin.billing(filter),
+    queryFn: () => data.admin.listBillingCharges(filter),
+    placeholderData: keepPreviousData,
+  });
+
+/** Las cuentas de Agenda360 para recibir las mensualidades (spec 029): nunca vienen en la configuración pública. */
+export const useBillingAccounts = () =>
+  useQuery({ queryKey: queryKeys.admin.billingAccounts, queryFn: () => data.admin.getBillingAccounts() });
+
+/** Los precios de los planes (spec 029, ampliación del 2026-10-20), para /admin → Planes. */
+export const usePlanPrices = () => useQuery({ queryKey: queryKeys.admin.planPrices, queryFn: () => data.admin.getPlanPrices() });
+
 /** Pública: la usan el registro y la pantalla de negocio suspendido. */
 export const usePlatformSettings = () =>
   useQuery({ queryKey: queryKeys.platformSettings, queryFn: () => data.platform.getSettings() });
@@ -130,6 +157,36 @@ export const useSetReferredBy = () =>
 
 /** «Marcar como aplicado» un descuento por referido (spec 023). */
 export const useApplyReferralReward = () => useAdminMutation((businessId: string) => data.admin.applyReferralReward(businessId));
+
+/** La mensualidad de un negocio (spec 029): recarga el panel (la ficha, los cobros y la actividad). */
+export const useSetBusinessBilling = () =>
+  useAdminMutation(({ businessId, input }: { businessId: string; input: BusinessBillingInput }) =>
+    data.admin.setBusinessBilling(businessId, input),
+  );
+
+/** Los precios de los planes: recarga el panel (la mensualidad de cada ficha y la actividad). */
+export const useSetPlanPrices = () => useAdminMutation((input: PlanPricesInput) => data.admin.setPlanPrices(input));
+
+/** «Pagado», «Rechazar», «Pagado sin comprobante» y «Anular» un cobro (spec 029). */
+export const useApproveBillingCharge = () => useAdminMutation((chargeId: string) => data.admin.approveBillingCharge(chargeId));
+export const useRejectBillingCharge = () =>
+  useAdminMutation(({ chargeId, reason }: { chargeId: string; reason: string }) => data.admin.rejectBillingCharge(chargeId, { reason }));
+export const useMarkBillingChargePaid = () =>
+  useAdminMutation(({ chargeId, input }: { chargeId: string; input: BillingPaidInput }) => data.admin.markBillingChargePaid(chargeId, input));
+export const useVoidBillingCharge = () =>
+  useAdminMutation(({ chargeId, reason }: { chargeId: string; reason: string }) => data.admin.voidBillingCharge(chargeId, { reason }));
+
+/** Las cuentas para recibir las mensualidades: la respuesta ya trae lo guardado. */
+export function useSetBillingAccounts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: PlatformBankAccountsInput) => data.admin.setBillingAccounts(input),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(queryKeys.admin.billingAccounts, saved);
+      void queryClient.invalidateQueries({ queryKey: ["admin", "audit-logs"] });
+    },
+  });
+}
 
 export const useSetBusinessStatus = () =>
   useAdminMutation(({ businessId, status }: { businessId: string; status: BusinessStatus }) =>

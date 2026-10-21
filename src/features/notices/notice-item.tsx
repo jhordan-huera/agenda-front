@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   Store,
   Sunrise,
+  WalletCards,
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -34,6 +35,7 @@ const ICONS: Record<NoticeKind, LucideIcon> = {
   account_security: ShieldAlert,
   login_attack: KeyRound,
   reminders_sent: BellRing,
+  billing_receipt: WalletCards,
 };
 
 interface NoticeItemProps {

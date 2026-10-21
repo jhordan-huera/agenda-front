@@ -2,6 +2,7 @@ import { Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { BODY_MAP_VIEW_LABELS } from "@/lib/clinical-templates";
 import { cn } from "@/lib/utils";
 import type { BodyMapMark } from "@/types";
 
@@ -13,8 +14,8 @@ import type { BodyMapMark } from "@/types";
 const VIEW_WIDTH = 100;
 const VIEW_HEIGHT = 220;
 const VIEWS: { view: BodyMapMark["view"]; label: string }[] = [
-  { view: "front", label: "Frente" },
-  { view: "back", label: "Espalda" },
+  { view: "front", label: BODY_MAP_VIEW_LABELS.front },
+  { view: "back", label: BODY_MAP_VIEW_LABELS.back },
 ];
 
 /**
@@ -85,8 +86,6 @@ function BodyFigures({ marks, onAdd, className }: { marks: BodyMapMark[]; onAdd?
   );
 }
 
-const viewLabel = (view: BodyMapMark["view"]) => (view === "front" ? "Frente" : "Espalda");
-
 /** Mapa de sólo lectura con la lista de marcas (ficha e impresión). */
 export function BodyMapView({ marks }: { marks: BodyMapMark[] }) {
   return (
@@ -95,7 +94,7 @@ export function BodyMapView({ marks }: { marks: BodyMapMark[] }) {
       <ol className="grid gap-0.5 text-sm">
         {marks.map((mark, index) => (
           <li key={index}>
-            <span className="font-medium">{index + 1}.</span> {viewLabel(mark.view)}
+            <span className="font-medium">{index + 1}.</span> {BODY_MAP_VIEW_LABELS[mark.view]}
             {mark.note && ` — ${mark.note}`}
           </li>
         ))}
@@ -118,7 +117,7 @@ export function BodyMapInput({ value, onChange }: { value: BodyMapMark[]; onChan
               <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
                 {index + 1}
               </span>
-              <span className="w-14 shrink-0 text-xs text-muted-foreground">{viewLabel(mark.view)}</span>
+              <span className="w-14 shrink-0 text-xs text-muted-foreground">{BODY_MAP_VIEW_LABELS[mark.view]}</span>
               <Input
                 aria-label={`Nota de la marca ${index + 1}`}
                 placeholder="Qué hay en este punto (p. ej. contusión, dolor 7/10)"

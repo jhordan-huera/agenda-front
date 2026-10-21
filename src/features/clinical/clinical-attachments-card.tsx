@@ -14,12 +14,9 @@ import { formatDateTime } from "@/lib/format";
 import { CLINICAL_ATTACHMENT_MAX_BYTES } from "@/lib/validations/clinical";
 import type { ClinicalAttachment, ClinicalRecord } from "@/types";
 import { PlanLimitContact } from "@/features/support/plan-limit-contact";
+import { formatAttachmentSize } from "./clinical-labels";
 
 const ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.pdf,image/jpeg,image/png,image/webp,image/heic,application/pdf";
-
-function formatSize(bytes: number): string {
-  return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
-}
 
 function AttachmentRow({ attachment }: { attachment: ClinicalAttachment }) {
   const businessId = useBusinessId();
@@ -43,7 +40,7 @@ function AttachmentRow({ attachment }: { attachment: ClinicalAttachment }) {
         </p>
         {attachment.description && <p className="text-sm text-muted-foreground">{attachment.description}</p>}
         <p className="text-xs text-muted-foreground">
-          {formatSize(attachment.sizeBytes)} · {attachment.uploadedByName} · {formatDateTime(attachment.createdAt, timezone)}
+          {formatAttachmentSize(attachment.sizeBytes)} · {attachment.uploadedByName} · {formatDateTime(attachment.createdAt, timezone)}
         </p>
       </div>
       <Button type="button" variant="outline" size="sm" onClick={open}>
@@ -110,7 +107,7 @@ export function ClinicalAttachmentsCard({ clientId, record }: { clientId: string
                 />
                 {progress !== null && <Progress value={progress} aria-label="Progreso de la subida" />}
                 <SubmitButton type="button" size="sm" className="justify-self-start" loading={upload.isPending} onClick={submit}>
-                  <Upload /> Subir {formatSize(file.size)}
+                  <Upload /> Subir {formatAttachmentSize(file.size)}
                 </SubmitButton>
               </>
             )}

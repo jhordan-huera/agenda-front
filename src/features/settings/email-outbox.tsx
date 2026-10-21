@@ -42,6 +42,10 @@ const TYPE_LABELS: Record<EmailType, string> = {
   appointment_series: "Serie de citas",
   appointment_series_cancelled: "Serie cancelada",
   calendar_invite: "Invitación de calendario (al profesional)",
+  billing_reminder: "Mensualidad por vencer",
+  billing_paid: "Mensualidad pagada",
+  billing_rejected: "Comprobante de mensualidad rechazado",
+  billing_voided: "Cobro de mensualidad anulado",
 };
 
 /** Bandeja de salida del negocio. */

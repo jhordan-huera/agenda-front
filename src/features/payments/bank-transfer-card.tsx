@@ -1,3 +1,4 @@
+import type { UseMutationResult } from "@tanstack/react-query";
 import { CircleCheck, Copy, FileUp, Landmark, Loader2 } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
@@ -31,7 +32,7 @@ interface BankTransferCardProps {
   paid?: boolean;
 }
 
-interface DataRow {
+export interface DataRow {
   label: string;
   value: string;
   /** Con botón para copiarlo (número de cuenta, cédula/RUC). */
@@ -75,41 +76,15 @@ export function BankTransferCard({
   const [sentHere, setSentHere] = useState(false);
   const sent = sentHere || receiptsSent > 0;
   const amountRow: DataRow[] = amount !== null ? [{ label: "Monto", value: formatPrice(amount, currency) }] : [];
-  const single = bankAccounts.length === 1;
+  const upload = useUploadReceipt(token);
 
   return (
     <section className="min-w-0 rounded-2xl border bg-background p-5 sm:p-6" aria-labelledby="bank-transfer-title">
       <h3 id="bank-transfer-title" className="flex items-start gap-2 text-lg leading-snug font-bold">
         <Landmark className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-        {single ? "Pago por transferencia" : "Transfiere a cualquiera de estas cuentas"}
+        {bankAccounts.length === 1 ? "Pago por transferencia" : "Transfiere a cualquiera de estas cuentas"}
       </h3>
-      {single ? (
-        <>
-          <DataList rows={[...accountRows(bankAccounts[0]), ...amountRow]} className="mt-4" />
-          <CopyAllButton rows={[...accountRows(bankAccounts[0]), ...amountRow]} />
-        </>
-      ) : (
-        <>
-          {amountRow.length > 0 && <DataList rows={amountRow} className="mt-4" />}
-          <ol className="mt-4 grid gap-3">
-            {bankAccounts.map((account, index) => (
-              <li key={index} aria-label={`Cuenta ${index + 1}: ${account.bank}`} className="min-w-0 rounded-xl border p-3 sm:p-4">
-                <p className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                  <span className="min-w-0 font-bold [overflow-wrap:anywhere]">{account.bank}</span>
-                  <span className="text-sm text-muted-foreground">Cuenta {BANK_ACCOUNT_TYPE_LABELS[account.accountType].toLowerCase()}</span>
-                </p>
-                {/* Banco y tipo ya van en el encabezado de la cuenta. */}
-                <DataList rows={accountRows(account).slice(2)} className="mt-2" />
-                <CopyAllButton
-                  rows={[...accountRows(account), ...amountRow]}
-                  label="Copiar los datos"
-                  ariaLabel={`Copiar los datos de la cuenta de ${account.bank}`}
-                />
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
+      <TransferAccounts bankAccounts={bankAccounts} amountRows={amountRow} />
 
       {paid ? (
         <SuccessNote title="Pago confirmado" text="El negocio ya confirmó tu pago. ¡Gracias!" />
@@ -131,7 +106,7 @@ export function BankTransferCard({
             Cuando transfieras, envía el comprobante para que el negocio confirme tu pago.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
-            {receiptsEnabled && <ReceiptUploadButton token={token} onSent={() => setSentHere(true)} />}
+            {receiptsEnabled && <ReceiptUploadButton upload={upload} onSent={() => setSentHere(true)} />}
             {whatsappUrl && (
               <Button asChild variant="outline" className="h-11 px-5">
                 <a href={whatsappUrl} target="_blank" rel="noreferrer">
@@ -149,8 +124,45 @@ export function BankTransferCard({
   );
 }
 
+/**
+ * Las cuentas para transferir, con «Copiar»: con una, sus datos y el monto; con varias, el monto arriba y
+ * cada cuenta en su recuadro (vale cualquiera). Lo usan el pago de una cita y la mensualidad (spec 029).
+ */
+export function TransferAccounts({ bankAccounts, amountRows }: { bankAccounts: BankAccount[]; amountRows: DataRow[] }) {
+  if (bankAccounts.length === 1) {
+    return (
+      <>
+        <DataList rows={[...accountRows(bankAccounts[0]), ...amountRows]} className="mt-4" />
+        <CopyAllButton rows={[...accountRows(bankAccounts[0]), ...amountRows]} />
+      </>
+    );
+  }
+  return (
+    <>
+      {amountRows.length > 0 && <DataList rows={amountRows} className="mt-4" />}
+      <ol className="mt-4 grid gap-3">
+        {bankAccounts.map((account, index) => (
+          <li key={index} aria-label={`Cuenta ${index + 1}: ${account.bank}`} className="min-w-0 rounded-xl border p-3 sm:p-4">
+            <p className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+              <span className="min-w-0 font-bold [overflow-wrap:anywhere]">{account.bank}</span>
+              <span className="text-sm text-muted-foreground">Cuenta {BANK_ACCOUNT_TYPE_LABELS[account.accountType].toLowerCase()}</span>
+            </p>
+            {/* Banco y tipo ya van en el encabezado de la cuenta. */}
+            <DataList rows={accountRows(account).slice(2)} className="mt-2" />
+            <CopyAllButton
+              rows={[...accountRows(account), ...amountRows]}
+              label="Copiar los datos"
+              ariaLabel={`Copiar los datos de la cuenta de ${account.bank}`}
+            />
+          </li>
+        ))}
+      </ol>
+    </>
+  );
+}
+
 /** Filas "Etiqueta: valor"; las de número y cédula, con su botón de copiar. */
-function DataList({ rows, className }: { rows: DataRow[]; className?: string }) {
+export function DataList({ rows, className }: { rows: DataRow[]; className?: string }) {
   return (
     <dl className={cn("divide-y border-y", className)}>
       {rows.map((row) => (
@@ -178,7 +190,7 @@ function DataList({ rows, className }: { rows: DataRow[]; className?: string }) 
 }
 
 /** Copia todas las filas en texto ("Banco: …"), para pegarlas en la app del banco o en una nota. */
-function CopyAllButton({ rows, label = "Copiar todos los datos", ariaLabel }: { rows: DataRow[]; label?: string; ariaLabel?: string }) {
+export function CopyAllButton({ rows, label = "Copiar todos los datos", ariaLabel }: { rows: DataRow[]; label?: string; ariaLabel?: string }) {
   return (
     <Button
       type="button"
@@ -209,10 +221,28 @@ function SuccessNote({ title, text }: { title: string; text: string }) {
   );
 }
 
-/** Sube la foto o el PDF del comprobante, con progreso; al terminar, el negocio recibe un aviso. */
-function ReceiptUploadButton({ token, onSent }: { token: string; onSent: () => void }) {
+/** La subida de un comprobante (la del pago de una cita o la de la mensualidad): el archivo y su avance. */
+export type ReceiptUploadMutation = Pick<
+  UseMutationResult<unknown, Error, { file: File; onProgress?: (percent: number) => void }>,
+  "mutateAsync" | "isPending"
+>;
+
+/**
+ * Sube la foto o el PDF del comprobante, con progreso; al terminar, quien cobra recibe un aviso. `sentText`:
+ * lo que dice el aviso de «Comprobante enviado» (por defecto, el del paciente).
+ */
+export function ReceiptUploadButton({
+  upload,
+  onSent,
+  sentText = "El negocio lo revisará y confirmará tu pago.",
+  className,
+}: {
+  upload: ReceiptUploadMutation;
+  onSent: () => void;
+  sentText?: string;
+  className?: string;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const upload = useUploadReceipt(token);
   const [progress, setProgress] = useState(0);
   // Evita dos subidas a la vez (p. ej. "Reintentar" en el aviso mientras ya se envía otro archivo).
   const sending = useRef(false);
@@ -240,7 +270,7 @@ function ReceiptUploadButton({ token, onSent }: { token: string; onSent: () => v
     setProgress(0);
     try {
       await upload.mutateAsync({ file, onProgress: setProgress });
-      toast.success("Comprobante enviado", { description: "El negocio lo revisará y confirmará tu pago." });
+      toast.success("Comprobante enviado", { description: sentText });
       onSent();
     } catch (error) {
       // Si la red falló (o la subida tardó demasiado), se puede reintentar con el mismo archivo.
@@ -255,7 +285,7 @@ function ReceiptUploadButton({ token, onSent }: { token: string; onSent: () => v
   };
 
   return (
-    <div className="grid gap-2">
+    <div className={cn("grid gap-2", className)}>
       <input ref={inputRef} type="file" accept="image/*,application/pdf" className="sr-only" tabIndex={-1} onChange={handleFile} />
       <Button type="button" className="h-11 px-5" disabled={upload.isPending} onClick={() => inputRef.current?.click()}>
         {upload.isPending ? <Loader2 className="animate-spin" aria-hidden /> : <FileUp aria-hidden />}

@@ -7,12 +7,13 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "19 de octubre de 2026";
+const LAST_UPDATED = "20 de octubre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
  * Pública: la enlazan la web, el inicio de sesión, el registro y la página de reservas. Sólo promete
- * lo que existe (spec 015): lo que falta (exportar los datos, avisar de los cambios desde la app) no.
+ * lo que existe (spec 015): lo que falta (avisar de los cambios desde la app) no. La descarga de los
+ * datos desde el panel existe desde la spec 028.
  */
 export default function PrivacyPage() {
   const settings = usePlatformSettings();
@@ -136,7 +137,8 @@ export default function PrivacyPage() {
               <li>
                 <strong>El soporte de {APP_NAME}</strong> puede entrar al panel de un negocio para darle asistencia, y ahí ve
                 lo mismo que su propietario, <strong>salvo la historia clínica</strong>: no puede abrirla, ni sus archivos, ni
-                cambiarla. Todo lo que cambie queda en el registro de actividad del negocio.
+                cambiarla. Tampoco puede descargar los datos del negocio. Todo lo que cambie queda en el registro de actividad
+                del negocio.
               </li>
               <li>
                 <strong>El acceso técnico a la base de datos</strong> queda reservado al mantenimiento del servicio y a las
@@ -269,9 +271,10 @@ export default function PrivacyPage() {
             </p>
             <p>
               Escríbenos a {contact}. Si eres cliente o paciente de un negocio, también puedes pedírselo directamente a él.
-              Responderemos en un plazo máximo de 15 días. La aplicación no tiene una descarga automática de los datos: la
-              portabilidad se pide de la misma forma, escribiéndonos, y la atendemos dentro del plazo que fija la ley. Si
-              no quedas conforme, puedes reclamar ante la Superintendencia de Protección de Datos Personales.
+              Responderemos en un plazo máximo de 15 días. Para la portabilidad, el propietario de cada negocio puede
+              descargar sus datos en cualquier momento desde su panel (pacientes y citas en Excel, historias clínicas y sus
+              archivos), y cada profesional, los de su agenda. Si no quedas conforme, puedes reclamar ante la
+              Superintendencia de Protección de Datos Personales.
             </p>
           </Section>
 
