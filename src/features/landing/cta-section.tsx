@@ -1,44 +1,55 @@
-import { ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { DEMO_BOOKING_PATH } from "./landing-constants";
+import { CONTAINER } from "./section-heading";
 import { SignupLink } from "./signup-link";
 import type { SignupContact } from "./use-signup-contact";
 
+/** El foco sobre el azul: el anillo del texto claro, que se ve sobre él (el de la marca no). */
+const FOCUS_ON_BRAND = "focus-visible:border-hero-foreground focus-visible:ring-hero-foreground/60";
+
 /**
- * Cierre: una tarjeta en el degradado de la marca (del azul al lila), con una cuadrícula sutil. Las
- * líneas de la cuadrícula van en blanco translúcido a propósito: sólo aclaran el degradado. Con el registro
- * cerrado, el botón es «Quiero mi agenda» (spec 022).
+ * Cierre (spec 030): una franja sobria en el azul de la marca, sin degradado ni dibujo, con el texto claro
+ * de --hero-foreground (4,5:1 en los dos modos: check:contrast, «Degrad.»). Con el registro cerrado, el
+ * botón es «Quiero mi agenda» (spec 022).
  */
 export function CtaSection({ signup }: { signup: SignupContact }) {
   return (
-    <section className="bg-canvas py-16 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-hero to-hero-end px-6 py-14 text-center text-hero-foreground sm:px-12 sm:py-16">
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.08)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]"
-          />
-          <div className="relative mx-auto max-w-2xl">
-            <h2 className="text-3xl leading-tight font-extrabold tracking-[-0.02em] sm:text-4xl">Abre tu agenda y deja que te reserven.</h2>
-            <p className="mt-4 text-lg text-hero-foreground/85">
-              Creas tu cuenta, escribes tus servicios y horarios, y compartes el enlace. Así de simple.
-            </p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 bg-hero-foreground px-6 text-base text-hero hover:bg-hero-foreground/90">
-                <SignupLink contact={signup} registerLabel="Crear mi agenda gratis" after={<ArrowRight />} />
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-12 border-hero-foreground/60 bg-transparent px-6 text-base text-hero-foreground hover:bg-hero-foreground/10 hover:text-hero-foreground dark:border-hero-foreground/60 dark:bg-transparent dark:hover:bg-hero-foreground/10"
-              >
-                <Link to="/login">Iniciar sesión</Link>
-              </Button>
-            </div>
-            <p className="mt-6 text-sm text-hero-foreground/75">Gratis para empezar, sin tarjeta de crédito.</p>
-          </div>
+    <section aria-labelledby="cierre-titulo" className="bg-hero text-hero-foreground">
+      <div className={cn(CONTAINER, "grid grid-cols-1 gap-8 py-16 sm:py-20 lg:grid-cols-12 lg:items-end lg:gap-10")}>
+        <div className="lg:col-span-7">
+          <h2 id="cierre-titulo" className="text-headline font-bold">
+            Deja que tus pacientes elijan su hora.
+          </h2>
+          <p className="mt-4 max-w-xl text-lg leading-relaxed">
+            Creas tu agenda, escribes tus servicios y tus horarios, y compartes tu enlace. Puedes empezar hoy, gratis.
+          </p>
         </div>
+        <div className="flex flex-col gap-3 sm:flex-row lg:col-span-5 lg:justify-end">
+          <Button asChild className={cn("h-12 bg-hero-foreground px-6 text-base text-hero hover:bg-hero-foreground/90", FOCUS_ON_BRAND)}>
+            <SignupLink contact={signup} registerLabel="Crear mi agenda gratis" />
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className={cn(
+              "h-12 border-hero-foreground/60 bg-transparent px-5 text-base text-hero-foreground hover:bg-hero-foreground/10 hover:text-hero-foreground dark:border-hero-foreground/60 dark:bg-transparent dark:hover:bg-hero-foreground/10",
+              FOCUS_ON_BRAND,
+            )}
+          >
+            <Link to={DEMO_BOOKING_PATH}>Probar una página de reservas</Link>
+          </Button>
+        </div>
+        <p className="lg:col-span-12">
+          ¿Ya tienes cuenta?{" "}
+          <Link
+            to="/login"
+            className="inline-flex min-h-11 items-center rounded-sm font-semibold underline decoration-hero-foreground/50 underline-offset-4 outline-none hover:decoration-current focus-visible:ring-3 focus-visible:ring-hero-foreground/60"
+          >
+            Iniciar sesión
+          </Link>
+        </p>
       </div>
     </section>
   );

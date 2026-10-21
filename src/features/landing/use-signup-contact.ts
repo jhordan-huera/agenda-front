@@ -74,9 +74,34 @@ export function useSignupContact(): SignupContact {
     from: fromName.data,
     referrer: referrerName.data ? { name: referrerName.data, code: validCode } : null,
   });
-  const { supportPhone, supportEmail } = settings.data;
+  return supportContact(settings.data, message, `${SIGNUP_CONTACT_LABEL} en ${APP_NAME}`);
+}
+
+/** Un mensaje para soporte: por WhatsApp o, sin teléfono, por email. */
+export type SupportContact = Extract<SignupContact, { href: string }>;
+
+/** El WhatsApp de soporte con el mensaje escrito o, si no hay teléfono, su email con el asunto y el mensaje. */
+function supportContact(
+  { supportPhone, supportEmail }: { supportPhone: string; supportEmail: string },
+  message: string,
+  subject: string,
+): SupportContact {
   const whatsAppUrl = supportPhone ? getSupportWhatsAppUrl(supportPhone, message) : null;
   if (whatsAppUrl) return { kind: "whatsapp", href: whatsAppUrl };
-  const subject = encodeURIComponent(`${SIGNUP_CONTACT_LABEL} en ${APP_NAME}`);
-  return { kind: "email", href: `mailto:${supportEmail}?subject=${subject}&body=${encodeURIComponent(message)}` };
+  return { kind: "email", href: `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}` };
+}
+
+/**
+ * «¿Cuánto cuesta?» de la portada (spec 030): la portada no muestra precios, así que lleva a soporte con
+ * la pregunta escrita, también con el registro abierto. Con un código de referidos válido en `?ref=`, el
+ * mensaje lo lleva, para que el dueño lo anote al crear el negocio. null mientras llega la configuración
+ * (o si falla).
+ */
+export function usePricingContact(): SupportContact | null {
+  const [params] = useSearchParams();
+  const settings = usePlatformSettings();
+  if (!settings.data) return null;
+  const code = params.get("ref")?.trim().toUpperCase() ?? "";
+  const referral = REFERRAL_CODE_PATTERN.test(code) ? ` Vengo con el código de referido ${code}.` : "";
+  return supportContact(settings.data, `Hola, quiero saber cuánto cuesta ${APP_NAME}.${referral}`, `Precios de ${APP_NAME}`);
 }

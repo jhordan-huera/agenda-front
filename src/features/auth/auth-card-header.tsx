@@ -1,29 +1,21 @@
 import type { ReactNode } from "react";
-import { Eyebrow, GradientText } from "@/features/landing/section-heading";
 
 interface AuthCardHeaderProps {
   title: string;
   description: ReactNode;
-  /** Etiqueta en píldora encima del título, como en la portada. */
-  eyebrow?: ReactNode;
-  /** El final del título, en el degradado de la marca. */
-  highlight?: string;
 }
 
-export function AuthCardHeader({ title, description, eyebrow, highlight }: AuthCardHeaderProps) {
+/**
+ * El título de cada paso del acceso (spec 030): en tinta sólida, con el peso haciendo la jerarquía, como los
+ * de la portada; debajo, la frase en el gris de la marca.
+ */
+export function AuthCardHeader({ title, description }: AuthCardHeaderProps) {
   return (
-    <div className="mb-7">
-      {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
-      <h1 className="text-3xl leading-tight font-extrabold tracking-[-0.025em] sm:text-[2.15rem]">
+    <div className="mb-6 sm:mb-8">
+      <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] text-foreground sm:text-3xl">
         {title}
-        {highlight && (
-          <>
-            {" "}
-            <GradientText>{highlight}</GradientText>
-          </>
-        )}
       </h1>
-      <p className="mt-3 text-muted-foreground">{description}</p>
+      <p className="mt-2 text-muted-foreground">{description}</p>
     </div>
   );
 }

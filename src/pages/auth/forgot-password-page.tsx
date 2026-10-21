@@ -8,6 +8,10 @@ import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 import { getSupportWhatsAppUrl } from "@/lib/whatsapp";
 
+/** Cada forma de contacto ocupa una fila entera de 48 px: se toca bien con el dedo. */
+const CONTACT_ROW =
+  "flex min-h-12 items-center gap-3 px-4 font-medium text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset [&_svg]:size-4 [&_svg]:shrink-0";
+
 /** Las contraseñas las pone el soporte de la plataforma: no hay recuperación automática por email. */
 export default function ForgotPasswordPage() {
   const settings = usePlatformSettings();
@@ -24,34 +28,30 @@ export default function ForgotPasswordPage() {
         title="¿Olvidaste tu contraseña?"
         description="Escríbenos desde el email de tu cuenta y te enviaremos una contraseña nueva."
       />
-      <div className="rounded-2xl border border-border/70 bg-card p-6 text-center shadow-[0_18px_40px_-28px_rgb(29_36_51/0.35)]">
-        <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-accent text-ink">
-          <Mail className="size-6" aria-hidden />
-        </span>
-        <p className="mt-4 text-sm text-muted-foreground">Contacta al soporte:</p>
+      <p className="text-sm font-medium">Contacta al soporte</p>
+      {/* Las filas, hundidas en el papel como los trozos de la app de la portada. */}
+      <div className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-wall ring-1 ring-border">
         {settings.isPending ? (
-          <Skeleton className="mx-auto mt-2 h-5 w-48" />
+          <div className="flex min-h-12 items-center px-4">
+            <Skeleton className="h-5 w-48" />
+          </div>
         ) : (
-          <a href={`mailto:${supportEmail}`} className="mt-1 inline-block font-medium text-primary hover:underline">
-            {supportEmail}
+          <a href={`mailto:${supportEmail}`} className={CONTACT_ROW}>
+            <Mail className="text-muted-foreground" aria-hidden />{" "}
+            <span className="min-w-0 truncate">{supportEmail}</span>
           </a>
         )}
         {whatsAppUrl && (
-          <a
-            href={whatsAppUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 flex items-center justify-center gap-1.5 font-medium text-primary hover:underline"
-          >
-            <WhatsAppIcon className="size-4" /> {supportPhone}
+          <a href={whatsAppUrl} target="_blank" rel="noreferrer" className={CONTACT_ROW}>
+            <WhatsAppIcon /> {supportPhone}
           </a>
         )}
       </div>
       <Link
         to="/login"
-        className="mt-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <ArrowLeft className="size-4" /> Volver a iniciar sesión
+        <ArrowLeft className="size-4" aria-hidden /> Volver a iniciar sesión
       </Link>
     </>
   );

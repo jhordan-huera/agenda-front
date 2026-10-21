@@ -85,6 +85,11 @@
   --color-lilac-ink: var(--lilac-ink);
   --color-field: var(--field);
   --color-rule-strong: var(--rule-strong);
+  --color-wall: var(--wall);
+  --color-counter: var(--counter);
+  --color-confirmed: var(--confirmed);
+  --shadow-sheet: var(--elevation-sheet);
+  --shadow-lifted: var(--elevation-lifted);
   --ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -122,6 +127,19 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * La escala de títulos de la portada (spec 030): razón ~1,25 sobre 16 px, fluida entre el celular y el
+ * computador. `text-display` es el titular (40 → 56 px) y `text-headline`, el de cada sección (30 → 40 px).
+ */
+@theme {
+  --text-display: clamp(2.5rem, 1.75rem + 2.6vw, 3.5rem);
+  --text-display--line-height: 1.06;
+  --text-display--letter-spacing: -0.032em;
+  --text-headline: clamp(1.875rem, 1.5rem + 1.3vw, 2.5rem);
+  --text-headline--line-height: 1.12;
+  --text-headline--letter-spacing: -0.026em;
 }
 
 /*
@@ -169,6 +187,16 @@
   --hero: var(--ink);
   --hero-end: var(--lilac-ink);
   --hero-foreground: #ffffff;
+  /*
+   * La portada (spec 030): la pared del consultorio (blanco hueso) y el mostrador, un tono más cálido; las
+   * hojas (tarjetas) van en --paper encima, con una sombra en capas apenas visible. El verde es el sello de
+   * «confirmado» y sólo se usa para eso. Todos dan 4,5:1 con --text, --graphite y --ink (check:contrast).
+   */
+  --wall: #faf9f6;
+  --counter: #f4f2ed;
+  --confirmed: #176b43;
+  --elevation-sheet: 0 0 0 1px rgb(29 36 51 / 0.06), 0 1px 2px -1px rgb(29 36 51 / 0.08), 0 2px 6px rgb(29 36 51 / 0.04);
+  --elevation-lifted: 0 0 0 1px rgb(29 36 51 / 0.06), 0 2px 4px -2px rgb(29 36 51 / 0.08), 0 18px 40px -18px rgb(29 36 51 / 0.24);
 
   --background: var(--paper);
   --foreground: var(--text);
@@ -241,6 +269,12 @@
     --chart-2: #495b7d;
     --chart-3: #7a69a3;
     --chart-4: #754d5e;
+    /* La portada: el mismo tono que el lienzo; las sombras no se ven en el oscuro, así que un anillo claro. */
+    --wall: #111319;
+    --counter: #0d0f15;
+    --confirmed: #6fcf9b;
+    --elevation-sheet: 0 0 0 1px rgb(228 232 240 / 0.08);
+    --elevation-lifted: 0 0 0 1px rgb(228 232 240 / 0.11), 0 18px 40px -18px rgb(0 0 0 / 0.7);
   }
 }
 
@@ -343,6 +377,40 @@
     .marker-sweep::before {
       animation: none;
     }
+  }
+  /*
+   * La portada (spec 030): el mismo trazo, dibujado de izquierda a derecha sólo con transform y opacity
+   * (la hora que elige el paciente). Sin movimiento, ya está marcado.
+   */
+  .marker-draw::before {
+    transform-origin: left center;
+    animation: marker-draw 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+    animation-delay: var(--marker-delay, 0s);
+  }
+  @keyframes marker-draw {
+    from {
+      opacity: 0;
+      transform: scaleX(0.1);
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marker-draw::before {
+      animation: none;
+    }
+  }
+}
+
+/* La portada lleva la barra fija arriba: el foco y las anclas quedan siempre por debajo de ella. */
+html:has([data-landing]) {
+  scroll-padding-top: 5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 

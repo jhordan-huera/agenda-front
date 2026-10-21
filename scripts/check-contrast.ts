@@ -18,6 +18,7 @@ import {
   brandThemeVariables,
   contrastRatio,
   DEFAULT_BRAND_COLORS,
+  HEX_COLOR,
   resolveBrandPalette,
   type BrandPalette,
 } from "../src/lib/brand-theme.ts";
@@ -106,6 +107,50 @@ for (const mode of ["light", "dark"] as const) {
     return `${color === stored ? color : `${stored}→${color}`} ${format(ratio)}`;
   });
   console.log(`${mode === "light" ? "\n" : ""}Profesionales (${MODE_LABEL[mode]}, mínimo ${PROFESSIONAL_MIN_CONTRAST} sobre ${paper}): ${professionals.join(" · ")}`);
+}
+
+// La portada (spec 030): la pared (--wall), el mostrador (--counter) y el verde de «confirmado»
+// (--confirmed) están en src/index.css, en el claro (:root) y en el oscuro (:root.dark). Encima van el
+// texto, el gris y el principal de Agenda360; el verde, también sobre su propio tono al 10 % (la insignia
+// «Confirmó el paciente», mezclado en sRGB: una aproximación de color-mix). Y la franja del cierre: el
+// texto claro sobre --hero y su botón, al revés. Todo a 4,5:1.
+const indexCss = readFileSync(new URL("../src/index.css", import.meta.url), "utf8");
+const tokensOf = (block: string) => Object.fromEntries([...block.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2].trim()]));
+const landingTokens: Record<Mode, Record<string, string>> = {
+  light: tokensOf(/:root\s*\{([^}]*)\}/.exec(indexCss)?.[1] ?? ""),
+  dark: tokensOf(/:root\.dark\s*\{([^}]*)\}/.exec(indexCss)?.[1] ?? ""),
+};
+const mixHex = (color: string, base: string, share: number) =>
+  `#${[1, 3, 5]
+    .map((at) => Math.round(parseInt(color.slice(at, at + 2), 16) * share + parseInt(base.slice(at, at + 2), 16) * (1 - share)))
+    .map((channel) => channel.toString(16).padStart(2, "0"))
+    .join("")}`;
+for (const mode of ["light", "dark"] as const) {
+  const palette = agendaPapers[mode];
+  const { "--wall": wall, "--counter": counter, "--confirmed": confirmed } = landingTokens[mode];
+  if (![wall, counter, confirmed].every((value) => value && HEX_COLOR.test(value))) {
+    failures.push(`src/index.css (${MODE_LABEL[mode]}): faltan --wall, --counter o --confirmed como colores #rrggbb`);
+    continue;
+  }
+  const pairs: [string, string, string][] = [
+    ["Texto/pared", palette.text, wall],
+    ["Gris/pared", palette.graphite, wall],
+    ["Princ./pared", palette.ink, wall],
+    ["Texto/mostrador", palette.text, counter],
+    ["Gris/mostrador", palette.graphite, counter],
+    ["Princ./mostrador", palette.ink, counter],
+    ["Verde/papel", confirmed, palette.paper],
+    ["Verde/pared", confirmed, wall],
+    ["Verde/insignia", confirmed, mixHex(confirmed, palette.paper, 0.1)],
+    ["Cierre", palette.heroText, palette.hero],
+    ["Botón cierre", palette.hero, palette.heroText],
+  ];
+  const cells = pairs.map(([label, foreground, background]) => {
+    const ratio = contrastRatio(foreground, background);
+    if (ratio < 4.5) failures.push(`Portada (${MODE_LABEL[mode]}): ${label} ${foreground} sobre ${background} = ${format(ratio)} (mínimo 4,5)`);
+    return `${label} ${ratio < 4.5 ? "✗ " : ""}${format(ratio)}`;
+  });
+  console.log(`${mode === "light" ? "\n" : ""}Portada (${MODE_LABEL[mode]}): ${cells.join(" · ")}`);
 }
 
 

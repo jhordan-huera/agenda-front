@@ -1,64 +1,86 @@
-import { ArrowRight, CalendarCheck } from "lucide-react";
+import { CalendarCheck, IdCard, MapPin, ShieldCheck } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-import { CalendarChips } from "./floating-chip";
-import { HeroCalendar } from "./hero-calendar";
-import { PRODUCT_FACTS } from "./product-facts";
-import { Eyebrow, GradientText } from "./section-heading";
+import { cn } from "@/lib/utils";
+import { BookingSample } from "./booking-sample";
+import { DaySample } from "./day-sample";
+import { DEMO_BOOKING_PATH } from "./landing-constants";
+import { CONTAINER } from "./section-heading";
 import { SignupLink } from "./signup-link";
 import type { SignupContact } from "./use-signup-contact";
 
-const PROFESSIONS = "psicólogos, odontólogos, nutricionistas, fisioterapeutas, entrenadores, estilistas y abogados";
+/** Un enlace dentro de una frase: su zona para el dedo crece hasta 44 px de alto sin mover el texto. */
+const INLINE_LINK = "relative rounded-sm outline-none before:absolute before:-inset-x-1 before:-inset-y-3.5 before:content-[''] focus-visible:ring-3 focus-visible:ring-ring/50";
 
 /**
- * La portada: el titular con su final en degradado y, a la derecha, el calendario de la semana (la
- * reserva que entra) con etiquetas flotantes de lo que pasa: el aviso de la reserva, la confirmación
- * al cliente y el recordatorio. Con el registro cerrado, el botón principal es «Quiero mi agenda» (spec 022).
+ * La portada (spec 030): el titular en tinta sólida, los dos botones y la línea de confianza y, debajo, la
+ * pieza propia: el celular del paciente, que elige su hora desde el enlace de WhatsApp, sobre la hoja de
+ * «Tu día», adonde llega la cita. En el celular se apilan. Con el registro cerrado, el botón principal es
+ * «Quiero mi agenda» (spec 022).
  */
 export function HeroSection({ signup }: { signup: SignupContact }) {
   return (
-    <section className="relative overflow-hidden bg-[radial-gradient(55%_45%_at_0%_0%,color-mix(in_oklch,var(--ink)_12%,transparent),transparent),radial-gradient(45%_45%_at_100%_8%,color-mix(in_oklch,var(--highlight)_55%,transparent),transparent)]">
-      <div className="mx-auto grid grid-cols-1 max-w-6xl gap-16 px-4 pt-32 pb-16 sm:px-6 sm:pt-36 lg:grid-cols-[1fr_minmax(0,30rem)] lg:items-center lg:pb-20">
-        <div className="max-w-xl">
-          <Eyebrow>
-            {/* El punto verde de «en línea», igual en los dos modos: se ve sobre los dos fondos (spec 019). */}
-            <span aria-hidden className="size-2 rounded-full bg-emerald-500" />
-            Agenda y reservas online
-          </Eyebrow>
-          <h1 className="mt-6 text-[2.6rem] leading-[1.04] font-extrabold tracking-[-0.025em] sm:text-6xl">
-            Tus clientes eligen su hora. <GradientText>Tú solo atiendes.</GradientText>
-          </h1>
-          <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-            Comparte tu enlace por WhatsApp: cada persona ve tus horas libres, reserva con su cédula y recibe la
-            confirmación por email. La cita aparece en tu agenda al instante.
-          </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button asChild size="lg" className="h-12 px-6 text-base">
-              <SignupLink contact={signup} registerLabel="Crear mi agenda gratis" after={<ArrowRight />} />
-            </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 border-ink/40 bg-background/70 px-5 text-base text-ink hover:bg-background hover:text-ink dark:border-ink/40">
-              <Link to="/book/jhordan">
-                <CalendarCheck /> Probar una página de reservas
-              </Link>
-            </Button>
+    <section aria-labelledby="portada-titulo" className="bg-wall">
+      <div className={cn(CONTAINER, "pt-10 pb-16 sm:pt-16 lg:pt-20 lg:pb-24")}>
+        {/* Una frase por línea: con el equilibrado de los títulos, «su hora» quedaba partido. */}
+        <h1 id="portada-titulo" className="max-w-4xl text-display font-bold text-foreground">
+          <span className="block">Tus pacientes eligen su hora.</span> <span className="block">Tú solo atiendes.</span>
+        </h1>
+
+        <div className="mt-6 grid grid-cols-1 gap-10 lg:mt-8 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-7">
+            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              Comparte tu enlace por WhatsApp: cada paciente ve tus horas libres, reserva con su cédula y la cita llega a tu
+              agenda al instante.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="h-12 px-6 text-base">
+                <SignupLink contact={signup} registerLabel="Crear mi agenda gratis" />
+              </Button>
+              <Button asChild variant="outline" className="h-12 px-5 text-base">
+                <Link to={DEMO_BOOKING_PATH}>
+                  <CalendarCheck className="text-ink" aria-hidden /> Probar una página de reservas
+                </Link>
+              </Button>
+            </div>
           </div>
-          <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-5">
-            {PRODUCT_FACTS.map((fact) => (
-              <div key={fact.label} className="flex flex-col-reverse">
-                <dt className="text-sm text-muted-foreground">{fact.label}</dt>
-                <dd className="text-2xl font-extrabold tracking-[-0.02em]">{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
+
+          <ul aria-label="Por qué confiar" className="divide-y divide-border border-y border-border text-[0.9375rem] lg:col-span-4 lg:col-start-9">
+            <li className="flex min-h-12 items-center gap-3 py-2.5">
+              <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              Hecho en Ecuador
+            </li>
+            <li className="flex min-h-12 items-center gap-3 py-2.5">
+              <IdCard className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              Tus pacientes no crean cuenta
+            </li>
+            <li className="flex min-h-12 items-center gap-3 py-2.5">
+              <ShieldCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <span>
+                Datos protegidos según la{" "}
+                <Link to="/privacidad" className={cn(INLINE_LINK, "font-medium underline decoration-rule-strong underline-offset-4 hover:decoration-current")}>
+                  LOPDP
+                </Link>
+              </span>
+            </li>
+          </ul>
         </div>
 
-        <div className="relative">
-          <HeroCalendar />
-          <CalendarChips />
-        </div>
+        <figure className="mt-14 lg:mt-16">
+          {/* En el computador, el celular se apoya sobre la hoja, más abajo que su borde: está encima de ella. */}
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[15rem_2.5rem_minmax(0,1fr)] lg:items-start lg:gap-0">
+            <BookingSample className="relative z-10 mx-auto w-full max-w-[18rem] lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:mt-14 lg:max-w-none" />
+            <DaySample className="lg:col-span-2 lg:col-start-2 lg:row-start-1 lg:pl-16" />
+          </div>
+          <figcaption className="mt-4 text-xs text-muted-foreground">
+            <span className="sr-only">
+              Ejemplo: Ana recibe por WhatsApp el enlace de su psicóloga, elige el jueves a las 11:00 sin crear cuenta y la cita
+              llega a «Tu día», junto a los avisos de la reserva, del paciente que confirmó y del comprobante de pago.{" "}
+            </span>
+            Datos de ejemplo
+          </figcaption>
+        </figure>
       </div>
-      <p className="mx-auto max-w-6xl px-4 pb-12 text-center text-muted-foreground sm:px-6">Hecho para {PROFESSIONS}.</p>
     </section>
   );
 }
-

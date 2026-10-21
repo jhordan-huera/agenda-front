@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleAlert, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { Link } from "react-router";
 import { useNavigate, useSearchParams } from "react-router";
 import { useEffect, useState, type FormEvent } from "react";
@@ -12,10 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getHomePath, isTwoFactorChallenge, safeNextPath, type Session } from "@/lib/auth";
 import { DataError, getErrorMessage } from "@/lib/data/errors";
+import { cn } from "@/lib/utils";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import { loadAuthSchemas } from "./auth-schemas";
+import { AUTH_LINK, FORM_ALERT } from "./auth-styles";
 import { useSession } from "./use-session";
-
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -84,7 +85,8 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
       {formError && (
-        <p role="alert" className="rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
+        <p role="alert" className={FORM_ALERT}>
+          <CircleAlert aria-hidden />
           {formError}
         </p>
       )}
@@ -120,18 +122,19 @@ export function LoginForm() {
           />
         )}
       </FormField>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex items-center gap-2">
           <Checkbox
             id="remember"
             checked={values.remember}
             onCheckedChange={(checked) => setValues({ ...values, remember: checked === true })}
           />
-          <Label htmlFor="remember" className="font-normal">
+          {/* La etiqueta también marca la casilla: con 44 px de alto se toca bien con el dedo. */}
+          <Label htmlFor="remember" className="min-h-11 font-normal">
             Recordarme
           </Label>
         </div>
-        <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+        <Link to="/forgot-password" className={cn(AUTH_LINK, "text-sm font-medium")}>
           ¿Olvidaste tu contraseña?
         </Link>
       </div>
@@ -182,8 +185,8 @@ function TwoFactorStep({ challenge, onSuccess, onRestart }: TwoFactorStepProps) 
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
-      <div className="flex gap-3 rounded-xl bg-accent px-3.5 py-3 text-sm">
-        <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+      <div className="flex gap-3 rounded-xl bg-wall px-4 py-3.5 text-sm ring-1 ring-border">
+        <ShieldCheck className="mt-0.5 size-5 shrink-0 text-ink" aria-hidden />
         <div className="space-y-1">
           <p className="font-medium">Verificación en dos pasos</p>
           <p className="text-muted-foreground">
@@ -225,13 +228,11 @@ function TwoFactorStep({ challenge, onSuccess, onRestart }: TwoFactorStepProps) 
       <SubmitButton size="lg" className="h-11 w-full text-base" loading={pending} loadingText="Verificando…">
         Verificar
       </SubmitButton>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <Button type="button" variant="ghost" size="sm" onClick={() => onRestart(null)} disabled={pending}>
-          <ArrowLeft /> Volver
-        </Button>
+      {/* La otra forma de entrar y, debajo, volver a la contraseña: en columna, alineadas con los campos. */}
+      <div className="flex flex-col items-start text-sm">
         <button
           type="button"
-          className="font-medium text-primary hover:underline"
+          className={cn(AUTH_LINK, "inline-flex min-h-11 items-center text-left font-medium")}
           onClick={() => {
             setUseRecovery(!useRecovery);
             setCode("");
@@ -240,6 +241,15 @@ function TwoFactorStep({ challenge, onSuccess, onRestart }: TwoFactorStepProps) 
         >
           {useRecovery ? "Usar el código de la app" : "¿No tienes el celular? Usa un código de recuperación"}
         </button>
+        <Button
+          type="button"
+          variant="link"
+          className="h-11 px-0 text-muted-foreground hover:text-foreground"
+          onClick={() => onRestart(null)}
+          disabled={pending}
+        >
+          <ArrowLeft aria-hidden /> Volver a la contraseña
+        </Button>
       </div>
     </form>
   );
