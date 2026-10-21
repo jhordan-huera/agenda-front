@@ -254,10 +254,11 @@ export default function AdminBusinessDetailPage() {
                         active={usage.professionals}
                       />
                     )}
-                    {/* La mensualidad (spec 029): una API anterior no la trae. */}
+                    {/* La mensualidad (spec 029): una API anterior no la trae. Si cambia lo guardado (también el plan o las
+                        agendas, que cambian su precio), el formulario vuelve a lo nuevo. */}
                     {detail.data.billing && (
                       <BusinessBillingFields
-                        key={`${detail.data.billing.monthlyFee}-${detail.data.billing.billingDay}-${detail.data.billing.billingStart}`}
+                        key={`${plan.id}-${detail.data.billing.customFee}-${detail.data.billing.planPrice}-${detail.data.billing.billingDay}-${detail.data.billing.billingStart}`}
                         businessId={business.id}
                         billing={detail.data.billing}
                         plan={plan.id}

@@ -4,10 +4,12 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAdminBusinesses } from "@/hooks/queries/use-admin";
+import { PlanPricesCard } from "@/features/admin/plan-prices-card";
+import { useAdminBusinesses, usePlanPrices } from "@/hooks/queries/use-admin";
+import { formatUsdAmount } from "@/lib/constants/business";
 import { PLANS } from "@/lib/constants/plans";
 import { cn } from "@/lib/utils";
-import type { PlanLimits } from "@/types";
+import type { PlanId, PlanLimits, PlanPrices } from "@/types";
 
 const LIMIT_ROWS: { key: keyof PlanLimits; label: string }[] = [
   { key: "appointmentsPerMonth", label: "Citas al mes" },
@@ -16,8 +18,17 @@ const LIMIT_ROWS: { key: keyof PlanLimits; label: string }[] = [
   { key: "professionals", label: "Agendas" },
 ];
 
+/** «$14,99 al mes», «$29,99 al mes con 3 agendas»: el precio guardado de cada plan, en su tarjeta. */
+function priceLine(plan: PlanId, prices: PlanPrices): string {
+  if (plan === "free") return "Sin cobros";
+  if (plan === "pro") return `${formatUsdAmount(prices.proPrice)} al mes`;
+  const agendas = prices.businessIncludedAgendas === 1 ? "1 agenda" : `${prices.businessIncludedAgendas} agendas`;
+  return `${formatUsdAmount(prices.businessPrice)} al mes con ${agendas}, y ${formatUsdAmount(prices.businessExtraAgendaPrice)} cada agenda más`;
+}
+
 export default function AdminPlansPage() {
   const businesses = useAdminBusinesses();
+  const prices = usePlanPrices();
   const countIn = (planId: string) => (businesses.data ?? []).filter((row) => row.subscription?.plan === planId).length;
   // El plan con más negocios, marcado (si hay empate, ninguno).
   const counts = PLANS.map((plan) => countIn(plan.id));
@@ -29,8 +40,10 @@ export default function AdminPlansPage() {
       <PageTitle title="Planes" />
       <PageHeader
         title="Planes"
-        description="Límites y negocios en cada plan. Los límites los aplica la API en cada operación; los precios los acuerdas con cada negocio."
+        description="Precios, límites y negocios en cada plan. Los límites los aplica la API en cada operación; la mensualidad de cada negocio sale de su plan y sus agendas."
       />
+
+      <PlanPricesCard />
 
       {businesses.isError ? (
         <ErrorState onRetry={() => businesses.refetch()} />
@@ -51,6 +64,7 @@ export default function AdminPlansPage() {
                     )}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
+                  {prices.data && <p className="mt-2 text-sm font-semibold tabular-nums">{priceLine(plan.id, prices.data)}</p>}
                 </div>
 
                 <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted/60 p-3">
@@ -93,8 +107,8 @@ export default function AdminPlansPage() {
       )}
 
       <p className="text-sm text-muted-foreground">
-        Los negocios no ven los planes ni los precios: el plan y las agendas contratadas (Business) se cambian desde la
-        ficha de cada negocio.
+        Los negocios no ven los planes ni los precios: el propietario sólo ve su total. El plan, las agendas contratadas
+        (Business) y un precio especial se cambian desde la ficha de cada negocio.
       </p>
     </div>
   );

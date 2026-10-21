@@ -9,6 +9,7 @@ import type {
   BusinessCategoryInput,
   PanelColorsInput,
   PlatformAdminInput,
+  PlanPricesInput,
   PlatformBankAccountsInput,
   PlatformSettingsInput,
 } from "@/lib/validations/admin";
@@ -125,6 +126,9 @@ export const useAdminBilling = (filter: AdminBillingFilter) =>
 export const useBillingAccounts = () =>
   useQuery({ queryKey: queryKeys.admin.billingAccounts, queryFn: () => data.admin.getBillingAccounts() });
 
+/** Los precios de los planes (spec 029, ampliación del 2026-10-20), para /admin → Planes. */
+export const usePlanPrices = () => useQuery({ queryKey: queryKeys.admin.planPrices, queryFn: () => data.admin.getPlanPrices() });
+
 /** Pública: la usan el registro y la pantalla de negocio suspendido. */
 export const usePlatformSettings = () =>
   useQuery({ queryKey: queryKeys.platformSettings, queryFn: () => data.platform.getSettings() });
@@ -159,6 +163,9 @@ export const useSetBusinessBilling = () =>
   useAdminMutation(({ businessId, input }: { businessId: string; input: BusinessBillingInput }) =>
     data.admin.setBusinessBilling(businessId, input),
   );
+
+/** Los precios de los planes: recarga el panel (la mensualidad de cada ficha y la actividad). */
+export const useSetPlanPrices = () => useAdminMutation((input: PlanPricesInput) => data.admin.setPlanPrices(input));
 
 /** «Pagado», «Rechazar», «Pagado sin comprobante» y «Anular» un cobro (spec 029). */
 export const useApproveBillingCharge = () => useAdminMutation((chargeId: string) => data.admin.approveBillingCharge(chargeId));

@@ -8,6 +8,7 @@ import type {
   BusinessCategoryInput,
   BusinessDeletionInput,
   PanelColorsInput,
+  PlanPricesInput,
   PlanRejectionInput,
   PlatformAdminInput,
   PlatformBankAccountsInput,
@@ -102,6 +103,7 @@ import type {
   EmailNotification,
   ISODate,
   PlanId,
+  PlanPrices,
   PlanUsage,
   PlatformSettings,
   PlatformStats,
@@ -517,8 +519,15 @@ export interface PlatformAdminRepository {
   updateSettings(input: PlatformSettingsInput): Promise<PlatformSettings>;
   /** Colores del panel de plataforma de la cuenta que lo pide (spec 007). */
   updatePanelColors(input: PanelColorsInput): Promise<{ colors: BrandColors | null }>;
-  /** La mensualidad de un negocio (spec 029): monto, día de pago y primer cobro. Queda en la actividad. */
+  /**
+   * La mensualidad de un negocio (spec 029): el precio especial (null: el de su plan), el día de pago y el
+   * primer cobro. Queda en la actividad.
+   */
   setBusinessBilling(businessId: string, input: BusinessBillingInput): Promise<AdminBusinessBilling>;
+  /** Los precios de los planes (/admin → Planes, spec 029): nunca van en la configuración pública. */
+  getPlanPrices(): Promise<PlanPrices>;
+  /** Valen desde el siguiente cobro de cada negocio. Queda en la actividad. */
+  setPlanPrices(input: PlanPricesInput): Promise<PlanPrices>;
   /** /admin → Cobros (spec 029): los cobros de un filtro y cuántos hay en cada uno. */
   listBillingCharges(filter: AdminBillingFilter): Promise<AdminBillingList>;
   /** «Pagado»: el comprobante está bien (`conflict` si el cobro no está en revisión). */

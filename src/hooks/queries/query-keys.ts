@@ -90,5 +90,7 @@ export const queryKeys = {
     billing: (filter: string) => ["admin", "billing", filter] as const,
     /** Las cuentas de Agenda360 para recibir las mensualidades (spec 029). */
     billingAccounts: ["admin", "billing-accounts"] as const,
+    /** Los precios de los planes (spec 029, ampliación del 2026-10-20). */
+    planPrices: ["admin", "plan-prices"] as const,
   },
 };
