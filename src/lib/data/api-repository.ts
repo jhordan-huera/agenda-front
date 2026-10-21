@@ -36,6 +36,11 @@ import type {
   ClinicalAttachmentUpload,
   ClinicalRecord,
   ClinicalTemplate,
+  DataExportAppointment,
+  DataExportClient,
+  DataExportClinicalPage,
+  DataExportPage,
+  DataExportSummary,
   EmailNotification,
   PlanUsage,
   PlatformSettings,
@@ -142,6 +147,16 @@ export const apiRepository: DataRepository = {
       api.post<ClinicalNote>(`${business(businessId)}/clients/${id(clientId)}/clinical-record/notes`, input),
     addAddendum: (businessId, noteId, input) =>
       api.post<ClinicalNote>(`${business(businessId)}/clinical-notes/${id(noteId)}/addenda`, input),
+  },
+
+  dataExport: {
+    summary: (businessId) => api.get<DataExportSummary>(`${business(businessId)}/export`),
+    clients: (businessId, cursor) => api.get<DataExportPage<DataExportClient>>(`${business(businessId)}/export/clients`, { cursor }),
+    appointments: (businessId, cursor) =>
+      api.get<DataExportPage<DataExportAppointment>>(`${business(businessId)}/export/appointments`, { cursor }),
+    clinical: (businessId, cursor) => api.get<DataExportClinicalPage>(`${business(businessId)}/export/clinical`, { cursor }),
+    attachmentUrl: (businessId, attachmentId) =>
+      api.post<{ url: string }>(`${business(businessId)}/export/attachments/${id(attachmentId)}`),
   },
 
   services: {

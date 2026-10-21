@@ -1,13 +1,10 @@
 import { Fragment } from "react";
-import { computeBmi, describeBmi, describeClinicalValue, visibleNoteFields } from "@/lib/clinical-templates";
+import { COMPACT_FIELD_TYPES, computeBmi, describeBmi, describeClinicalValue, visibleNoteFields } from "@/lib/clinical-templates";
 import { cn } from "@/lib/utils";
 import type { BodyMapMark, ClinicalField, ClinicalListRow, ClinicalNoteData, OdontogramValue } from "@/types";
 import { BodyMapView } from "./body-map";
 import { OdontogramView } from "./odontogram";
 import { QuestionnaireView } from "./questionnaire";
-
-/** Valores cortos (números, escalas, sí/no…): van en una cuadrícula para ocupar menos. */
-const COMPACT_TYPES = new Set<ClinicalField["type"]>(["number", "scale", "boolean", "date", "bmi", "select"]);
 
 function CellValue({ value }: { value: ClinicalListRow[string] }) {
   if (value === null || value === undefined || value === "") return <span className="text-muted-foreground">—</span>;
@@ -84,7 +81,7 @@ export function ClinicalNoteContent({ fields, data, className }: { fields: Clini
   const blocks: ClinicalField[][] = [];
   for (const field of visible) {
     const last = blocks.at(-1);
-    if (COMPACT_TYPES.has(field.type) && last && COMPACT_TYPES.has(last[0].type)) last.push(field);
+    if (COMPACT_FIELD_TYPES.has(field.type) && last && COMPACT_FIELD_TYPES.has(last[0].type)) last.push(field);
     else blocks.push([field]);
   }
 
@@ -100,7 +97,7 @@ export function ClinicalNoteContent({ fields, data, className }: { fields: Clini
           );
         }
         return (
-          <dl key={first.id} className={cn("grid gap-3", COMPACT_TYPES.has(first.type) && "grid-cols-2 sm:grid-cols-3")}>
+          <dl key={first.id} className={cn("grid gap-3", COMPACT_FIELD_TYPES.has(first.type) && "grid-cols-2 sm:grid-cols-3")}>
             {block.map((field) => (
               <div key={field.id}>
                 <dt className="text-xs font-medium text-muted-foreground">{field.label}</dt>

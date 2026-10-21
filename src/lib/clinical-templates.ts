@@ -1,10 +1,24 @@
 import { formatNumericDate } from "@/lib/format";
 import { parseClinicalNumber } from "@/lib/validations/clinical";
-import type { ClinicalField, ClinicalFieldValue, ClinicalNoteData, ClinicalTemplate } from "@/types";
+import type { BodyMapMark, ClinicalField, ClinicalFieldValue, ClinicalNoteData, ClinicalTemplate } from "@/types";
 
-/** Utilidades de las plantillas de historia clínica (formulario, ficha e impresión). */
+/**
+ * Utilidades de las plantillas de historia clínica (formulario, ficha, impresión y las páginas de la
+ * descarga de los datos, spec 028).
+ */
 
 type BmiField = Extract<ClinicalField, { type: "bmi" }>;
+type QuestionnaireField = Extract<ClinicalField, { type: "questionnaire" }>;
+
+/** Valores cortos (números, escalas, sí/no…): van en una cuadrícula para ocupar menos. */
+export const COMPACT_FIELD_TYPES: ReadonlySet<ClinicalField["type"]> = new Set(["number", "scale", "boolean", "date", "bmi", "select"]);
+
+/** La respuesta de una pregunta de un cuestionario por sus puntos («Varios días»; si no está, los puntos). */
+export const questionnaireOptionLabel = (field: QuestionnaireField, points: number) =>
+  field.options.find((option) => option.points === points)?.label ?? String(points);
+
+/** Las dos vistas del mapa del cuerpo. */
+export const BODY_MAP_VIEW_LABELS: Record<BodyMapMark["view"], string> = { front: "Frente", back: "Espalda" };
 
 const numberFormat = new Intl.NumberFormat("es-EC", { maximumFractionDigits: 2 });
 

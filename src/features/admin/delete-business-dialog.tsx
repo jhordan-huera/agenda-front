@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { FileArchive, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -10,30 +10,45 @@ import { Input } from "@/components/ui/input";
 import { useSession } from "@/features/auth/use-session";
 import { useDeleteBusiness } from "@/hooks/queries/use-admin";
 import { getErrorMessage } from "@/lib/data";
-import { plural } from "@/lib/format";
+import { formatDateTime, plural } from "@/lib/format";
 import { isSameBusinessName } from "@/lib/validations/admin";
 
 interface DeleteBusinessDialogProps {
-  business: { id: string; name: string };
+  business: { id: string; name: string; timezone: string };
   /** Cuentas del equipo, que se eliminan con el negocio. */
   members: number;
+  /**
+   * La última vez que el propietario o un profesional descargó sus datos (spec 028); null: no en los últimos 5 meses (lo que guarda la actividad);
+   * undefined: una API anterior que no lo trae (no se dice nada).
+   */
+  lastDataExportAt?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-/** Eliminar un negocio para siempre: hay que escribir su nombre para confirmar. */
-export function DeleteBusinessDialog({ business, members, open, onOpenChange }: DeleteBusinessDialogProps) {
+/**
+ * Eliminar un negocio para siempre: hay que escribir su nombre para confirmar. Antes recuerda que el
+ * propietario descargue sus datos (spec 028) y cuándo los descargó por última vez.
+ */
+export function DeleteBusinessDialog({ business, members, lastDataExportAt, open, onOpenChange }: DeleteBusinessDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         {/* Se monta de nuevo en cada apertura: el campo empieza vacío. */}
-        {open && <DeleteBusinessForm business={business} members={members} onCancel={() => onOpenChange(false)} />}
+        {open && (
+          <DeleteBusinessForm business={business} members={members} lastDataExportAt={lastDataExportAt} onCancel={() => onOpenChange(false)} />
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
-function DeleteBusinessForm({ business, members, onCancel }: Omit<DeleteBusinessDialogProps, "open" | "onOpenChange"> & { onCancel: () => void }) {
+function DeleteBusinessForm({
+  business,
+  members,
+  lastDataExportAt,
+  onCancel,
+}: Omit<DeleteBusinessDialogProps, "open" | "onOpenChange"> & { onCancel: () => void }) {
   const deleteBusiness = useDeleteBusiness();
   const { session, exitSupport } = useSession();
   const navigate = useNavigate();
@@ -72,6 +87,23 @@ function DeleteBusinessForm({ business, members, onCancel }: Omit<DeleteBusiness
         </li>
         <li>Su página de reservas.</li>
       </ul>
+      <div className="flex items-start gap-2.5 rounded-lg border p-3 text-sm">
+        <FileArchive className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+        <div className="grid gap-1">
+          <p>
+            Antes de eliminarlo, pídele al propietario que descargue sus datos en Configuración → Negocio. Después ya no se pueden
+            recuperar.
+          </p>
+          {lastDataExportAt !== undefined && (
+            <p className="text-xs font-medium text-muted-foreground">
+              {lastDataExportAt
+                ? `Última descarga: ${formatDateTime(lastDataExportAt, business.timezone)}`
+                : // La actividad se guarda 5 meses: más atrás no se puede saber.
+                  "No descargó sus datos en los últimos 5 meses."}
+            </p>
+          )}
+        </div>
+      </div>
       <p className="text-sm text-muted-foreground">¿Sólo quieres pausarlo? Suspéndelo: los datos se conservan.</p>
       <FormField label={`Escribe «${business.name}» para confirmar`}>
         {(field) => (

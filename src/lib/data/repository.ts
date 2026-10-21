@@ -83,6 +83,11 @@ import type {
   ClinicalAttachmentUpload,
   ClinicalRecord,
   ClinicalTemplate,
+  DataExportAppointment,
+  DataExportClient,
+  DataExportClinicalPage,
+  DataExportPage,
+  DataExportSummary,
   EmailNotification,
   ISODate,
   PlanId,
@@ -209,6 +214,24 @@ export interface ClinicalRecordRepository {
   saveProfile(businessId: string, clientId: string, input: ClinicalProfileInput): Promise<ClinicalProfile>;
   addNote(businessId: string, clientId: string, input: ClinicalNoteInput): Promise<ClinicalNote>;
   addAddendum(businessId: string, noteId: string, input: ClinicalAddendumInput): Promise<ClinicalNote>;
+}
+
+/**
+ * Descargar los datos del negocio (spec 028): el propietario, todo el negocio; el rol Profesional, lo de su
+ * agenda (las historias, sólo con acceso clínico). Los demás, y el super admin en modo soporte, reciben
+ * `forbidden`. `summary` empieza la descarga y la deja en la actividad; cada parte se pide con el cursor
+ * de la anterior.
+ */
+export interface DataExportRepository {
+  summary(businessId: string): Promise<DataExportSummary>;
+  /** De 500 en 500. */
+  clients(businessId: string, cursor?: string): Promise<DataExportPage<DataExportClient>>;
+  /** De 1000 en 1000. */
+  appointments(businessId: string, cursor?: string): Promise<DataExportPage<DataExportAppointment>>;
+  /** De hasta 50 pacientes (`forbidden` si la descarga no lleva lo clínico). */
+  clinical(businessId: string, cursor?: string): Promise<DataExportClinicalPage>;
+  /** El enlace de unos minutos de un archivo de la historia, sin registrar cada apertura. */
+  attachmentUrl(businessId: string, attachmentId: string): Promise<{ url: string }>;
 }
 
 export interface ClientRepository {
@@ -535,6 +558,7 @@ export interface DataRepository {
   subscriptions: SubscriptionRepository;
   clients: ClientRepository;
   clinicalRecords: ClinicalRecordRepository;
+  dataExport: DataExportRepository;
   services: ServiceRepository;
   appointments: AppointmentRepository;
   schedules: ScheduleRepository;

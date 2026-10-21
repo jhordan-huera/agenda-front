@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { questionnaireOptionLabel } from "@/lib/clinical-templates";
 import { questionnaireScore } from "@/lib/validations/clinical";
 import { cn } from "@/lib/utils";
 import type { ClinicalField } from "@/types";
@@ -26,7 +27,6 @@ function ScoreSummary({ field, answers }: { field: QuestionnaireField; answers: 
 
 /** Resultado de un cuestionario (ficha e impresión), con las respuestas desplegables en pantalla. */
 export function QuestionnaireView({ field, answers }: { field: QuestionnaireField; answers: number[] }) {
-  const optionLabel = (points: number) => field.options.find((option) => option.points === points)?.label ?? String(points);
   return (
     <div className="grid gap-1">
       <ScoreSummary field={field} answers={answers} />
@@ -35,7 +35,7 @@ export function QuestionnaireView({ field, answers }: { field: QuestionnaireFiel
         <ol className="mt-1 grid list-decimal gap-0.5 pl-5">
           {field.items.map((item, index) => (
             <li key={index}>
-              {item} — <span className="font-medium">{optionLabel(answers[index])}</span> ({answers[index]})
+              {item} — <span className="font-medium">{questionnaireOptionLabel(field, answers[index])}</span> ({answers[index]})
             </li>
           ))}
         </ol>

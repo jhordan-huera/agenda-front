@@ -15,3 +15,8 @@ export const HISTORY_FIELDS: { key: keyof Pick<ClinicalProfile, "allergies" | "c
   { key: "surgeries", label: "Cirugías y hospitalizaciones", placeholder: "Año y motivo" },
   { key: "familyHistory", label: "Antecedentes familiares", placeholder: "Enfermedades relevantes en la familia" },
 ];
+
+/** «850 KB», «2,4 MB»: el tamaño de un archivo de la historia (la ficha y la descarga de los datos). */
+export function formatAttachmentSize(bytes: number): string {
+  return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
+}

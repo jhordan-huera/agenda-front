@@ -494,7 +494,13 @@ export default function AdminBusinessDetailPage() {
         }}
       />
       {setPassword.dialog}
-      <DeleteBusinessDialog business={business} members={members.length} open={deleteOpen} onOpenChange={setDeleteOpen} />
+      <DeleteBusinessDialog
+        business={business}
+        members={members.length}
+        lastDataExportAt={detail.data.lastDataExportAt}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
       <AddMemberDialog
         businessId={business.id}
         businessName={business.name}
