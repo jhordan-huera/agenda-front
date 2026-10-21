@@ -46,7 +46,8 @@ export function ReferralRewardsSection() {
           Descuentos por referidos
         </h2>
         <p className="text-sm text-muted-foreground">
-          Quién ganó {formatReferralAmount(REFERRAL_DISCOUNT)} menos en su siguiente mensualidad por recomendar un negocio que se quedó. Márcalos al cobrar.
+          Quién ganó {formatReferralAmount(REFERRAL_DISCOUNT)} menos en su siguiente mensualidad por recomendar un negocio que se quedó. Con mensualidad,
+          el descuento va solo en su siguiente cobro (y deja de salir aquí); los demás, márcalos al cobrar.
         </p>
       </div>
       {rewards.isError ? (

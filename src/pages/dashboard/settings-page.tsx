@@ -6,6 +6,7 @@ import { PageTitle } from "@/components/shared/page-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions } from "@/features/auth/use-permissions";
 import { useSession } from "@/features/auth/use-session";
+import { MonthlyFeeCard } from "@/features/billing/monthly-fee-card";
 import { DataExportCard } from "@/features/data-export/data-export-card";
 import { PushSettingsCard } from "@/features/push/push-settings-card";
 import { ActivityLog } from "@/features/settings/activity-log";
@@ -106,6 +107,8 @@ export default function SettingsPage() {
               <>
                 <BusinessSettingsForm business={business} />
                 <ClinicalSettingsCard business={business} />
+                {/* Su mensualidad y sus pagos (spec 029): sólo el propietario. */}
+                <MonthlyFeeCard />
                 {/* El programa de referidos (spec 023): sólo el propietario. */}
                 <ReferralCard />
                 {/* «Descargar los datos del negocio» (spec 028): sólo el propietario, nunca en modo soporte. */}

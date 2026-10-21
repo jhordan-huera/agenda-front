@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { forgetBillingLater } from "@/features/billing/billing-later";
 import { authService, isTwoFactorChallenge, type Session } from "@/lib/auth";
 import { setApiUnreachable } from "@/lib/connection-status";
 import { DataError } from "@/lib/data/errors";
@@ -144,6 +145,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       signOut: async () => {
         await authService.signOut();
         updateSupport(null);
+        // El «Más tarde» de la mensualidad (spec 029) es de esta sesión: al volver a entrar, la pantalla sale otra vez.
+        forgetBillingLater();
         queryClient.clear();
         applySession(null);
       },

@@ -13,6 +13,7 @@ import {
   Tags,
   UserCog,
   Users,
+  WalletCards,
   type LucideIcon,
 } from "lucide-react";
 import type { Permission } from "@/lib/permissions";
@@ -44,6 +45,8 @@ export const NAV_ITEMS: NavItem[] = [
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: "/admin", label: "Resumen", icon: LayoutDashboard, end: true },
   { to: "/admin/businesses", label: "Negocios", icon: Building2 },
+  // El cobro de las mensualidades (spec 029).
+  { to: "/admin/billing", label: "Cobros", icon: WalletCards },
   { to: "/admin/analytics", label: "Analítica", icon: ChartNoAxesCombined },
   { to: "/admin/users", label: "Usuarios", icon: UserCog },
   { to: "/admin/plans", label: "Planes", icon: CreditCard },

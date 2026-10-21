@@ -35,6 +35,7 @@ import { AdminAuditList } from "@/features/admin/admin-audit-list";
 import { VersusTypeCard } from "@/features/admin/analytics/versus-type-card";
 import { AddMemberDialog } from "@/features/admin/add-member-dialog";
 import { AddOwnerDialog } from "@/features/admin/add-owner-dialog";
+import { BusinessBillingFields } from "@/features/admin/business-billing-fields";
 import { BusinessHero } from "@/features/admin/business-hero";
 import { ClientRequiredFieldsCard } from "@/features/admin/client-required-fields-card";
 import { MultiClientAppointmentsCard } from "@/features/admin/multi-client-appointments-card";
@@ -227,7 +228,7 @@ export default function AdminBusinessDetailPage() {
                   <CardDescription>
                     {/* Desde cuándo está en su plan (spec 015): sin cobro todavía, no hay fecha de renovación. */}
                     {subscription?.planSince ? `En ${plan.name} desde el ${planSinceLabel(subscription.planSince)}` : `Plan ${plan.name}`}
-                    . El negocio no ve planes ni precios.
+                    . El propietario sólo ve su mensualidad, nunca los planes ni los precios.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -245,13 +246,22 @@ export default function AdminBusinessDetailPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">El cobro lo acuerdas tú con el negocio.</p>
                     {plan.id === "business" && (
                       <MaxProfessionalsField
                         key={subscription?.maxProfessionals ?? "sin-tope"}
                         businessId={business.id}
                         value={subscription?.maxProfessionals ?? null}
                         active={usage.professionals}
+                      />
+                    )}
+                    {/* La mensualidad (spec 029): una API anterior no la trae. */}
+                    {detail.data.billing && (
+                      <BusinessBillingFields
+                        key={`${detail.data.billing.monthlyFee}-${detail.data.billing.billingDay}-${detail.data.billing.billingStart}`}
+                        businessId={business.id}
+                        billing={detail.data.billing}
+                        plan={plan.id}
+                        timezone={business.timezone}
                       />
                     )}
                   </div>

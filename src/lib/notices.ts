@@ -1,6 +1,7 @@
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
+import { formatUsdAmount } from "@/lib/constants/business";
 import { NOTICE_AUDIENCE, TO_CLOSE_PARAM, type BusinessNoticeKind } from "@/lib/constants/notices";
-import { capitalize, formatShortDate, joinNames, plural } from "@/lib/format";
+import { capitalize, formatDate, formatShortDate, joinNames, plural } from "@/lib/format";
 import { addDaysISO, getZonedNow } from "@/lib/time";
 import type { BusinessRole, ISODate, NoticeKind, TimeString } from "@/types";
 
@@ -60,6 +61,11 @@ export interface NoticeDataByKind {
    * más hubo. Sólo nombres de negocios y cifras, nunca pacientes.
    */
   reminders_sent: { batch: RemindersBatch; businesses: { name: string; count: number }[]; others: number };
+  /**
+   * Un propietario subió el comprobante de su mensualidad (spec 029): el negocio, lo que paga y el día de
+   * pago del cobro (de él sale el mes). Sólo lo ve el super admin.
+   */
+  billing_receipt: { businessName: string; amount: number; dueDate: ISODate };
 }
 
 /** Las dos tandas de recordatorios de citas por cerrar: la de la mañana y la de las 8 de la noche. */
@@ -107,6 +113,8 @@ export const appointmentUrl = (appointment: Pick<NoticeAppointment, "id" | "date
 const ACTIVITY_SECURITY_URL = "/admin/activity?ver=seguridad";
 /** La agenda con la lista «Por cerrar» abierta (spec 021). */
 export const TO_CLOSE_URL = `/dashboard/calendar?${TO_CLOSE_PARAM}=1`;
+/** /admin → Cobros, que se abre con los comprobantes por revisar (spec 029). */
+export const BILLING_URL = "/admin/billing";
 
 /** «Márcala…» o «Márcalas Completada o No asistió para que la agenda y los reportes cuadren.» */
 const closeThem = (count: number) => `${count === 1 ? "Márcala" : "Márcalas"} Completada o No asistió para que la agenda y los reportes cuadren.`;
@@ -208,6 +216,12 @@ const BUILDERS: { [K in NoticeKind]: Builder<K> } = {
       others > 0 ? ` y ${plural(others, "negocio más", "negocios más")}` : ""
     }`,
     url: "/admin/businesses",
+  }),
+  // El título no nombra al negocio: el de ntfy queda en el registro del cron, que es público.
+  billing_receipt: ({ businessName, amount, dueDate }) => ({
+    title: "Comprobante de mensualidad",
+    body: `${businessName} · ${formatUsdAmount(amount)} · mensualidad de ${formatDate(dueDate, "MMMM")}`,
+    url: BILLING_URL,
   }),
 };
 

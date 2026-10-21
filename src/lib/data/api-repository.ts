@@ -1,6 +1,8 @@
 import { api } from "@/lib/api/client";
 import type {
   AdminAuditLog,
+  AdminBillingList,
+  AdminBusinessBilling,
   AdminBusinessDetail,
   AdminBusinessCategory,
   AdminBusinessReferrals,
@@ -14,6 +16,10 @@ import type {
   AppointmentsToClose,
   AppointmentsToCloseCount,
   AuditLogPage,
+  BankAccount,
+  BillingCharge,
+  BillingReceiptUpload,
+  BusinessBilling,
   CloseAllResult,
   DatabaseStats,
   ImageUpload,
@@ -107,6 +113,15 @@ export const apiRepository: DataRepository = {
   subscriptions: {
     get: (businessId) => api.get<Subscription | null>(`${business(businessId)}/subscription`),
     getUsage: (businessId) => api.get<PlanUsage>(`${business(businessId)}/subscription/usage`),
+  },
+
+  billing: {
+    get: (businessId) => api.get<BusinessBilling>(`${business(businessId)}/billing`),
+    requestReceiptUpload: (businessId, chargeId, input) =>
+      api.post<BillingReceiptUpload>(`${business(businessId)}/billing/charges/${id(chargeId)}/receipt`, input),
+    completeReceiptUpload: (businessId, chargeId, receiptId) =>
+      api.post<BillingCharge>(`${business(businessId)}/billing/charges/${id(chargeId)}/receipt/${id(receiptId)}/complete`),
+    getReceiptUrl: (businessId, chargeId) => api.get<{ url: string }>(`${business(businessId)}/billing/charges/${id(chargeId)}/receipt`),
   },
 
   clients: {
@@ -299,6 +314,15 @@ export const apiRepository: DataRepository = {
     listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),
     updatePanelColors: (input) => api.put<{ colors: BrandColors | null }>("/admin/panel-colors", input),
+    setBusinessBilling: (businessId, input) => api.put<AdminBusinessBilling>(`/admin/businesses/${id(businessId)}/billing`, input),
+    listBillingCharges: (filter) => api.get<AdminBillingList>("/admin/billing", { status: filter }),
+    approveBillingCharge: (chargeId) => api.post<void>(`/admin/billing/charges/${id(chargeId)}/approve`),
+    rejectBillingCharge: (chargeId, input) => api.post<void>(`/admin/billing/charges/${id(chargeId)}/reject`, input),
+    markBillingChargePaid: (chargeId, input) => api.post<void>(`/admin/billing/charges/${id(chargeId)}/mark-paid`, input),
+    voidBillingCharge: (chargeId, input) => api.post<void>(`/admin/billing/charges/${id(chargeId)}/void`, input),
+    getBillingReceiptUrl: (chargeId) => api.get<{ url: string }>(`/admin/billing/charges/${id(chargeId)}/receipt`),
+    getBillingAccounts: () => api.get<{ bankAccounts: BankAccount[] }>("/admin/billing-accounts"),
+    setBillingAccounts: (input) => api.put<{ bankAccounts: BankAccount[] }>("/admin/billing-accounts", input),
   },
 
   push: {

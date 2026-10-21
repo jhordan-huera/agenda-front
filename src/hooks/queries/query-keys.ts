@@ -40,6 +40,8 @@ export const queryKeys = {
   publicProfile: (slug: string) => ["public-profile", slug] as const,
   /** El programa de referidos de un negocio (spec 023): la tarjeta del propietario. */
   referrals: (businessId: string) => ["referrals", businessId] as const,
+  /** La mensualidad del propietario (spec 029): su tarjeta y la pantalla de pago. */
+  billing: (businessId: string) => ["billing", businessId] as const,
   /** El nombre del negocio de un código de referidos (la portada con `?ref=`). */
   referrer: (code: string) => ["referrer", code] as const,
   /** Enlace de pago de una cita (/pago/:token). */
@@ -84,5 +86,9 @@ export const queryKeys = {
     emails: ["admin", "emails"] as const,
     /** «Descuentos por referidos» del Inicio (spec 023). */
     referralRewards: ["admin", "referral-rewards"] as const,
+    /** «Cobros» (spec 029), por filtro. */
+    billing: (filter: string) => ["admin", "billing", filter] as const,
+    /** Las cuentas de Agenda360 para recibir las mensualidades (spec 029). */
+    billingAccounts: ["admin", "billing-accounts"] as const,
   },
 };

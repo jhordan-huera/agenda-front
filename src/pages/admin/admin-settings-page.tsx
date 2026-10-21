@@ -5,6 +5,7 @@ import { FormField } from "@/components/shared/form-field";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Input } from "@/components/ui/input";
+import { BillingAccountsCard } from "@/features/admin/billing-accounts-card";
 import { PanelColorsCard } from "@/features/admin/panel-colors-card";
 import { PlatformTeamCard } from "@/features/admin/platform-team-card";
 import { PushSettingsCard } from "@/features/push/push-settings-card";
@@ -38,6 +39,8 @@ export default function AdminSettingsPage() {
           ) : (
             <PlatformSettingsForm settings={settings.data} />
           )}
+          {/* Las cuentas de las mensualidades (spec 029): aparte de la configuración pública. */}
+          <BillingAccountsCard />
           <PlatformTeamCard />
         </div>
         <div className="grid min-w-0 gap-6">

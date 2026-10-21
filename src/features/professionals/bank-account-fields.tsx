@@ -41,14 +41,25 @@ interface BankAccountsFieldsProps {
   errors: FieldErrors;
   /** Titular propuesto en cada cuenta nueva (el nombre de la agenda). */
   defaultHolder: string;
+  /**
+   * Los textos del interruptor y de quién las ve. Por defecto, los de una agenda (el paciente); las cuentas
+   * de Agenda360 para recibir las mensualidades (spec 029) llevan los suyos (el propietario).
+   */
+  labels?: { title: string; description: string; seenBy: string };
 }
+
+const AGENDA_LABELS = {
+  title: "Cobro por transferencia",
+  description: "Al reservar, el paciente ve estos datos y el monto, transfiere a cualquiera de las cuentas y te envía el comprobante.",
+  seenBy: "el paciente",
+};
 
 /**
  * Datos bancarios de una agenda: hasta 3 cuentas. Al reservar, el paciente las ve todas junto con el
  * monto, transfiere a cualquiera y envía el comprobante (lo sube o lo manda por WhatsApp). La
  * primera es la principal: es la que ve primero.
  */
-export function BankAccountsFields({ value, onChange, errors, defaultHolder }: BankAccountsFieldsProps) {
+export function BankAccountsFields({ value, onChange, errors, defaultHolder, labels = AGENDA_LABELS }: BankAccountsFieldsProps) {
   const listId = useId();
   const [keys, setKeys] = useState(() => value.map(newKey));
   // Si la lista cambió desde fuera (p. ej. "Descartar"), las que falten toman una clave por su posición.
@@ -83,11 +94,9 @@ export function BankAccountsFields({ value, onChange, errors, defaultHolder }: B
       <label className="flex items-center justify-between gap-4">
         <span>
           <span className="flex items-center gap-2 text-sm font-medium">
-            <Landmark className="size-4 text-muted-foreground" aria-hidden /> Cobro por transferencia
+            <Landmark className="size-4 text-muted-foreground" aria-hidden /> {labels.title}
           </span>
-          <span className="block text-xs text-muted-foreground">
-            Al reservar, el paciente ve estos datos y el monto, transfiere a cualquiera de las cuentas y te envía el comprobante.
-          </span>
+          <span className="block text-xs text-muted-foreground">{labels.description}</span>
         </span>
         <Switch
           checked={value.length > 0}
@@ -162,7 +171,7 @@ export function BankAccountsFields({ value, onChange, errors, defaultHolder }: B
               <Plus aria-hidden /> Agregar otra cuenta
             </Button>
             <span className="text-xs text-muted-foreground">
-              {full ? `Ya tienes las ${MAX_BANK_ACCOUNTS} cuentas posibles.` : `Hasta ${MAX_BANK_ACCOUNTS} cuentas: el paciente las ve todas.`}
+              {full ? `Ya tienes las ${MAX_BANK_ACCOUNTS} cuentas posibles.` : `Hasta ${MAX_BANK_ACCOUNTS} cuentas: ${labels.seenBy} las ve todas.`}
             </span>
           </div>
           {errors.bankAccounts && <p className="text-xs font-medium text-destructive">{errors.bankAccounts}</p>}

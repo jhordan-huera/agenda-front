@@ -4,6 +4,7 @@ import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
+import { BillingOverviewCard } from "@/features/admin/billing-overview-card";
 import { CreateBusinessDialog } from "@/features/admin/create-business-dialog";
 import { GrowthSection } from "@/features/admin/growth-section";
 import { HealthSection } from "@/features/admin/health-section";
@@ -21,7 +22,8 @@ import { getZonedNow } from "@/lib/time";
 /**
  * Inicio del super admin con los datos importantes (spec 006): el crecimiento del mes, la salud del
  * sistema, los negocios para vender y los descuentos por referidos (spec 023). Arriba, el saludo, los
- * negocios por plan y las solicitudes de cambio de plan pendientes (sólo si hay).
+ * negocios por plan, los comprobantes de mensualidades por revisar y los cobros atrasados (spec 029) y las
+ * solicitudes de cambio de plan pendientes (sólo si hay).
  */
 export default function AdminOverviewPage() {
   const stats = useAdminStats();
@@ -55,6 +57,9 @@ export default function AdminOverviewPage() {
           </Button>
         }
       />
+
+      {/* Los cobros por revisar o atrasados (spec 029): sin ninguno, no ocupan lugar. */}
+      <BillingOverviewCard billing={data?.billing} />
 
       {/* Las pendientes se resuelven aquí mismo; sin pendientes, no ocupan lugar. */}
       {pendingRequests > 0 && <PlanRequestsCard />}

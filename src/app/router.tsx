@@ -71,6 +71,8 @@ export const router = createBrowserRouter([
           { index: true, lazy: lazyPage(() => import("@/pages/admin/admin-overview-page")) },
           { path: "businesses", lazy: lazyPage(() => import("@/pages/admin/admin-businesses-page")) },
           { path: "businesses/:id", lazy: lazyPage(() => import("@/pages/admin/admin-business-detail-page")) },
+          // El cobro de las mensualidades (spec 029): los comprobantes por revisar y los cobros de cada estado.
+          { path: "billing", lazy: lazyPage(() => import("@/pages/admin/admin-billing-page")) },
           { path: "analytics", lazy: lazyPage(() => import("@/pages/admin/admin-analytics-page")) },
           // La pantalla «Base de datos» (spec 024): sólo el super admin principal (la página y la API lo comprueban).
           { path: "database", lazy: lazyPage(() => import("@/pages/admin/admin-database-page")) },

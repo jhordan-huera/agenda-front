@@ -1,12 +1,16 @@
 import type {
   AdminBusinessInput,
   AdminMemberInput,
+  BillingPaidInput,
+  BillingReasonInput,
+  BusinessBillingInput,
   BusinessOwnerInput,
   BusinessCategoryInput,
   BusinessDeletionInput,
   PanelColorsInput,
   PlanRejectionInput,
   PlatformAdminInput,
+  PlatformBankAccountsInput,
   PlatformSettingsInput,
   UserPasswordInput,
 } from "@/lib/validations/admin";
@@ -41,6 +45,9 @@ import type { BlockedTimeInput, ScheduleDayInput } from "@/lib/validations/sched
 import type { ServiceInput } from "@/lib/validations/service";
 import type {
   AdminAuditLog,
+  AdminBillingFilter,
+  AdminBillingList,
+  AdminBusinessBilling,
   AdminBusinessDetail,
   AdminBusinessCategory,
   AdminBusinessReferrals,
@@ -65,10 +72,14 @@ import type {
   PublicPayment,
   AuditEntityType,
   AuditLogPage,
+  BankAccount,
+  BillingCharge,
+  BillingReceiptUpload,
   BlockedTime,
   BookingConfirmation,
   BrandColors,
   Business,
+  BusinessBilling,
   BusinessCategoryInfo,
   BusinessReferrals,
   BusinessRole,
@@ -185,6 +196,20 @@ export interface SubscriptionRepository {
   get(businessId: string): Promise<Subscription | null>;
   /** Uso frente a los límites (los planes y precios no se muestran al negocio: los gestiona la plataforma). */
   getUsage(businessId: string): Promise<PlanUsage>;
+}
+
+/**
+ * La mensualidad del propietario (spec 029): sólo el propietario (y el super admin en modo soporte, que sólo
+ * la ve); los demás roles reciben `forbidden`. Leerla crea el cobro del mes si ya llegó su día de pago.
+ */
+export interface BillingRepository {
+  get(businessId: string): Promise<BusinessBilling>;
+  /** Registra el comprobante de un cobro (por pagar o rechazado) y da la URL firmada para subirlo. */
+  requestReceiptUpload(businessId: string, chargeId: string, input: ReceiptInput): Promise<BillingReceiptUpload>;
+  /** El archivo ya subió: el cobro pasa a «En revisión» y el super admin recibe un aviso. */
+  completeReceiptUpload(businessId: string, chargeId: string, receiptId: string): Promise<BillingCharge>;
+  /** El último comprobante del cobro, con una URL firmada de unos minutos. */
+  getReceiptUrl(businessId: string, chargeId: string): Promise<{ url: string }>;
 }
 
 /**
@@ -492,6 +517,23 @@ export interface PlatformAdminRepository {
   updateSettings(input: PlatformSettingsInput): Promise<PlatformSettings>;
   /** Colores del panel de plataforma de la cuenta que lo pide (spec 007). */
   updatePanelColors(input: PanelColorsInput): Promise<{ colors: BrandColors | null }>;
+  /** La mensualidad de un negocio (spec 029): monto, día de pago y primer cobro. Queda en la actividad. */
+  setBusinessBilling(businessId: string, input: BusinessBillingInput): Promise<AdminBusinessBilling>;
+  /** /admin → Cobros (spec 029): los cobros de un filtro y cuántos hay en cada uno. */
+  listBillingCharges(filter: AdminBillingFilter): Promise<AdminBillingList>;
+  /** «Pagado»: el comprobante está bien (`conflict` si el cobro no está en revisión). */
+  approveBillingCharge(chargeId: string): Promise<void>;
+  /** «Rechazar», con el motivo: le llega al propietario y se le vuelve a abrir la pantalla de pago. */
+  rejectBillingCharge(chargeId: string, input: BillingReasonInput): Promise<void>;
+  /** «Pagado sin comprobante»: el pago llegó por otra vía (efectivo…). */
+  markBillingChargePaid(chargeId: string, input: BillingPaidInput): Promise<void>;
+  /** «Anular», con el motivo: ya no se cobra (sus descuentos de referidos vuelven a quedar libres). */
+  voidBillingCharge(chargeId: string, input: BillingReasonInput): Promise<void>;
+  /** El último comprobante de un cobro, con una URL firmada de unos minutos. */
+  getBillingReceiptUrl(chargeId: string): Promise<{ url: string }>;
+  /** Las cuentas de Agenda360 para recibir las mensualidades (nunca van en la configuración pública). */
+  getBillingAccounts(): Promise<{ bankAccounts: BankAccount[] }>;
+  setBillingAccounts(input: PlatformBankAccountsInput): Promise<{ bankAccounts: BankAccount[] }>;
 }
 
 /** El aparato (este navegador) en el servicio de avisos: lo que da `PushSubscription.toJSON()`. */
@@ -556,6 +598,7 @@ export interface DataRepository {
   professionals: ProfessionalRepository;
   team: TeamRepository;
   subscriptions: SubscriptionRepository;
+  billing: BillingRepository;
   clients: ClientRepository;
   clinicalRecords: ClinicalRecordRepository;
   dataExport: DataExportRepository;
