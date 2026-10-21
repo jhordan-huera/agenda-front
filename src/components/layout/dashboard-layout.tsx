@@ -1,5 +1,5 @@
 import { LifeBuoy, LogOut } from "lucide-react";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,6 @@ import { ToCloseContext } from "@/features/appointments/to-close/to-close-contex
 import { ToCloseScreen } from "@/features/appointments/to-close/to-close-screen";
 import { ToCloseSheet } from "@/features/appointments/to-close/to-close-sheet";
 import { WhatsAppNoticeProvider } from "@/features/appointments/whatsapp-notice";
-import { BillingScreenContext } from "@/features/billing/billing-context";
-import { billingLater, clearBillingLater, isBillingLater } from "@/features/billing/billing-later";
 import { BillingScreen } from "@/features/billing/billing-screen";
 import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { useInstallableApp } from "@/features/install/use-installable-app";
@@ -70,29 +68,16 @@ function DashboardShell() {
 
   // La mensualidad (spec 029): sólo el propietario, nunca en modo soporte (ni el resto del equipo, que sigue
   // trabajando). Desde el día de pago de un cobro sin comprobante, su pantalla va antes que todo, también que
-  // la del cierre de mes. «Más tarde» vale para ese cobro hasta cerrar sesión, y sólo dentro de la gracia:
-  // pasada, la pantalla no se cierra hasta subirlo (`blocked`). Si la API no la tiene o falla, no se bloquea.
+  // la del cierre de mes, y no se cierra hasta subirlo: no hay «Más tarde» ni días de gracia (pedido del
+  // dueño del producto, 2026-10-20). Si la API no la tiene o falla, no se bloquea.
   const isOwner = session?.role === "owner" && !support;
   const billing = useBusinessBilling(isOwner);
-  const [, refreshBillingLater] = useReducer((count: number) => count + 1, 0);
   // El cobro cuyo comprobante acaba de subir: la pantalla se cierra sin esperar a que la mensualidad se recargue.
   const [sentCharge, setSentCharge] = useState<string | null>(null);
   const billingHidden = !isOwner || isBillingUnavailable(billing.error);
   const billingLoaded = billingHidden || billing.data !== undefined || billing.isError;
   const pendingCharge = billingHidden ? null : (billing.data?.pending ?? null);
-  const billingScreen =
-    pendingCharge !== null &&
-    pendingCharge.id !== sentCharge &&
-    (billing.data!.blocked || !isBillingLater(userId, pendingCharge.id));
-  const billingScreenValue = useMemo(
-    () => ({
-      open: (chargeId: string) => {
-        clearBillingLater(userId, chargeId);
-        refreshBillingLater();
-      },
-    }),
-    [userId],
-  );
+  const billingScreen = pendingCharge !== null && pendingCharge.id !== sentCharge;
 
   // La campana de avisos (spec 014) es del equipo: el super admin en modo soporte no la ve (tiene la suya en /admin).
   const bell = (align: "start" | "end") =>
@@ -140,44 +125,39 @@ function DashboardShell() {
   return (
     <BrandThemeProvider colors={business?.brandColors}>
       <WhatsAppNoticeProvider>
-        <BillingScreenContext.Provider value={billingScreenValue}>
-          <ToCloseContext.Provider value={toCloseValue}>
-            {billingScreen && pendingCharge ? (
-              <BillingScreen
-                billing={{ ...billing.data!, pending: pendingCharge }}
-                onLater={() => {
-                  billingLater(userId, pendingCharge.id);
-                  refreshBillingLater();
-                }}
-                onSent={() => setSentCharge(pendingCharge.id)}
-              />
-            ) : blocked ? (
-              <ToCloseScreen overdue={toClose.overdue} previousMonth={toClose.previousMonth} onLater={remindLater} />
-            ) : (
-              <AppShell
-                homeHref="/dashboard"
-                renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} bell={onNavigate ? null : bell("start")} />}
-                bell={bell("end")}
-                banner={
-                  <>
-                    {session?.support ? (
-                      <SupportBanner businessName={session.support.businessName} />
-                    ) : session?.role === "owner" ? (
-                      // Avisos en el celular (spec 013): el propietario; nunca coincide con el modo soporte.
-                      <PushPrompt audience="owner" />
-                    ) : (
-                      // Y el rol Profesional con su agenda (spec 017), sólo para los resúmenes de su agenda.
-                      session?.role === "professional" && session.professionalId && <PushPrompt audience="agenda" />
-                    )}
-                    {/* Con «Más tarde» (o en modo soporte), la franja con la cifra y el enlace a la lista. */}
-                    {showBanner && <ToCloseBanner total={toClose.total} support={support} onOpen={() => setListOpen(true)} />}
-                  </>
-                }
-              />
-            )}
-            {!blocked && !billingScreen && <ToCloseSheet open={listOpen} onOpenChange={setListOpen} />}
-          </ToCloseContext.Provider>
-        </BillingScreenContext.Provider>
+        <ToCloseContext.Provider value={toCloseValue}>
+          {billingScreen && pendingCharge ? (
+            <BillingScreen
+              billing={{ ...billing.data!, pending: pendingCharge }}
+              timezone={business?.timezone ?? DEFAULT_TIMEZONE}
+              onSent={() => setSentCharge(pendingCharge.id)}
+            />
+          ) : blocked ? (
+            <ToCloseScreen overdue={toClose.overdue} previousMonth={toClose.previousMonth} onLater={remindLater} />
+          ) : (
+            <AppShell
+              homeHref="/dashboard"
+              renderSidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} bell={onNavigate ? null : bell("start")} />}
+              bell={bell("end")}
+              banner={
+                <>
+                  {session?.support ? (
+                    <SupportBanner businessName={session.support.businessName} />
+                  ) : session?.role === "owner" ? (
+                    // Avisos en el celular (spec 013): el propietario; nunca coincide con el modo soporte.
+                    <PushPrompt audience="owner" />
+                  ) : (
+                    // Y el rol Profesional con su agenda (spec 017), sólo para los resúmenes de su agenda.
+                    session?.role === "professional" && session.professionalId && <PushPrompt audience="agenda" />
+                  )}
+                  {/* Con «Más tarde» (o en modo soporte), la franja con la cifra y el enlace a la lista. */}
+                  {showBanner && <ToCloseBanner total={toClose.total} support={support} onOpen={() => setListOpen(true)} />}
+                </>
+              }
+            />
+          )}
+          {!blocked && !billingScreen && <ToCloseSheet open={listOpen} onOpenChange={setListOpen} />}
+        </ToCloseContext.Provider>
       </WhatsAppNoticeProvider>
     </BrandThemeProvider>
   );

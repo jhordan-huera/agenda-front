@@ -8,37 +8,36 @@ import { ReceiptUploadButton, TransferAccounts } from "@/features/payments/bank-
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { useUploadBillingReceipt } from "@/hooks/queries/use-billing";
 import { APP_NAME } from "@/lib/constants/app";
-import { BILLING_GRACE_DAYS, describeBillingDiscount, formatUsdAmount } from "@/lib/constants/business";
+import { describeBillingDiscount, formatUsdAmount } from "@/lib/constants/business";
 import { formatDate } from "@/lib/format";
+import { getZonedNow } from "@/lib/time";
 import type { BillingCharge, BusinessBilling } from "@/types";
 
 interface BillingScreenProps {
   billing: BusinessBilling & { pending: BillingCharge };
-  /** «Más tarde»: sólo dentro de los días de gracia. */
-  onLater: () => void;
+  /** La zona del negocio: de ella sale si el cobro «Vence hoy». */
+  timezone: string;
   /** Subió el comprobante: el panel se abre (la mensualidad ya se está recargando). */
   onSent: () => void;
 }
 
-/** «Te queda 1 día» / «Te quedan 5 días». */
-const daysLeft = (days: number) => (days === 1 ? "Te queda 1 día" : `Te quedan ${days} días`);
-
 /**
  * «Tu mensualidad de noviembre» (spec 029): la ve el propietario, en lugar del panel, desde el día de pago
  * de un cobro sin comprobante (el más antiguo, si hay varios). El monto (con el descuento de referidos), las
- * cuentas para transferir con «Copiar», «Subir comprobante» y, durante los 5 días de gracia, «Más tarde».
- * Pasada la gracia, la pantalla no se cierra hasta subirlo: sólo queda «Cerrar sesión». Si el super admin
+ * cuentas para transferir con «Copiar» y «Subir comprobante». No se cierra hasta subirlo: no hay «Más tarde»
+ * ni días de gracia (pedido del dueño del producto, 2026-10-20), sólo «Cerrar sesión». Si el super admin
  * rechazó el comprobante, dice el motivo. Nunca en modo soporte ni para el resto del equipo: su equipo y su
  * página de reservas siguen funcionando.
  */
-export function BillingScreen({ billing, onLater, onSent }: BillingScreenProps) {
+export function BillingScreen({ billing, timezone, onSent }: BillingScreenProps) {
   const signOut = useSignOut();
-  const { pending, graceDaysLeft, blocked, bankAccounts, receiptsEnabled } = billing;
+  const { pending, bankAccounts, receiptsEnabled } = billing;
   const upload = useUploadBillingReceipt(pending.id);
   const { data: settings } = usePlatformSettings();
   const month = formatDate(pending.dueDate, "MMMM");
   const discount = describeBillingDiscount(pending);
   const rejected = pending.status === "rejected";
+  const dueToday = pending.dueDate === getZonedNow(timezone).date;
   const supportMessage = `Hola, tengo una consulta sobre mi mensualidad de ${month} en ${APP_NAME}.`;
 
   return (
@@ -59,11 +58,9 @@ export function BillingScreen({ billing, onLater, onSent }: BillingScreenProps) 
             <div className="min-w-0">
               <h1 className="text-xl font-semibold tracking-tight text-balance">Tu mensualidad de {month}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {blocked
-                  ? `Pasaron los ${BILLING_GRACE_DAYS} días para enviar el comprobante: súbelo para seguir usando el panel. Tu equipo y tu página de reservas siguen funcionando.`
-                  : `${graceDaysLeft >= BILLING_GRACE_DAYS ? "Vence hoy" : `Venció el ${formatDate(pending.dueDate, "d 'de' MMMM")}`}. Transfiere a ${
-                      bankAccounts.length > 1 ? "cualquiera de estas cuentas" : "esta cuenta"
-                    } y sube el comprobante: lo revisamos y te avisamos por email.`}
+                {dueToday ? "Vence hoy" : `Venció el ${formatDate(pending.dueDate, "d 'de' MMMM")}`}.{" "}
+                <span className="font-medium text-foreground">Para seguir usando el panel, tienes que subir el comprobante de tu transferencia.</span>{" "}
+                Tu equipo y tu página de reservas siguen funcionando.
               </p>
             </div>
           </div>
@@ -120,23 +117,14 @@ export function BillingScreen({ billing, onLater, onSent }: BillingScreenProps) 
                 {settings ? <SupportContact email={settings.supportEmail} phone={settings.supportPhone} message={supportMessage} /> : "soporte"}.
               </p>
             )}
-            <p className="text-xs text-muted-foreground">Una foto o el PDF del banco, de hasta 10 MB. Sólo lo vemos tú y el equipo de {APP_NAME}.</p>
-            {graceDaysLeft > 0 ? (
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {daysLeft(graceDaysLeft)} para enviarlo. Con «Más tarde» entras al panel; esta pantalla vuelve a salir en tu siguiente inicio de sesión.
-                </p>
-                <Button variant="outline" className="shrink-0" onClick={onLater}>
-                  Más tarde
-                </Button>
-              </div>
-            ) : (
-              settings && (
-                <p className="text-xs text-muted-foreground">
-                  ¿Ya pagaste o tienes una duda? Escríbenos a{" "}
-                  <SupportContact email={settings.supportEmail} phone={settings.supportPhone} message={supportMessage} />.
-                </p>
-              )
+            <p className="text-xs text-muted-foreground">
+              Una foto o el PDF del banco, de hasta 10 MB. Lo revisamos y te avisamos por email. Sólo lo vemos tú y el equipo de {APP_NAME}.
+            </p>
+            {settings && (
+              <p className="text-xs text-muted-foreground">
+                ¿Ya pagaste o tienes una duda? Escríbenos a{" "}
+                <SupportContact email={settings.supportEmail} phone={settings.supportPhone} message={supportMessage} />.
+              </p>
             )}
           </div>
         </main>

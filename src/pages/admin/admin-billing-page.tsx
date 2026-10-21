@@ -24,7 +24,7 @@ import {
   useVoidBillingCharge,
 } from "@/hooks/queries/use-admin";
 import { openSignedUrl } from "@/hooks/queries/use-billing";
-import { describeBillingDiscount, formatUsdAmount } from "@/lib/constants/business";
+import { BILLING_OVERDUE_DAYS, describeBillingDiscount, formatUsdAmount } from "@/lib/constants/business";
 import { data, getErrorMessage } from "@/lib/data";
 import { formatDate, formatDateTime } from "@/lib/format";
 import type { AdminBillingCharge, AdminBillingFilter } from "@/types";
@@ -32,7 +32,7 @@ import type { AdminBillingCharge, AdminBillingFilter } from "@/types";
 /** Los filtros, en este orden, con su nombre y su dirección (`?estado=`, para volver atrás o compartirla). */
 const FILTERS: { value: AdminBillingFilter; label: string; slug: string; empty: string }[] = [
   { value: "in_review", label: "En revisión", slug: "en-revision", empty: "No hay comprobantes por revisar." },
-  { value: "due", label: "Por pagar", slug: "por-pagar", empty: "Ningún cobro por pagar dentro de sus días de gracia." },
+  { value: "due", label: "Por pagar", slug: "por-pagar", empty: `Ningún cobro por pagar de menos de ${BILLING_OVERDUE_DAYS} días.` },
   { value: "overdue", label: "Atrasados", slug: "atrasados", empty: "Ningún cobro atrasado." },
   { value: "paid", label: "Pagados", slug: "pagados", empty: "Todavía no hay cobros pagados." },
   { value: "rejected", label: "Rechazados", slug: "rechazados", empty: "Ningún comprobante rechazado." },
@@ -114,12 +114,16 @@ export default function AdminBillingPage() {
 /** «Mensualidad de noviembre de 2026» */
 const monthOf = (charge: AdminBillingCharge) => `Mensualidad de ${formatDate(charge.dueDate, "MMMM 'de' yyyy")}`;
 
-/** «Día de pago: 14 nov 2026 · le quedan 3 días de gracia»: cuándo vence y, si espera el comprobante, cuánto le queda. */
+/**
+ * Cuándo vence y, si está por pagar, cuánto le falta para salir como atrasado (Día de pago: 14 nov 2026 ·
+ * pasa a «Atrasados» en 3 días). Es sólo del super admin: el propietario no tiene gracia, su pantalla de
+ * pago no se cierra desde el día de pago.
+ */
 function dueLabel(charge: AdminBillingCharge): string {
   const date = `Día de pago: ${formatDate(charge.dueDate, "d MMM yyyy")}`;
-  if (charge.status !== "due" && charge.status !== "rejected") return date;
-  if (charge.graceDaysLeft === 0) return `${date} · pasaron los días de gracia`;
-  return `${date} · ${charge.graceDaysLeft === 1 ? "le queda 1 día" : `le quedan ${charge.graceDaysLeft} días`} de gracia`;
+  if (charge.status !== "due") return date;
+  if (charge.overdueInDays === 0) return `${date} · ${BILLING_OVERDUE_DAYS} días o más sin comprobante`;
+  return `${date} · pasa a «Atrasados» ${charge.overdueInDays === 1 ? "mañana" : `en ${charge.overdueInDays} días`}`;
 }
 
 function ChargeCard({ charge, onAction }: { charge: AdminBillingCharge; onAction: (kind: Action["kind"], charge: AdminBillingCharge) => void }) {
@@ -140,7 +144,7 @@ function ChargeCard({ charge, onAction }: { charge: AdminBillingCharge; onAction
           </div>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold tabular-nums">{formatUsdAmount(charge.amount)}</span>
-            <BillingStatusBadge status={charge.status} overdue={charge.graceDaysLeft === 0} />
+            <BillingStatusBadge status={charge.status} overdue={charge.overdueInDays === 0} />
           </div>
         </div>
         <div className="grid gap-0.5 text-xs text-muted-foreground">
@@ -266,7 +270,7 @@ function ReasonForm({ action, onDone }: { action: Action; onDone: () => void }) 
         <DialogDescription>
           {monthOf(charge)}: {formatUsdAmount(charge.amount)}.{" "}
           {rejecting
-            ? "Al entrar, se le vuelve a abrir la pantalla de pago con los días de gracia que le queden."
+            ? "Al entrar, se le vuelve a abrir la pantalla de pago, y no se cierra hasta que suba otro comprobante."
             : "Ya no se le cobra; si usaba descuentos de referidos, vuelven a quedar para el cobro siguiente."}
         </DialogDescription>
       </DialogHeader>

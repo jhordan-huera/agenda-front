@@ -7,18 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/features/auth/use-session";
 import { isBillingUnavailable, openSignedUrl, useBusinessBilling } from "@/hooks/queries/use-billing";
-import { BILLING_GRACE_DAYS, describeBillingDiscount, formatUsdAmount } from "@/lib/constants/business";
+import { describeBillingDiscount, formatUsdAmount } from "@/lib/constants/business";
 import { data, getErrorMessage } from "@/lib/data";
 import { capitalize, formatDate } from "@/lib/format";
 import type { BillingCharge, BusinessBilling } from "@/types";
-import { useBillingScreen } from "./billing-context";
 import { BillingStatusBadge } from "./billing-status-badge";
 
 /**
  * «Tu mensualidad» (spec 029), en Configuración → Negocio: el monto, el próximo día de pago y el historial
- * de sus pagos con su estado (y el motivo de un rechazo o de una anulación), con su comprobante. Con un
- * cobro pendiente, «Pagar ahora» vuelve a abrir la pantalla de pago. Sólo el propietario (y el super admin
- * en modo soporte, que sólo la ve): nunca la lista de planes ni los precios de otros (principio III).
+ * de sus pagos con su estado (y el motivo de un rechazo o de una anulación), con su comprobante. Un cobro
+ * pendiente sólo se avisa: el propietario lo paga en la pantalla de pago, que mientras tanto tapa el panel.
+ * Sólo el propietario (y el super admin en modo soporte, que sólo la ve): nunca la lista de planes ni los
+ * precios de otros (principio III).
  */
 export function MonthlyFeeCard() {
   const { session } = useSession();
@@ -54,8 +54,7 @@ export function MonthlyFeeCard() {
 }
 
 function FeeDetails({ billing, support }: { billing: BusinessBilling; support: boolean }) {
-  const screen = useBillingScreen();
-  const { pending, graceDaysLeft } = billing;
+  const { pending } = billing;
   return (
     <>
       <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -80,19 +79,9 @@ function FeeDetails({ billing, support }: { billing: BusinessBilling; support: b
             </span>
             {pending.status === "rejected"
               ? `No pudimos confirmar el pago: ${pending.rejectionReason ?? "vuelve a subir el comprobante"}.`
-              : graceDaysLeft > 0
-                ? graceDaysLeft === 1
-                  ? "Te queda 1 día para enviar el comprobante."
-                  : `Te quedan ${graceDaysLeft} días para enviar el comprobante.`
-                : `Pasaron los ${BILLING_GRACE_DAYS} días para enviar el comprobante.`}
+              : `Día de pago: ${formatDate(pending.dueDate, "d 'de' MMMM")}. Falta el comprobante de la transferencia.`}
           </p>
-          {support ? (
-            <p className="text-xs">El propietario la ve al entrar al panel.</p>
-          ) : (
-            <Button size="sm" className="shrink-0" onClick={() => screen.open(pending.id)}>
-              Pagar ahora
-            </Button>
-          )}
+          {support && <p className="text-xs">Al entrar al panel, el propietario tiene que subirlo para seguir usándolo.</p>}
         </div>
       )}
 

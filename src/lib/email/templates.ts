@@ -1,5 +1,5 @@
 import { APP_NAME } from "@/lib/constants/app";
-import { BANK_ACCOUNT_TYPE_LABELS, BILLING_GRACE_DAYS, describeTimezone, formatUsdAmount } from "@/lib/constants/business";
+import { BANK_ACCOUNT_TYPE_LABELS, describeTimezone, formatUsdAmount } from "@/lib/constants/business";
 import { capitalize, formatDate, formatLongDate, formatPrice, formatShortDate, formatTimeRange, joinNames } from "@/lib/format";
 import { describeHomeVisit, getDirectionsUrl, getPlaceMapsUrl, hasMapPoint } from "@/lib/maps";
 import type { BankAccount, BillingPaidMethod, HomeVisitAddress, ISODate } from "@/types";
@@ -980,8 +980,8 @@ export const emailTemplates = {
   },
 
   /**
-   * La mensualidad vence en tres días (spec 029): el monto y las cuentas para transferir, y que el día de
-   * pago, al entrar al panel, se abre la pantalla para subir el comprobante.
+   * La mensualidad vence en tres días (spec 029): el monto y las cuentas para transferir, y que desde el día
+   * de pago, al entrar al panel, tendrá que subir el comprobante para seguir usándolo (no hay días de gracia).
    */
   billingReminder: (data: BillingEmailData & { bankAccounts: BankAccount[]; supportContact: string }): EmailContent =>
     platformEmail({
@@ -994,15 +994,12 @@ export const emailTemplates = {
           kind: "text",
           text: `El ${billingDay(data)} vence la mensualidad de ${data.businessName}. Transfiere a ${
             data.bankAccounts.length > 1 ? "cualquiera de estas cuentas" : "esta cuenta"
-          } y sube el comprobante en tu panel: ese día, al entrar, se abre la pantalla para enviarlo.`,
+          } y guarda el comprobante: ese día, al entrar a tu panel, tendrás que subirlo para seguir usándolo.`,
         },
         billingAmountBlock(data),
         ...billingAccounts(data.bankAccounts, data.supportContact),
         { kind: "button", label: "Abrir mi panel", url: data.panelUrl },
-        {
-          kind: "note",
-          text: `Tienes ${BILLING_GRACE_DAYS} días desde el día de pago para enviarlo. Tu equipo y tu página de reservas siguen funcionando igual.`,
-        },
+        { kind: "note", text: "Tu equipo y tu página de reservas siguen funcionando igual." },
       ],
     }),
 
@@ -1027,9 +1024,9 @@ export const emailTemplates = {
 
   /**
    * El super admin rechazó el comprobante, con el motivo: al entrar al panel se vuelve a abrir la pantalla
-   * de pago, con los días de gracia que le queden.
+   * de pago, y no se cierra hasta subir otro.
    */
-  billingRejected: (data: BillingEmailData & { reason: string; graceDaysLeft: number; supportContact: string }): EmailContent =>
+  billingRejected: (data: BillingEmailData & { reason: string; supportContact: string }): EmailContent =>
     platformEmail({
       subject: `No pudimos confirmar el pago de tu mensualidad de ${billingMonth(data)}`,
       preheader: `Motivo: ${data.reason}`,
@@ -1040,12 +1037,7 @@ export const emailTemplates = {
         { kind: "callout", tone: "warning", text: `Motivo: ${data.reason}` },
         {
           kind: "text",
-          text:
-            data.graceDaysLeft > 0
-              ? `Revisa la transferencia y vuelve a subir el comprobante desde tu panel: te ${
-                  data.graceDaysLeft === 1 ? "queda 1 día" : `quedan ${data.graceDaysLeft} días`
-                }.`
-              : "Revisa la transferencia y vuelve a subir el comprobante desde tu panel para seguir usándolo. Tu equipo y tu página de reservas siguen funcionando.",
+          text: "Revisa la transferencia: al entrar a tu panel, tendrás que volver a subir el comprobante para seguir usándolo. Tu equipo y tu página de reservas siguen funcionando.",
         },
         billingAmountBlock(data),
         { kind: "button", label: "Subir el comprobante", url: data.panelUrl },

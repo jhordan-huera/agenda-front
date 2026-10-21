@@ -14,7 +14,7 @@ const TONES: Record<BillingStatus, string> = {
 
 /**
  * El estado de un cobro de la mensualidad (spec 029): «Por pagar», «En revisión», «Pagado», «Rechazado» o
- * «Anulado». Con `overdue`, un cobro por pagar pasada la gracia dice «Atrasado» (sólo en /admin).
+ * «Anulado». Con `overdue`, un cobro por pagar de BILLING_OVERDUE_DAYS días o más dice «Atrasado» (sólo en /admin).
  */
 export function BillingStatusBadge({ status, overdue = false, className }: { status: BillingStatus; overdue?: boolean; className?: string }) {
   const late = overdue && status === "due";
