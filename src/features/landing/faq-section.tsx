@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { APP_NAME } from "@/lib/constants/app";
 import { cn } from "@/lib/utils";
 import { LANDING_SECTIONS } from "./landing-constants";
-import { CONTAINER } from "./section-heading";
+import { CONTAINER, SECTION_SPACING } from "./section-heading";
 import { usePricingContact, type SupportContact } from "./use-signup-contact";
 
 /** Un enlace dentro de una frase: su zona para el dedo crece hasta 44 px de alto sin mover el texto. */
@@ -22,7 +22,8 @@ function ContactLink({ contact, children }: { contact: SupportContact; children:
 
 /**
  * Preguntas frecuentes (spec 030), con `<details>` nativo: se abren con el teclado y el lector de
- * pantalla sin nada más. Sin precios (constitución): «¿Cuánto cuesta?» lleva a soporte.
+ * pantalla sin nada más. Sin precios (constitución): «¿Cuánto cuesta?» lleva a soporte. En la portada de
+ * la spec 032, sobre blanco, antes del cierre.
  */
 export function FaqSection() {
   const pricing = usePricingContact();
@@ -76,7 +77,7 @@ export function FaqSection() {
   ];
 
   return (
-    <section id={LANDING_SECTIONS.faq} aria-labelledby="preguntas-titulo" className="bg-wall py-16 sm:py-24">
+    <section id={LANDING_SECTIONS.faq} aria-labelledby="preguntas-titulo" className={cn("border-t border-border bg-card", SECTION_SPACING)}>
       <div className={cn(CONTAINER, "grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-10")}>
         <div className="lg:col-span-4">
           <h2 id="preguntas-titulo" className="text-headline font-bold text-foreground">

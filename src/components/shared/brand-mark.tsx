@@ -2,8 +2,9 @@ import { cn } from "@/lib/utils";
 
 /**
  * Símbolo de Agenda360 (el mismo dibujo que public/icon-calendar.svg): una hoja de calendario con
- * la cabecera lila y el día reservado marcado en azul. Usa los colores de la marca (con los de un
- * negocio, toma los suyos). Van en `style`: algunos navegadores no pintan `fill="var(--x)"`.
+ * la cabecera en el resaltado (durazno) y el día reservado marcado en el principal (tomate). Usa los
+ * colores de la marca (con los de un negocio, toma los suyos). Van en `style`: algunos navegadores no
+ * pintan `fill="var(--x)"`.
  */
 export function BrandMark({ className }: { className?: string }) {
   return (

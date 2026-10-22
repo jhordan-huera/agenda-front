@@ -5,7 +5,7 @@ import { encode, renderSVG } from "uqr";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BrandPaletteContext } from "@/features/branding/brand-palette-context";
-import type { BrandPalettes } from "@/lib/brand-theme";
+import { DEFAULT_BRAND_COLORS, resolveBrandPalette, type BrandPalettes } from "@/lib/brand-theme";
 
 interface SheetColors {
   qr: string;
@@ -17,11 +17,12 @@ interface SheetColors {
 /**
  * Colores de la lámina: los del negocio (o los de Agenda360), siempre los del modo claro, también con la
  * pantalla en oscuro (spec 019): el QR va sobre blanco y con el color del texto, casi negro, para que lo lea
- * cualquier cámara, y la lámina se imprime. Sin colores propios, los de src/index.css.
+ * cualquier cámara, y la lámina se imprime. Sin colores propios, los de Agenda360 con la misma fórmula (los
+ * mismos de src/index.css).
  */
 function sheetColors(palettes: BrandPalettes | null): SheetColors {
-  const light = palettes?.light;
-  return { qr: light?.text ?? "#1d2433", ink: light?.ink ?? "#4a6cb0", muted: light?.graphite ?? "#5b6478", paper: "#ffffff" };
+  const { light } = palettes ?? resolveBrandPalette(DEFAULT_BRAND_COLORS);
+  return { qr: light.text, ink: light.ink, muted: light.graphite, paper: "#ffffff" };
 }
 const FONT = '"Sora Variable", ui-sans-serif, system-ui, sans-serif';
 

@@ -58,20 +58,23 @@ pantalla de importar pacientes, con la versión fija).
 
 ## Diseño
 
-Identidad de "agenda de consultorio en azul y lila pastel" (tokens en `src/index.css`, la misma que
-el beta):
+Identidad de "agenda de consultorio en tomate y durazno" (spec 033; tokens en `src/index.css`, la
+misma que el beta). Una sola gama: todo sale de los dos colores de Agenda360 (`DEFAULT_BRAND_COLORS` en
+`src/lib/brand-theme.ts`) con la misma fórmula que los colores de un negocio:
 
-- **Azul consultorio** `#4A6CB0` (`--ink`): acciones, títulos y lo activo. **Azul pastel** `#E8EEFB` y
-  **bruma** `#F5F7FC`: superficies y fondos. **Lila pastel** `#DDD4F8` (clases `marker` y
-  `marker-sweep`): marca lo elegido o lo nuevo; su tono suave `#EFEBFC` viste insignias y botones
-  secundarios.
-- **Icono** `public/icon-calendar.svg` (y `BrandMark`), con versiones PNG de 32, 192 y 180 px. Cada
-  icono nuevo lleva otro nombre de archivo y `src/main.tsx` lo vuelve a declarar con `?v=` para que
-  los navegadores no sigan mostrando el anterior.
+- **Tomate** `#C2410C` (`--ink`): acciones, títulos, lo activo y el botón principal de la portada.
+  **Durazno pálido** `#FDE9E3` (`--accent`) y **bruma** `#FDF5F3` (`--desk`): superficies y fondos.
+  **Durazno** `#FCD9C2` (`--highlight`, clases `marker` y `marker-sweep`): marca lo elegido o lo nuevo;
+  su tono suave `#FBEAE0` viste insignias y botones secundarios. Hasta la spec 033 era azul `#4A6CB0` y
+  lila `#DDD4F8`: hoy es la paleta lista «Azul clásico».
+- **Icono** `public/icon-calendar.svg` (y `BrandMark`), con versiones PNG de 32, 192 y 180 px, las de
+  la app instalable (`icon-app-*`: 192, 512 y la maskable de 512) y la silueta blanca del aviso
+  (`icon-badge-96.png`, sin color). Al cambiar el icono se sube `ICON_VERSION` en `src/main.tsx`, que
+  lo vuelve a declarar con `?v=` para que los navegadores no sigan mostrando el anterior.
 - **Colores de cada negocio** (Configuración → Colores, cualquier plan; los cambia sólo el
   propietario, con el permiso `business.manage`, o el super admin en modo soporte: un administrador
-  no ve la pestaña): una paleta lista (Agenda360, Eucalipto, Lavanda, Rosa, Turquesa, Coral, Oliva, Grafito) o
-  dos colores a elección (principal y resaltado), con vista previa. Se aplican a su panel, a su
+  no ve la pestaña): una paleta lista (Agenda360, Azul clásico, Eucalipto, Lavanda, Rosa, Turquesa,
+  Coral, Oliva, Grafito) o dos colores a elección (principal y resaltado), con vista previa. Se aplican a su panel, a su
   página de reservas y a la lámina del QR; la portada, el login y el panel de plataforma siguen con
   los de Agenda360. De los dos colores sale toda la paleta (fondos, bordes, textos, gráficos) en
   `src/lib/brand-theme.ts`, calculada en OKLCH; si el principal es muy claro para texto blanco se
@@ -95,7 +98,8 @@ el beta):
   - **Siguen claros a propósito:** los emails, el QR y la placa del logo del negocio.
   - **El contraste:** `npm run check:contrast` mide la paleta de Agenda360, cada paleta de la lista y
     cuatro colores extremos, en los dos modos. Exige 4,5:1 en los textos y 3:1 en lo demás, y falla si
-    algo no llega.
+    algo no llega o si un color de Agenda360 escrito a mano (`src/index.css`, `index.html`,
+    `public/theme-boot.js`, el manifiesto, los gráficos o los emails) no es el de la fórmula.
 - **Tipografía** Sora; las horas, grandes, gruesas y con cifras tabulares.
 - **Pestañas de agenda** (`TabsList variant="folder"`): el menú lateral, los pasos de la reserva y
   las pestañas de Configuración y de la ficha del cliente.
@@ -477,7 +481,7 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   del menú lateral y en el celular a la derecha de la barra de arriba (`AppShell` recibe `bell`; los
   menús la reciben sólo en la computadora). Para el lector de pantalla es «Avisos, 3 sin leer». Al
   tocarla, un `Popover` con los últimos 20 (`src/features/notices/`): título, texto con el nombre
-  completo del paciente y hace cuánto («hace 5 min», «ayer»), los no leídos en el lila suave con un
+  completo del paciente y hace cuánto («hace 5 min», «ayer»), los no leídos en el tono suave del resaltado con un
   punto, «Marcar todo como leído», «Ver todos» y «No tienes avisos» con qué aparecerá ahí. Tocar un
   aviso lo marca leído y abre su pantalla (la cita en la agenda, la agenda del día, la lista «Por
   cerrar» —el aviso de la mañana, spec 021, con `?por-cerrar=1`— o la ficha en /admin). «Ver todos» lleva a `/dashboard/notices` o `/admin/notices`: los de los últimos 30 días

@@ -14,5 +14,5 @@
   if (dark) document.documentElement.classList.add("dark");
   // La barra del celular: --background de Agenda360.
   var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", dark ? "#15181f" : "#ffffff");
+  if (meta) meta.setAttribute("content", dark ? "#201612" : "#ffffff");
 })();

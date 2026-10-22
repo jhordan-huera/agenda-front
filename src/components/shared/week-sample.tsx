@@ -1,12 +1,14 @@
+import { BellRing } from "lucide-react";
 import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * La semana del panel del acceso (spec 030): la Agenda en su vista «Semana», de lunes a viernes, en una sola
- * gama, el azul de la marca y sus grises (sin los colores de cada estado, que aquí se verían como
- * confeti): lo atendido en gris, lo confirmado en azul claro, lo pendiente con el borde punteado y la
- * reserva que acaba de entrar en el azul lleno, lo único que destaca. Al cargar, entra esa reserva (con
- * «reducir movimiento», ya está). Datos de ejemplo; el texto para el lector de pantalla lo pone quien la usa.
+ * La semana de la Agenda de ejemplo (spec 030): la vista «Semana», de lunes a viernes, en una sola gama, el
+ * color de la marca y sus grises (sin los colores de cada estado, que aquí se verían como confeti): lo
+ * atendido en gris, lo confirmado en el tono pálido de la marca, lo pendiente con el borde punteado y la
+ * reserva que acaba de entrar en el color de la marca lleno, lo único que destaca. Al cargar, entra esa reserva (con «reducir movimiento»,
+ * ya está). La usan el panel del acceso (features/auth/auth-showcase.tsx) y la vista del panel de la portada
+ * (spec 032). Datos de ejemplo; el texto para el lector de pantalla lo pone quien la usa.
  */
 
 const DAYS = [
@@ -21,7 +23,7 @@ const FIRST_HOUR = 8;
 const HOURS = [8, 9, 10, 11, 12, 13, 14];
 const ROW = 44;
 /** Cuándo entra la reserva nueva (segundos desde que carga); el aviso del panel llega justo después. */
-export const ARRIVAL_DELAY = 0.8;
+const ARRIVAL_DELAY = 0.8;
 
 type Kind = "done" | "confirmed" | "pending" | "new" | "blocked";
 
@@ -29,7 +31,7 @@ const KIND_STYLE: Record<Exclude<Kind, "blocked">, string> = {
   done: "border-l-[3px] border-muted-foreground/35 bg-muted text-muted-foreground",
   confirmed: "border-l-[3px] border-ink bg-accent text-foreground",
   pending: "border border-dashed border-ink/45 bg-card text-foreground",
-  new: "z-[1] bg-ink text-primary-foreground shadow-[0_8px_18px_-8px_rgb(29_36_51/0.5)] animate-in fill-mode-both duration-500 zoom-in-90 fade-in motion-reduce:animate-none",
+  new: "z-[1] bg-ink text-primary-foreground shadow-[0_8px_18px_-8px_color-mix(in_oklch,var(--shell)_50%,transparent)] animate-in fill-mode-both duration-500 zoom-in-90 fade-in motion-reduce:animate-none",
 };
 
 /** La leyenda, con una muestra chica de cada bloque (el borde entero: la barra de 3 px no se lee en 10 px). */
@@ -141,6 +143,31 @@ export function WeekSample({ className }: { className?: string }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * El aviso de la reserva que acaba de entrar en la semana: llega medio segundo después de ella (con
+ * «reducir movimiento», ya está). Quien lo usa lo coloca (`className`) encima de la semana.
+ */
+export function NewBookingNotice({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      style={{ animationDelay: `${ARRIVAL_DELAY + 0.5}s` }}
+      className={cn(
+        "flex items-center gap-3 rounded-xl bg-popover py-2.5 pr-4 pl-3 text-popover-foreground shadow-lifted animate-in fill-mode-both duration-500 fade-in slide-in-from-bottom-2 ease-out-soft motion-reduce:animate-none",
+        className,
+      )}
+    >
+      <span className="flex size-8 items-center justify-center rounded-full bg-accent text-ink">
+        <BellRing className="size-4" />
+      </span>
+      <span className="text-sm leading-tight">
+        <span className="block font-semibold">Nueva reserva online</span>
+        <span className="block text-xs text-muted-foreground">Ana Torres, jueves a las 10:00</span>
+      </span>
     </div>
   );
 }

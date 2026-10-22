@@ -45,13 +45,8 @@ export function PanelColorsCard() {
       onSubmit={submit}
       onDiscard={() => reset()}
     >
-      {/* En dos columnas (pantallas anchas) la tarjeta es angosta: 3 paletas por fila. */}
-      <BrandColorsPicker
-        colors={values.colors}
-        onChange={(next) => setField("colors", next)}
-        texts={TEXTS}
-        presetsClassName="xl:grid-cols-3 2xl:grid-cols-4"
-      />
+      {/* Las nueve paletas, de 3 en 3 (también en dos columnas, donde la tarjeta es angosta). */}
+      <BrandColorsPicker colors={values.colors} onChange={(next) => setField("colors", next)} texts={TEXTS} />
       <PanelPreview colors={values.colors ?? DEFAULT_BRAND_COLORS} />
     </SettingsSection>
   );

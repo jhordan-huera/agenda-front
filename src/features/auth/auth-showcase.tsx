@@ -1,5 +1,5 @@
-import { BellRing, IdCard, MapPin, ShieldCheck } from "lucide-react";
-import { ARRIVAL_DELAY, WeekSample } from "./week-sample";
+import { IdCard, MapPin, ShieldCheck } from "lucide-react";
+import { NewBookingNotice, WeekSample } from "@/components/shared/week-sample";
 
 const TRUST = [
   { icon: MapPin, label: "Hecho en Ecuador" },
@@ -11,7 +11,7 @@ const TRUST = [
 const PANEL_CONTENT = "mx-auto w-full max-w-[40rem] px-12";
 
 /**
- * El panel de la marca junto al formulario (spec 030, sólo en el computador): el azul marino de --shell,
+ * El panel de la marca junto al formulario (spec 030, sólo en el computador): el casi negro de --shell,
  * sólido y a toda altura, con el mensaje de la portada, la semana de la Agenda entera (nada se sale del
  * panel) y el aviso de la reserva que acaba de entrar; abajo, la línea de confianza. En ventanas bajas se
  * quedan el titular y la semana. Los textos, en --shell-foreground puro o al 75 % (más de 7:1 en los dos
@@ -35,19 +35,7 @@ export function AuthShowcase() {
 
           <div className="relative mt-10">
             <WeekSample />
-            <div
-              aria-hidden
-              style={{ animationDelay: `${ARRIVAL_DELAY + 0.5}s` }}
-              className="absolute -bottom-6 left-6 flex items-center gap-3 rounded-xl bg-popover py-2.5 pr-4 pl-3 text-popover-foreground shadow-lifted animate-in fill-mode-both duration-500 fade-in slide-in-from-bottom-2 ease-out-soft motion-reduce:animate-none"
-            >
-              <span className="flex size-8 items-center justify-center rounded-full bg-accent text-ink">
-                <BellRing className="size-4" />
-              </span>
-              <span className="text-sm leading-tight">
-                <span className="block font-semibold">Nueva reserva online</span>
-                <span className="block text-xs text-muted-foreground">Ana Torres, jueves a las 10:00</span>
-              </span>
-            </div>
+            <NewBookingNotice className="absolute -bottom-6 left-6" />
           </div>
         </div>
       </div>

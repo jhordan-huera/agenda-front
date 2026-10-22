@@ -71,7 +71,7 @@ export function NoticeItem({ notice, scope, time, onOpen }: NoticeItemProps) {
         onClick={open}
         className={cn(
           "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
-          // Lo nuevo, en el lila suave de la marca (como la reserva que entra).
+          // Lo nuevo, en el tono suave del resaltado de la marca (como la reserva que entra).
           !notice.read && "bg-secondary/70 hover:bg-secondary",
         )}
       >

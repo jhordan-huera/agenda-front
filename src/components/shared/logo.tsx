@@ -13,7 +13,7 @@ interface LogoProps {
 // "Agenda360" → "Agenda" en negrita y "360" más ligero, junto al símbolo.
 const [, WORD = APP_NAME, NUMBER = ""] = /^(\D+)(\d*)$/.exec(APP_NAME) ?? [];
 
-/** Logotipo: el símbolo (calendario con el día reservado) y el nombre en azul (o claro, sobre `shell`). */
+/** Logotipo: el símbolo (calendario con el día reservado) y el nombre en el color de la marca (o claro, sobre `shell`). */
 export function Logo({ href = "/", className, tone = "default" }: LogoProps) {
   return (
     <Link

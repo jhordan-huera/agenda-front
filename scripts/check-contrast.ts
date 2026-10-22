@@ -5,20 +5,23 @@
  * (casi negro, casi blanco, gris y chillón), en claro y en oscuro, con las mismas fórmulas que usa
  * la app. Pide 4,5:1 en los textos y 3:1 en lo que no es texto (la serie de los gráficos y los
  * colores de los profesionales) y en las horas sobre el marcador. Comprueba también que los colores
- * oscuros de Agenda360 escritos a mano (src/index.css, index.html, public/theme-boot.js y
- * CHART_COLORS_DARK) son los de la fórmula. Sale con código 1 si algo no llega o no coincide.
+ * de Agenda360 escritos a mano, en el claro y en el oscuro (src/index.css, index.html,
+ * public/theme-boot.js, public/manifest.webmanifest, CHART_COLORS, CHART_COLORS_DARK y los de los
+ * emails), son los de la fórmula (spec 033). Sale con código 1 si algo no llega o no coincide.
  *
  * Sin dependencias: Node ejecuta el .ts directamente.
  */
 import { readFileSync } from "node:fs";
 import { PROFESSIONAL_COLORS, PROFESSIONAL_MIN_CONTRAST, professionalColor } from "../src/features/professionals/colors.ts";
-import { CHART_COLORS_DARK } from "../src/features/reports/chart-colors.ts";
+import { CHART_COLORS, CHART_COLORS_DARK } from "../src/features/reports/chart-colors.ts";
+import { EMAIL_COLORS } from "../src/lib/email/layout.ts";
 import {
   BRAND_PRESETS,
   brandThemeVariables,
   contrastRatio,
   DEFAULT_BRAND_COLORS,
   HEX_COLOR,
+  mixWithOklch,
   resolveBrandPalette,
   type BrandPalette,
 } from "../src/lib/brand-theme.ts";
@@ -109,16 +112,23 @@ for (const mode of ["light", "dark"] as const) {
   console.log(`${mode === "light" ? "\n" : ""}Profesionales (${MODE_LABEL[mode]}, mínimo ${PROFESSIONAL_MIN_CONTRAST} sobre ${paper}): ${professionals.join(" · ")}`);
 }
 
-// La portada (spec 030): la pared (--wall), el mostrador (--counter) y el verde de «confirmado»
-// (--confirmed) están en src/index.css, en el claro (:root) y en el oscuro (:root.dark). Encima van el
-// texto, el gris y el principal de Agenda360; el verde, también sobre su propio tono al 10 % (la insignia
-// «Confirmó el paciente», mezclado en sRGB: una aproximación de color-mix). Y la franja del cierre: el
-// texto claro sobre --hero y su botón, al revés. Todo a 4,5:1.
+// La portada (spec 032) y el acceso (spec 030). Desde src/index.css, en el claro (:root) y en el oscuro
+// (:root.dark):
+// - la pared (--wall, los recuadros del acceso) con el texto, el gris y el principal de Agenda360;
+// - el verde de «confirmado» (--confirmed), sobre el papel, la pared y su propio tono al 10 % (la insignia
+//   «Confirmó que va», mezclado en sRGB: una aproximación de color-mix);
+// - el lienzo de la portada (--canvas, el del panel) con el texto, el gris y el principal (el titular);
+// - el botón principal al pasar el ratón (spec 033: es el principal de la marca, sin un naranja aparte): en
+//   el claro, el del botón de siempre (color-mix con negro al 18 %); en el oscuro, SignupCta lo aclara (con
+//   blanco al 15 %), porque su texto es oscuro;
+// - el cierre (--shell, casi negro con el tono de la marca): su texto, puro y al 75 %.
+// Todo a 4,5:1.
 const indexCss = readFileSync(new URL("../src/index.css", import.meta.url), "utf8");
 const tokensOf = (block: string) => Object.fromEntries([...block.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2].trim()]));
+const lightTokens = tokensOf(/:root\s*\{([^}]*)\}/.exec(indexCss)?.[1] ?? "");
 const landingTokens: Record<Mode, Record<string, string>> = {
-  light: tokensOf(/:root\s*\{([^}]*)\}/.exec(indexCss)?.[1] ?? ""),
-  dark: tokensOf(/:root\.dark\s*\{([^}]*)\}/.exec(indexCss)?.[1] ?? ""),
+  light: lightTokens,
+  dark: { ...lightTokens, ...tokensOf(/:root\.dark\s*\{([^}]*)\}/.exec(indexCss)?.[1] ?? "") },
 };
 const mixHex = (color: string, base: string, share: number) =>
   `#${[1, 3, 5]
@@ -127,23 +137,28 @@ const mixHex = (color: string, base: string, share: number) =>
     .join("")}`;
 for (const mode of ["light", "dark"] as const) {
   const palette = agendaPapers[mode];
-  const { "--wall": wall, "--counter": counter, "--confirmed": confirmed } = landingTokens[mode];
-  if (![wall, counter, confirmed].every((value) => value && HEX_COLOR.test(value))) {
-    failures.push(`src/index.css (${MODE_LABEL[mode]}): faltan --wall, --counter o --confirmed como colores #rrggbb`);
+  const tokens = landingTokens[mode];
+  const names = ["--wall", "--confirmed"];
+  const missing = names.filter((name) => !tokens[name] || !HEX_COLOR.test(tokens[name]));
+  if (missing.length) {
+    failures.push(`src/index.css (${MODE_LABEL[mode]}): faltan ${missing.join(", ")} como colores #rrggbb`);
     continue;
   }
+  const { "--wall": wall, "--confirmed": confirmed } = tokens;
+  const hover = mode === "light" ? mixWithOklch(palette.ink, "black", 0.18) : mixWithOklch(palette.ink, "white", 0.15);
   const pairs: [string, string, string][] = [
     ["Texto/pared", palette.text, wall],
     ["Gris/pared", palette.graphite, wall],
     ["Princ./pared", palette.ink, wall],
-    ["Texto/mostrador", palette.text, counter],
-    ["Gris/mostrador", palette.graphite, counter],
-    ["Princ./mostrador", palette.ink, counter],
     ["Verde/papel", confirmed, palette.paper],
     ["Verde/pared", confirmed, wall],
     ["Verde/insignia", confirmed, mixHex(confirmed, palette.paper, 0.1)],
-    ["Cierre", palette.heroText, palette.hero],
-    ["Botón cierre", palette.hero, palette.heroText],
+    ["Texto/lienzo", palette.text, palette.canvas],
+    ["Gris/lienzo", palette.graphite, palette.canvas],
+    ["Princ./lienzo", palette.ink, palette.canvas],
+    ["Botón al pasar", palette.inkText, hover],
+    ["Cierre", palette.shellText, palette.shell],
+    ["Cierre 75 %", mixHex(palette.shellText, palette.shell, 0.75), palette.shell],
   ];
   const cells = pairs.map(([label, foreground, background]) => {
     const ratio = contrastRatio(foreground, background);
@@ -153,30 +168,82 @@ for (const mode of ["light", "dark"] as const) {
   console.log(`${mode === "light" ? "\n" : ""}Portada (${MODE_LABEL[mode]}): ${cells.join(" · ")}`);
 }
 
-
-// Los tokens oscuros de Agenda360 están escritos a mano en src/index.css y en CHART_COLORS_DARK: deben
-// ser los de la fórmula. Si la fórmula cambia, aquí se ve qué copiar.
-const agendaDark = resolveBrandPalette(DEFAULT_BRAND_COLORS).dark;
-const darkBlock = /:root\.dark\s*\{([^}]*)\}/.exec(readFileSync(new URL("../src/index.css", import.meta.url), "utf8"))?.[1] ?? "";
-const cssTokens = Object.fromEntries([...darkBlock.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2].trim()]));
-const expected = brandThemeVariables(agendaDark);
-const drift = Object.entries(cssTokens).filter(([name, value]) => name in expected && expected[name] !== value);
-for (const [name, value] of drift) failures.push(`src/index.css (:root.dark) ${name}: ${value}, la fórmula da ${expected[name]}`);
-for (const [name, value] of Object.entries(agendaDark.chart)) {
-  const written = CHART_COLORS_DARK[name as keyof typeof CHART_COLORS_DARK];
-  if (written !== value) failures.push(`CHART_COLORS_DARK.${name}: ${written}, la fórmula da ${value}`);
+// Los tokens de Agenda360 están escritos a mano en src/index.css (el claro en :root y el oscuro en
+// :root.dark), en CHART_COLORS y en CHART_COLORS_DARK: deben ser los de la fórmula. Un token que se apoya en
+// otro (--primary: var(--ink)) vale lo que vale ese otro en el mismo modo. Si la fórmula o los colores de
+// Agenda360 cambian, aquí se ve qué copiar.
+const agenda = resolveBrandPalette(DEFAULT_BRAND_COLORS);
+const agendaDark = agenda.dark;
+const resolveVars = (tokens: Record<string, string>) => {
+  const value = (raw: string, depth = 0): string => {
+    const reference = /^var\((--[\w-]+)\)$/.exec(raw);
+    return reference && tokens[reference[1]] && depth < 5 ? value(tokens[reference[1]], depth + 1) : raw;
+  };
+  return Object.fromEntries(Object.entries(tokens).map(([name, raw]) => [name, value(raw)]));
+};
+const writtenTokens: Record<Mode, Record<string, string>> = {
+  light: resolveVars(lightTokens),
+  dark: resolveVars(landingTokens.dark),
+};
+const ownTokens: Record<Mode, string[]> = { light: Object.keys(lightTokens), dark: Object.keys(tokensOf(/:root\.dark\s*\{([^}]*)\}/.exec(indexCss)?.[1] ?? "")) };
+const chartsWritten: Record<Mode, [string, typeof CHART_COLORS]> = { light: ["CHART_COLORS", CHART_COLORS], dark: ["CHART_COLORS_DARK", CHART_COLORS_DARK] };
+for (const mode of ["light", "dark"] as const) {
+  const expected = brandThemeVariables(agenda[mode]);
+  const checked = ownTokens[mode].filter((name) => name in expected);
+  const drift = checked.filter((name) => writtenTokens[mode][name] !== expected[name]);
+  const block = mode === "light" ? ":root" : ":root.dark";
+  for (const name of drift) failures.push(`src/index.css (${block}) ${name}: ${writtenTokens[mode][name]}, la fórmula da ${expected[name]}`);
+  const [chartName, chart] = chartsWritten[mode];
+  for (const [name, value] of Object.entries(agenda[mode].chart)) {
+    const written = chart[name as keyof typeof chart];
+    if (written !== value) failures.push(`${chartName}.${name}: ${written}, la fórmula da ${value}`);
+  }
+  console.log(`${mode === "light" ? "\n" : ""}Tokens de Agenda360 en src/index.css (${MODE_LABEL[mode]}): ${checked.length} revisados, ${drift.length} distintos de la fórmula.`);
 }
-console.log(`Tokens oscuros de Agenda360 en src/index.css: ${Object.keys(cssTokens).length} revisados, ${drift.length} distintos de la fórmula.`);
 
-// La pantalla de carga de index.html y public/theme-boot.js llevan los mismos colores, escritos a mano.
+// Los emails (src/lib/email/layout.ts) llevan los del claro.
+const agendaLight = agenda.light;
+const emailExpected = {
+  brand: agendaLight.ink,
+  text: agendaLight.text,
+  muted: agendaLight.graphite,
+  border: agendaLight.chart.grid,
+  page: agendaLight.desk,
+  panel: agendaLight.desk,
+  "info.bg": agendaLight.secondary,
+  "info.border": agendaLight.highlight,
+  "info.text": agendaLight.secondaryText,
+};
+const emailWritten: Record<string, string> = { ...EMAIL_COLORS, "info.bg": EMAIL_COLORS.info.bg, "info.border": EMAIL_COLORS.info.border, "info.text": EMAIL_COLORS.info.text } as never;
+for (const [name, value] of Object.entries(emailExpected)) {
+  if (emailWritten[name] !== value) failures.push(`src/lib/email/layout.ts EMAIL_COLORS.${name}: ${emailWritten[name]}, la fórmula da ${value}`);
+}
+
+// La pantalla de carga de index.html, public/theme-boot.js y el manifiesto llevan los mismos colores,
+// escritos a mano: en cada modo, el logotipo como lo pinta BrandMark y el fondo (--background).
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
-const bootBlock = /html\.dark \.boot-loader\s*\{([^}]*)\}/.exec(read("../index.html"))?.[1] ?? "";
-const bootExpected = { "--boot-ink": agendaDark.ink, "--boot-paper": agendaDark.paper, "--boot-highlight": agendaDark.highlight, "--boot-soft": agendaDark.chart.soft };
-for (const [name, value] of Object.entries(bootExpected)) {
-  if (!new RegExp(`${name}:\\s*${value};`).test(bootBlock)) failures.push(`index.html (html.dark .boot-loader) ${name}: debe ser ${value}`);
+const indexHtml = read("../index.html");
+const bootBlocks: Record<Mode, string> = {
+  light: /\.boot-loader\s*\{([^}]*)\}/.exec(indexHtml)?.[1] ?? "",
+  dark: /html\.dark \.boot-loader\s*\{([^}]*)\}/.exec(indexHtml)?.[1] ?? "",
+};
+for (const mode of ["light", "dark"] as const) {
+  const palette = agenda[mode];
+  const bootExpected = { "--boot-ink": palette.ink, "--boot-paper": palette.paper, "--boot-highlight": palette.highlight, "--boot-soft": palette.chart.soft };
+  const block = mode === "light" ? ".boot-loader" : "html.dark .boot-loader";
+  for (const [name, value] of Object.entries(bootExpected)) {
+    if (!new RegExp(`${name}:\\s*${value};`).test(bootBlocks[mode])) failures.push(`index.html (${block}) ${name}: debe ser ${value}`);
+  }
 }
-if (!new RegExp(`html\\.dark \\{\\s*background: ${agendaDark.paper};`).test(read("../index.html"))) failures.push(`index.html (html.dark): el fondo debe ser ${agendaDark.paper}`);
-if (!read("../public/theme-boot.js").includes(`dark ? "${agendaDark.paper}"`)) failures.push(`public/theme-boot.js: el theme-color oscuro debe ser ${agendaDark.paper}`);
+if (!new RegExp(`html\\.dark \\{\\s*background: ${agendaDark.paper};`).test(indexHtml)) failures.push(`index.html (html.dark): el fondo debe ser ${agendaDark.paper}`);
+if (!indexHtml.includes(`<meta name="theme-color" content="${agendaLight.paper}" />`)) failures.push(`index.html: el theme-color debe ser ${agendaLight.paper}`);
+if (!read("../public/theme-boot.js").includes(`dark ? "${agendaDark.paper}" : "${agendaLight.paper}"`)) {
+  failures.push(`public/theme-boot.js: el theme-color debe ser ${agendaDark.paper} en el oscuro y ${agendaLight.paper} en el claro`);
+}
+const manifest = JSON.parse(read("../public/manifest.webmanifest")) as { theme_color?: string; background_color?: string };
+for (const key of ["theme_color", "background_color"] as const) {
+  if (manifest[key] !== agendaLight.paper) failures.push(`public/manifest.webmanifest ${key}: ${manifest[key]}, debe ser ${agendaLight.paper}`);
+}
 
 if (failures.length) {
   console.error(`\nNo pasa (${failures.length}):\n- ${failures.join("\n- ")}`);

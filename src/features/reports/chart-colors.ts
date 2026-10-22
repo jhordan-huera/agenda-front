@@ -21,14 +21,18 @@ export interface ChartColors {
   cursor: string;
 }
 
+/**
+ * Los de Agenda360 en el claro (spec 033: el tomate y el durazno): `resolveBrandPalette(DEFAULT_BRAND_COLORS)
+ * .light.chart`, igual que los tokens de src/index.css (`npm run check:contrast` comprueba que coinciden).
+ */
 export const CHART_COLORS: ChartColors = {
-  series: "#6d8fd1",
-  soft: "#a9bde8",
-  highlight: "#a99be0",
-  grid: "#e3e7f0",
-  axis: "#d2d8e5",
-  tick: "#5b6478",
-  cursor: "#f5f7fc",
+  series: "#df663e",
+  soft: "#ecab97",
+  highlight: "#d79669",
+  grid: "#f2e4df",
+  axis: "#e7d3cd",
+  tick: "#7a5c53",
+  cursor: "#fdf5f3",
 };
 
 /**
@@ -36,11 +40,11 @@ export const CHART_COLORS: ChartColors = {
  * igual que los tokens oscuros de src/index.css (`npm run check:contrast` comprueba que coinciden).
  */
 export const CHART_COLORS_DARK: ChartColors = {
-  series: "#7598da",
-  soft: "#495b7d",
-  highlight: "#7a69a3",
-  grid: "#272b34",
-  axis: "#383d48",
-  tick: "#9ba5b8",
-  cursor: "#1b1f27",
+  series: "#e96f48",
+  soft: "#7f4b3b",
+  highlight: "#9d663e",
+  grid: "#342824",
+  axis: "#493934",
+  tick: "#ba9d94",
+  cursor: "#281c18",
 };

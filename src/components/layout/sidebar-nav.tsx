@@ -14,7 +14,7 @@ export function SidebarNav({ items, label, onNavigate }: { items: NavItem[]; lab
           className={({ isActive }) =>
             cn(
               "flex h-10 items-center gap-3 rounded-xl px-3 text-[0.9375rem] text-sidebar-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
-              // Página actual: en el azul pastel de la marca.
+              // Página actual: en el tono pálido de la marca.
               isActive && "bg-sidebar-accent font-semibold text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             )
           }

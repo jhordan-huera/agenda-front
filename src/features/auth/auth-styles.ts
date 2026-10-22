@@ -1,5 +1,5 @@
 /**
- * Un enlace del acceso dentro de una frase, en el azul de la marca: su zona para el dedo crece hasta 44 px
+ * Un enlace del acceso dentro de una frase, en el color de la marca: su zona para el dedo crece hasta 44 px
  * de alto sin mover el texto, y con el teclado lleva el anillo de foco.
  */
 export const AUTH_LINK =

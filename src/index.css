@@ -86,7 +86,6 @@
   --color-field: var(--field);
   --color-rule-strong: var(--rule-strong);
   --color-wall: var(--wall);
-  --color-counter: var(--counter);
   --color-confirmed: var(--confirmed);
   --shadow-sheet: var(--elevation-sheet);
   --shadow-lifted: var(--elevation-lifted);
@@ -143,57 +142,60 @@
 }
 
 /*
- * Identidad de Agenda360: la agenda de un consultorio, en azul y lila pastel.
- * - Azul consultorio (#4A6CB0, --ink): acciones, títulos y lo activo. Suave, pero legible sobre
- *   blanco (5,2:1 con texto blanco encima).
- * - Azul pastel (#E8EEFB, --accent) y bruma (#F5F7FC, --desk): superficies y fondos.
- * - Lila pastel (#DDD4F8, --highlight): marca lo elegido o lo nuevo (la hora reservada, el día
- *   elegido, la reserva que entra), con el trazo de marcador (.marker). Su tono suave (#EFEBFC,
- *   --secondary) viste insignias y botones secundarios.
+ * Identidad de Agenda360 (spec 033): la agenda de un consultorio, en tomate y durazno. Una sola gama:
+ * todo sale de los dos colores de la marca (DEFAULT_BRAND_COLORS en lib/brand-theme.ts) con la misma
+ * fórmula que los colores de un negocio, y estos valores son los suyos (`npm run check:contrast`
+ * comprueba que coinciden).
+ * - Tomate (#C2410C, --ink): acciones, títulos, lo activo y el botón principal de la portada. Legible
+ *   sobre blanco (5,18:1 con texto blanco encima).
+ * - Durazno pálido (#FDE9E3, --accent) y bruma (#FDF5F3, --desk): superficies y fondos.
+ * - Durazno (#FCD9C2, --highlight): marca lo elegido o lo nuevo (la hora reservada, el día elegido, la
+ *   reserva que entra), con el trazo de marcador (.marker). Su tono suave (#FBEAE0, --secondary), con
+ *   el texto en --lilac-ink (el nombre viene del lila de antes), viste insignias y botones secundarios.
  * - Tipografía: Sora; las horas, grandes, gruesas y con cifras tabulares.
- * - Panel (diseño de aplicación SaaS, claro): el lienzo gris claro (--canvas) con el menú y las
- *   tarjetas en blanco; lo destacado, en un degradado del principal al lila. --shell (casi negro
- *   con el tono de la marca) viste etiquetas y el pie de la portada. Con los colores de un negocio,
- *   --shell y --canvas salen de su principal (lib/brand-theme.ts).
+ * - Panel (diseño de aplicación SaaS, claro): el lienzo (--canvas) con el menú y las tarjetas en
+ *   blanco; lo destacado, en un degradado del principal al tono del resaltado. --shell (casi negro con
+ *   el tono de la marca) viste etiquetas y el cierre y el pie de la portada. Con los colores de un
+ *   negocio, todo esto sale de los suyos (BrandThemeProvider).
+ * Hasta la spec 033, Agenda360 era azul (#4A6CB0) y lila (#DDD4F8): hoy es la paleta «Azul clásico».
  * Los estados de las citas (pendiente, confirmada…) usan sus colores en
  * lib/constants/appointment-status.ts.
  * El modo oscuro (spec 019) tiene sus tokens en el bloque `:root.dark`, más abajo.
  */
 :root {
   color-scheme: light;
-  /* Mundo del consultorio: papel, bruma azul, tinta azul suave, grafito, renglones y marcador lila. */
+  /* Mundo del consultorio: papel, bruma, tinta tomate, grafito, renglones y marcador durazno. */
   --paper: #ffffff;
-  --desk: #f5f7fc;
-  --ink: #4a6cb0;
-  --graphite: #5b6478;
-  --text: #1d2433;
+  --desk: #fdf5f3;
+  --ink: #c2410c;
+  --graphite: #7a5c53;
+  --text: #341e17;
   /* Renglones: bordes translúcidos que se ven cuando se buscan, no antes. */
-  --rule: rgb(29 36 51 / 0.1);
-  --rule-strong: rgb(29 36 51 / 0.18);
+  --rule: rgb(52 30 23 / 0.1);
+  --rule-strong: rgb(52 30 23 / 0.18);
   /* Campos: un poco más oscuros que el papel (reciben lo que se escribe). */
-  --field: rgb(29 36 51 / 0.025);
-  --highlight: #ddd4f8;
+  --field: rgb(52 30 23 / 0.025);
+  --highlight: #fcd9c2;
   --highlight-foreground: var(--text);
-  --lilac-ink: #5a4ea3;
+  --lilac-ink: #8e4700;
   --red-pen: #b4453c;
   /* Marco del panel: lo mismo que da brandThemeVariables con los colores de Agenda360. */
-  --shell: #131e33;
+  --shell: #341308;
   --shell-foreground: #eef1f8;
-  --canvas: #f0f3f8;
+  --canvas: #f9f0ee;
   /*
    * Degradados con texto encima (cabeceras, la portada): `from-hero to-hero-end text-hero-foreground`.
-   * En el claro, del principal al lila con texto blanco; en el oscuro, más oscuros (spec 019).
+   * En el claro, del principal al tono del resaltado con texto blanco; en el oscuro, más oscuros (spec 019).
    */
   --hero: var(--ink);
   --hero-end: var(--lilac-ink);
   --hero-foreground: #ffffff;
   /*
-   * La portada (spec 030): la pared del consultorio (blanco hueso) y el mostrador, un tono más cálido; las
-   * hojas (tarjetas) van en --paper encima, con una sombra en capas apenas visible. El verde es el sello de
-   * «confirmado» y sólo se usa para eso. Todos dan 4,5:1 con --text, --graphite y --ink (check:contrast).
+   * La pared (spec 030): blanco hueso, para los recuadros del acceso. Las hojas (tarjetas) van en --paper,
+   * con una sombra en capas apenas visible. El verde es el sello de «confirmado» y sólo se usa para eso.
+   * Todos dan 4,5:1 con --text, --graphite y --ink (check:contrast). La portada (spec 032) va sobre --canvas.
    */
   --wall: #faf9f6;
-  --counter: #f4f2ed;
   --confirmed: #176b43;
   --elevation-sheet: 0 0 0 1px rgb(29 36 51 / 0.06), 0 1px 2px -1px rgb(29 36 51 / 0.08), 0 2px 6px rgb(29 36 51 / 0.04);
   --elevation-lifted: 0 0 0 1px rgb(29 36 51 / 0.06), 0 2px 4px -2px rgb(29 36 51 / 0.08), 0 18px 40px -18px rgb(29 36 51 / 0.24);
@@ -206,23 +208,23 @@
   --popover-foreground: var(--text);
   --primary: var(--ink);
   --primary-foreground: var(--paper);
-  --secondary: #efebfc;
+  --secondary: #fbeae0;
   --secondary-foreground: var(--lilac-ink);
   --muted: var(--desk);
   --muted-foreground: var(--graphite);
-  --accent: #e8eefb;
+  --accent: #fde9e3;
   --accent-foreground: var(--ink);
   --destructive: var(--red-pen);
   --border: var(--rule);
   --input: var(--rule-strong);
   --ring: var(--ink);
   --chart-1: var(--ink);
-  --chart-2: #a9bde8;
-  --chart-3: #a99be0;
+  --chart-2: #ecab97;
+  --chart-3: #d79669;
   --chart-4: #e3b5c8;
   --chart-5: var(--red-pen);
   --radius: 0.625rem;
-  /* El menú lateral: una tarjeta blanca flotante; lo activo, en el azul pastel de la marca. */
+  /* El menú lateral: una tarjeta blanca flotante; lo activo, en el tono pálido de la marca (--accent). */
   --sidebar: var(--paper);
   --sidebar-foreground: var(--graphite);
   --sidebar-primary: var(--ink);
@@ -244,34 +246,34 @@
   :root.dark {
     color-scheme: dark;
     /* Fondos de 0,17 a 0,27 de claridad, de más oscuro a más claro: lienzo, tarjetas, bruma y lo activo. */
-    --canvas: #0d0f15;
-    --paper: #15181f;
-    --desk: #1b1f27;
-    --accent: #1d2638;
+    --canvas: #150d0b;
+    --paper: #201612;
+    --desk: #281c18;
+    --accent: #391f16;
     /* El principal, aclarado hasta 4,5:1 sobre lo activo del menú: sus botones llevan el texto oscuro (--paper). */
-    --ink: #698dd4;
-    --graphite: #9ba5b8;
-    --text: #e4e8f0;
-    --rule: rgb(228 232 240 / 0.12);
-    --rule-strong: rgb(228 232 240 / 0.22);
-    --field: rgb(228 232 240 / 0.04);
-    /* El lila, oscurecido hasta que se lean encima el texto claro (4,5:1) y las horas en el principal (3:1). */
-    --highlight: #443c59;
-    --secondary: #2d273d;
-    --lilac-ink: #c3b2f1;
+    --ink: #e36a43;
+    --graphite: #ba9d94;
+    --text: #f1e5e1;
+    --rule: rgb(241 229 225 / 0.12);
+    --rule-strong: rgb(241 229 225 / 0.22);
+    --field: rgb(241 229 225 / 0.04);
+    /* El durazno, oscurecido hasta que se lean encima el texto claro (4,5:1) y las horas en el principal (3:1). */
+    --highlight: #573b28;
+    --secondary: #3b2617;
+    --lilac-ink: #ebaf86;
     --red-pen: #d66459;
-    --shell: #050b18;
-    --shell-foreground: #e4e8f0;
-    /* Los degradados, más oscuros que el principal y el lila: su texto es el claro. */
-    --hero: #4061a4;
-    --hero-end: #624c90;
-    --hero-foreground: #e4e8f0;
-    --chart-2: #495b7d;
-    --chart-3: #7a69a3;
+    --shell: #180502;
+    --shell-foreground: #f1e5e1;
+    /* Los degradados, más oscuros que el principal y el durazno: su texto es el claro. */
+    --hero: #aa3604;
+    --hero-end: #88470d;
+    --hero-foreground: #f1e5e1;
+    --chart-2: #7f4b3b;
+    --chart-3: #9d663e;
     --chart-4: #754d5e;
-    /* La portada: el mismo tono que el lienzo; las sombras no se ven en el oscuro, así que un anillo claro. */
-    --wall: #111319;
-    --counter: #0d0f15;
+    /* La pared, un tono sobre el lienzo (0,187 de claridad, con el tono de la marca); las sombras no se ven en
+       el oscuro, así que un anillo claro. */
+    --wall: #1a110e;
     --confirmed: #6fcf9b;
     --elevation-sheet: 0 0 0 1px rgb(228 232 240 / 0.08);
     --elevation-lifted: 0 0 0 1px rgb(228 232 240 / 0.11), 0 18px 40px -18px rgb(0 0 0 / 0.7);
@@ -378,35 +380,11 @@
       animation: none;
     }
   }
-  /*
-   * La portada (spec 030): el mismo trazo, dibujado de izquierda a derecha sólo con transform y opacity
-   * (la hora que elige el paciente). Sin movimiento, ya está marcado.
-   */
-  .marker-draw::before {
-    transform-origin: left center;
-    animation: marker-draw 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
-    animation-delay: var(--marker-delay, 0s);
-  }
-  @keyframes marker-draw {
-    from {
-      opacity: 0;
-      transform: scaleX(0.1);
-    }
-    to {
-      opacity: 1;
-      transform: scaleX(1);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .marker-draw::before {
-      animation: none;
-    }
-  }
 }
 
-/* La portada lleva la barra fija arriba: el foco y las anclas quedan siempre por debajo de ella. */
+/* La portada lleva la barra flotante arriba (spec 032): el foco y las anclas quedan siempre por debajo de ella. */
 html:has([data-landing]) {
-  scroll-padding-top: 5rem;
+  scroll-padding-top: 6.5rem;
 }
 @media (prefers-reduced-motion: reduce) {
   html {
