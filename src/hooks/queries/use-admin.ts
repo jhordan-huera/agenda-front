@@ -3,6 +3,7 @@ import { data, DataError, type AdminAuditFilters } from "@/lib/data";
 import type {
   AdminBusinessInput,
   AdminMemberInput,
+  AwsCostAlertInput,
   BillingPaidInput,
   BusinessBillingInput,
   BusinessOwnerInput,
@@ -129,6 +130,13 @@ export const useBillingAccounts = () =>
 /** Los precios de los planes (spec 029, ampliación del 2026-10-20), para /admin → Planes. */
 export const usePlanPrices = () => useQuery({ queryKey: queryKeys.admin.planPrices, queryFn: () => data.admin.getPlanPrices() });
 
+/**
+ * Los costos de AWS (spec 031): lo que guardó el cron, que cambia una vez al día. Leerlos no consulta a AWS (la
+ * API lee una fila), pero no hace falta volver a pedirlos al volver a la pestaña.
+ */
+export const useAwsCosts = () =>
+  useQuery({ queryKey: queryKeys.admin.awsCosts, queryFn: () => data.admin.getAwsCosts(), staleTime: 5 * 60_000, refetchOnWindowFocus: false });
+
 /** Pública: la usan el registro y la pantalla de negocio suspendido. */
 export const usePlatformSettings = () =>
   useQuery({ queryKey: queryKeys.platformSettings, queryFn: () => data.platform.getSettings() });
@@ -166,6 +174,9 @@ export const useSetBusinessBilling = () =>
 
 /** Los precios de los planes: recarga el panel (la mensualidad de cada ficha y la actividad). */
 export const useSetPlanPrices = () => useAdminMutation((input: PlanPricesInput) => data.admin.setPlanPrices(input));
+
+/** El monto del aviso de los costos de AWS (spec 031): poner, cambiar o quitar (null). */
+export const useSetAwsCostAlert = () => useAdminMutation((input: AwsCostAlertInput) => data.admin.setAwsCostAlert(input));
 
 /** «Pagado», «Rechazar», «Pagado sin comprobante» y «Anular» un cobro (spec 029). */
 export const useApproveBillingCharge = () => useAdminMutation((chargeId: string) => data.admin.approveBillingCharge(chargeId));
