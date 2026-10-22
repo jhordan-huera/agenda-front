@@ -9,7 +9,7 @@ const FACTS = [
   { value: "24/7", label: "Reservas online" },
   { value: "0", label: "Cuentas para tus pacientes" },
   { value: "1", label: "Enlace para WhatsApp" },
-  { value: "LOPDP", label: "Datos protegidos" },
+  { value: "Gratis", label: "Para empezar" },
 ];
 
 /**

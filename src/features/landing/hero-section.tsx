@@ -1,4 +1,4 @@
-import { CalendarCheck, IdCard, MapPin, ShieldCheck, type LucideIcon } from "lucide-react";
+import { CalendarCheck, IdCard, MapPin, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { NAV_ITEMS } from "@/components/layout/nav-items";
@@ -10,9 +10,6 @@ import { DEMO_BOOKING_PATH } from "./landing-constants";
 import { CONTAINER } from "./section-heading";
 import { SignupCta } from "./signup-link";
 import type { SignupContact } from "./use-signup-contact";
-
-/** Un enlace dentro de una frase: su zona para el dedo crece hasta 44 px de alto sin mover el texto. */
-const INLINE_LINK = "relative rounded-sm outline-none before:absolute before:-inset-x-1 before:-inset-y-3.5 before:content-[''] focus-visible:ring-3 focus-visible:ring-ring/50";
 
 /** Un sello de confianza: una píldora blanca con su icono en el color de la marca. Sólo hechos reales. */
 function TrustChip({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
@@ -76,7 +73,7 @@ function PanelPreview({ className }: { className?: string }) {
 }
 
 /**
- * La portada (spec 032), centrada: los tres sellos reales, el titular en dos frases (la segunda en el color
+ * La portada (spec 032), centrada: los dos sellos reales (sin la LOPDP, a pedido del dueño del producto), el titular en dos frases (la segunda en el color
  * de la marca, sin degradado), la frase de apoyo, el botón principal y el de la página de reservas de
  * ejemplo, la línea «Gratis para empezar» y, debajo, la vista del panel. Con el registro cerrado, el botón
  * principal es «Quiero mi agenda» (spec 022).
@@ -87,12 +84,6 @@ export function HeroSection({ signup }: { signup: SignupContact }) {
       <div className={cn(CONTAINER, "pt-12 pb-16 text-center sm:pt-20 sm:pb-20 lg:pt-24")}>
         <ul aria-label="Por qué confiar" className="flex flex-wrap justify-center gap-2">
           <TrustChip icon={MapPin}>Hecho en Ecuador</TrustChip>
-          <TrustChip icon={ShieldCheck}>
-            Datos protegidos según la{" "}
-            <Link to="/privacidad" className={cn(INLINE_LINK, "font-medium text-foreground underline decoration-rule-strong underline-offset-4 hover:decoration-current")}>
-              LOPDP
-            </Link>
-          </TrustChip>
           <TrustChip icon={IdCard}>Tus pacientes no crean cuenta</TrustChip>
         </ul>
 

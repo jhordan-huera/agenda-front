@@ -1,4 +1,4 @@
-import { MapPin, ShieldCheck, type LucideIcon } from "lucide-react";
+import { MapPin, type LucideIcon } from "lucide-react";
 import { Link } from "react-router";
 import { Logo } from "@/components/shared/logo";
 import { APP_NAME } from "@/lib/constants/app";
@@ -37,7 +37,6 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
 /** Los sellos del pie: los mismos hechos de la portada, sin certificaciones inventadas. */
 const BADGES: { icon: LucideIcon; label: string }[] = [
   { icon: MapPin, label: "Hecho en Ecuador" },
-  { icon: ShieldCheck, label: "Datos protegidos según la LOPDP" },
 ];
 
 /** Cada enlace del pie ocupa 44 px de alto: se toca bien con el dedo. */
@@ -45,7 +44,7 @@ const LINK = "inline-flex min-h-11 items-center rounded-sm text-muted-foreground
 
 /**
  * Pie de la portada (spec 032): el logotipo con su frase y tres columnas de enlaces (cuatro columnas en el
- * computador) y, en el renglón de abajo, el año y los sellos «Hecho en Ecuador» y LOPDP.
+ * computador) y, en el renglón de abajo, el año y el sello «Hecho en Ecuador».
  */
 export function LandingFooter({ signup }: { signup: SignupContact }) {
   return (

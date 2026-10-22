@@ -66,7 +66,8 @@ export function FaqSection() {
       question: "¿Cómo se cuidan los datos de mis pacientes?",
       answer: (
         <>
-          Según la Ley Orgánica de Protección de Datos Personales del Ecuador (LOPDP). Lo explicamos en la{" "}
+          Sólo tú y tu equipo los ven, y la historia clínica, sólo quien tiene acceso a ella: ni el soporte de Agenda360
+          puede abrirla. Lo explicamos en la{" "}
           <Link to="/privacidad" className={TEXT_LINK}>
             política de privacidad
           </Link>
