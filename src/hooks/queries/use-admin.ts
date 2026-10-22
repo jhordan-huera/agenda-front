@@ -17,6 +17,7 @@ import { useSession } from "@/features/auth/use-session";
 import type {
   AdminBillingFilter,
   AdminBusinessDetail,
+  AdminEmailFilter,
   AnalyticsPeriodDays,
   Business,
   BusinessStatus,
@@ -108,7 +109,9 @@ export const useAdminAuditFeed = (filters: Omit<AdminAuditFilters, "cursor">) =>
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 
-export const useAdminEmails = () => useQuery({ queryKey: queryKeys.admin.emails, queryFn: () => data.admin.listEmails() });
+/** Los emails de /admin → Actividad: los de «Emails de hoy», los fallidos o todos. Al cambiar de filtro se ve el anterior mientras llega. */
+export const useAdminEmails = (filter: AdminEmailFilter) =>
+  useQuery({ queryKey: queryKeys.admin.emails(filter), queryFn: () => data.admin.listEmails(filter), placeholderData: keepPreviousData });
 
 /** «Descuentos por referidos» del Inicio (spec 023): los ganados y pendientes de aplicar. */
 export const useReferralRewards = () =>

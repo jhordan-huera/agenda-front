@@ -2,6 +2,7 @@ import { api } from "@/lib/api/client";
 import type {
   AdminAuditLog,
   AdminBillingList,
+  AdminEmailFilter,
   AdminBusinessBilling,
   AdminBusinessDetail,
   AdminBusinessCategory,
@@ -312,7 +313,8 @@ export const apiRepository: DataRepository = {
     assignBusinessOwner: (businessId, input) =>
       api.post<TeamMember>(`/admin/businesses/${id(businessId)}/owner`, input),
     listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),
-    listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
+    listEmails: (filter: AdminEmailFilter = "all") =>
+      api.get<EmailNotification[]>(filter === "all" ? "/admin/emails" : `/admin/emails?filter=${filter}`),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),
     updatePanelColors: (input) => api.put<{ colors: BrandColors | null }>("/admin/panel-colors", input),
     setBusinessBilling: (businessId, input) => api.put<AdminBusinessBilling>(`/admin/businesses/${id(businessId)}/billing`, input),

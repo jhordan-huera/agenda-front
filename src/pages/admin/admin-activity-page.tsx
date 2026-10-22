@@ -1,5 +1,5 @@
 import { Download, Loader2, MailCheck, MailX, ShieldAlert, UserRoundX } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/shared/page-header";
@@ -20,7 +20,7 @@ import { data, getErrorMessage, type AdminAuditFilters, type AdminAuditScope } f
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { plural } from "@/lib/format";
 import { getZonedNow } from "@/lib/time";
-import type { AuditEntityType } from "@/types";
+import type { AdminEmailFilter, AuditEntityType } from "@/types";
 
 const SCOPES: { value: AdminAuditScope; label: string; description: string }[] = [
   { value: "admin", label: "Super admin", description: "Tus acciones en la plataforma." },
@@ -50,6 +50,28 @@ const TYPES: AuditEntityType[] = [
 /** «Actividad → Seguridad» se abre directamente con ?ver=seguridad (los avisos del super admin, spec 013). */
 const scopeFromUrl = (value: string | null): AdminAuditScope | null => (value === "seguridad" ? "security" : null);
 
+/** Los filtros de los emails, con su texto cuando no hay ninguno. */
+const EMAIL_FILTERS: { value: AdminEmailFilter; label: string; empty: { title: string; detail: string } }[] = [
+  {
+    value: "today",
+    label: "Hoy",
+    empty: { title: "Hoy todavía no salió ningún email", detail: "Ni hay emails en cola: los de «Emails de hoy» del Inicio salen aquí." },
+  },
+  {
+    value: "failed",
+    label: "Fallidos",
+    empty: { title: "No hay emails fallidos", detail: "Los que Gmail no pudo entregar salen aquí, con el motivo." },
+  },
+  { value: "all", label: "Todos", empty: { title: "Todavía no se ha enviado ningún email", detail: "Los emails de la plataforma salen aquí." } },
+];
+
+/**
+ * «Ver emails» de la tarjeta «Emails de hoy» del Inicio abre esta pantalla con ?emails=hoy (o =fallidos si hubo
+ * fallidos) y baja hasta la lista.
+ */
+const emailFilterFromUrl = (value: string | null): AdminEmailFilter | null =>
+  value === "hoy" ? "today" : value === "fallidos" ? "failed" : value === "todos" ? "all" : null;
+
 export default function AdminActivityPage() {
   const [searchParams] = useSearchParams();
   const requested = scopeFromUrl(searchParams.get("ver"));
@@ -64,7 +86,14 @@ export default function AdminActivityPage() {
   const [businessId, setBusinessId] = useState("all");
   const [onlyFailed, setOnlyFailed] = useState(false);
   const businesses = useAdminBusinesses();
-  const emails = useAdminEmails();
+  const requestedEmails = emailFilterFromUrl(searchParams.get("emails"));
+  const [emailFilter, setEmailFilter] = useState<AdminEmailFilter>(requestedEmails ?? "all");
+  const [seenEmailsRequest, setSeenEmailsRequest] = useState(requestedEmails);
+  if (requestedEmails !== seenEmailsRequest) {
+    setSeenEmailsRequest(requestedEmails);
+    if (requestedEmails) setEmailFilter(requestedEmails);
+  }
+  const emails = useAdminEmails(emailFilter);
   const stats = useAdminStats();
   const health = stats.data?.health;
   const [exporting, setExporting] = useState(false);
@@ -80,6 +109,16 @@ export default function AdminActivityPage() {
     [filters, scope, businessId, onlyFailed],
   );
   const feed = useAdminAuditFeed(query);
+
+  // Al llegar desde el Inicio, baja hasta la lista de emails, una vez por pedido y cuando ya cargó lo de arriba
+  // (las cifras y la actividad): si no, al llegar empujarían la lista hacia abajo.
+  const scrolledFor = useRef<AdminEmailFilter | null>(null);
+  const settled = emails.isSuccess && !feed.isPending && !stats.isPending;
+  useEffect(() => {
+    if (!requestedEmails || !settled || scrolledFor.current === requestedEmails) return;
+    scrolledFor.current = requestedEmails;
+    document.getElementById("emails")?.scrollIntoView({ block: "start" });
+  }, [requestedEmails, settled]);
   const current = SCOPES.find((option) => option.value === scope)!;
 
   const exportCsv = async () => {
@@ -180,9 +219,22 @@ export default function AdminActivityPage() {
       </Card>
 
       <EmailOutboxCard
+        id="emails"
         outbox={emails}
         groupByDay
-        description="Todos los emails de la plataforma: altas, contraseñas, reservas y recordatorios."
+        description="Los emails de la plataforma (los 200 más recientes): altas, contraseñas, reservas y recordatorios, con su negocio y si salieron. Toca uno para ver su contenido."
+        empty={EMAIL_FILTERS.find((option) => option.value === emailFilter)!.empty}
+        toolbar={
+          <Tabs value={emailFilter} onValueChange={(value) => setEmailFilter(value as AdminEmailFilter)}>
+            <TabsList aria-label="Qué emails ver">
+              {EMAIL_FILTERS.map((option) => (
+                <TabsTrigger key={option.value} value={option.value} className="px-3">
+                  {option.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        }
       />
     </div>
   );

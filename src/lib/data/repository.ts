@@ -48,6 +48,7 @@ import type {
   AdminAuditLog,
   AdminBillingFilter,
   AdminBillingList,
+  AdminEmailFilter,
   AdminBusinessBilling,
   AdminBusinessDetail,
   AdminBusinessCategory,
@@ -514,8 +515,8 @@ export interface PlatformAdminRepository {
    */
   assignBusinessOwner(businessId: string, input: BusinessOwnerInput): Promise<TeamMember>;
   listAuditLogs(filters: AdminAuditFilters): Promise<AuditLogPage<AdminAuditLog>>;
-  /** Todos los emails de la plataforma (bandeja de salida global). */
-  listEmails(): Promise<EmailNotification[]>;
+  /** Los emails de la plataforma (bandeja de salida global): los de «Emails de hoy», los fallidos o todos. */
+  listEmails(filter?: AdminEmailFilter): Promise<EmailNotification[]>;
   updateSettings(input: PlatformSettingsInput): Promise<PlatformSettings>;
   /** Colores del panel de plataforma de la cuenta que lo pide (spec 007). */
   updatePanelColors(input: PanelColorsInput): Promise<{ colors: BrandColors | null }>;

@@ -83,7 +83,7 @@ export const queryKeys = {
     planRequests: ["admin", "plan-requests"] as const,
     categories: ["admin", "categories"] as const,
     auditLogs: (filters: object) => ["admin", "audit-logs", filters] as const,
-    emails: ["admin", "emails"] as const,
+    emails: (filter: string) => ["admin", "emails", filter] as const,
     /** «Descuentos por referidos» del Inicio (spec 023). */
     referralRewards: ["admin", "referral-rewards"] as const,
     /** «Cobros» (spec 029), por filtro. */
