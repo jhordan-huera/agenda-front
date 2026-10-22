@@ -1,10 +1,9 @@
-import { IdCard, MapPin, ShieldCheck } from "lucide-react";
+import { IdCard, MapPin } from "lucide-react";
 import { NewBookingNotice, WeekSample } from "@/components/shared/week-sample";
 
 const TRUST = [
   { icon: MapPin, label: "Hecho en Ecuador" },
   { icon: IdCard, label: "Tus pacientes no crean cuenta" },
-  { icon: ShieldCheck, label: "Datos protegidos (LOPDP)" },
 ];
 
 /** El ancho de lo que va en el panel: en pantallas grandes no se estira, queda centrado. */
@@ -41,7 +40,7 @@ export function AuthShowcase() {
       </div>
 
       <div className="hidden border-t border-shell-foreground/10 py-6 [@media(min-height:820px)]:block">
-        <ul className={`${PANEL_CONTENT} grid grid-cols-3 gap-6 text-sm leading-snug text-shell-foreground/75`}>
+        <ul className={`${PANEL_CONTENT} grid grid-cols-2 gap-6 text-sm leading-snug text-shell-foreground/75`}>
           {TRUST.map(({ icon: Icon, label }) => (
             <li key={label} className="flex items-start gap-2">
               <Icon className="mt-px size-4 shrink-0" aria-hidden />
