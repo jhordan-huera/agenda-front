@@ -46,7 +46,6 @@ const TYPE_LABELS: Record<EmailType, string> = {
   billing_paid: "Mensualidad pagada",
   billing_rejected: "Comprobante de mensualidad rechazado",
   billing_voided: "Cobro de mensualidad anulado",
-  aws_cost_alert: "Costos de AWS",
 };
 
 /** Bandeja de salida del negocio. */

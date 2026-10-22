@@ -1,7 +1,6 @@
 import type {
   AdminBusinessInput,
   AdminMemberInput,
-  AwsCostAlertInput,
   BillingPaidInput,
   BillingReasonInput,
   BusinessBillingInput,
@@ -64,7 +63,6 @@ import type {
   AppointmentStatus,
   AppointmentsToClose,
   AppointmentsToCloseCount,
-  AwsCosts,
   CloseAllResult,
   DatabaseStats,
   ImageUpload,
@@ -463,13 +461,6 @@ export interface PlatformAdminRepository {
    * cómo crece. Sólo el super admin principal (los demás reciben `forbidden`); se calcula al pedirla.
    */
   getDatabaseStats(): Promise<DatabaseStats>;
-  /**
-   * Los costos de AWS (spec 031): lo último que guardó el cron (una consulta a AWS al día): pedirlos no consulta
-   * a AWS. Cualquier super admin.
-   */
-  getAwsCosts(): Promise<AwsCosts>;
-  /** El monto del aviso de gasto (null: sin aviso). Queda en la actividad si cambia. Devuelve los costos. */
-  setAwsCostAlert(input: AwsCostAlertInput): Promise<AwsCosts>;
   listBusinesses(): Promise<AdminBusinessSummary[]>;
   getBusiness(businessId: string): Promise<AdminBusinessDetail | null>;
   /** Crea el negocio, todavía sin propietario (se agrega después con assignBusinessOwner). */

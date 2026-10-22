@@ -9,7 +9,6 @@ import {
   CreditCard,
   History,
   LayoutDashboard,
-  Receipt,
   Settings,
   Tags,
   UserCog,
@@ -48,8 +47,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: "/admin/businesses", label: "Negocios", icon: Building2 },
   // El cobro de las mensualidades (spec 029).
   { to: "/admin/billing", label: "Cobros", icon: WalletCards },
-  // Lo que cuesta el backend en AWS (spec 031).
-  { to: "/admin/costs", label: "Costos", icon: Receipt },
   { to: "/admin/analytics", label: "Analítica", icon: ChartNoAxesCombined },
   { to: "/admin/users", label: "Usuarios", icon: UserCog },
   { to: "/admin/plans", label: "Planes", icon: CreditCard },

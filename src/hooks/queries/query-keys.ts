@@ -92,7 +92,5 @@ export const queryKeys = {
     billingAccounts: ["admin", "billing-accounts"] as const,
     /** Los precios de los planes (spec 029, ampliación del 2026-10-20). */
     planPrices: ["admin", "plan-prices"] as const,
-    /** Los costos de AWS (spec 031): la página «Costos» y la tarjeta del Inicio. */
-    awsCosts: ["admin", "aws-costs"] as const,
   },
 };
