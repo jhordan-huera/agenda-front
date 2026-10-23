@@ -330,10 +330,22 @@ export function useUpdateAppointmentStatus() {
   const offerWhatsApp = useOfferWhatsAppNotice();
   return useMutation({
     // `notify: false`: corrige un error sin avisar al paciente, ni por email ni por WhatsApp (spec 008).
-    mutationFn: async ({ id, status, notify = true }: { id: string; status: AppointmentStatus; notify?: boolean }) => {
+    // `onlyIfOpen` (el tablero, spec 034): sólo si sigue pendiente o confirmada. Si otra persona ya la cambió,
+    // la API responde `conflict`, su estado se respeta y la agenda se recarga.
+    mutationFn: async ({
+      id,
+      status,
+      notify = true,
+      onlyIfOpen = false,
+    }: {
+      id: string;
+      status: AppointmentStatus;
+      notify?: boolean;
+      onlyIfOpen?: boolean;
+    }) => {
       // Si se acaba de mover en la agenda, ese movimiento se guarda antes: si no, la devolvería a su estado anterior.
       await settleAppointmentMove(id);
-      return data.appointments.updateStatus(businessId, id, status, notify);
+      return data.appointments.updateStatus(businessId, id, status, notify, { onlyIfOpen });
     },
     onMutate: ({ id }) => ({ previous: findCached(id) }),
     onSuccess: (appointment, { status, notify = true }, context) => {
@@ -342,6 +354,9 @@ export function useUpdateAppointmentStatus() {
       // Sin esperar la recarga: "¿Cancelar esta cita?" se cierra al responder la API (no queda
       // apilada con el aviso de WhatsApp) y la cita ya se ve con su nuevo estado.
       applySaved(appointment);
+    },
+    onError: (_error, { onlyIfOpen }) => {
+      if (onlyIfOpen) applySaved();
     },
   });
 }

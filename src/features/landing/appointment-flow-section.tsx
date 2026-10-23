@@ -1,5 +1,6 @@
 import { BellRing, CircleCheck, ClipboardCheck, FileCheck2, Globe, Landmark, Mail, type LucideIcon } from "lucide-react";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useRef } from "react";
+import { useOverflowsX } from "@/hooks/use-overflows-x";
 import { cn } from "@/lib/utils";
 import { LANDING_SECTIONS } from "./landing-constants";
 import { CONTAINER, SECTION_SPACING, SectionHeading } from "./section-heading";
@@ -87,24 +88,6 @@ const FEATURES: { icon: LucideIcon; title: string; description: string }[] = [
     description: "Las citas que ya pasaron y siguen abiertas te esperan en «Por cerrar»: marcas si vino o no, y tus reportes del mes salen reales.",
   },
 ];
-
-/**
- * Si el contenido de la caja se sale a lo ancho (el tablero en el celular): sólo entonces la caja entra en
- * el orden del teclado, para deslizarla con las flechas. En el computador cabe y no es una parada más.
- */
-function useOverflowsX(ref: RefObject<HTMLElement | null>) {
-  const [overflows, setOverflows] = useState(false);
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const update = () => setOverflows(element.scrollWidth > element.clientWidth + 1);
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref]);
-  return overflows;
-}
 
 function AppointmentCard({ appointment, stage }: { appointment: SampleAppointment; stage: Stage }) {
   const { name, service, when, tag } = appointment;

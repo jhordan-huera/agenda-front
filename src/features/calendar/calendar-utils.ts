@@ -10,20 +10,46 @@ import {
 } from "@/lib/time";
 import type { Appointment, ISODate, Schedule } from "@/types";
 
-export type CalendarView = "day" | "week" | "month";
+/** Las vistas de la Agenda: tres de calendario y el tablero de las citas (spec 034). */
+export type CalendarView = "day" | "week" | "month" | "board";
+
+/** El periodo de citas que muestra una vista: un día, una semana o un mes. */
+export type CalendarPeriod = Exclude<CalendarView, "board">;
 
 export const CALENDAR_VIEWS: { value: CalendarView; label: string }[] = [
   { value: "day", label: "Día" },
   { value: "week", label: "Semana" },
   { value: "month", label: "Mes" },
+  { value: "board", label: "Tablero" },
 ];
 
 export function isCalendarView(value: string | null): value is CalendarView {
+  return value === "day" || value === "week" || value === "month" || value === "board";
+}
+
+/**
+ * El periodo del tablero (spec 034), en la URL como `?range=`: «Hoy» es el de un día (las flechas pasan al
+ * anterior y al siguiente), y la semana va por defecto.
+ */
+export const BOARD_PERIODS: { value: CalendarPeriod; label: string }[] = [
+  { value: "day", label: "Hoy" },
+  { value: "week", label: "Semana" },
+  { value: "month", label: "Mes" },
+];
+
+export const DEFAULT_BOARD_PERIOD: CalendarPeriod = "week";
+
+export function isCalendarPeriod(value: string | null): value is CalendarPeriod {
   return value === "day" || value === "week" || value === "month";
 }
 
+/** Los días del tablero: el día, la semana de lunes a domingo o el mes justo (sin los días de los meses de al lado). */
+export function getBoardDays(period: CalendarPeriod, date: ISODate): ISODate[] {
+  return period === "month" ? eachDayISO(startOfMonthISO(date), endOfMonthISO(date)) : getVisibleDays(period, date);
+}
+
 /** Días visibles para la vista (el mes incluye semanas completas de lunes a domingo). */
-export function getVisibleDays(view: CalendarView, date: ISODate): ISODate[] {
+export function getVisibleDays(view: CalendarPeriod, date: ISODate): ISODate[] {
   if (view === "day") return [date];
   if (view === "week") {
     const start = startOfWeekISO(date);
@@ -34,13 +60,13 @@ export function getVisibleDays(view: CalendarView, date: ISODate): ISODate[] {
   return eachDayISO(start, end);
 }
 
-export function shiftDate(view: CalendarView, date: ISODate, direction: 1 | -1): ISODate {
+export function shiftDate(view: CalendarPeriod, date: ISODate, direction: 1 | -1): ISODate {
   if (view === "day") return addDaysISO(date, direction);
   if (view === "week") return addDaysISO(date, 7 * direction);
   return addMonthsISO(date, direction);
 }
 
-export function getRangeLabel(view: CalendarView, date: ISODate): string {
+export function getRangeLabel(view: CalendarPeriod, date: ISODate): string {
   if (view === "day") return capitalize(formatLongDate(date));
   if (view === "month") return capitalize(formatDate(date, "MMMM yyyy"));
 
