@@ -34,7 +34,7 @@ export default function AdminLayout() {
   if (session.twoFactorSetupRequired) return <TwoFactorRequiredScreen />;
   // Los colores que eligió este super admin para su panel (spec 007); sin ellos, los de Agenda360.
   return (
-    <BrandThemeProvider colors={session.panelColors}>
+    <BrandThemeProvider colors={session.panelColors} remember="admin">
       <AppShell
         homeHref="/admin"
         renderSidebar={(onNavigate) => (

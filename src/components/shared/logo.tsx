@@ -8,13 +8,15 @@ interface LogoProps {
   className?: string;
   /** "inverse": el nombre claro, sobre un fondo `shell` (oscuro en los dos modos, como el pie de la portada). */
   tone?: "default" | "inverse";
+  /** Sólo el símbolo, sin el nombre (el menú encogido, spec 036). */
+  markOnly?: boolean;
 }
 
 // "Agenda360" → "Agenda" en negrita y "360" más ligero, junto al símbolo.
 const [, WORD = APP_NAME, NUMBER = ""] = /^(\D+)(\d*)$/.exec(APP_NAME) ?? [];
 
-/** Logotipo: el símbolo (calendario con el día reservado) y el nombre en azul (o claro, sobre `shell`). */
-export function Logo({ href = "/", className, tone = "default" }: LogoProps) {
+/** Logotipo: el símbolo (calendario con el día reservado) y el nombre en el color de la marca (o claro, sobre `shell`). */
+export function Logo({ href = "/", className, tone = "default", markOnly = false }: LogoProps) {
   return (
     <Link
       to={href}
@@ -22,7 +24,7 @@ export function Logo({ href = "/", className, tone = "default" }: LogoProps) {
       className={cn("inline-flex items-center gap-2 rounded-md text-xl tracking-[-0.02em]", tone === "inverse" ? "text-shell-foreground" : "text-ink", className)}
     >
       <BrandMark />
-      <Wordmark />
+      {!markOnly && <Wordmark />}
     </Link>
   );
 }

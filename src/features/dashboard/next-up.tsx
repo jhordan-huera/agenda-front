@@ -28,8 +28,9 @@ interface NextUpProps {
 const LIGHT_BUTTON = "bg-hero-foreground text-hero hover:bg-hero-foreground/90";
 
 /**
- * La tarjeta destacada: un degradado del color de la marca a su lila (con los colores de cada negocio). Con los
- * tokens del degradado (spec 019): en el claro son el principal y el lila de siempre; en el oscuro, más oscuros.
+ * La tarjeta destacada: un degradado del color de la marca al tono de su resaltado (con los colores de cada
+ * negocio). Con los tokens del degradado (spec 019): en el claro son el principal y el texto de las insignias
+ * (--lilac-ink); en el oscuro, más oscuros.
  */
 const FEATURED_CARD =
   "rounded-2xl bg-[linear-gradient(135deg,var(--hero),color-mix(in_oklch,var(--hero)_40%,var(--hero-end)))] text-hero-foreground shadow-[0_16px_32px_-18px_color-mix(in_oklch,var(--hero)_70%,transparent)]";

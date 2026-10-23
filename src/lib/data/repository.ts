@@ -48,11 +48,15 @@ import type {
   AdminAuditLog,
   AdminBillingFilter,
   AdminBillingList,
+  AdminEmailFilter,
   AdminBusinessBilling,
   AdminBusinessDetail,
   AdminBusinessCategory,
   AdminBusinessReferrals,
   AdminBusinessSummary,
+  AdminCalendar,
+  AdminCalendarDay,
+  AdminCalendarFilters,
   AdminPlanRequest,
   AdminUserSummary,
   AnalyticsPeriodDays,
@@ -457,6 +461,13 @@ export interface PlatformAdminRepository {
    */
   getAnalytics(days: AnalyticsPeriodDays): Promise<AnalyticsSnapshot | null>;
   /**
+   * El calendario de la plataforma (spec 035): sólo cifras por día y por hora, de `from` a `to` (incluido,
+   * 42 días como mucho). Nunca pacientes ni citas sueltas.
+   */
+  getCalendar(from: ISODate, to: ISODate, filters: AdminCalendarFilters): Promise<AdminCalendar>;
+  /** Los negocios con citas ese día o, con `hour`, a esa hora: sus cifras por estado y por agenda. */
+  getCalendarDay(date: ISODate, hour: number | null, filters: AdminCalendarFilters): Promise<AdminCalendarDay>;
+  /**
    * La pantalla «Base de datos» (spec 024): qué ocupa la base, qué la hace trabajar, su mantenimiento y
    * cómo crece. Sólo el super admin principal (los demás reciben `forbidden`); se calcula al pedirla.
    */
@@ -514,8 +525,8 @@ export interface PlatformAdminRepository {
    */
   assignBusinessOwner(businessId: string, input: BusinessOwnerInput): Promise<TeamMember>;
   listAuditLogs(filters: AdminAuditFilters): Promise<AuditLogPage<AdminAuditLog>>;
-  /** Todos los emails de la plataforma (bandeja de salida global). */
-  listEmails(): Promise<EmailNotification[]>;
+  /** Los emails de la plataforma (bandeja de salida global): los de «Emails de hoy», los fallidos o todos. */
+  listEmails(filter?: AdminEmailFilter): Promise<EmailNotification[]>;
   updateSettings(input: PlatformSettingsInput): Promise<PlatformSettings>;
   /** Colores del panel de plataforma de la cuenta que lo pide (spec 007). */
   updatePanelColors(input: PanelColorsInput): Promise<{ colors: BrandColors | null }>;

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useInstallApp } from "./install-prompt";
 
@@ -25,19 +26,36 @@ function useInstallAction() {
 }
 
 /** En el menú lateral: "Instalar aplicación" (no aparece si ya está instalada o no se puede). */
-export function InstallAppButton() {
+/** `compact`: sólo el icono, con su nombre para los lectores de pantalla (el menú encogido, spec 036). */
+export function InstallAppButton({ compact = false }: { compact?: boolean }) {
   const { mode, start, dialog } = useInstallAction();
   if (!mode) return null;
-  return (
-    <>
-      <button
+  const button = (
+    <button
         type="button"
         onClick={start}
-        className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-ring/50"
+        aria-label={compact ? "Instalar aplicación" : undefined}
+        className={cn(
+          "flex items-center rounded-xl text-sm font-semibold text-ink outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-ring/50",
+          compact ? "mx-auto size-10 justify-center" : "w-full justify-between gap-2 px-3 py-2 text-left",
+        )}
       >
-        <span className="truncate">Instalar aplicación</span>
-        <Download className="size-3.5 shrink-0" aria-hidden />
-      </button>
+        {!compact && <span className="truncate">Instalar aplicación</span>}
+        <Download className={cn("shrink-0", compact ? "size-4" : "size-3.5")} aria-hidden />
+    </button>
+  );
+  return (
+    <>
+      {compact ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8}>
+            Instalar aplicación
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        button
+      )}
       {dialog}
     </>
   );

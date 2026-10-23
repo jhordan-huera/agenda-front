@@ -1,44 +1,64 @@
-import { ArrowRight } from "lucide-react";
+import { Check } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-import { SignupLink } from "./signup-link";
+import { cn } from "@/lib/utils";
+import { DEMO_BOOKING_PATH } from "./landing-constants";
+import { CONTAINER } from "./section-heading";
+import { SignupCta } from "./signup-link";
 import type { SignupContact } from "./use-signup-contact";
 
+/** El foco sobre el casi negro del cierre: el anillo del texto claro, que se ve sobre él (el de la marca no). */
+const FOCUS_ON_SHELL = "focus-visible:border-shell-foreground focus-visible:ring-shell-foreground/60";
+
+/** Tres hechos al pie del cierre, como los del ejemplo pero reales: no hay prueba de 14 días, hay un plan gratis. */
+const TICKS = ["Gratis para empezar", "Sin tarjeta", "Sin instalar nada"];
+
 /**
- * Cierre: una tarjeta en el degradado de la marca (del azul al lila), con una cuadrícula sutil. Las
- * líneas de la cuadrícula van en blanco translúcido a propósito: sólo aclaran el degradado. Con el registro
- * cerrado, el botón es «Quiero mi agenda» (spec 022).
+ * Cierre (spec 032): una franja centrada en --shell (casi negro, con el tono de la marca), sin degradado ni
+ * dibujo, con el botón principal y la página de reservas de ejemplo; debajo, los tres hechos e «Iniciar
+ * sesión». Los textos van en --shell-foreground puro o al 75 % (más de 7:1 en los dos modos: check:contrast,
+ * «Cierre»). Con el registro cerrado, el botón es «Quiero mi agenda» (spec 022).
  */
 export function CtaSection({ signup }: { signup: SignupContact }) {
   return (
-    <section className="bg-canvas py-16 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-hero to-hero-end px-6 py-14 text-center text-hero-foreground sm:px-12 sm:py-16">
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.08)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]"
-          />
-          <div className="relative mx-auto max-w-2xl">
-            <h2 className="text-3xl leading-tight font-extrabold tracking-[-0.02em] sm:text-4xl">Abre tu agenda y deja que te reserven.</h2>
-            <p className="mt-4 text-lg text-hero-foreground/85">
-              Creas tu cuenta, escribes tus servicios y horarios, y compartes el enlace. Así de simple.
-            </p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 bg-hero-foreground px-6 text-base text-hero hover:bg-hero-foreground/90">
-                <SignupLink contact={signup} registerLabel="Crear mi agenda gratis" after={<ArrowRight />} />
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-12 border-hero-foreground/60 bg-transparent px-6 text-base text-hero-foreground hover:bg-hero-foreground/10 hover:text-hero-foreground dark:border-hero-foreground/60 dark:bg-transparent dark:hover:bg-hero-foreground/10"
-              >
-                <Link to="/login">Iniciar sesión</Link>
-              </Button>
-            </div>
-            <p className="mt-6 text-sm text-hero-foreground/75">Gratis para empezar, sin tarjeta de crédito.</p>
-          </div>
+    <section aria-labelledby="cierre-titulo" className="bg-shell text-shell-foreground dark:border-y dark:border-border">
+      <div className={cn(CONTAINER, "py-16 text-center sm:py-24")}>
+        <h2 id="cierre-titulo" className="mx-auto max-w-3xl text-headline font-bold">
+          Deja que tus pacientes elijan su hora.
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-shell-foreground/75">
+          Creas tu agenda, escribes tus servicios y tus horarios, y compartes tu enlace. Puedes empezar hoy.
+        </p>
+        <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+          <SignupCta contact={signup} arrow className={cn("h-12 px-6 text-base", FOCUS_ON_SHELL)} />
+          <Button
+            asChild
+            variant="outline"
+            className={cn(
+              "h-12 border-shell-foreground/40 bg-transparent px-5 text-base text-shell-foreground hover:bg-shell-foreground/10 hover:text-shell-foreground dark:border-shell-foreground/40 dark:bg-transparent dark:hover:bg-shell-foreground/10",
+              FOCUS_ON_SHELL,
+            )}
+          >
+            <Link to={DEMO_BOOKING_PATH}>Probar una página de reservas</Link>
+          </Button>
         </div>
+        <ul className="mt-8 flex flex-col items-center justify-center gap-x-7 gap-y-2 text-sm text-shell-foreground/75 sm:flex-row">
+          {TICKS.map((tick) => (
+            <li key={tick} className="inline-flex items-center gap-2">
+              <Check className="size-4 text-shell-foreground" aria-hidden />
+              {tick}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-sm text-shell-foreground/75">
+          ¿Ya tienes cuenta?{" "}
+          <Link
+            to="/login"
+            className="inline-flex min-h-11 items-center rounded-sm font-semibold text-shell-foreground underline decoration-shell-foreground/50 underline-offset-4 outline-none hover:decoration-current focus-visible:ring-3 focus-visible:ring-shell-foreground/60"
+          >
+            Iniciar sesión
+          </Link>
+        </p>
       </div>
     </section>
   );

@@ -13,14 +13,19 @@ import { useAppointmentDialogs } from "@/features/appointments/use-appointment-d
 import { usePermissions } from "@/features/auth/use-permissions";
 import {
   CALENDAR_VIEWS,
+  DEFAULT_BOARD_PERIOD,
+  getBoardDays,
   getHourRange,
   getRangeLabel,
   getVisibleDays,
+  isCalendarPeriod,
   isCalendarView,
   shiftDate,
+  type CalendarPeriod,
   type CalendarView,
 } from "@/features/calendar/calendar-utils";
 import { AgendaListView } from "@/features/calendar/agenda-list-view";
+import { BoardPeriodSelect, BoardView } from "@/features/calendar/board-view";
 import { MonthView } from "@/features/calendar/month-view";
 import { StatusLegend } from "@/features/calendar/status-legend";
 import { TimeGridView, type GridColumn } from "@/features/calendar/time-grid-view";
@@ -58,19 +63,31 @@ export default function CalendarPage() {
   const dateParam = searchParams.get("date") ?? "";
   const view = isCalendarView(viewParam) ? viewParam : defaultView;
   const date = dateField.safeParse(dateParam).success ? dateParam : now.date;
+  // El tablero (spec 034) muestra las citas de un día, una semana (por defecto) o un mes: ?view=board&range=month.
+  const rangeParam = searchParams.get("range");
+  const boardPeriod: CalendarPeriod = isCalendarPeriod(rangeParam) ? rangeParam : DEFAULT_BOARD_PERIOD;
+  // El periodo que usan las flechas, el título y la consulta: el de la vista o, en el tablero, el suyo.
+  const period: CalendarPeriod = view === "board" ? boardPeriod : view;
   // Con varias agendas: ?agenda=<id> muestra la de un profesional; sin él, todas.
   const agendas = useAgendas();
   const agendaParam = searchParams.get("agenda");
   const agenda = agendas.multiple && agendas.selectable.some((p) => p.id === agendaParam) ? agendaParam! : ALL_AGENDAS;
-  const navigate = (next: { view?: CalendarView; date?: string; agenda?: string }) => {
+  const navigate = (next: { view?: CalendarView; date?: string; agenda?: string; range?: CalendarPeriod }) => {
     const nextAgenda = next.agenda ?? agenda;
+    const nextView = next.view ?? view;
+    const nextRange = next.range ?? boardPeriod;
     setSearchParams(
-      { view: next.view ?? view, date: next.date ?? date, ...(nextAgenda !== ALL_AGENDAS && { agenda: nextAgenda }) },
+      {
+        view: nextView,
+        date: next.date ?? date,
+        ...(nextView === "board" && nextRange !== DEFAULT_BOARD_PERIOD && { range: nextRange }),
+        ...(nextAgenda !== ALL_AGENDAS && { agenda: nextAgenda }),
+      },
       { replace: true },
     );
   };
 
-  const days = getVisibleDays(view, date);
+  const days = view === "board" ? getBoardDays(boardPeriod, date) : getVisibleDays(period, date);
   const appointmentsQuery = useAppointments({ from: days[0], to: days.at(-1) }, { keepPrevious: true });
   const { data: allSchedules = [] } = useSchedules();
   const { data: blockedTimes = [] } = useBlockedTimes();
@@ -139,7 +156,7 @@ export default function CalendarPage() {
       <PageHeader
         title="Agenda"
         description={
-          agendas.multiple ? "Las citas de todos los profesionales, por día, semana o mes." : "Gestiona tus citas por día, semana o mes."
+          agendas.multiple ? "Las citas de todos los profesionales, por día, semana, mes o en el tablero." : "Gestiona tus citas por día, semana, mes o en el tablero."
         }
         actions={
           <>
@@ -175,24 +192,27 @@ export default function CalendarPage() {
               variant="ghost"
               size="icon-sm"
               aria-label="Periodo anterior"
-              onClick={() => navigate({ date: shiftDate(view, date, -1) })}
+              onClick={() => navigate({ date: shiftDate(period, date, -1) })}
             >
               <ChevronLeft />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate({ date: now.date })}>
-              Hoy
-            </Button>
+            {/* En el tablero, «Hoy» es uno de sus periodos (Hoy / Semana / Mes): no se repite aquí. */}
+            {view !== "board" && (
+              <Button variant="ghost" size="sm" onClick={() => navigate({ date: now.date })}>
+                Hoy
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon-sm"
               aria-label="Periodo siguiente"
-              onClick={() => navigate({ date: shiftDate(view, date, 1) })}
+              onClick={() => navigate({ date: shiftDate(period, date, 1) })}
             >
               <ChevronRight />
             </Button>
           </div>
           <h2 className="text-base font-semibold sm:text-lg" aria-live="polite">
-            {getRangeLabel(view, date)}
+            {getRangeLabel(period, date)}
           </h2>
           {appointmentsQuery.isFetching && !appointmentsQuery.isPending && (
             <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label="Actualizando" />
@@ -220,7 +240,15 @@ export default function CalendarPage() {
             allLabel="Todos los profesionales"
           />
         )}
-        <StatusLegend />
+        {view === "board" ? (
+          <BoardPeriodSelect
+            value={boardPeriod}
+            // «Hoy» lleva al día de hoy; la semana y el mes, a los del día que se está viendo.
+            onChange={(range) => navigate({ range, ...(range === "day" && { date: now.date }) })}
+          />
+        ) : (
+          <StatusLegend />
+        )}
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <Switch checked={showCancelled} onCheckedChange={setShowCancelled} size="sm" />
           Mostrar canceladas
@@ -248,7 +276,17 @@ export default function CalendarPage() {
             </div>
           )}
 
-          {view === "month" ? (
+          {view === "board" ? (
+            <BoardView
+              appointments={appointments}
+              today={now.date}
+              clientsById={clientsById}
+              servicesById={servicesById}
+              professionalsById={agendas.multiple && agenda === ALL_AGENDAS ? professionalsById : undefined}
+              canMove={can("appointments.manage")}
+              onAppointmentClick={dialogs.openDetails}
+            />
+          ) : view === "month" ? (
             <MonthView
               days={days}
               month={date.slice(0, 7)}

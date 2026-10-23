@@ -23,10 +23,14 @@ const FIXED = {
 };
 
 /**
- * Lo que falló, cuando la serie del panel ya es rojiza (por ejemplo, la paleta Rosa): ámbar, para que
- * «Enviados» y «Fallidos» no se confundan. ≥ 3:1 sobre el fondo de cada modo.
+ * Lo que falló, cuando la serie del panel ya es rojiza, para que «Enviados» y «Fallidos» no se confundan:
+ * ámbar (por ejemplo, con la paleta Rosa) y, si la serie también se parece al ámbar (el tomate de
+ * Agenda360 desde la spec 033, la paleta Coral), magenta. ≥ 3:1 sobre el fondo de cada modo.
  */
-const FAILED_ON_RED = { light: "#c26a08", dark: "#f0a43a" };
+const FAILED_ON_RED = [
+  { light: "#c26a08", dark: "#f0a43a" },
+  { light: "#b0478f", dark: "#e07bbd" },
+];
 
 /**
  * Colores de los gráficos del inicio del super admin, en el modo de la pantalla: los de la paleta del
@@ -36,7 +40,9 @@ export function useAdminChartColors() {
   const { resolved } = useThemeMode();
   const chart = useChartColors();
   const fixed = FIXED[resolved];
-  const failed = similarHue(chart.series, fixed.failed) ? FAILED_ON_RED[resolved] : fixed.failed;
+  const failed =
+    [fixed.failed, ...FAILED_ON_RED.map((colors) => colors[resolved])].find((color) => !similarHue(chart.series, color)) ??
+    fixed.failed;
   const colors = { ...chart, ...fixed, failed };
   return { colors, axisTick: { fontSize: 11, fill: colors.tick } };
 }

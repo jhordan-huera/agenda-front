@@ -2,11 +2,14 @@ import { api } from "@/lib/api/client";
 import type {
   AdminAuditLog,
   AdminBillingList,
+  AdminEmailFilter,
   AdminBusinessBilling,
   AdminBusinessDetail,
   AdminBusinessCategory,
   AdminBusinessReferrals,
   AdminBusinessSummary,
+  AdminCalendar,
+  AdminCalendarDay,
   AdminPlanRequest,
   AdminUserSummary,
   AnalyticsSnapshot,
@@ -276,6 +279,8 @@ export const apiRepository: DataRepository = {
   admin: {
     getStats: () => api.get<PlatformStats>("/admin/stats"),
     getAnalytics: (days) => api.get<{ snapshot: AnalyticsSnapshot | null }>("/admin/analytics", { days }).then((result) => result.snapshot),
+    getCalendar: (from, to, filters) => api.get<AdminCalendar>("/admin/calendar", { from, to, ...filters }),
+    getCalendarDay: (date, hour, filters) => api.get<AdminCalendarDay>("/admin/calendar/day", { date, hour, ...filters }),
     getDatabaseStats: () => api.get<DatabaseStats>("/admin/database"),
     listBusinesses: () => api.get<AdminBusinessSummary[]>("/admin/businesses"),
     getBusiness: (businessId) => api.get<AdminBusinessDetail | null>(`/admin/businesses/${id(businessId)}`),
@@ -312,7 +317,8 @@ export const apiRepository: DataRepository = {
     assignBusinessOwner: (businessId, input) =>
       api.post<TeamMember>(`/admin/businesses/${id(businessId)}/owner`, input),
     listAuditLogs: (filters) => api.get<AuditLogPage<AdminAuditLog>>("/admin/audit-logs", { ...filters }),
-    listEmails: () => api.get<EmailNotification[]>("/admin/emails"),
+    listEmails: (filter: AdminEmailFilter = "all") =>
+      api.get<EmailNotification[]>(filter === "all" ? "/admin/emails" : `/admin/emails?filter=${filter}`),
     updateSettings: (input) => api.put<PlatformSettings>("/admin/settings", input),
     updatePanelColors: (input) => api.put<{ colors: BrandColors | null }>("/admin/panel-colors", input),
     setBusinessBilling: (businessId, input) => api.put<AdminBusinessBilling>(`/admin/businesses/${id(businessId)}/billing`, input),

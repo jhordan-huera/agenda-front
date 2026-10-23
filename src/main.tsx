@@ -13,7 +13,8 @@ import "@/features/push/notification-navigation";
 
 // Algunos navegadores (Vivaldi, Safari) siguen mostrando en la pestaña un icono anterior guardado
 // en su caché. Al volver a declararlo al arrancar, con una versión en la URL, pintan el actual.
-const ICON_VERSION = "calendario-1";
+// Sube con cada icono nuevo: "tomate-1" es el de la spec 033.
+const ICON_VERSION = "tomate-1";
 for (const link of document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]')) {
   link.href = `${link.getAttribute("href")}?v=${ICON_VERSION}`;
 }

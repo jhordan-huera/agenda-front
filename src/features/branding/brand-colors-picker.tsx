@@ -12,8 +12,6 @@ interface BrandColorsPickerProps {
   onChange: (colors: BrandColors | null) => void;
   /** Textos de ayuda: por defecto, los del negocio (su logo, la hora reservada…). */
   texts?: { intro: string; primary: string; highlight: string };
-  /** Columnas de las paletas, si la tarjeta es más angosta que la de los negocios. */
-  presetsClassName?: string;
 }
 
 const BUSINESS_TEXTS = {
@@ -26,7 +24,7 @@ const BUSINESS_TEXTS = {
  * Las paletas listas y los dos colores a elección. Lo usan los colores de la marca de un negocio y
  * los del panel de cada super admin (spec 007): mismas paletas y mismas reglas de contraste.
  */
-export function BrandColorsPicker({ colors, onChange, texts = BUSINESS_TEXTS, presetsClassName }: BrandColorsPickerProps) {
+export function BrandColorsPicker({ colors, onChange, texts = BUSINESS_TEXTS }: BrandColorsPickerProps) {
   const name = useId();
   const effective = colors ?? DEFAULT_BRAND_COLORS;
   // Los avisos de «se ajustó» hablan del claro: en el oscuro los dos colores siempre se ajustan.
@@ -40,7 +38,8 @@ export function BrandColorsPicker({ colors, onChange, texts = BUSINESS_TEXTS, pr
         <legend className="mb-3 text-sm font-semibold">
           Paletas listas
         </legend>
-        <div className={cn("grid grid-cols-2 gap-2 sm:grid-cols-4", presetsClassName)}>
+        {/* Las nueve paletas, de 3 en 3 (2 en el celular). */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {BRAND_PRESETS.map((preset) => {
             const swatch = preset.colors ?? DEFAULT_BRAND_COLORS;
             const checked = sameColors(preset.colors, colors);

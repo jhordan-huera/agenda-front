@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { forgetBootColors } from "@/features/branding/brand-boot";
 import { authService, isTwoFactorChallenge, type Session } from "@/lib/auth";
 import { setApiUnreachable } from "@/lib/connection-status";
 import { DataError } from "@/lib/data/errors";
@@ -143,6 +144,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       signUp: async (input) => applySession(await authService.signUp(input))!,
       signOut: async () => {
         await authService.signOut();
+        // Los colores que recuerda la pantalla de carga: otra persona puede entrar en este equipo.
+        forgetBootColors();
         updateSupport(null);
         queryClient.clear();
         applySession(null);

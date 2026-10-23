@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { Inbox, Mail } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ErrorState } from "@/components/shared/error-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { useEmailOutbox } from "@/hooks/queries/use-activity";
 import { groupItemsByDay } from "@/features/activity/day-groups";
 import type { EmailNotification, EmailType } from "@/types";
 import { formatClockTime, formatDateTime, plural } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 const TYPE_LABELS: Record<EmailType, string> = {
   welcome: "Bienvenida",
@@ -48,6 +49,13 @@ const TYPE_LABELS: Record<EmailType, string> = {
   billing_voided: "Cobro de mensualidad anulado",
 };
 
+/** El estado de cada email: si salió, si espera en la cola o si falló (o se descartó a propósito). */
+function deliveryOf(email: EmailNotification): { label: string; variant: "outline" | "destructive" } {
+  if (email.status === "sent") return { label: "Enviado", variant: "outline" };
+  if (email.status === "queued") return { label: "En cola", variant: "outline" };
+  return email.discarded ? { label: "Descartado", variant: "outline" } : { label: "Falló", variant: "destructive" };
+}
+
 /** Bandeja de salida del negocio. */
 export function EmailOutbox() {
   const timezone = useCurrentBusiness().data?.timezone;
@@ -60,9 +68,18 @@ export function EmailOutboxCard({
   description = "Emails automáticos enviados a tus clientes y a tu equipo: reservas, confirmaciones, cambios y recordatorios.",
   timezone,
   groupByDay,
+  id,
+  toolbar,
+  empty,
 }: {
   outbox: UseQueryResult<EmailNotification[]>;
   description?: string;
+  /** El ancla de la tarjeta («Ver emails» del Inicio del super admin lleva a /admin/activity#emails). */
+  id?: string;
+  /** Los filtros, encima de la lista (los del super admin: Hoy, Fallidos, Todos). */
+  toolbar?: ReactNode;
+  /** El texto sin emails, si no es el de siempre (p. ej. con un filtro). */
+  empty?: { title: string; detail: string };
   /** Zona horaria de las fechas (la del negocio; sin ella, la de la plataforma). */
   timezone?: string;
   /** Agrupados por día, con el día como título (panel de plataforma, spec 007). */
@@ -71,12 +88,13 @@ export function EmailOutboxCard({
   const [preview, setPreview] = useState<EmailNotification | null>(null);
 
   return (
-    <Card>
+    <Card id={id} className={cn(id && "scroll-mt-20")}>
       <CardHeader>
         <CardTitle>Emails enviados</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
+        {toolbar && <div className="mb-3">{toolbar}</div>}
         {outbox.isPending ? (
           <Skeleton className="h-40" />
         ) : outbox.isError ? (
@@ -84,8 +102,8 @@ export function EmailOutboxCard({
         ) : outbox.data.length === 0 ? (
           <div className="flex flex-col items-center rounded-lg border border-dashed px-4 py-10 text-center">
             <Inbox className="size-6 text-muted-foreground" aria-hidden />
-            <p className="mt-2 text-sm font-medium">Todavía no se ha enviado ningún email</p>
-            <p className="text-xs text-muted-foreground">Crea o confirma una cita para ver el primero.</p>
+            <p className="mt-2 text-sm font-medium">{empty?.title ?? "Todavía no se ha enviado ningún email"}</p>
+            <p className="text-xs text-muted-foreground">{empty?.detail ?? "Crea o confirma una cita para ver el primero."}</p>
           </div>
         ) : groupByDay ? (
           <div className="max-h-[32rem] overflow-y-auto rounded-xl border">
@@ -122,8 +140,10 @@ export function EmailOutboxCard({
             <DialogTitle>{preview?.subject}</DialogTitle>
             <DialogDescription>
               Para {preview?.to} · {preview && formatDateTime(preview.createdAt, timezone)}
+              {preview?.businessName && ` · ${preview.businessName}`}
             </DialogDescription>
           </DialogHeader>
+          {preview && <DeliveryDetail email={preview} timezone={timezone} />}
           <pre className="max-h-96 overflow-y-auto rounded-lg bg-muted/60 p-4 font-sans text-sm whitespace-pre-wrap">
             {/* A los 30 días se borra el contenido para no llenar la base; queda el registro. */}
             {preview?.body || "El contenido de los emails se guarda 30 días. De este queda sólo el registro: a quién se envió, el asunto y la fecha."}
@@ -134,7 +154,29 @@ export function EmailOutboxCard({
   );
 }
 
+/**
+ * En la vista previa: si salió, cuándo; si falló, el motivo (el de Gmail o el del sistema). Sólo lo trae la
+ * bandeja del super admin; la del negocio no lleva este detalle.
+ */
+function DeliveryDetail({ email, timezone }: { email: EmailNotification; timezone?: string }) {
+  if (email.sentAt === undefined && email.error === undefined) return null;
+  const delivery = deliveryOf(email);
+  return (
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+      <Badge variant={delivery.variant}>{delivery.label}</Badge>
+      <span className="text-muted-foreground [overflow-wrap:anywhere]">
+        {email.status === "sent" && email.sentAt
+          ? `Salió el ${formatDateTime(email.sentAt, timezone)}`
+          : email.status === "queued"
+            ? "Espera su turno en la cola de envío."
+            : email.error || "Sin motivo registrado."}
+      </span>
+    </p>
+  );
+}
+
 function EmailRow({ email, when, onOpen }: { email: EmailNotification; when: string; onOpen: () => void }) {
+  const delivery = deliveryOf(email);
   return (
     <button
       type="button"
@@ -146,11 +188,13 @@ function EmailRow({ email, when, onOpen }: { email: EmailNotification; when: str
         <span className="block truncate text-sm font-medium">{email.subject}</span>
         <span className="block truncate text-xs text-muted-foreground">
           Para {email.to} · {when}
+          {email.businessName && ` · ${email.businessName}`}
         </span>
       </span>
-      <Badge variant="secondary" className="shrink-0">
-        {TYPE_LABELS[email.type]}
-      </Badge>
+      <span className="flex shrink-0 flex-col items-end gap-1">
+        <Badge variant="secondary">{TYPE_LABELS[email.type]}</Badge>
+        <Badge variant={delivery.variant}>{delivery.label}</Badge>
+      </span>
     </button>
   );
 }

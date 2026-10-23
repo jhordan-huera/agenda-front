@@ -2,11 +2,17 @@ import { useLayoutEffect, useMemo, type ReactNode } from "react";
 import { syncThemeColor } from "@/features/theme/theme-mode";
 import { brandThemeCss, resolveBrandPalette } from "@/lib/brand-theme";
 import type { BrandColors } from "@/types";
+import { dropBootColors, rememberBootColors, type BrandBootArea } from "./brand-boot";
 import { BrandPaletteContext } from "./brand-palette-context";
 
 interface BrandThemeProviderProps {
   /** null o sin cargar: los colores de Agenda360. */
   colors: BrandColors | null | undefined;
+  /**
+   * El panel (el del negocio o el de plataforma): sus colores se recuerdan en este equipo para que la
+   * pantalla de carga salga ya con ellos (ver brand-boot.ts). Las páginas de los pacientes no lo llevan.
+   */
+  remember?: BrandBootArea;
   children: ReactNode;
 }
 
@@ -19,6 +25,7 @@ interface BrandThemeProviderProps {
  */
 export function BrandThemeProvider({
   colors,
+  remember,
   children,
 }: BrandThemeProviderProps) {
   const primary = colors?.primary;
@@ -29,6 +36,17 @@ export function BrandThemeProvider({
     [primary, highlight],
   );
 
+  // Ya se sabe qué colores lleva (null: los de Agenda360). Mientras carga se quedan los recordados.
+  const known = colors !== undefined;
+  useLayoutEffect(() => {
+    if (!known) return;
+    if (remember) rememberBootColors(remember, palettes);
+    if (!palettes) {
+      dropBootColors();
+      syncThemeColor();
+    }
+  }, [known, remember, palettes]);
+
   useLayoutEffect(() => {
     if (!palettes) return;
     const style = document.createElement("style");
@@ -36,6 +54,8 @@ export function BrandThemeProvider({
     // `html:root` le gana a `:root` de index.css aunque su hoja llegue después (va al final del <body>).
     style.textContent = `html:root { ${brandThemeCss(palettes.light)} }\n@media screen { html:root.dark { ${brandThemeCss(palettes.dark)} } }`;
     document.head.append(style);
+    // Los que puso theme-boot.js al cargar ya sobran (y le ganarían a estos).
+    dropBootColors();
     // La barra del celular toma el fondo de la marca.
     syncThemeColor();
     return () => {

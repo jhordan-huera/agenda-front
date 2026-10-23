@@ -1,49 +1,53 @@
-import { CalendarChips } from "@/features/landing/floating-chip";
-import { HeroCalendar } from "@/features/landing/hero-calendar";
-import { PRODUCT_FACTS } from "@/features/landing/product-facts";
+import { IdCard, MapPin } from "lucide-react";
+import { NewBookingNotice, WeekSample } from "@/components/shared/week-sample";
+
+const TRUST = [
+  { icon: MapPin, label: "Hecho en Ecuador" },
+  { icon: IdCard, label: "Tus pacientes no crean cuenta" },
+];
+
+/** El ancho de lo que va en el panel: en pantallas grandes no se estira, queda centrado. */
+const PANEL_CONTENT = "mx-auto w-full max-w-[40rem] px-12";
 
 /**
- * El panel de las pantallas de acceso (sólo en escritorio): en el degradado de la marca, el mensaje
- * de la portada y su calendario de ejemplo con las etiquetas de lo que pasa solo. Cabe entero en
- * ventanas bajas (unos 700 px); los datos de abajo sólo aparecen si hay altura.
- * Los textos van en el color del texto del degradado, puro o al 90 %: más claros no llegan a 4,5:1.
- * Las líneas de la cuadrícula, en blanco translúcido a propósito: sólo aclaran el degradado.
+ * El panel de la marca junto al formulario (spec 030, sólo en el computador): el casi negro de --shell,
+ * sólido y a toda altura, con el mensaje de la portada, la semana de la Agenda entera (nada se sale del
+ * panel) y el aviso de la reserva que acaba de entrar; abajo, la línea de confianza. En ventanas bajas se
+ * quedan el titular y la semana. Los textos, en --shell-foreground puro o al 75 % (más de 7:1 en los dos
+ * modos).
  */
 export function AuthShowcase() {
   return (
     <aside
-      aria-label="Ejemplo de tu agenda: las reservas de tu página entran solas y cada cliente recibe su confirmación y su recordatorio."
-      className="relative flex h-full flex-col justify-center overflow-hidden rounded-3xl bg-linear-to-br from-hero to-hero-end px-10 py-8 text-hero-foreground xl:px-14"
+      aria-label="Agenda360: tus pacientes reservan solos desde tu enlace y la cita llega a tu agenda."
+      className="flex h-full flex-col overflow-hidden bg-shell text-shell-foreground"
     >
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.07)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_at_center,black,transparent_85%)]"
-      />
-      <div aria-hidden className="absolute -top-24 -right-24 size-72 rounded-full bg-highlight/25 blur-3xl" />
+      <div className="flex flex-1 flex-col justify-center py-10">
+        <div className={PANEL_CONTENT}>
+          {/* Una frase por línea, como en la portada. */}
+          <p className="text-[1.75rem] leading-[1.15] font-bold tracking-[-0.025em] xl:text-[2rem]">
+            <span className="block">Tus pacientes eligen su hora.</span> <span className="block">Tú solo atiendes.</span>
+          </p>
+          <p className="mt-4 hidden leading-relaxed text-shell-foreground/75 [@media(min-height:760px)]:block">
+            Las reservas de tu enlace llegan solas a tu agenda, con su confirmación y su recordatorio.
+          </p>
 
-      <div aria-hidden className="relative mx-auto w-full max-w-[34rem]">
-        <p className="inline-flex items-center gap-2 rounded-full bg-hero-foreground px-3 py-1 text-sm font-semibold text-hero shadow-sm">
-          {/* El punto verde de «en línea», igual en los dos modos: la píldora es clara en los dos (spec 019). */}
-          <span className="size-2 rounded-full bg-emerald-500" />
-          Agenda y reservas online
-        </p>
-        <p className="mt-4 text-[1.75rem] leading-[1.15] font-extrabold tracking-[-0.025em] [@media(min-height:800px)]:text-[2rem]">
-          Tus clientes eligen su hora. Tú solo atiendes.
-        </p>
-
-        <div className="relative mt-7 text-foreground [@media(min-height:760px)]:mt-9">
-          <HeroCalendar />
-          <CalendarChips />
+          <div className="relative mt-10">
+            <WeekSample />
+            <NewBookingNotice className="absolute -bottom-6 left-6" />
+          </div>
         </div>
+      </div>
 
-        <dl className="mt-14 hidden gap-x-10 [@media(min-height:860px)]:flex">
-          {PRODUCT_FACTS.map((fact) => (
-            <div key={fact.label} className="flex flex-col-reverse">
-              <dt className="text-sm text-hero-foreground/90">{fact.label}</dt>
-              <dd className="text-2xl font-extrabold tracking-[-0.02em]">{fact.value}</dd>
-            </div>
+      <div className="hidden border-t border-shell-foreground/10 py-6 [@media(min-height:820px)]:block">
+        <ul className={`${PANEL_CONTENT} grid grid-cols-2 gap-6 text-sm leading-snug text-shell-foreground/75`}>
+          {TRUST.map(({ icon: Icon, label }) => (
+            <li key={label} className="flex items-start gap-2">
+              <Icon className="mt-px size-4 shrink-0" aria-hidden />
+              {label}
+            </li>
           ))}
-        </dl>
+        </ul>
       </div>
     </aside>
   );

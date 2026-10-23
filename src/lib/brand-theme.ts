@@ -10,13 +10,19 @@ import type { BrandColors } from "@/types";
  * Cada paleta tiene dos modos (spec 019): el claro y el oscuro salen de los mismos dos colores, con
  * el mismo tono y la claridad justa para que todo se lea. `npm run check:contrast` mide los dos.
  *
- * Sin colores propios (null) se usan los de Agenda360, definidos en src/index.css (sus tokens
- * oscuros salen de esta misma fórmula).
+ * Sin colores propios (null) se usan los de Agenda360 (spec 033): el tomate y el durazno. Sus tokens
+ * están escritos a mano en src/index.css (y en index.html, public/theme-boot.js y chart-colors.ts) y
+ * son los de esta misma fórmula, en el claro y en el oscuro: `npm run check:contrast` lo comprueba.
  */
 
+/**
+ * Los colores de Agenda360 (spec 033): el principal, tomate (#c2410c, 5,18:1 con texto blanco encima), y
+ * el resaltado, un durazno suave (el trazo de marcador, 11,8:1 con el texto encima). Hasta la spec 033
+ * eran el azul #4a6cb0 y el lila #ddd4f8, que siguen en las paletas listas como «Azul clásico».
+ */
 export const DEFAULT_BRAND_COLORS: BrandColors = {
-  primary: "#4a6cb0",
-  highlight: "#ddd4f8",
+  primary: "#c2410c",
+  highlight: "#fcd9c2",
 };
 
 export interface BrandPreset {
@@ -29,6 +35,12 @@ export interface BrandPreset {
 /** Paletas listas: tonos suaves y profesionales, todas legibles. */
 export const BRAND_PRESETS: BrandPreset[] = [
   { id: "agenda360", name: "Agenda360", colors: null },
+  // Los colores de Agenda360 hasta la spec 033, para quien quiera seguir en azul.
+  {
+    id: "azul-clasico",
+    name: "Azul clásico",
+    colors: { primary: "#4a6cb0", highlight: "#ddd4f8" },
+  },
   {
     id: "eucalipto",
     name: "Eucalipto",
@@ -110,7 +122,7 @@ export interface BrandPalette {
   /** Errores y lo que borra: no cambia con la marca, sólo con el modo. */
   destructive: string;
   /**
-   * Los degradados con texto encima (las cabeceras, la portada): del principal al lila y su texto.
+   * Los degradados con texto encima (las cabeceras, la portada): del principal al tono del resaltado y su texto.
    * En el claro, `ink` → `secondaryText` con texto blanco; en el oscuro, más oscuros y con el texto claro.
    */
   hero: string;
@@ -217,6 +229,17 @@ export function contrastRatio(a: string, b: string): number {
 }
 
 /**
+ * Lo que da el CSS `color-mix(in oklch, <color>, black|white <share>)`: el negro y el blanco no tienen tono,
+ * así que se mezclan la claridad y el croma y queda el tono del color. Lo usa check:contrast para el botón
+ * al pasar el ratón.
+ */
+export function mixWithOklch(hex: string, other: "black" | "white", share: number): string {
+  const color = rgbToOklch(hexToRgb(hex));
+  const target = other === "white" ? 1 : 0;
+  return oklchToHex({ l: color.l * (1 - share) + target * share, c: color.c * (1 - share), h: color.h });
+}
+
+/**
  * ¿Tienen dos colores casi el mismo tono? Los dos deben tener color (un gris no se confunde con un
  * rojo) y su tono, a menos de `degrees` grados en el círculo OKLCH.
  */
@@ -250,7 +273,10 @@ const WHITE = "#ffffff";
 const RED_PEN = "#b4453c";
 /** El texto sobre `shell` en el claro (`--shell-foreground`). */
 const SHELL_TEXT = "#eef1f8";
-/** Croma del azul de Agenda360: las superficies se calibraron con él. */
+/**
+ * Croma del azul con el que se calibraron las superficies (el de Agenda360 hasta la spec 033, hoy «Azul
+ * clásico»). No cambia con el tomate: moverlo cambiaría la paleta de los negocios con colores propios.
+ */
 const BASE_PRIMARY_CHROMA = 0.114;
 const BASE_HIGHLIGHT_CHROMA = 0.05;
 /** En el oscuro, un principal o un resaltado muy chillón brillaría sobre el fondo: se le baja el croma. */
@@ -420,7 +446,7 @@ function darkPalette(
       0.01,
       (hex) => contrastRatio(hex, desk) >= 4.5,
     ),
-    // Los degradados no pueden ir del principal aclarado al lila claro: el texto claro no se leería.
+    // Los degradados no pueden ir del principal aclarado al resaltado claro: el texto claro no se leería.
     hero: adjustLightness(
       oklchToHex({
         l: 0.5,

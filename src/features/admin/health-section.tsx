@@ -50,8 +50,13 @@ interface Tile {
   status: Status;
   main: ReactNode;
   detail: ReactNode;
-  /** «Ver detalle»: la pantalla con el detalle de la tarjeta (la de la base, sólo para el super admin principal). */
+  /**
+   * «Ver detalle»: la pantalla con el detalle de la tarjeta (la de la base, sólo para el super admin principal;
+   * la lista de los emails de hoy).
+   */
   link?: string;
+  /** El texto del enlace, si no es «Ver detalle». */
+  linkLabel?: string;
 }
 
 /** "hace 4 min", "hace 3 h", "hace 2 días". */
@@ -116,6 +121,9 @@ function tiles(health: PlatformStats["health"], today: ISODate, databaseLink: st
       status: emailsToday.failed > 0 ? "warn" : "ok",
       main: plural(emailsToday.sent, "enviado", "enviados"),
       detail: `${plural(emailsToday.failed, "fallido", "fallidos")} · ${emailsToday.queued} en cola`,
+      // Con fallidos, directo a ellos; si no, los de hoy (/admin → Actividad, la lista de emails).
+      link: `/admin/activity?emails=${emailsToday.failed > 0 ? "fallidos" : "hoy"}`,
+      linkLabel: emailsToday.failed > 0 ? "Ver los fallidos" : "Ver emails",
     },
     // Una API anterior a la spec 015 no lo trae.
     ...(emailQuota ? [quotaTile(emailQuota)] : []),
@@ -225,7 +233,7 @@ export function HealthSection({
                     {tile.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{tile.detail}</p>}
                     {tile.link && (
                       <Link to={tile.link} className="mt-0.5 inline-flex w-fit items-center gap-1 text-sm font-medium text-ink hover:underline">
-                        Ver detalle <ArrowRight className="size-3.5" aria-hidden />
+                        {tile.linkLabel ?? "Ver detalle"} <ArrowRight className="size-3.5" aria-hidden />
                       </Link>
                     )}
                   </Card>

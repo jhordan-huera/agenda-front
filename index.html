@@ -40,7 +40,7 @@
       /* Modo oscuro: el fondo (--background de src/index.css) desde el primer instante, antes que nada. */
       @media screen {
         html.dark {
-          background: #15181f;
+          background: #201612;
           color-scheme: dark;
         }
       }
@@ -50,14 +50,14 @@
     <!--
       Pantalla de carga mientras llega la app (la misma que FullPageLoader): el logotipo y tres puntos.
       React la reemplaza al arrancar. Lleva sus propios estilos: aún no hay CSS de la app. Sus colores
-      son los tokens de src/index.css en cada modo (npm run check:contrast comprueba los oscuros).
+      son los tokens de src/index.css en cada modo (npm run check:contrast comprueba los dos).
     -->
     <style>
       .boot-loader {
-        --boot-ink: #4a6cb0;
+        --boot-ink: #c2410c;
         --boot-paper: #ffffff;
-        --boot-highlight: #ddd4f8;
-        --boot-soft: #a9bde8;
+        --boot-highlight: #fcd9c2;
+        --boot-soft: #ecab97;
         position: fixed;
         inset: 0;
         display: flex;
@@ -101,10 +101,10 @@
       }
       /* Modo oscuro (spec 019): el logotipo como lo pinta BrandMark con los tokens oscuros. */
       html.dark .boot-loader {
-        --boot-ink: #698dd4;
-        --boot-paper: #15181f;
-        --boot-highlight: #443c59;
-        --boot-soft: #495b7d;
+        --boot-ink: #e36a43;
+        --boot-paper: #201612;
+        --boot-highlight: #573b28;
+        --boot-soft: #7f4b3b;
       }
       .boot-dots i:nth-child(2) {
         animation-delay: 0.16s;

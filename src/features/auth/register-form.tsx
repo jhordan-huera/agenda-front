@@ -1,3 +1,4 @@
+import { CircleAlert } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -10,6 +11,7 @@ import { useCaptchaSiteKey } from "@/hooks/queries/use-public-booking";
 import { getErrorMessage } from "@/lib/data/errors";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import { loadAuthSchemas } from "./auth-schemas";
+import { FORM_ALERT } from "./auth-styles";
 import { useSession } from "./use-session";
 
 const INITIAL_VALUES = { firstName: "", lastName: "", email: "", password: "", confirmPassword: "" };
@@ -62,7 +64,8 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-5">
       {formError && (
-        <p role="alert" className="rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
+        <p role="alert" className={FORM_ALERT}>
+          <CircleAlert aria-hidden />
           {formError}
         </p>
       )}
@@ -117,7 +120,12 @@ export function RegisterForm() {
       {/* Sin términos del servicio hasta que existan (spec 015). En otra pestaña: el formulario no se pierde. */}
       <p className="text-center text-xs text-muted-foreground">
         Al crear tu cuenta aceptas la{" "}
-        <a href="/privacidad" target="_blank" rel="noreferrer" className="underline hover:text-foreground">
+        <a
+          href="/privacidad"
+          target="_blank"
+          rel="noreferrer"
+          className="relative rounded-sm underline decoration-rule-strong underline-offset-4 outline-none before:absolute before:-inset-x-1 before:-inset-y-3.5 before:content-[''] hover:text-foreground hover:decoration-current focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
           política de privacidad
         </a>
         .

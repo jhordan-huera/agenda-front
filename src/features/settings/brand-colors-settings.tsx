@@ -69,7 +69,7 @@ function BrandPreview({ colors, slug }: { colors: BrandColors; slug: string }) {
         </Button>
       </figcaption>
       <ModePreviews palettes={resolveBrandPalette(colors)} className="bg-muted" testId="brand-preview">
-        {/* El menú del panel: lo activo, en el azul pastel de la marca */}
+        {/* El menú del panel: lo activo, en el tono pálido de la marca */}
         <div className="flex flex-wrap gap-1 border-b bg-sidebar p-2 text-xs font-medium text-sidebar-foreground">
           <span className="rounded-lg bg-sidebar-accent px-2.5 py-1.5 font-semibold text-sidebar-accent-foreground">
             Inicio

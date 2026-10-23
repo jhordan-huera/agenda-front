@@ -136,8 +136,8 @@ interface DayRibbonProps {
 /**
  * El día en una franja: horario de atención (papel), fuera de horario (niebla), bloqueos (rayado), las
  * citas con el color de su estado y la línea de "ahora". Lo ya pasado queda atenuado; la siguiente cita
- * lleva el borde lila. Se ven unas horas a la vez y el resto se desliza (spec 026), con ‹ ›, «Ahora» y
- * los avisos de las citas que quedan a los lados.
+ * lleva el anillo del resaltado. Se ven unas horas a la vez y el resto se desliza (spec 026), con ‹ ›,
+ * «Ahora» y los avisos de las citas que quedan a los lados.
  */
 export function DayRibbon({ bounds, now, appointments, schedules, blockedTimes, nextId, clientName, onOpen }: DayRibbonProps) {
   const span = bounds.end - bounds.start;

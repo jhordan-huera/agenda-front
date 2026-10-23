@@ -17,10 +17,13 @@ import { useSession } from "@/features/auth/use-session";
 import type {
   AdminBillingFilter,
   AdminBusinessDetail,
+  AdminCalendarFilters,
+  AdminEmailFilter,
   AnalyticsPeriodDays,
   Business,
   BusinessStatus,
   ClientRequiredFields,
+  ISODate,
   PlanId,
 } from "@/types";
 import { queryKeys } from "./query-keys";
@@ -47,6 +50,29 @@ export const useAdminAnalytics = (days: AnalyticsPeriodDays) =>
  * límite de 20 cada 15 minutos), así que sólo se vuelve a pedir con «Actualizar». `enabled`: sólo el super
  * admin principal la pide; con 403 no se reintenta.
  */
+/**
+ * El calendario de la plataforma (spec 035): se calcula al pedirlo. Cinco minutos de margen y sin volver a
+ * pedirlo al volver a la pestaña; al cambiar de mes se ve el anterior mientras llega.
+ */
+export const useAdminCalendar = (from: ISODate, to: ISODate, filters: AdminCalendarFilters) =>
+  useQuery({
+    queryKey: queryKeys.admin.calendar(from, to, filters),
+    queryFn: () => data.admin.getCalendar(from, to, filters),
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+  });
+
+/** El panel de un día o de una hora del calendario; sin `selection`, no pide nada. */
+export const useAdminCalendarDay = (selection: { date: ISODate; hour: number | null } | null, filters: AdminCalendarFilters) =>
+  useQuery({
+    queryKey: queryKeys.admin.calendarDay(selection?.date ?? "", selection?.hour ?? null, filters),
+    queryFn: () => data.admin.getCalendarDay(selection!.date, selection!.hour, filters),
+    enabled: selection !== null,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+
 export const useAdminDatabase = (enabled: boolean) =>
   useQuery({
     queryKey: queryKeys.admin.database,
@@ -108,7 +134,9 @@ export const useAdminAuditFeed = (filters: Omit<AdminAuditFilters, "cursor">) =>
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 
-export const useAdminEmails = () => useQuery({ queryKey: queryKeys.admin.emails, queryFn: () => data.admin.listEmails() });
+/** Los emails de /admin → Actividad: los de «Emails de hoy», los fallidos o todos. Al cambiar de filtro se ve el anterior mientras llega. */
+export const useAdminEmails = (filter: AdminEmailFilter) =>
+  useQuery({ queryKey: queryKeys.admin.emails(filter), queryFn: () => data.admin.listEmails(filter), placeholderData: keepPreviousData });
 
 /** «Descuentos por referidos» del Inicio (spec 023): los ganados y pendientes de aplicar. */
 export const useReferralRewards = () =>

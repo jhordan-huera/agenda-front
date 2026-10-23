@@ -1,44 +1,31 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Texto en el degradado de la marca (del azul al lila), para la palabra que se quiere destacar. */
-export function GradientText({ children }: { children: ReactNode }) {
-  return <span className="bg-linear-to-r from-ink to-lilac-ink bg-clip-text text-transparent">{children}</span>;
+/** El ancho de la portada y sus márgenes: el mismo en todas las secciones. */
+export const CONTAINER = "mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8";
+
+/** El espacio vertical de cada sección de la portada (spec 032): el mismo en todas. */
+export const SECTION_SPACING = "py-16 sm:py-24";
+
+interface SectionHeadingProps {
+  id: string;
+  title: string;
+  description?: ReactNode;
+  /** «center» en las secciones a todo el ancho (las funciones, Funciona con); a la izquierda, las de dos columnas. */
+  align?: "start" | "center";
+  className?: string;
 }
 
 /**
- * Etiqueta en forma de píldora sobre un título (como «Funciones»). En el claro, el azul un poco más oscuro:
- * sobre el fondo pastel llega a 4,5:1. En el oscuro, el principal tal cual: ya llega a 4,5:1 sobre su fondo.
+ * El título de una sección de la portada (spec 030): en tinta sólida y con el peso haciendo la jerarquía;
+ * la descripción, en el gris de la marca y con un ancho de lectura cómodo. `id` es el del título: la
+ * sección lo usa en `aria-labelledby`.
  */
-export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
+export function SectionHeading({ id, title, description, align = "start", className }: SectionHeadingProps) {
   return (
-    <p className={cn("inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-sm font-semibold text-[color-mix(in_oklch,var(--ink),black_15%)] dark:text-ink", className)}>
-      {children}
-    </p>
-  );
-}
-
-interface SectionHeadingProps {
-  eyebrow?: string;
-  title: string;
-  /** El final del título, en degradado. */
-  highlight?: string;
-  description?: string;
-  align?: "left" | "center";
-}
-
-export function SectionHeading({ eyebrow, title, highlight, description, align = "center" }: SectionHeadingProps) {
-  return (
-    <div className={cn("max-w-2xl", align === "center" && "mx-auto text-center")}>
-      {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
-      <h2 className="text-3xl leading-tight font-extrabold tracking-[-0.02em] sm:text-4xl">
+    <div className={cn("max-w-2xl", align === "center" && "mx-auto text-center", className)}>
+      <h2 id={id} className="text-headline font-bold text-foreground">
         {title}
-        {highlight && (
-          <>
-            {" "}
-            <GradientText>{highlight}</GradientText>
-          </>
-        )}
       </h2>
       {description && <p className="mt-4 text-lg leading-relaxed text-muted-foreground">{description}</p>}
     </div>
