@@ -4,6 +4,8 @@ import { Outlet } from "react-router";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { SidebarCollapseContext, useStoredCollapse } from "./sidebar-collapse-context";
 
 interface AppShellProps {
   homeHref: string;
@@ -18,15 +20,27 @@ interface AppShellProps {
 /**
  * Estructura común de los paneles (negocio y plataforma). En escritorio, el menú es una tarjeta blanca
  * flotante a la izquierda y el contenido va sobre el lienzo gris claro; en el móvil, el contenido a
- * pantalla completa y el menú en un cajón.
+ * pantalla completa y el menú en un cajón. En escritorio el menú se puede encoger a una barra de iconos
+ * (spec 036): el contenido se ensancha. El cajón del celular lo muestra siempre completo.
  */
 export function AppShell({ homeHref, renderSidebar, banner, bell }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, toggle] = useStoredCollapse();
 
   return (
-    <div className="min-h-screen bg-canvas lg:pl-[16.75rem] print:bg-white print:pl-0">
-      <aside className="fixed inset-y-3 left-3 z-30 hidden w-60 overflow-hidden rounded-2xl border border-sidebar-border shadow-[0_8px_30px_-16px_rgb(16_24_40/0.18)] lg:flex print:hidden">
-        {renderSidebar()}
+    <div
+      className={cn(
+        "min-h-screen bg-canvas transition-[padding] duration-200 ease-out motion-reduce:transition-none print:bg-white print:pl-0",
+        collapsed ? "lg:pl-[5.75rem]" : "lg:pl-[16.75rem]",
+      )}
+    >
+      <aside
+        className={cn(
+          "fixed inset-y-3 left-3 z-30 hidden overflow-hidden rounded-2xl border border-sidebar-border shadow-[0_8px_30px_-16px_rgb(16_24_40/0.18)] transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex print:hidden",
+          collapsed ? "w-16" : "w-60",
+        )}
+      >
+        <SidebarCollapseContext value={{ collapsed, toggle }}>{renderSidebar()}</SidebarCollapseContext>
       </aside>
 
       {/* En el móvil la cabecera ya queda fija arriba: el aviso (p. ej. el modo soporte) se va al desplazar. */}
