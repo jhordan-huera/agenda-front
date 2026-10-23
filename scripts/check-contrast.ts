@@ -17,6 +17,7 @@ import { CHART_COLORS, CHART_COLORS_DARK } from "../src/features/reports/chart-c
 import { EMAIL_COLORS } from "../src/lib/email/layout.ts";
 import {
   BRAND_PRESETS,
+  brandThemeCss,
   brandThemeVariables,
   contrastRatio,
   DEFAULT_BRAND_COLORS,
@@ -243,6 +244,22 @@ if (!read("../public/theme-boot.js").includes(`dark ? "${agendaDark.paper}" : "$
 const manifest = JSON.parse(read("../public/manifest.webmanifest")) as { theme_color?: string; background_color?: string };
 for (const key of ["theme_color", "background_color"] as const) {
   if (manifest[key] !== agendaLight.paper) failures.push(`public/manifest.webmanifest ${key}: ${manifest[key]}, debe ser ${agendaLight.paper}`);
+}
+
+// La pantalla de carga con los colores propios del panel (brand-boot.ts): public/theme-boot.js sólo acepta
+// variables con colores. Las de todas las paletas, en los dos modos, tienen que pasar su filtro, o la
+// pantalla de carga volvería en silencio a los de Agenda360.
+const safeCss = /var SAFE_CSS = \/(.+)\/([a-z]*);/.exec(read("../public/theme-boot.js"));
+if (!safeCss) failures.push("public/theme-boot.js: no encuentro SAFE_CSS");
+else {
+  const filter = new RegExp(safeCss[1], safeCss[2]);
+  for (const preset of BRAND_PRESETS) {
+    const palettes = resolveBrandPalette(preset.colors ?? DEFAULT_BRAND_COLORS);
+    for (const mode of ["light", "dark"] as const) {
+      if (!filter.test(brandThemeCss(palettes[mode]))) failures.push(`public/theme-boot.js: SAFE_CSS rechaza las variables de «${preset.name}» (${mode})`);
+    }
+  }
+  if (filter.test("--ink: #fff; } body { background: url(x);")) failures.push("public/theme-boot.js: SAFE_CSS deja pasar CSS que no son colores");
 }
 
 if (failures.length) {

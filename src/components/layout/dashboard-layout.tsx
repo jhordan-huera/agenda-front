@@ -123,7 +123,7 @@ function DashboardShell() {
   };
 
   return (
-    <BrandThemeProvider colors={business?.brandColors}>
+    <BrandThemeProvider colors={business?.brandColors} remember="dashboard">
       <WhatsAppNoticeProvider>
         <ToCloseContext.Provider value={toCloseValue}>
           {billingScreen && pendingCharge ? (
