@@ -43,6 +43,7 @@ import { capitalize, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Appointment, Client, ISODate, Professional, Service } from "@/types";
 import {
+  BOARD_COLUMN_MARK,
   BOARD_COLUMNS,
   BOARD_COLUMN_TITLES,
   boardColumnOf,
@@ -72,17 +73,6 @@ interface MoveRequest {
   action: BoardAction;
   lands: BoardColumn;
 }
-
-/**
- * La marca de cada columna, en la gama de la marca como el tablero de la portada (spec 032): lo pendiente con
- * el borde punteado, lo confirmado en el color de la marca, lo atendido en gris y lo pagado lleno.
- */
-const COLUMN_MARK: Record<Exclude<BoardColumn, "closed">, string> = {
-  pending: "border-[1.5px] border-dashed border-ink/60",
-  confirmed: "bg-ink/25 ring-[1.5px] ring-ink ring-inset",
-  completed: "bg-muted-foreground/40",
-  paid: "bg-ink",
-};
 
 /** Las cuatro columnas del recorrido; la plegada va aparte. */
 const FLOW_COLUMNS = BOARD_COLUMNS.filter(
@@ -271,7 +261,7 @@ export function BoardView({
                   state === "blocked" && "opacity-55",
                 )}
               >
-                <ColumnHeading id={`board-${id}`} title={title} count={items.length} mark={<span aria-hidden className={cn("size-2.5 shrink-0 rounded-full", COLUMN_MARK[id])} />} />
+                <ColumnHeading id={`board-${id}`} title={title} count={items.length} mark={<span aria-hidden className={cn("size-2.5 shrink-0 rounded-full", BOARD_COLUMN_MARK[id])} />} />
                 <ColumnList items={items} empty={state === "open" || state === "over" ? "Suelta aquí" : "Sin citas"}>
                   {items.map((appointment) => (
                     <BoardCard key={appointment.id} appointment={appointment} column={id} saving={appointment.id in saving} {...cardProps} />
@@ -575,7 +565,7 @@ function BoardCard({
               <DropdownMenuLabel>Mover a…</DropdownMenuLabel>
               {targets.map(({ column: target }) => (
                 <DropdownMenuItem key={target} onSelect={() => onMove(appointment, target)}>
-                  {target !== "closed" && <span aria-hidden className={cn("size-2.5 shrink-0 rounded-full", COLUMN_MARK[target])} />}
+                  {target !== "closed" && <span aria-hidden className={cn("size-2.5 shrink-0 rounded-full", BOARD_COLUMN_MARK[target])} />}
                   {BOARD_COLUMN_TITLES[target]}
                 </DropdownMenuItem>
               ))}

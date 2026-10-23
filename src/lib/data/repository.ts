@@ -54,6 +54,9 @@ import type {
   AdminBusinessCategory,
   AdminBusinessReferrals,
   AdminBusinessSummary,
+  AdminCalendar,
+  AdminCalendarDay,
+  AdminCalendarFilters,
   AdminPlanRequest,
   AdminUserSummary,
   AnalyticsPeriodDays,
@@ -457,6 +460,13 @@ export interface PlatformAdminRepository {
    * calcula nada). null: todavía no hay ninguna.
    */
   getAnalytics(days: AnalyticsPeriodDays): Promise<AnalyticsSnapshot | null>;
+  /**
+   * El calendario de la plataforma (spec 035): sólo cifras por día y por hora, de `from` a `to` (incluido,
+   * 42 días como mucho). Nunca pacientes ni citas sueltas.
+   */
+  getCalendar(from: ISODate, to: ISODate, filters: AdminCalendarFilters): Promise<AdminCalendar>;
+  /** Los negocios con citas ese día o, con `hour`, a esa hora: sus cifras por estado y por agenda. */
+  getCalendarDay(date: ISODate, hour: number | null, filters: AdminCalendarFilters): Promise<AdminCalendarDay>;
   /**
    * La pantalla «Base de datos» (spec 024): qué ocupa la base, qué la hace trabajar, su mantenimiento y
    * cómo crece. Sólo el super admin principal (los demás reciben `forbidden`); se calcula al pedirla.

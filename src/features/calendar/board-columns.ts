@@ -24,6 +24,18 @@ export const BOARD_COLUMN_TITLES = Object.fromEntries(BOARD_COLUMNS.map(({ id, t
   string
 >;
 
+/**
+ * La marca de cada columna, en la gama de la marca como el tablero de la portada (spec 032): lo pendiente con
+ * el borde punteado, lo confirmado en el color de la marca, lo atendido en gris y lo pagado lleno. También la
+ * usa el calendario de la plataforma (spec 035).
+ */
+export const BOARD_COLUMN_MARK: Record<Exclude<BoardColumn, "closed">, string> = {
+  pending: "border-[1.5px] border-dashed border-ink/60",
+  confirmed: "bg-ink/25 ring-[1.5px] ring-ink ring-inset",
+  completed: "bg-muted-foreground/40",
+  paid: "bg-ink",
+};
+
 type BoardAppointment = Pick<Appointment, "status" | "paidAt">;
 
 /**

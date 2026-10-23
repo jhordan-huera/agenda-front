@@ -1,4 +1,5 @@
 import type { AppointmentFilters } from "@/lib/data";
+import type { AdminCalendarFilters } from "@/types";
 
 /** Claves de caché. Todas incluyen el businessId: la caché también es multi-tenant. */
 export const queryKeys = {
@@ -74,6 +75,9 @@ export const queryKeys = {
     stats: ["admin", "stats"] as const,
     /** La foto de la analítica de 30 o de 90 días (spec 016). */
     analytics: (days: number) => ["admin", "analytics", days] as const,
+    /** El calendario de la plataforma (spec 035): el rango y el panel de un día o una hora. */
+    calendar: (from: string, to: string, filters: AdminCalendarFilters) => ["admin", "calendar", from, to, filters] as const,
+    calendarDay: (date: string, hour: number | null, filters: AdminCalendarFilters) => ["admin", "calendar", "day", date, hour, filters] as const,
     /** La pantalla «Base de datos» (spec 024). */
     database: ["admin", "database"] as const,
     businesses: ["admin", "businesses"] as const,

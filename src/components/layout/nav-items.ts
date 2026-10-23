@@ -48,6 +48,8 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   // El cobro de las mensualidades (spec 029).
   { to: "/admin/billing", label: "Cobros", icon: WalletCards },
   { to: "/admin/analytics", label: "Analítica", icon: ChartNoAxesCombined },
+  // Sólo cifras (spec 035): las citas de un negocio se ven en su modo soporte.
+  { to: "/admin/calendar", label: "Calendario", icon: CalendarDays },
   { to: "/admin/users", label: "Usuarios", icon: UserCog },
   { to: "/admin/plans", label: "Planes", icon: CreditCard },
   { to: "/admin/categories", label: "Categorías", icon: Tags },
