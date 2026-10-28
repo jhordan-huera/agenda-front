@@ -212,9 +212,16 @@ export default function ClinicalTemplatesPage() {
           </section>
 
           <section aria-labelledby="platform-heading" className="space-y-3">
-            <h2 id="platform-heading" className="font-semibold">
-              Formatos de la plataforma
-            </h2>
+            <div>
+              <h2 id="platform-heading" className="font-semibold">
+                Formatos de la plataforma
+              </h2>
+              {/* Una psicóloga duplicó «Sesión» queriendo adaptar la primera consulta (2026-10-28). */}
+              <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+                Cada uno dice en qué consulta se usa: por ejemplo, uno para la primera y otro para las de seguimiento.
+                {canEdit && " Para adaptar uno, toca «Duplicar» en ese mismo formato: el original no cambia."}
+              </p>
+            </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {platform.map((template) => (
                 <TemplateCard key={template.id} template={template} meta={countFields(template)}>
