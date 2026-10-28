@@ -5,6 +5,7 @@ import { fileContentType, uploadToStorage } from "@/lib/upload";
 import type {
   ClinicalAddendumInput,
   ClinicalAttachmentInput,
+  ClinicalNoteDateInput,
   ClinicalNoteInput,
   ClinicalProfileInput,
   ClinicalTemplateInput,
@@ -105,6 +106,11 @@ export const useAddClinicalNote = (clientId: string) =>
 export const useAddClinicalAddendum = (clientId: string) =>
   useClinicalMutation(clientId, (businessId, { noteId, input }: { noteId: string; input: ClinicalAddendumInput }) =>
     data.clinicalRecords.addAddendum(businessId, noteId, input),
+  );
+
+export const useChangeClinicalNoteDate = (clientId: string) =>
+  useClinicalMutation(clientId, (businessId, { noteId, input }: { noteId: string; input: ClinicalNoteDateInput }) =>
+    data.clinicalRecords.changeNoteDate(businessId, noteId, input),
   );
 
 /**

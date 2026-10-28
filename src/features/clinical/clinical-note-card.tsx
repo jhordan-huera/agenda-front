@@ -1,4 +1,4 @@
-import { FileStack, MessageSquarePlus } from "lucide-react";
+import { CalendarClock, FileStack, MessageSquarePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/shared/submit-button";
@@ -12,6 +12,7 @@ import { getErrorMessage } from "@/lib/data";
 import { capitalize, formatDateTime, formatLongDate } from "@/lib/format";
 import type { ClinicalNote, ClinicalTemplateVersion } from "@/types";
 import { ClinicalNoteContent } from "./clinical-note-content";
+import { ClinicalNoteDateDialog } from "./clinical-note-date-dialog";
 
 interface ClinicalNoteCardProps {
   note: ClinicalNote;
@@ -28,6 +29,7 @@ export function ClinicalNoteCard({ note, template, ownTemplate = false, serviceN
   const timezone = useCurrentBusiness().data?.timezone;
   const [writing, setWriting] = useState(false);
   const [text, setText] = useState("");
+  const [changingDate, setChangingDate] = useState(false);
 
   const save = async () => {
     try {
@@ -44,7 +46,10 @@ export function ClinicalNoteCard({ note, template, ownTemplate = false, serviceN
     <Card className="gap-4" aria-label={`Evolución del ${formatLongDate(note.date)}`}>
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <CardTitle className="text-base">{capitalize(formatLongDate(note.date))}</CardTitle>
+          <CardTitle className="text-base">
+            <span className="sr-only">Consulta del </span>
+            {capitalize(formatLongDate(note.date))}
+          </CardTitle>
           {template && (
             <div className="flex flex-wrap items-center gap-1.5" title="Formato con que se registró">
               <Badge variant="secondary">
@@ -55,7 +60,7 @@ export function ClinicalNoteCard({ note, template, ownTemplate = false, serviceN
           )}
         </div>
         <CardDescription>
-          {serviceName ? `${serviceName} · ` : ""}Registrada por {note.authorName} · {formatDateTime(note.createdAt, timezone)}
+          {serviceName ? `${serviceName} · ` : ""}Registrada el {formatDateTime(note.createdAt, timezone)} por {note.authorName}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
@@ -98,11 +103,17 @@ export function ClinicalNoteCard({ note, template, ownTemplate = false, serviceN
             </div>
           </div>
         ) : (
-          <Button type="button" variant="ghost" size="sm" className="justify-self-start text-muted-foreground" onClick={() => setWriting(true)}>
-            <MessageSquarePlus /> Añadir aclaración
-          </Button>
+          <div className="flex flex-wrap gap-1">
+            <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setWriting(true)}>
+              <MessageSquarePlus /> Añadir aclaración
+            </Button>
+            <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setChangingDate(true)}>
+              <CalendarClock /> Cambiar fecha
+            </Button>
+          </div>
         )}
       </CardContent>
+      <ClinicalNoteDateDialog note={note} timezone={timezone} open={changingDate} onOpenChange={setChangingDate} />
     </Card>
   );
 }

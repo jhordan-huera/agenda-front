@@ -166,6 +166,8 @@ export const apiRepository: DataRepository = {
       api.post<ClinicalNote>(`${business(businessId)}/clients/${id(clientId)}/clinical-record/notes`, input),
     addAddendum: (businessId, noteId, input) =>
       api.post<ClinicalNote>(`${business(businessId)}/clinical-notes/${id(noteId)}/addenda`, input),
+    changeNoteDate: (businessId, noteId, input) =>
+      api.patch<ClinicalNote>(`${business(businessId)}/clinical-notes/${id(noteId)}/date`, input),
   },
 
   dataExport: {

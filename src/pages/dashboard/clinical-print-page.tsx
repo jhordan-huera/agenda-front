@@ -132,7 +132,8 @@ export default function ClinicalPrintPage() {
                   {serviceOf(note.appointmentId) && ` · ${serviceOf(note.appointmentId)}`}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {templateVersions[note.templateVersionId]?.name ?? "Evolución"} · Registrada por {note.authorName}
+                  {templateVersions[note.templateVersionId]?.name ?? "Evolución"} · Registrada el{" "}
+                  {formatDateTime(note.createdAt, business?.timezone)} por {note.authorName}
                 </p>
                 {templateVersions[note.templateVersionId] && (
                   <ClinicalNoteContent className="mt-2" fields={templateVersions[note.templateVersionId].fields} data={note.data} />

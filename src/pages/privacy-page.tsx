@@ -7,7 +7,7 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "20 de octubre de 2026";
+const LAST_UPDATED = "28 de octubre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
@@ -155,9 +155,10 @@ export default function PrivacyPage() {
             <p>
               El profesional es responsable de obtener el consentimiento de su paciente antes de registrar su historia
               clínica (la plataforma guarda la fecha de ese consentimiento). Las evoluciones registradas no se pueden
-              modificar ni borrar, sólo completar con una aclaración. Queda registrado quién del equipo del negocio abre
-              cada historia clínica y cada archivo. Los archivos se guardan en un almacenamiento privado y sólo se abren
-              con enlaces temporales de unos minutos.
+              modificar ni borrar, sólo completar con una aclaración; únicamente su fecha de consulta se puede corregir,
+              hasta 30 días antes del día en que se registraron, y cada cambio queda anotado. También queda registrado
+              quién del equipo del negocio abre cada historia clínica y cada archivo. Los archivos se guardan en un
+              almacenamiento privado y sólo se abren con enlaces temporales de unos minutos.
             </p>
           </Section>
 
