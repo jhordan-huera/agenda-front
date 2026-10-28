@@ -199,7 +199,7 @@ ok(
 ok(html.includes("color-scheme: light") && html.includes("@media print"), "clara y para imprimir");
 const has = (label: string, ...needles: string[]) => ok(needles.every((needle) => html.includes(needle)), label, needles.filter((needle) => !html.includes(needle)));
 has("los datos del paciente, el consentimiento y los antecedentes", "Historia clínica", "0912345675", "12/04/1988", "Femenino", "O+", "Firmado el 10/01/2026", "Alergias", "Penicilina &lt;script&gt;", "Sin registrar");
-has("la evolución: fecha, servicio, formato, autor", "Jueves, 5 de marzo de 2026 · Consulta odontológica", "Formato &lt;script&gt;", "Registrada por Dra. Valeria Cruz");
+has("la evolución: fecha, servicio, formato, autor", "Jueves, 5 de marzo de 2026 · Consulta odontológica", "Formato &lt;script&gt;", "Registrada el ", " por Dra. Valeria Cruz");
 has("texto y texto largo (con sus saltos de línea)", "Dolor &lt;script&gt;", 'class="pre">Primera línea\nSegunda línea');
 has("número con su unidad", "72 kg", "170 cm");
 has("escala", "7/10");

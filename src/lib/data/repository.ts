@@ -25,6 +25,7 @@ import type {
 import type {
   ClinicalAddendumInput,
   ClinicalAttachmentInput,
+  ClinicalNoteDateInput,
   ClinicalNoteInput,
   ClinicalProfileInput,
   ClinicalTemplateInput,
@@ -245,6 +246,8 @@ export interface ClinicalRecordRepository {
   saveProfile(businessId: string, clientId: string, input: ClinicalProfileInput): Promise<ClinicalProfile>;
   addNote(businessId: string, clientId: string, input: ClinicalNoteInput): Promise<ClinicalNote>;
   addAddendum(businessId: string, noteId: string, input: ClinicalAddendumInput): Promise<ClinicalNote>;
+  /** Corrige la fecha de la consulta (spec 037): queda en la actividad. */
+  changeNoteDate(businessId: string, noteId: string, input: ClinicalNoteDateInput): Promise<ClinicalNote>;
 }
 
 /**

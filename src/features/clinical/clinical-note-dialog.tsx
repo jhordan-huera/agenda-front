@@ -5,6 +5,7 @@ import { ErrorState } from "@/components/shared/error-state";
 import { FormField } from "@/components/shared/form-field";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +18,7 @@ import { useBusinessNow } from "@/hooks/use-business-now";
 import { businessTemplate } from "@/lib/clinical-templates";
 import { DataError, getErrorMessage } from "@/lib/data";
 import { capitalize, formatNumericDate, formatShortDate } from "@/lib/format";
-import { clinicalNoteDataSchema } from "@/lib/validations/clinical";
+import { CLINICAL_NOTE_DATE_WINDOW_DAYS, clinicalNoteDataSchema, clinicalNoteDateRange } from "@/lib/validations/clinical";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { ClinicalField, ClinicalRecord, ClinicalTemplate, OdontogramValue } from "@/types";
 import { ClinicalFieldInput } from "./clinical-field-input";
@@ -104,9 +105,14 @@ function ClinicalNoteForm({
   const addNote = useAddClinicalNote(clientId);
   const { data: appointments = [] } = useAppointments({ clientId });
   const { servicesById } = useLookups();
-  // La fecha de la evolución es siempre la de hoy (la pone la API): no se puede fechar con retraso.
+  // La fecha de la consulta: hoy por defecto, hasta 30 días atrás y nunca futura (spec 037).
   const { data: business } = useCurrentBusiness();
   const today = useBusinessNow(business?.timezone).date;
+  const dateRange = clinicalNoteDateRange(today);
+  const inDateRange = (value: string) => value >= dateRange.min && value <= dateRange.max;
+  // Mientras no se elija a mano, la de la cita unida (si cabe) o la de hoy.
+  const [chosenDate, setChosenDate] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string>();
   // Mientras no se elija un formato a mano, se usa el del negocio.
   const [chosenTemplateId, setChosenTemplateId] = useState<string | null>(null);
   const [linkedAppointment, setLinkedAppointment] = useState<string | null>(appointmentId);
@@ -141,6 +147,8 @@ function ClinicalNoteForm({
   const others = rest.filter((t) => t.businessId === null && !t.recommended);
   // Citas del paciente que no están canceladas, de la más reciente a la más antigua.
   const linkable = appointments.filter((a) => a.status !== "cancelled").toReversed();
+  const linkedDate = appointments.find((a) => a.id === linkedAppointment)?.date;
+  const date = chosenDate ?? (linkedDate && inDateRange(linkedDate) ? linkedDate : today);
 
   const setValue = (id: string, value: unknown) => {
     if (!template) return;
@@ -159,7 +167,15 @@ function ClinicalNoteForm({
     if (!template) return;
     const result = validate(clinicalNoteDataSchema(template.fields), values);
     setErrors(result.errors);
-    if (!result.success) {
+    const nextDateError = !date
+      ? "Elige la fecha de la consulta."
+      : date > dateRange.max
+        ? "La fecha de la consulta no puede ser futura."
+        : date < dateRange.min
+          ? `Puede ser de hasta ${CLINICAL_NOTE_DATE_WINDOW_DAYS} días atrás: desde el ${formatNumericDate(dateRange.min)}.`
+          : undefined;
+    setDateError(nextDateError);
+    if (!result.success || nextDateError) {
       // Lleva al primer campo con error (las plantillas pueden ser largas).
       requestAnimationFrame(() => {
         const invalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"], [id$="-error"], [role="alert"]');
@@ -168,7 +184,7 @@ function ClinicalNoteForm({
       return;
     }
     try {
-      await addNote.mutateAsync({ appointmentId: linkedAppointment, templateVersionId: template.versionId, data: result.data });
+      await addNote.mutateAsync({ appointmentId: linkedAppointment, date, templateVersionId: template.versionId, data: result.data });
       toast.success("Evolución registrada");
       onDone();
     } catch (error) {
@@ -185,7 +201,7 @@ function ClinicalNoteForm({
         <DialogDescription>Historia clínica de {clientName}.</DialogDescription>
       </DialogHeader>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_150px]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_11rem]">
         <FormField label="Formato" hint={template && <span data-testid="template-reason">{templateReason}</span>}>
           {(field) => (
             <Select
@@ -237,19 +253,33 @@ function ClinicalNoteForm({
             </Select>
           )}
         </FormField>
-        <div className="grid content-start gap-2">
-          <p className="text-sm font-medium">Fecha</p>
-          <p className="flex h-8 items-center gap-2 rounded-lg border bg-muted/40 px-2.5 text-sm" title="La pone el sistema: no se puede cambiar">
-            <Lock className="size-3.5 text-muted-foreground" aria-hidden /> {formatNumericDate(today)}
-          </p>
-        </div>
+        <FormField label="Fecha de la consulta" error={dateError}>
+          {(field) => (
+            <Input
+              {...field}
+              type="date"
+              min={dateRange.min}
+              max={dateRange.max}
+              value={date}
+              onChange={(e) => {
+                setChosenDate(e.target.value);
+                setDateError(undefined);
+              }}
+            />
+          )}
+        </FormField>
       </div>
 
       <FormField label="Cita" hint="Une la evolución a la consulta en la que se hizo.">
         {(field) => (
           <Select
             value={linkedAppointment ?? NO_APPOINTMENT}
-            onValueChange={(value) => setLinkedAppointment(linkable.find((a) => a.id === value)?.id ?? null)}
+            onValueChange={(value) => {
+              setLinkedAppointment(linkable.find((a) => a.id === value)?.id ?? null);
+              // La fecha pasa a la de la cita elegida (o a hoy, sin cita).
+              setChosenDate(null);
+              setDateError(undefined);
+            }}
           >
             <SelectTrigger {...field} className="w-full">
               <SelectValue />
@@ -292,7 +322,7 @@ function ClinicalNoteForm({
       )}
       <p className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
         <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-        Una vez guardada, la evolución no se puede editar ni borrar. Si hay que corregir algo, añade una aclaración.
+        Una vez guardada, la evolución no se puede editar ni borrar: para corregir algo, añade una aclaración. La fecha de la consulta sí se puede cambiar después.
       </p>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>

@@ -147,7 +147,7 @@ export function clinicalRecordHtml(input: ClinicalHtmlInput): string {
     const template = templateVersions[note.templateVersionId];
     return `<li>
 <h3>${esc(capitalize(formatLongDate(note.date)))}${note.serviceName ? ` · ${esc(note.serviceName)}` : ""}</h3>
-<p class="muted small">${esc(template?.name ?? "Evolución")} · Registrada por ${esc(note.authorName)} · ${esc(formatDateTime(note.createdAt, timezone))}</p>
+<p class="muted small">${esc(template?.name ?? "Evolución")} · Registrada el ${esc(formatDateTime(note.createdAt, timezone))} por ${esc(note.authorName)}</p>
 ${template ? noteContentHtml(template.fields, note.data) : '<p class="muted">No se pudo cargar el formato de esta evolución.</p>'}
 ${note.addenda
   .map(
