@@ -12,7 +12,7 @@ import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useSaveClinicalProfile } from "@/hooks/queries/use-clinical";
 import { getErrorMessage } from "@/lib/data";
 import { formatDateTime, formatNumericDate } from "@/lib/format";
-import { onlyDigits } from "@/lib/identity";
+import { DOCUMENT_ID_MAX_LENGTH, documentIdChars } from "@/lib/identity";
 import { clinicalProfileSchema, type ClinicalProfileInput } from "@/lib/validations/clinical";
 import { validate } from "@/lib/validations/validate";
 import type { ClinicalProfile } from "@/types";
@@ -95,10 +95,10 @@ export function ClinicalProfileForm({
           {(field) => (
             <Input
               {...field}
-              inputMode="numeric"
-              maxLength={20}
+              autoCapitalize="characters"
+              maxLength={DOCUMENT_ID_MAX_LENGTH}
               value={values.documentId}
-              onChange={(e) => setField("documentId", onlyDigits(e.target.value))}
+              onChange={(e) => setField("documentId", documentIdChars(e.target.value))}
             />
           )}
         </FormField>

@@ -10,13 +10,13 @@ import type {
   ToothState,
 } from "@/types";
 import { addDaysISO } from "@/lib/time";
-import { optionalDigitsField, optionalText, requiredText, stripControlChars } from "./fields";
+import { optionalDocumentField, optionalText, requiredText, stripControlChars } from "./fields";
 
 const optionalDate = z.string().refine((value) => value === "" || /^\d{4}-\d{2}-\d{2}$/.test(value), "Fecha inválida");
 const longText = optionalText(4000);
 
 export const clinicalProfileSchema = z.object({
-  documentId: optionalDigitsField,
+  documentId: optionalDocumentField,
   birthDate: optionalDate,
   sex: z.enum(["", "female", "male", "other"]),
   bloodType: optionalText(10),
