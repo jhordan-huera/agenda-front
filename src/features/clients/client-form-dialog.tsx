@@ -18,7 +18,7 @@ import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useSaveClient } from "@/hooks/queries/use-clients";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { clientRequiredFieldsOf } from "@/lib/constants/business";
-import { documentIdError, documentIdMaxLength, onlyDigits } from "@/lib/identity";
+import { DOCUMENT_ID_MAX_LENGTH, documentIdChars } from "@/lib/identity";
 import { clientSchemaFor, type ClientInput } from "@/lib/validations/client";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { Client } from "@/types";
@@ -91,11 +91,8 @@ function ClientForm({
     // Sin el negocio aún no se sabe qué datos son obligatorios (el botón espera a que cargue).
     if (!business) return;
     const result = validate(clientSchemaFor(required), values);
-    // La cédula escrita, en Ecuador, con su dígito verificador (también si es opcional).
-    const documentError =
-      result.success && result.data.documentId ? documentIdError(result.data.documentId, business.timezone) : null;
-    setErrors({ ...result.errors, ...(documentError ? { documentId: documentError } : {}) });
-    if (!result.success || documentError) return;
+    setErrors(result.errors);
+    if (!result.success) return;
 
     try {
       const saved = await saveClient.mutateAsync({ id: client?.id, input: result.data });
@@ -117,17 +114,17 @@ function ClientForm({
         label="Cédula"
         error={errors.documentId}
         optional={!required.documentId}
-        hint="Sólo números, sin guiones. Identifica al cliente: con ella, sus reservas online se unen a esta ficha."
+        hint="Cédula, pasaporte o documento de otro país, sin guiones. Identifica al cliente: con ella, sus reservas online se unen a esta ficha."
       >
         {(field) => (
           <Input
             {...field}
-            inputMode="numeric"
             autoComplete="off"
-            maxLength={business ? documentIdMaxLength(business.timezone) : 20}
+            autoCapitalize="characters"
+            maxLength={DOCUMENT_ID_MAX_LENGTH}
             className="sm:w-56"
             value={values.documentId}
-            onChange={(e) => set("documentId", onlyDigits(e.target.value))}
+            onChange={(e) => set("documentId", documentIdChars(e.target.value))}
           />
         )}
       </FormField>

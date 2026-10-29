@@ -9,10 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { clearHomeVisitErrors, EMPTY_HOME_VISIT, getPlace } from "@/features/appointments/appointment-utils";
 import { HomeVisitFields } from "@/features/appointments/home-visit-fields";
 import { MODE_ICONS } from "@/features/services/mode-icons";
-import { documentIdError, documentIdMaxLength, normalizeDocumentId, onlyDigits } from "@/lib/identity";
+import { DOCUMENT_ID_MAX_LENGTH, documentIdChars } from "@/lib/identity";
 import { formatCurrency, isPriceVisible } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { publicBookingSchema, type BookingPerson, type PublicBookingInput } from "@/lib/validations/booking";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { HomeVisitAddress, PublicBusiness, PublicService, ServiceMode } from "@/types";
@@ -89,16 +88,6 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
       isVirtual: place === "virtual",
       lastHomeVisit: current.homeVisit ?? current.lastHomeVisit,
     }));
-  // Sin cédula ecuatoriana (p. ej. un extranjero) no puede reservar online: se le ofrece escribir al negocio.
-  const showNoCedulaHelp =
-    Boolean(errors.documentId) && documentIdError(normalizeDocumentId(values.documentId), business.timezone) !== null;
-  const noCedulaUrl = business.phone
-    ? getWhatsAppUrl(
-        business.phone,
-        business.timezone,
-        `Hola, quisiera agendar una cita en ${business.name}, pero no tengo cédula ecuatoriana.`,
-      )
-    : null;
   const placeOptions: Record<ServiceMode, { title: string; detail: string }> = {
     business: { title: `En ${business.name}`, detail: business.address || "En el local del negocio" },
     home: {
@@ -114,16 +103,8 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     const result = validate(publicBookingSchema, { ...selection, ...values, extraPatients: others });
-    // La cédula de un negocio de Ecuador, además, debe ser válida (dígito verificador), la de cada persona.
-    const documentErrors: FieldErrors = {};
-    const checkDocument = (path: string, documentId: string) => {
-      const error = result.errors[path] ? null : documentIdError(normalizeDocumentId(documentId), business.timezone);
-      if (error) documentErrors[path] = error;
-    };
-    checkDocument("documentId", values.documentId);
-    others.forEach((person, index) => checkDocument(`extraPatients.${index}.documentId`, person.documentId));
-    setErrors({ ...result.errors, ...documentErrors });
-    if (result.success && Object.keys(documentErrors).length === 0) onContinue(result.data);
+    setErrors(result.errors);
+    if (result.success) onContinue(result.data);
   };
 
   return (
@@ -137,37 +118,20 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
           </Button>
         </div>
       )}
-      <FormField label="Número de cédula" error={errors.documentId} hint="Sólo números, sin guiones.">
+      <FormField label="Número de cédula" error={errors.documentId} hint="Cédula, pasaporte o documento de tu país, sin guiones.">
         {(field) => (
           <Input
             {...field}
-            inputMode="numeric"
             autoComplete="off"
-            maxLength={documentIdMaxLength(business.timezone)}
+            autoCapitalize="characters"
+            maxLength={DOCUMENT_ID_MAX_LENGTH}
             className="h-10"
             placeholder="Ej.: 1712345678"
             value={values.documentId}
-            onChange={(e) => set("documentId")(onlyDigits(e.target.value))}
+            onChange={(e) => set("documentId")(documentIdChars(e.target.value))}
           />
         )}
       </FormField>
-      {showNoCedulaHelp && (
-        <p className="-mt-2 text-xs text-muted-foreground">
-          ¿No tienes cédula ecuatoriana?{" "}
-          {noCedulaUrl ? (
-            <a
-              href={noCedulaUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-ink underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              Escríbenos por WhatsApp
-            </a>
-          ) : (
-            `Comunícate con ${business.name} para agendar tu cita.`
-          )}
-        </p>
-      )}
       <FormField label="Nombre completo" error={errors.name}>
         {(field) => (
           <Input {...field} autoComplete="name" className="h-10" value={values.name} onChange={(e) => set("name")(e.target.value)} />
@@ -212,7 +176,6 @@ export function DetailsStep({ selection, service, business, contact, onContactCh
           person={person}
           errors={errors}
           path={`extraPatients.${index}`}
-          documentMaxLength={documentIdMaxLength(business.timezone)}
           businessName={business.name}
           onChange={(key, value) => setOther(index, key, value)}
         />
@@ -316,7 +279,6 @@ function OtherPersonFields({
   person,
   errors,
   path,
-  documentMaxLength,
   businessName,
   onChange,
 }: {
@@ -325,7 +287,6 @@ function OtherPersonFields({
   errors: FieldErrors;
   /** Ruta de sus errores ("extraPatients.0"). */
   path: string;
-  documentMaxLength: number;
   businessName: string;
   onChange: (key: keyof BookingPerson, value: string) => void;
 }) {
@@ -335,16 +296,16 @@ function OtherPersonFields({
       <h3 aria-hidden className="text-base font-bold">
         {title}
       </h3>
-      <FormField label="Número de cédula" error={errors[`${path}.documentId`]} hint="Sólo números, sin guiones.">
+      <FormField label="Número de cédula" error={errors[`${path}.documentId`]} hint="Cédula, pasaporte o documento de su país, sin guiones.">
         {(field) => (
           <Input
             {...field}
-            inputMode="numeric"
             autoComplete="off"
-            maxLength={documentMaxLength}
+            autoCapitalize="characters"
+            maxLength={DOCUMENT_ID_MAX_LENGTH}
             className="h-10"
             value={person.documentId}
-            onChange={(e) => onChange("documentId", onlyDigits(e.target.value))}
+            onChange={(e) => onChange("documentId", documentIdChars(e.target.value))}
           />
         )}
       </FormField>
