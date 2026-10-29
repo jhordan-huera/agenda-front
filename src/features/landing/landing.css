@@ -1,0 +1,361 @@
+/*
+ * La portada editorial (prueba en dev, 2026-10-27), al estilo de getartcraft.com: líneas de plano, etiquetas
+ * en mayúsculas monoespaciadas y movimiento ligado al desplazamiento. Todo con los tokens de la marca
+ * (src/index.css), así sirve en claro y en oscuro y con los colores de siempre: el tomate y los grises.
+ * Con «reducir movimiento» nada se anima: todo queda en su sitio final.
+ */
+
+/* ------------------------------------------------------------------ Aparecer -- */
+
+/* Lo que aparece al llegar con el desplazamiento (useReveal): sube un poco y se aclara, una vez. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+[data-reveal][data-revealed] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.8s var(--ease-out-soft),
+    transform 0.8s var(--ease-out-soft);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+/* La línea de la marca sobre cada barra de sección: se dibuja de izquierda a derecha. */
+[data-draw] {
+  transform: scaleX(0);
+  transform-origin: left;
+}
+[data-revealed] [data-draw],
+[data-draw][data-revealed] {
+  transform: scaleX(1);
+  transition: transform 0.9s cubic-bezier(0.33, 1, 0.68, 1) 0.1s;
+}
+
+/* La entrada al cargar: las letras del nombre, el menú y el texto, escalonados con --rise-delay. */
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+  }
+}
+.landing-rise {
+  animation: landing-rise 0.9s var(--ease-out-soft) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+/* --------------------------------------------------------------- La cinta -- */
+
+@keyframes landing-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.landing-marquee-track {
+  animation: landing-marquee 36s linear infinite;
+}
+.landing-marquee:hover .landing-marquee-track {
+  animation-play-state: paused;
+}
+
+/* ---------------------------------------------------------- Los anillos -- */
+
+@keyframes landing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.landing-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: landing-spin var(--ring-duration, 90s) linear infinite;
+  animation-direction: var(--ring-direction, normal);
+}
+
+/* -------------------------------------------------------------- La regla -- */
+
+/* Las rayas entran en cascada al cargar, desde el borde. */
+@keyframes landing-tick {
+  from {
+    transform: scaleX(0);
+  }
+}
+.landing-tick {
+  transform-origin: right;
+  animation: landing-tick 0.5s var(--ease-out-soft) both;
+  animation-delay: var(--tick-delay, 0ms);
+}
+/* Las cifras del porcentaje ruedan como un contador. */
+.landing-digit-col {
+  transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+/* ------------------------------------------- Las ilustraciones de las funciones -- */
+
+/*
+ * Cada ilustración corre en bucle sólo mientras se ve (data-playing en su casilla); fuera de la pantalla,
+ * quieta. Todas duran lo mismo (--lv-loop) y cada pieza dice en qué momento entra.
+ */
+.lv {
+  --lv-loop: 7s;
+}
+.lv [class*="lv-a-"] {
+  animation-duration: var(--lv-loop);
+  animation-iteration-count: infinite;
+  animation-timing-function: var(--ease-out-soft);
+  animation-fill-mode: both;
+  animation-play-state: paused;
+}
+[data-playing] .lv [class*="lv-a-"] {
+  animation-play-state: running;
+}
+
+/* Aparecen en su momento del bucle (al 15 %, 30 %, 55 % o 75 %) y se quedan hasta el final. */
+@keyframes lv-in-30 {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  38%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes lv-in-15 {
+  0%,
+  12% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  20%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes lv-in-55 {
+  0%,
+  55% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  62%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes lv-in-75 {
+  0%,
+  72% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  78%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.lv-a-in15 {
+  animation-name: lv-in-15;
+}
+.lv-a-in30 {
+  animation-name: lv-in-30;
+}
+.lv-a-in55 {
+  animation-name: lv-in-55;
+}
+.lv-a-in75 {
+  animation-name: lv-in-75;
+}
+
+/* Una hora que se elige: se llena con la marca a mitad del bucle. */
+@keyframes lv-pick {
+  0%,
+  34% {
+    background: transparent;
+    color: var(--foreground);
+    border-color: var(--border);
+  }
+  40%,
+  92% {
+    background: var(--ink);
+    color: var(--primary-foreground);
+    border-color: var(--ink);
+  }
+  100% {
+    background: transparent;
+  }
+}
+.lv-a-pick {
+  animation-name: lv-pick;
+}
+
+/* Un botón que se pulsa. */
+@keyframes lv-press {
+  0%,
+  48% {
+    transform: none;
+  }
+  52% {
+    transform: scale(0.94);
+  }
+  56%,
+  100% {
+    transform: none;
+  }
+}
+.lv-a-press {
+  animation-name: lv-press;
+}
+
+/* Una barra que se llena (la subida de un comprobante, el puntaje de una escala). */
+@keyframes lv-fill {
+  0%,
+  15% {
+    transform: scaleX(0);
+  }
+  50%,
+  92% {
+    transform: scaleX(var(--lv-fill, 1));
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+.lv-a-fill {
+  transform-origin: left;
+  animation-name: lv-fill;
+}
+
+/* La tarjeta del tablero que pasa de columna en columna (cuatro columnas, tres pasos). */
+@keyframes lv-board {
+  0%,
+  14% {
+    transform: translateX(0);
+  }
+  24%,
+  38% {
+    transform: translateX(calc(100% + var(--lv-gap)));
+  }
+  48%,
+  62% {
+    transform: translateX(calc(200% + 2 * var(--lv-gap)));
+  }
+  72%,
+  90% {
+    transform: translateX(calc(300% + 3 * var(--lv-gap)));
+  }
+  100% {
+    transform: translateX(calc(300% + 3 * var(--lv-gap)));
+    opacity: 0;
+  }
+}
+.lv-a-board {
+  animation-name: lv-board;
+}
+
+/* Las citas que entran en la semana, una tras otra (--lv-at: su momento, de 0 a 1). */
+@keyframes lv-slot {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.4);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.lv-week-block {
+  transform-origin: top;
+}
+[data-playing] .lv-week-block {
+  animation: lv-slot 0.6s var(--ease-out-soft) both;
+  animation-delay: calc(var(--lv-at, 0) * 3s);
+}
+
+/* Un cursor que se mueve hasta su sitio. */
+@keyframes lv-cursor {
+  0%,
+  10% {
+    transform: translate(var(--lv-cx0, 120%), var(--lv-cy0, 120%));
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  32%,
+  52% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  62%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+}
+.lv-a-cursor {
+  animation-name: lv-cursor;
+}
+
+/* --------------------------------------------------- Con «reducir movimiento» -- */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+  [data-draw] {
+    transform: none;
+  }
+  .landing-rise,
+  .landing-tick,
+  .landing-ring,
+  .landing-marquee-track {
+    animation: none;
+  }
+  .landing-digit-col {
+    transition: none;
+  }
+  /* Las ilustraciones quedan en su estado final, sin bucle. */
+  .lv [class*="lv-a-"],
+  [data-playing] .lv-week-block {
+    animation: none;
+  }
+  .lv-a-pick {
+    background: var(--ink);
+    color: var(--primary-foreground);
+    border-color: var(--ink);
+  }
+  .lv-a-cursor {
+    opacity: 0;
+  }
+  .lv-a-fill {
+    transform: scaleX(var(--lv-fill, 1));
+  }
+  .lv-a-board {
+    transform: translateX(calc(300% + 3 * var(--lv-gap)));
+  }
+}
+
+@media print {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
