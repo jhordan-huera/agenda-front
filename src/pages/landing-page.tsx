@@ -1,54 +1,43 @@
-import "@fontsource-variable/archivo/wdth.css";
-import "@fontsource-variable/geist-mono/wght.css";
-import "@fontsource/instrument-serif/400-italic.css";
-import "@/features/landing/landing.css";
 import { PageTitle } from "@/components/shared/page-title";
-import { DataSection } from "@/features/landing/data-section";
+import { AppointmentFlowSection } from "@/features/landing/appointment-flow-section";
+import { AutomationSection } from "@/features/landing/automation-section";
+import { CtaSection } from "@/features/landing/cta-section";
+import { FactsBand } from "@/features/landing/facts-band";
 import { FaqSection } from "@/features/landing/faq-section";
-import { FeatureMarquee } from "@/features/landing/feature-marquee";
-import { FeaturesSection } from "@/features/landing/features-section";
-import { TRACKED_SECTIONS } from "@/features/landing/landing-constants";
+import { HeroSection } from "@/features/landing/hero-section";
+import { HighlightsSection } from "@/features/landing/highlights-section";
+import { IntegrationsSection } from "@/features/landing/integrations-section";
 import { LandingFooter } from "@/features/landing/landing-footer";
-import { useActiveSection } from "@/features/landing/landing-motion";
-import { LandingNav } from "@/features/landing/landing-nav";
-import { FRAME } from "@/features/landing/landing-styles";
-import { OrbitHero } from "@/features/landing/orbit-hero";
-import { ScrollRail } from "@/features/landing/scroll-rail";
-import { StartSection } from "@/features/landing/start-section";
+import { LandingNavbar } from "@/features/landing/landing-navbar";
+import { TestimonialSection } from "@/features/landing/testimonial-section";
 import { useSignupContact } from "@/features/landing/use-signup-contact";
 
-const SECTION_IDS = TRACKED_SECTIONS.map((section) => section.id);
-
 /**
- * La portada editorial (prueba en dev, 2026-10-27), al estilo de getartcraft.com, leído con REA:
- * - la barra de arriba con las secciones en mayúsculas monoespaciadas;
- * - el nombre enorme, con la órbita de trozos de Agenda360 detrás;
- * - la cinta de funciones;
- * - dentro del marco con líneas de plano, 01 / Funciones, 02 / Tus datos, 03 / Preguntas y el cierre;
- * - el pie en casillas y, en pantallas anchas, la regla de la derecha.
- * Con los colores de la marca (el tomate y los grises) y sin datos inventados. `data-landing` le da a la
- * página el margen de la barra para las anclas (src/index.css).
+ * La portada (spec 032), al estilo de una plataforma de ventas: la barra flotante, el encabezado centrado con
+ * la vista del panel, los cuatro hechos, cómo avanza una cita, las seis funciones, lo automático, con qué
+ * funciona, el testimonio (sólo si está autorizado), las preguntas, el cierre y el pie. Sobre el lienzo del
+ * panel (--canvas), con tarjetas blancas; todo en la gama de la marca, el tomate (spec 033).
+ * `data-landing` le da a la página el margen de la barra para las anclas y el foco (src/index.css).
  */
 export default function LandingPage() {
   // Con el registro cerrado, cada «Crear cuenta» pasa a «Quiero mi agenda» (spec 022).
   const signup = useSignupContact();
-  const active = useActiveSection(SECTION_IDS);
   return (
-    <div data-landing className="min-h-screen bg-wall text-foreground">
+    <div data-landing className="bg-canvas text-foreground">
       <PageTitle />
-      <LandingNav signup={signup} active={active} />
+      <LandingNavbar signup={signup} />
       <main id="contenido" tabIndex={-1} className="outline-none">
-        <OrbitHero signup={signup} />
-        <FeatureMarquee />
-        <div className={FRAME}>
-          <FeaturesSection />
-          <DataSection />
-          <FaqSection />
-          <StartSection signup={signup} />
-        </div>
+        <HeroSection signup={signup} />
+        <FactsBand />
+        <AppointmentFlowSection />
+        <HighlightsSection />
+        <AutomationSection />
+        <IntegrationsSection />
+        <TestimonialSection />
+        <FaqSection />
+        <CtaSection signup={signup} />
       </main>
       <LandingFooter signup={signup} />
-      <ScrollRail active={active} />
     </div>
   );
 }
