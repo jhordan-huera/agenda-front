@@ -195,7 +195,17 @@ function ClinicalNoteForm({
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} noValidate className="grid gap-4">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      // Enter (o «Ir» en el teclado del iPhone) en un campo de una línea no guarda: una evolución no se
+      // edita después y se guardaba a medias sin querer (2026-11-04). Sólo guarda el botón.
+      onKeyDown={(event) => {
+        if (event.key === "Enter" && event.target instanceof HTMLInputElement) event.preventDefault();
+      }}
+      noValidate
+      className="grid gap-4"
+    >
       <DialogHeader>
         <DialogTitle>Nueva evolución</DialogTitle>
         <DialogDescription>Historia clínica de {clientName}.</DialogDescription>
