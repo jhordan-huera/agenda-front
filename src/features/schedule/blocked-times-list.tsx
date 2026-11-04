@@ -45,13 +45,15 @@ export function BlockedTimesList({ blockedTimes }: { blockedTimes: BlockedTime[]
                 </p>
               </div>
               {!(agendas.scoped && block.professionalId === null) && (
+                // Con texto: sólo con la papelera, una clienta no lo encontraba (2026-11-04).
                 <Button
                   variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Eliminar bloqueo ${block.reason}`}
+                  size="sm"
+                  className="shrink-0"
+                  aria-label={`Quitar el bloqueo ${block.reason}`}
                   onClick={() => setDeleting(block)}
                 >
-                  <Trash2 />
+                  <Trash2 /> Quitar
                 </Button>
               )}
             </li>
@@ -61,15 +63,15 @@ export function BlockedTimesList({ blockedTimes }: { blockedTimes: BlockedTime[]
       <ConfirmDialog
         open={Boolean(deleting)}
         onOpenChange={(open) => !open && setDeleting(null)}
-        title="¿Eliminar este bloqueo?"
+        title="¿Quitar este bloqueo?"
         description="Ese horario volverá a estar disponible para reservas."
-        confirmLabel="Eliminar"
+        confirmLabel="Quitar"
         destructive
         onConfirm={async () => {
           if (!deleting) return;
           try {
             await deleteBlockedTime.mutateAsync(deleting.id);
-            toast.success("Bloqueo eliminado");
+            toast.success("Bloqueo quitado");
           } catch (error) {
             toast.error(getErrorMessage(error));
             throw error;
