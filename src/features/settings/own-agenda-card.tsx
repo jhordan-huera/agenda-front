@@ -1,4 +1,4 @@
-import { CalendarSync } from "lucide-react";
+import { CalendarSync, ReceiptText } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,12 +8,20 @@ import { usePermissions } from "@/features/auth/use-permissions";
 import { useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { BankAccountsFields } from "@/features/professionals/bank-account-fields";
 import { CalendarInvitesField } from "@/features/professionals/calendar-invites-field";
-import { useProfessionals, useSaveProfessional, useSetCalendarInvites } from "@/hooks/queries/use-professionals";
+import { PaymentReminderModeField } from "@/features/professionals/payment-reminder-mode-field";
+import { useCurrentBusiness } from "@/hooks/queries/use-account";
+import {
+  useProfessionals,
+  useSaveProfessional,
+  useSetCalendarInvites,
+  useSetPaymentReminderMode,
+} from "@/hooks/queries/use-professionals";
+import { paymentRemindersOf } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
 import type { BankAccountInput } from "@/lib/validations/payment";
 import { professionalSchema } from "@/lib/validations/professional";
 import { validate } from "@/lib/validations/validate";
-import type { BankAccount, Professional } from "@/types";
+import type { BankAccount, PaymentReminderMode, Professional } from "@/types";
 import { SettingsSection } from "./settings-section";
 import { useSettingsForm } from "./use-settings-form";
 
@@ -21,7 +29,8 @@ import { useSettingsForm } from "./use-settings-form";
  * Cuenta individual (Free y Pro): su única agenda se edita aquí, porque no hay sección Profesionales.
  * El nombre y la foto son los del perfil; aquí van la especialidad, el enlace de videollamada, los datos
  * bancarios y las invitaciones de calendario (spec 027). Con varias agendas, quien tiene la suya (también
- * el rol Profesional) sólo ve aquí el interruptor de sus invitaciones de calendario.
+ * el rol Profesional) sólo ve aquí el interruptor de sus invitaciones de calendario. En un negocio con
+ * «Pedir el comprobante de pago» (spec 039), también el modo de los recordatorios de su agenda.
  */
 export function OwnAgendaCard() {
   const { session } = useSession();
@@ -31,8 +40,51 @@ export function OwnAgendaCard() {
   const own = professionals.find((p) => p.userId === session?.userId);
   const agenda = own ?? (professionals.length === 1 ? professionals[0] : undefined);
   if (multiAgenda === false && can("professionals.manage") && agenda) return <OwnAgendaForm key={agenda.id} agenda={agenda} />;
-  if (multiAgenda !== undefined && own) return <OwnCalendarInvitesCard agenda={own} />;
+  if (multiAgenda !== undefined && own) {
+    return (
+      <>
+        <OwnCalendarInvitesCard agenda={own} />
+        <OwnPaymentReminderModeCard agenda={own} />
+      </>
+    );
+  }
   return null;
+}
+
+/**
+ * El modo de los recordatorios del comprobante de la agenda propia, solo (spec 039): se guarda al cambiarlo,
+ * como las invitaciones de calendario. Sólo en los negocios con «Pedir el comprobante de pago».
+ */
+function OwnPaymentReminderModeCard({ agenda }: { agenda: Professional }) {
+  const { data: business } = useCurrentBusiness();
+  const setMode = useSetPaymentReminderMode();
+  if (!paymentRemindersOf(business).enabled) return null;
+  const change = async (mode: PaymentReminderMode) => {
+    try {
+      await setMode.mutateAsync({ professionalId: agenda.id, mode });
+      toast.success(mode === "before" ? "Recordatorios antes de la cita" : "Recordatorios después de la cita");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ReceiptText className="size-4 text-primary" aria-hidden /> El comprobante de pago de tus citas
+        </CardTitle>
+        <CardDescription>Cuándo le recordamos a tu paciente que te envíe el comprobante de su transferencia.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <PaymentReminderModeField
+          person="own"
+          value={agenda.paymentReminderMode ?? "before"}
+          onChange={change}
+          disabled={setMode.isPending}
+        />
+      </CardContent>
+    </Card>
+  );
 }
 
 /** Las invitaciones de calendario de la agenda propia, solas: se guardan al cambiar el interruptor (spec 027). */
@@ -71,11 +123,15 @@ function OwnCalendarInvitesCard({ agenda }: { agenda: Professional }) {
 
 function OwnAgendaForm({ agenda }: { agenda: Professional }) {
   const save = useSaveProfessional();
+  const { data: business } = useCurrentBusiness();
+  // El modo de los recordatorios del comprobante (spec 039), sólo con el negocio activado.
+  const paymentReminders = paymentRemindersOf(business).enabled;
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm({
     title: agenda.title,
     meetingUrl: agenda.meetingUrl,
     bankAccounts: inFormOrder(agenda.bankAccounts),
     calendarInvites: agenda.calendarInvites,
+    paymentReminderMode: agenda.paymentReminderMode ?? ("before" as PaymentReminderMode),
   });
   const setBankAccounts = (bankAccounts: BankAccountInput[]) => {
     setField("bankAccounts", bankAccounts);
@@ -84,9 +140,15 @@ function OwnAgendaForm({ agenda }: { agenda: Professional }) {
   };
 
   const submit = async () => {
-    const { id, businessId: _business, sortOrder: _order, createdAt: _created, calendarEmail, ...current } = agenda;
-    // Sin email no hay invitaciones de calendario: se guardan apagadas.
-    const result = validate(professionalSchema, { ...current, ...values, calendarInvites: values.calendarInvites && Boolean(calendarEmail) });
+    const { id, businessId: _business, sortOrder: _order, createdAt: _created, calendarEmail, paymentReminderMode: _mode, ...current } = agenda;
+    // Sin email no hay invitaciones de calendario: se guardan apagadas. El modo sólo va con el negocio activado.
+    const { paymentReminderMode, ...rest } = values;
+    const result = validate(professionalSchema, {
+      ...current,
+      ...rest,
+      calendarInvites: values.calendarInvites && Boolean(calendarEmail),
+      ...(paymentReminders && { paymentReminderMode }),
+    });
     setErrors(result.errors);
     if (!result.success) return;
     try {
@@ -96,6 +158,7 @@ function OwnAgendaForm({ agenda }: { agenda: Professional }) {
         meetingUrl: result.data.meetingUrl,
         bankAccounts: result.data.bankAccounts,
         calendarInvites: result.data.calendarInvites ?? false,
+        paymentReminderMode: result.data.paymentReminderMode ?? values.paymentReminderMode,
       });
       toast.success("Agenda actualizada");
     } catch (error) {
@@ -139,6 +202,9 @@ function OwnAgendaForm({ agenda }: { agenda: Professional }) {
         checked={values.calendarInvites}
         onCheckedChange={(checked) => setField("calendarInvites", checked)}
       />
+      {paymentReminders && (
+        <PaymentReminderModeField person="own" value={values.paymentReminderMode} onChange={(mode) => setField("paymentReminderMode", mode)} />
+      )}
     </SettingsSection>
   );
 }

@@ -160,6 +160,28 @@ const describeDates = (dates: ISODate[]) => {
   return days.length <= 1 ? (days[0] ?? "") : `${days.slice(0, -1).join(", ")} y ${days[days.length - 1]}`;
 };
 
+/**
+ * «Recordar el pago por WhatsApp» (spec 039): un recordatorio amable para que el paciente envíe el
+ * comprobante de su cita, con el enlace para subirlo (ahí están las cuentas). Nunca «deuda» ni «cobro»: es
+ * un recordatorio. El profesional lo revisa antes de enviarlo y no cuenta en el tope de los emails.
+ */
+export function buildPaymentReminderMessage(data: {
+  clientName: string;
+  businessName: string;
+  serviceName: string;
+  date: ISODate;
+  startTime: string;
+  paymentUrl: string;
+}): string {
+  const name = data.clientName.trim().split(/\s+/)[0] ?? "";
+  const hello = name ? `Hola ${name}` : "Hola";
+  const when = `del ${formatDate(data.date, "EEEE d 'de' MMMM")} a las ${data.startTime}`;
+  return (
+    `${hello}, te escribimos de ${data.businessName} para recordarte el comprobante de la transferencia de tu cita de ${data.serviceName} ${when}. ` +
+    `Puedes enviarnos la foto o el PDF aquí: ${data.paymentUrl}\n\nSi ya nos lo enviaste, no te preocupes. ¡Gracias!`
+  );
+}
+
 /** Para recuperar a un paciente que no ha vuelto (Reportes): se puede editar en WhatsApp antes de enviarlo. */
 export function buildWinBackMessage(data: { clientName: string; businessName: string; bookingUrl: string }): string {
   const name = data.clientName.trim().split(/\s+/)[0] ?? "";

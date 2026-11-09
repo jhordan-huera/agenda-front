@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusinessId } from "@/features/auth/use-session";
 import { data } from "@/lib/data";
 import type { ProfessionalInput } from "@/lib/validations/professional";
-import type { Professional } from "@/types";
+import type { PaymentReminderMode, Professional } from "@/types";
 import { queryKeys } from "./query-keys";
 import { useInvalidateActivity } from "./use-invalidate-activity";
 
@@ -59,6 +59,19 @@ export function useSetCalendarInvites() {
   return useMutation({
     mutationFn: ({ professionalId, calendarInvites }: { professionalId: string; calendarInvites: boolean }) =>
       data.professionals.setCalendarInvites(businessId, professionalId, calendarInvites),
+    onSuccess: () => {
+      void invalidate();
+    },
+  });
+}
+
+/** El modo de los recordatorios del comprobante de una agenda, solo (spec 039): se guarda al cambiarlo. */
+export function useSetPaymentReminderMode() {
+  const businessId = useBusinessId();
+  const invalidate = useInvalidateProfessionals();
+  return useMutation({
+    mutationFn: ({ professionalId, mode }: { professionalId: string; mode: PaymentReminderMode }) =>
+      data.professionals.setPaymentReminderMode(businessId, professionalId, mode),
     onSuccess: () => {
       void invalidate();
     },

@@ -2,7 +2,7 @@ import { CalendarOff, ChevronRight, Home, Video } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { VerifyBadge } from "@/components/shared/verify-badge";
 import { ClientConfirmedBadge } from "@/features/appointments/client-confirmed-badge";
-import { ReceiptBadge } from "@/features/appointments/receipt-badge";
+import { MissingReceiptBadge, ReceiptBadge } from "@/features/appointments/receipt-badge";
 import { getBlockedRanges } from "@/lib/availability";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { capitalize, formatDate, formatTimeRange, plural } from "@/lib/format";
@@ -22,6 +22,8 @@ interface AgendaListViewProps {
   clientsById: Map<string, Client>;
   servicesById: Map<string, Service>;
   onAppointmentClick: (appointment: Appointment) => void;
+  /** «Sin comprobante» (spec 039): la cita lleva su marca (sin la función, ninguna). */
+  missingReceipt?: (appointment: Appointment) => boolean;
   /** Tocar la cabecera de un día (vista Semana) abre ese día. */
   onDayClick: (day: ISODate) => void;
 }
@@ -82,6 +84,7 @@ function DayItems({
   clientsById,
   servicesById,
   onAppointmentClick,
+  missingReceipt,
 }: Omit<AgendaListViewProps, "days" | "today" | "onDayClick"> & { day: ISODate }) {
   const items: Item[] = [
     ...blockedTimes.flatMap((block) =>
@@ -150,6 +153,7 @@ function DayItems({
                   <StatusBadge status={appointment.status} />
                   <ClientConfirmedBadge appointment={appointment} />
                   <ReceiptBadge appointment={appointment} />
+                  {missingReceipt?.(appointment) && <MissingReceiptBadge />}
                   {clientsToVerify(clientsById, appointment).length > 0 && <VerifyBadge />}
                 </span>
               </span>

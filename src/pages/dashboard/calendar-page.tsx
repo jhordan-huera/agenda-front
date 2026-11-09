@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarOff, ChevronLeft, ChevronRight, ClipboardCheck, Loader2, Plus } from "lucide-react";
+import { CalendarCheck, CalendarOff, ChevronLeft, ChevronRight, ClipboardCheck, Loader2, Plus, ReceiptText } from "lucide-react";
 import { useState, type ComponentProps } from "react";
 import { useSearchParams } from "react-router";
 import { ErrorState } from "@/components/shared/error-state";
@@ -40,9 +40,12 @@ import { useBusinessNow } from "@/hooks/use-business-now";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { offersService } from "@/lib/availability";
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
+import { paymentRemindersOf } from "@/lib/constants/business";
 import { formatDate } from "@/lib/format";
+import { isMissingReceipt } from "@/lib/payment-reminders";
 import { minutesToTime, timeToMinutes } from "@/lib/time";
 import { dateField } from "@/lib/validations/fields";
+import type { Appointment } from "@/types";
 
 export default function CalendarPage() {
   const { data: business } = useCurrentBusiness();
@@ -52,6 +55,9 @@ export default function CalendarPage() {
   // Vista por defecto: semana en escritorio, día en móvil.
   const [defaultView] = useState<CalendarView>(isDesktop ? "week" : "day");
   const [showCancelled, setShowCancelled] = useState(true);
+  // «Sólo sin comprobante» (spec 039): sólo en los negocios con «Pedir el comprobante de pago».
+  const [onlyMissingReceipt, setOnlyMissingReceipt] = useState(false);
+  const paymentReminders = paymentRemindersOf(business).enabled;
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const { can } = usePermissions();
   // «Por cerrar (N)» (spec 018): las citas que ya terminaron y siguen pendientes o confirmadas.
@@ -95,13 +101,20 @@ export default function CalendarPage() {
   // ?appointment=<id> (enlace del email "Comprobante de pago"): abre la ficha de esa cita.
   const dialogs = useAppointmentDialogs(searchParams.get("appointment"));
 
+  const professionalsById = new Map(agendas.all.map((p) => [p.id, p]));
+  // «Sin comprobante» (spec 039): la misma regla que la ficha de la cita; sin el interruptor, ninguna.
+  const missingReceipt = paymentReminders
+    ? (appointment: Appointment) => isMissingReceipt(appointment, business, professionalsById.get(appointment.professionalId))
+    : undefined;
+  const filterByReceipt = onlyMissingReceipt && missingReceipt !== undefined;
   const appointments = (appointmentsQuery.data ?? []).filter(
     (appointment) =>
-      (showCancelled || appointment.status !== "cancelled") && (agenda === ALL_AGENDAS || appointment.professionalId === agenda),
+      (showCancelled || appointment.status !== "cancelled") &&
+      (agenda === ALL_AGENDAS || appointment.professionalId === agenda) &&
+      (!filterByReceipt || missingReceipt(appointment)),
   );
   const schedules = agenda === ALL_AGENDAS ? allSchedules : allSchedules.filter((s) => s.professionalId === agenda);
   const { startHour, endHour } = getHourRange(schedules, appointments);
-  const professionalsById = new Map(agendas.all.map((p) => [p.id, p]));
   // Arrastrar citas pendientes o confirmadas a otra hora, otro día o (vista Día) otro profesional.
   const moveAppointment = useMoveAppointment();
   const move: ComponentProps<typeof TimeGridView>["move"] = can("appointments.manage")
@@ -249,10 +262,18 @@ export default function CalendarPage() {
         ) : (
           <StatusLegend />
         )}
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Switch checked={showCancelled} onCheckedChange={setShowCancelled} size="sm" />
-          Mostrar canceladas
-        </label>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          {paymentReminders && (
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Switch checked={onlyMissingReceipt} onCheckedChange={setOnlyMissingReceipt} size="sm" />
+              Sólo sin comprobante
+            </label>
+          )}
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Switch checked={showCancelled} onCheckedChange={setShowCancelled} size="sm" />
+            Mostrar canceladas
+          </label>
+        </div>
       </div>
 
       {appointmentsQuery.isPending ? (
@@ -261,7 +282,15 @@ export default function CalendarPage() {
         <ErrorState onRetry={() => appointmentsQuery.refetch()} />
       ) : (
         <>
-          {appointments.length === 0 && (
+          {appointments.length === 0 && filterByReceipt && (
+            <div className="flex items-center gap-3 rounded-xl border border-dashed bg-background p-4">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <ReceiptText className="size-5" aria-hidden />
+              </span>
+              <p className="text-sm text-muted-foreground">En estas fechas no hay citas sin comprobante.</p>
+            </div>
+          )}
+          {appointments.length === 0 && !filterByReceipt && (
             <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed bg-background p-4 sm:flex-row sm:items-center">
               <span className="flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
                 <CalendarCheck className="size-5" aria-hidden />
@@ -285,6 +314,7 @@ export default function CalendarPage() {
               professionalsById={agendas.multiple && agenda === ALL_AGENDAS ? professionalsById : undefined}
               canMove={can("appointments.manage")}
               onAppointmentClick={dialogs.openDetails}
+              missingReceipt={missingReceipt}
             />
           ) : view === "month" ? (
             <MonthView
@@ -318,6 +348,7 @@ export default function CalendarPage() {
                 servicesById={servicesById}
                 onAppointmentClick={dialogs.openDetails}
                 onDayClick={(day) => navigate({ view: "day", date: day })}
+                missingReceipt={missingReceipt}
               />
             </>
           ) : (
@@ -338,6 +369,7 @@ export default function CalendarPage() {
                 dialogs.openCreate({ date: day, startTime, professionalId: professionalId ?? (agenda !== ALL_AGENDAS ? agenda : undefined) })
               }
               onAppointmentClick={dialogs.openDetails}
+              missingReceipt={missingReceipt}
               move={move}
             />
           )}

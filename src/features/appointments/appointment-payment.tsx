@@ -8,13 +8,17 @@ import { openPaymentReceipt, useAppointmentReceipts, useSetAppointmentPaid } fro
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { formatDateTime, formatLongDate } from "@/lib/format";
 import { RECEIPT_RETENTION_MONTHS } from "@/lib/validations/payment";
-import { describeBankAccounts, getWhatsAppUrl } from "@/lib/whatsapp";
+import { isMissingReceipt } from "@/lib/payment-reminders";
+import { buildPaymentReminderMessage, describeBankAccounts, getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, Business, Client, Professional } from "@/types";
 import { paymentLinkOf } from "./appointment-utils";
+import { MissingReceiptBadge } from "./receipt-badge";
 
 /**
  * Pago de la cita en su ficha: comprobantes que envió el paciente, "Marcar como pagada" y, si la
- * agenda cobra por transferencia, el enlace de pago para mandárselo.
+ * agenda cobra por transferencia, el enlace de pago para mandárselo. En un negocio con «Pedir el
+ * comprobante de pago» (spec 039), la marca «Sin comprobante» y «Recordar el pago por WhatsApp», un
+ * recordatorio amable con el enlace (no cuenta en el tope de los emails).
  */
 export function AppointmentPayment({
   appointment,
@@ -50,6 +54,24 @@ export function AppointmentPayment({
         )
       : null;
 
+  // «Sin comprobante» (spec 039): la misma regla que la agenda y el tablero.
+  const missingReceipt = isMissingReceipt(appointment, business, professional);
+  const reminderUrl =
+    missingReceipt && client?.phone && business
+      ? getWhatsAppUrl(
+          client.phone,
+          business.timezone,
+          buildPaymentReminderMessage({
+            clientName: client.name,
+            businessName: business.name,
+            serviceName,
+            date: appointment.date,
+            startTime: appointment.startTime,
+            paymentUrl: link,
+          }),
+        )
+      : null;
+
   const togglePaid = async () => {
     try {
       await setPaid.mutateAsync({ id: appointment.id, paid: !paid });
@@ -82,6 +104,8 @@ export function AppointmentPayment({
           </span>
         ) : appointment.receiptAt ? (
           <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold">Comprobante por revisar</span>
+        ) : missingReceipt ? (
+          <MissingReceiptBadge />
         ) : (
           <span className="text-xs text-muted-foreground">Sin pagar</span>
         )}
@@ -122,6 +146,13 @@ export function AppointmentPayment({
               <Button asChild variant="outline" size="sm">
                 <a href={whatsAppUrl} target="_blank" rel="noreferrer">
                   <WhatsAppIcon /> Enviar datos de pago
+                </a>
+              </Button>
+            )}
+            {reminderUrl && (
+              <Button asChild variant="outline" size="sm">
+                <a href={reminderUrl} target="_blank" rel="noreferrer">
+                  <WhatsAppIcon /> Recordar el pago por WhatsApp
                 </a>
               </Button>
             )}

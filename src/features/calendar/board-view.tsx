@@ -7,6 +7,7 @@ import {
   Globe,
   Landmark,
   Loader2,
+  ReceiptText,
   UserX,
   XCircle,
   type LucideIcon,
@@ -65,6 +66,8 @@ interface BoardViewProps {
   /** Puede cambiar el estado y el pago (`appointments.manage`): arrastrar y «Mover a…». */
   canMove: boolean;
   onAppointmentClick: (appointment: Appointment) => void;
+  /** «Sin comprobante» (spec 039): la tarjeta lleva su marca (sin la función, ninguna). */
+  missingReceipt?: (appointment: Appointment) => boolean;
 }
 
 /** Una cita que se lleva a otra columna, a la espera de la confirmación. */
@@ -98,6 +101,7 @@ export function BoardView({
   professionalsById,
   canMove,
   onAppointmentClick,
+  missingReceipt,
 }: BoardViewProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const scrollable = useOverflowsX(boxRef);
@@ -213,6 +217,7 @@ export function BoardView({
     draggingId: dragging?.id ?? null,
     canMove,
     canDrag,
+    missingReceipt,
     onDragStart: (appointment: Appointment) => setDragging(appointment),
     onDragEnd: () => {
       setDragging(null);
@@ -415,6 +420,7 @@ interface BoardCardProps {
   draggingId: string | null;
   canMove: boolean;
   canDrag: boolean;
+  missingReceipt?: (appointment: Appointment) => boolean;
   onDragStart: (appointment: Appointment) => void;
   onDragEnd: () => void;
 }
@@ -426,8 +432,11 @@ interface Mark {
   tone?: "confirmed" | "brand";
 }
 
-/** Las marcas de la tarjeta, sólo cuando aplican. El verde es sólo para «Confirmó que va». */
-function marksOf(appointment: Appointment): Mark[] {
+/**
+ * Las marcas de la tarjeta, sólo cuando aplican. El verde es sólo para «Confirmó que va». `withoutReceipt`:
+ * «Sin comprobante» (spec 039), en gris como las demás.
+ */
+function marksOf(appointment: Appointment, withoutReceipt = false): Mark[] {
   const open = appointment.status === "pending" || appointment.status === "confirmed";
   const marks: Mark[] = [];
   if (appointment.status === "cancelled") marks.push({ icon: XCircle, label: "Cancelada" });
@@ -438,6 +447,7 @@ function marksOf(appointment: Appointment): Mark[] {
     marks.push({ icon: CircleCheck, label: confirmation.total === 1 ? "Confirmó que va" : confirmation.label, tone: "confirmed" });
   }
   if (appointment.receiptAt && !appointment.paidAt) marks.push({ icon: FileCheck2, label: "Comprobante recibido" });
+  if (withoutReceipt) marks.push({ icon: ReceiptText, label: "Sin comprobante" });
   // Pagada antes de atenderla (las completadas pagadas ya están en «Pagadas»).
   if (appointment.paidAt && appointment.status !== "completed") marks.push({ icon: Landmark, label: "Pagada", tone: "brand" });
   return marks;
@@ -456,6 +466,7 @@ function BoardCard({
   draggingId,
   canMove,
   canDrag,
+  missingReceipt,
   onDragStart,
   onDragEnd,
 }: BoardCardProps) {
@@ -466,7 +477,7 @@ function BoardCard({
   const targets = canMove && !closed ? boardTargets(appointment) : [];
   const draggable = canDrag && !closed && !saving && targets.length > 0;
   const day = appointment.date === today ? "Hoy" : capitalize(formatDate(appointment.date, "EEE d MMM"));
-  const marks = marksOf(appointment);
+  const marks = marksOf(appointment, missingReceipt?.(appointment) ?? false);
   const withButton = targets.length > 0 || saving;
 
   // La tarjeta es un `div` con rol de botón y no un `<button>`: Firefox no arrastra los botones.

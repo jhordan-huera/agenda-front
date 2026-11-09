@@ -103,6 +103,8 @@ export const apiRepository: DataRepository = {
       api.put<Professional>(`${business(businessId)}/professionals/${id(professionalId)}`, input),
     setCalendarInvites: (businessId, professionalId, calendarInvites) =>
       api.patch<Professional>(`${business(businessId)}/professionals/${id(professionalId)}/calendar-invites`, { calendarInvites }),
+    setPaymentReminderMode: (businessId, professionalId, mode) =>
+      api.patch<Professional>(`${business(businessId)}/professionals/${id(professionalId)}/payment-reminder-mode`, { mode }),
     remove: (businessId, professionalId) => api.delete(`${business(businessId)}/professionals/${id(professionalId)}`),
   },
 
@@ -297,6 +299,7 @@ export const apiRepository: DataRepository = {
       api.put<Business>(`/admin/businesses/${id(businessId)}/client-required-fields`, fields),
     setMultiClientAppointments: (businessId, enabled) =>
       api.put<Business>(`/admin/businesses/${id(businessId)}/multi-client-appointments`, { enabled }),
+    setPaymentReminders: (businessId, input) => api.put<Business>(`/admin/businesses/${id(businessId)}/payment-reminders`, input),
     setReferredBy: (businessId, referredBy) =>
       api.put<AdminBusinessReferrals>(`/admin/businesses/${id(businessId)}/referred-by`, { referredBy }),
     listReferralRewards: () => api.get<ReferralReward[]>("/admin/referral-rewards"),

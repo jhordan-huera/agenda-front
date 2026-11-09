@@ -25,6 +25,13 @@ const DESCRIPTION: Record<PushAudience, string> = {
     "Negocios nuevos, solicitudes de cambio de plan, alertas de seguridad y a qué negocios salieron los recordatorios de citas por cerrar, además de los avisos por ntfy.",
 };
 
+/**
+ * El rol Profesional en un negocio con «Pedir el comprobante de pago» (spec 039): también el comprobante de
+ * sus citas, que sí lleva el nombre abreviado del paciente.
+ */
+const AGENDA_WITH_RECEIPTS_DESCRIPTION =
+  "Te avisamos cuando un paciente de tu agenda sube el comprobante de su pago, a las 8 de la noche si te quedan citas de hoy sin cerrar y, al empezar tu horario, si quedan de días anteriores. El del comprobante lleva el nombre abreviado del paciente («Juan P.»); los resúmenes, sólo cuántas son.";
+
 /** Cómo volver a permitir los avisos, en el navegador de esta persona. */
 const UNBLOCK_STEPS: Record<BrowserFamily, string> = {
   chrome: "Toca el candado (o el icono de ajustes) junto a la dirección de la página → Notificaciones → Permitir, y recarga la página.",
@@ -96,7 +103,9 @@ export function PushSettingsCard({ audience, icon }: { audience: PushAudience; i
             push.status === "off" && <Badge variant="outline">Desactivados</Badge>
           )}
         </CardTitle>
-        <CardDescription>{DESCRIPTION[audience]}</CardDescription>
+        <CardDescription>
+          {audience === "agenda" && push.kinds.includes("receipt") ? AGENDA_WITH_RECEIPTS_DESCRIPTION : DESCRIPTION[audience]}
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         {push.status === "error" && (

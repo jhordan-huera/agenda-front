@@ -8,6 +8,7 @@ import type {
   BusinessCategoryInput,
   BusinessDeletionInput,
   PanelColorsInput,
+  PaymentRemindersInput,
   PlanPricesInput,
   PlanRejectionInput,
   PlatformAdminInput,
@@ -107,6 +108,7 @@ import type {
   DataExportSummary,
   EmailNotification,
   ISODate,
+  PaymentReminderMode,
   PlanId,
   PlanPrices,
   PlanUsage,
@@ -187,6 +189,11 @@ export interface ProfessionalRepository {
    * gestiona los profesionales, en cualquiera. Sin email responde `validation`.
    */
   setCalendarInvites(businessId: string, professionalId: string, calendarInvites: boolean): Promise<Professional>;
+  /**
+   * Sólo el modo de los recordatorios del comprobante de pago (spec 039), con los permisos del calendario. Con
+   * el negocio sin «Pedir el comprobante de pago» responde `conflict`.
+   */
+  setPaymentReminderMode(businessId: string, professionalId: string, mode: PaymentReminderMode): Promise<Professional>;
   /** Sólo sin citas (`conflict`): con historial, se desactiva. */
   remove(businessId: string, professionalId: string): Promise<void>;
 }
@@ -494,6 +501,11 @@ export interface PlatformAdminRepository {
    * el negocio no lo cambia.
    */
   setMultiClientAppointments(businessId: string, enabled: boolean): Promise<Business>;
+  /**
+   * «Pedir el comprobante de pago» (spec 039). Sólo el super admin: al activarlo, todas las agendas toman
+   * `defaultMode`; con el interruptor encendido, se cambian los días del modo «Antes de la cita».
+   */
+  setPaymentReminders(businessId: string, input: PaymentRemindersInput): Promise<Business>;
   /** «Recomendado por» (spec 023): otro negocio o null. Queda en la actividad. */
   setReferredBy(businessId: string, referredBy: string | null): Promise<AdminBusinessReferrals>;
   /** «Descuentos por referidos» (spec 023): los ganados y pendientes de aplicar. */
