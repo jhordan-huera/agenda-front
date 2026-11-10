@@ -14,6 +14,7 @@ import { LandingNav } from "@/features/landing/landing-nav";
 import { FRAME } from "@/features/landing/landing-styles";
 import { OrbitHero } from "@/features/landing/orbit-hero";
 import { ScrollRail } from "@/features/landing/scroll-rail";
+import { SpecialtiesRow } from "@/features/landing/specialties-row";
 import { StartSection } from "@/features/landing/start-section";
 import { useSignupContact } from "@/features/landing/use-signup-contact";
 
@@ -40,6 +41,7 @@ export default function LandingPage() {
       <main id="contenido" tabIndex={-1} className="outline-none">
         <OrbitHero signup={signup} />
         <FeatureMarquee />
+        <SpecialtiesRow />
         <div className={FRAME}>
           <FeaturesSection />
           <DataSection />

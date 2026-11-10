@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { RootLayout } from "@/components/layout/root-layout";
@@ -91,6 +91,10 @@ export const router = createBrowserRouter([
       // «Tu cita» (spec 010): el enlace de los emails para confirmar que va o cancelar, sin sesión.
       { path: "/cita/:token", lazy: lazyPage(() => import("@/pages/appointment-page")) },
       { path: "/privacidad", lazy: lazyPage(() => import("@/pages/privacy-page")) },
+      // Las páginas por especialidad (spec 041); las direcciones con tilde llevan a la de siempre.
+      ...["/psicologos", "/fisioterapeutas", "/odontologos"].map((path) => ({ path, lazy: lazyPage(() => import("@/pages/specialty-page")) })),
+      { path: "/psicólogos", element: <Navigate to="/psicologos" replace /> },
+      { path: "/odontólogos", element: <Navigate to="/odontologos" replace /> },
       { path: "*", Component: NotFoundPage },
     ],
   },

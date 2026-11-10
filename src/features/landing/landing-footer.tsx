@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { DEMO_BOOKING_PATH, LANDING_SECTIONS, TESTIMONIAL } from "./landing-constants";
 import { FRAME, TECH_LABEL } from "./landing-styles";
 import { SignupLink } from "./signup-link";
+import { SPECIALTIES } from "./specialties";
 import type { SignupContact } from "./use-signup-contact";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -21,6 +22,8 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
       { label: "Página de reservas de ejemplo", to: DEMO_BOOKING_PATH },
     ],
   },
+  // Las páginas por especialidad (spec 041).
+  { title: "Especialidades", links: SPECIALTIES.map((specialty) => ({ label: specialty.name, to: `/${specialty.slug}` })) },
   {
     title: "Cuenta",
     links: [
@@ -44,7 +47,7 @@ const LINK =
 export function LandingFooter({ signup }: { signup: SignupContact }) {
   return (
     <footer className={cn(FRAME, "mb-0")}>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]">
         <div className="border-b border-border p-6 sm:col-span-2 sm:p-8 lg:col-span-1 lg:border-r lg:border-b-0">
           <Link to="/" aria-label={APP_NAME} className="inline-flex rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
             <BrandMark className="size-9" />
@@ -59,9 +62,9 @@ export function LandingFooter({ signup }: { signup: SignupContact }) {
             <ul className="mt-3">
               {column.links.map((link) => (
                 <li key={link.label}>
-                  {/* Las secciones de la portada son anclas de esta misma página. */}
+                  {/* Las secciones de la portada: desde ella, sólo baja; desde las páginas por especialidad, vuelve a ella. */}
                   {link.to.startsWith("/#") ? (
-                    <a href={link.to.slice(1)} className={LINK}>
+                    <a href={link.to} className={LINK}>
                       {link.label}
                     </a>
                   ) : link.to === "/register" ? (

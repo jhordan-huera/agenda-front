@@ -12,7 +12,8 @@
     "check:admin-calendar": "node scripts/check-admin-calendar.ts",
     "check:board": "node scripts/check-board.ts",
     "check:contrast": "node scripts/check-contrast.ts",
-    "check:data-export": "node scripts/check-data-export.ts"
+    "check:data-export": "node scripts/check-data-export.ts",
+    "check:specialties": "node scripts/check-specialties.ts"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
