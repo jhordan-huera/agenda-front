@@ -10,6 +10,7 @@ import type {
   ServiceMode,
   TimeRange,
 } from "@/types";
+import { cachedDateFormat } from "@/lib/time";
 
 /**
  * Zonas horarias admitidas, con el país del negocio: prefijo telefónico (enlaces de
@@ -71,7 +72,7 @@ export function describeTimezone(timezone: string, at: Date = new Date()): strin
   let offset = "";
   try {
     offset =
-      new Intl.DateTimeFormat("en-US", { timeZone: timezone, timeZoneName: "shortOffset" })
+      cachedDateFormat("en-US", { timeZone: timezone, timeZoneName: "shortOffset" })
         .formatToParts(at)
         .find((part) => part.type === "timeZoneName")?.value ?? "";
   } catch {
