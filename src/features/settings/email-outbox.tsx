@@ -48,6 +48,7 @@ const TYPE_LABELS: Record<EmailType, string> = {
   billing_rejected: "Comprobante de mensualidad rechazado",
   billing_voided: "Cobro de mensualidad anulado",
   payment_reminder: "Recordatorio del comprobante de pago",
+  monthly_report: "Informe mensual",
 };
 
 /** El estado de cada email: si salió, si espera en la cola o si falló (o se descartó a propósito). */
