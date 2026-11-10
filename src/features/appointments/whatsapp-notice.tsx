@@ -15,7 +15,7 @@ import { data } from "@/lib/data";
 import { getZonedNow } from "@/lib/time";
 import { buildAppointmentNotice, getWhatsAppUrl, type AppointmentNoticeKind } from "@/lib/whatsapp";
 import type { Appointment, Business, Client } from "@/types";
-import { appointmentClientIds, getServiceName, paymentLinkOf } from "./appointment-utils";
+import { appointmentClientIds, getServiceName, isPaymentLinkOpen, paymentLinkOf } from "./appointment-utils";
 import { WhatsAppNoticeContext } from "./whatsapp-notice-context";
 import { useProfessionals } from "@/hooks/queries/use-professionals";
 
@@ -136,7 +136,12 @@ export function WhatsAppNoticeProvider({ children }: { children: ReactNode }) {
         homeVisit: Boolean(appointment.homeVisit),
         virtual: appointment.isVirtual ? { meetingUrl: professional?.meetingUrl || null } : undefined,
         paymentUrl:
-          professional?.bankAccounts.length && appointment.price > 0 && !appointment.paidAt ? paymentLinkOf(appointment) : undefined,
+          professional?.bankAccounts.length &&
+          appointment.price > 0 &&
+          !appointment.paidAt &&
+          isPaymentLinkOpen(appointment, getZonedNow(business.timezone).date)
+            ? paymentLinkOf(appointment)
+            : undefined,
         // Las fechas canceladas en que está esa persona.
         dates: series?.filter((item) => appointmentClientIds(item).includes(client.id)).map((item) => item.date),
       });
