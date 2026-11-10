@@ -146,8 +146,8 @@ export function EmailOutboxCard({
           </DialogHeader>
           {preview && <DeliveryDetail email={preview} timezone={timezone} />}
           <pre className="max-h-96 overflow-y-auto rounded-lg bg-muted/60 p-4 font-sans text-sm whitespace-pre-wrap">
-            {/* A los 30 días se borra el contenido para no llenar la base; queda el registro. */}
-            {preview?.body || "El contenido de los emails se guarda 30 días. De este queda sólo el registro: a quién se envió, el asunto y la fecha."}
+            {/* Cada lunes al mediodía se borra el contenido para no llenar la base; queda el registro. */}
+            {preview?.body || "El contenido de los emails se borra cada lunes al mediodía. De este queda sólo el registro: a quién se envió, el asunto y la fecha."}
           </pre>
         </DialogContent>
       </Dialog>
