@@ -1,4 +1,4 @@
-import { Home, ShieldQuestion, UserCheck, Video } from "lucide-react";
+import { Home, ReceiptText, ShieldQuestion, UserCheck, Video } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { toast } from "sonner";
 import { getBlockedRanges, getWorkingRanges } from "@/lib/availability";
@@ -43,6 +43,8 @@ interface TimeGridViewProps {
   servicesById: Map<string, Service>;
   onSlotClick: (date: ISODate, time: string, professionalId?: string) => void;
   onAppointmentClick: (appointment: Appointment) => void;
+  /** «Sin comprobante» (spec 039): la cita lleva su icono (sin la función, ninguna). */
+  missingReceipt?: (appointment: Appointment) => boolean;
   /** Arrastrar citas: cuáles se pueden mover, por qué no se pueden soltar en un sitio y qué hacer al soltarlas. */
   move?: {
     canMove: (appointment: Appointment) => boolean;
@@ -163,6 +165,7 @@ function DayColumn({
   servicesById,
   onSlotClick,
   onAppointmentClick,
+  missingReceipt,
   move,
   dragging,
   startDrag,
@@ -231,6 +234,8 @@ function DayColumn({
         const toVerify = clientsToVerify(clientsById, appointment).length > 0;
         // «Confirmo que voy» del paciente (spec 010): el icono en el bloque y el texto para el lector de pantalla.
         const confirmation = clientConfirmationSummary(appointment);
+        // «Sin comprobante» (spec 039): el icono en el bloque y el texto para el lector de pantalla.
+        const withoutReceipt = missingReceipt?.(appointment) ?? false;
         const serviceName = servicesById.get(appointment.serviceId)?.name ?? "";
         const status = APPOINTMENT_STATUS_CONFIG[appointment.status];
         // Con todas las agendas en la misma columna, el color del profesional junto al nombre.
@@ -247,7 +252,7 @@ function DayColumn({
             // Arrastrar: con el ratón, al moverla; en el móvil, manteniendo el dedo encima.
             onPointerDown={movable ? (e) => startDrag(e, appointment) : undefined}
             onContextMenu={movable ? (e) => e.preventDefault() : undefined}
-            aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : appointment.isVirtual ? ", virtual" : ""}${toVerify ? ", por verificar" : ""}${confirmation ? `, ${confirmation.label.toLowerCase()}` : ""}${professional ? `, con ${professional.displayName}` : ""}`}
+            aria-label={`${clientName}, ${formatTimeRange(appointment.startTime, appointment.endTime)}, ${serviceName}, ${status.label}${appointment.homeVisit ? ", a domicilio" : appointment.isVirtual ? ", virtual" : ""}${toVerify ? ", por verificar" : ""}${confirmation ? `, ${confirmation.label.toLowerCase()}` : ""}${withoutReceipt ? ", sin comprobante" : ""}${professional ? `, con ${professional.displayName}` : ""}`}
             className={cn(
               "absolute z-[1] overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-xs leading-tight shadow-xs transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring",
               status.event,
@@ -269,6 +274,7 @@ function DayColumn({
               {appointment.isVirtual && <Video className="size-3 shrink-0" aria-hidden />}
               {toVerify && <ShieldQuestion className="size-3 shrink-0" aria-hidden />}
               {confirmation && <UserCheck className="size-3 shrink-0" aria-hidden />}
+              {withoutReceipt && <ReceiptText className="size-3 shrink-0" aria-hidden />}
               <span className="truncate">{shortClientName}</span>
             </p>
             {height >= 36 && <p className="truncate opacity-80">{formatTimeRange(appointment.startTime, appointment.endTime)}</p>}

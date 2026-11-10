@@ -8,6 +8,7 @@ import type {
   BusinessOwnerInput,
   BusinessCategoryInput,
   PanelColorsInput,
+  PaymentRemindersInput,
   PlatformAdminInput,
   PlanPricesInput,
   PlatformBankAccountsInput,
@@ -250,6 +251,15 @@ export function useSetMultiClientAppointments() {
   return useMutation({
     mutationFn: ({ businessId, enabled }: { businessId: string; enabled: boolean }) =>
       data.admin.setMultiClientAppointments(businessId, enabled),
+    onSuccess: (business) => onBusinessSettingSaved(queryClient, business),
+  });
+}
+
+/** «Pedir el comprobante de pago» de un negocio (spec 039), como las citas con varios pacientes. */
+export function useSetPaymentReminders() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ businessId, input }: { businessId: string; input: PaymentRemindersInput }) => data.admin.setPaymentReminders(businessId, input),
     onSuccess: (business) => onBusinessSettingSaved(queryClient, business),
   });
 }

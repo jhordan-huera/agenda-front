@@ -8,6 +8,7 @@ import type {
   BusinessCategoryInput,
   BusinessDeletionInput,
   PanelColorsInput,
+  PaymentRemindersInput,
   PlanPricesInput,
   PlanRejectionInput,
   PlatformAdminInput,
@@ -494,6 +495,11 @@ export interface PlatformAdminRepository {
    * el negocio no lo cambia.
    */
   setMultiClientAppointments(businessId: string, enabled: boolean): Promise<Business>;
+  /**
+   * «Pedir el comprobante de pago» (spec 039). Sólo el super admin: el interruptor y, con él encendido, los
+   * días de los recordatorios (siempre antes de la cita).
+   */
+  setPaymentReminders(businessId: string, input: PaymentRemindersInput): Promise<Business>;
   /** «Recomendado por» (spec 023): otro negocio o null. Queda en la actividad. */
   setReferredBy(businessId: string, referredBy: string | null): Promise<AdminBusinessReferrals>;
   /** «Descuentos por referidos» (spec 023): los ganados y pendientes de aplicar. */

@@ -297,6 +297,7 @@ export const apiRepository: DataRepository = {
       api.put<Business>(`/admin/businesses/${id(businessId)}/client-required-fields`, fields),
     setMultiClientAppointments: (businessId, enabled) =>
       api.put<Business>(`/admin/businesses/${id(businessId)}/multi-client-appointments`, { enabled }),
+    setPaymentReminders: (businessId, input) => api.put<Business>(`/admin/businesses/${id(businessId)}/payment-reminders`, input),
     setReferredBy: (businessId, referredBy) =>
       api.put<AdminBusinessReferrals>(`/admin/businesses/${id(businessId)}/referred-by`, { referredBy }),
     listReferralRewards: () => api.get<ReferralReward[]>("/admin/referral-rewards"),
