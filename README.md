@@ -409,7 +409,8 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   cambia el estado; con `?confirmar=1`, el botón del recordatorio, se confirma al abrir y el parámetro
   se quita de la dirección) y, si el negocio lo permite y aún está en plazo, «Cancelar mi cita» (pide
   confirmarlo y ofrece «Elegir otra hora»). Si no, el WhatsApp con el aviso ya escrito y «Llamar».
-  Sólo el principal cancela y paga; las otras personas de la sesión sólo confirman. La página de pago
+  Sólo el principal cancela y paga; las otras personas de la sesión sólo confirman. Subir el comprobante
+  de una cita que aún no empieza también la deja con «Confirmó que va» (2026-11-10). La página de pago
   enlaza a «Tu cita». En el panel, la marca «Confirmó el paciente» (`client-confirmed-badge.tsx`) va
   en el bloque de la agenda (icono y lector de pantalla), la lista del celular, la ficha (con la hora
   y, con varias personas, la de cada una) y el Inicio («Confirmó»). Configuración → Agenda explica
