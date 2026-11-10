@@ -73,6 +73,10 @@
   --color-foreground: var(--foreground);
   --font-sans: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
+  /* La portada editorial (prueba en dev, 2026-10-27): sus fuentes las carga sólo src/pages/landing-page.tsx. */
+  --font-wide: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-tech: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-accent: "Instrument Serif", Georgia, serif;
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
   --color-ink: var(--ink);
@@ -384,7 +388,7 @@
 
 /* La portada lleva la barra flotante arriba (spec 032): el foco y las anclas quedan siempre por debajo de ella. */
 html:has([data-landing]) {
-  scroll-padding-top: 6.5rem;
+  scroll-padding-top: 3rem;
 }
 @media (prefers-reduced-motion: reduce) {
   html {
