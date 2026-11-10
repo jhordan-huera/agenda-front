@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useBusinessId } from "@/features/auth/use-session";
 import { meetingUrlPlace, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { openPaymentReceipt, useAppointmentReceipts, useSetAppointmentPaid } from "@/hooks/queries/use-appointments";
+import { useBusinessNow } from "@/hooks/use-business-now";
 import { useErrorToast } from "@/hooks/use-error-toast";
 import { formatDateTime, formatLongDate } from "@/lib/format";
 import { RECEIPT_RETENTION_MONTHS } from "@/lib/validations/payment";
@@ -17,8 +18,8 @@ import { MissingReceiptBadge } from "./receipt-badge";
 /**
  * Pago de la cita en su ficha: comprobantes que envió el paciente, "Marcar como pagada" y, si la
  * agenda cobra por transferencia, el enlace de pago para mandárselo. En un negocio con «Pedir el
- * comprobante de pago» (spec 039), la marca «Sin comprobante» y «Recordar el pago por WhatsApp», un
- * recordatorio amable con el enlace (no cuenta en el tope de los emails).
+ * comprobante de pago» (spec 039), en una cita que aún no empezó, la marca «Sin comprobante» y «Recordar
+ * el pago por WhatsApp», un recordatorio amable con el enlace (no cuenta en el tope de los emails).
  */
 export function AppointmentPayment({
   appointment,
@@ -38,6 +39,7 @@ export function AppointmentPayment({
   const setPaid = useSetAppointmentPaid();
   const showError = useErrorToast();
   const multiAgenda = useMultiAgendaAccess();
+  const now = useBusinessNow(business?.timezone);
   if (appointment.price <= 0 && !appointment.receiptAt && !appointment.paidAt) return null;
 
   const paid = Boolean(appointment.paidAt);
@@ -55,7 +57,7 @@ export function AppointmentPayment({
       : null;
 
   // «Sin comprobante» (spec 039): la misma regla que la agenda y el tablero.
-  const missingReceipt = isMissingReceipt(appointment, business, professional);
+  const missingReceipt = isMissingReceipt(appointment, business, professional, now);
   const reminderUrl =
     missingReceipt && client?.phone && business
       ? getWhatsAppUrl(

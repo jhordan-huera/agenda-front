@@ -255,18 +255,12 @@ export function useSetMultiClientAppointments() {
   });
 }
 
-/**
- * «Pedir el comprobante de pago» de un negocio (spec 039). Como las citas con varios pacientes, y además las
- * agendas del negocio (al activarlo toman el modo por defecto).
- */
+/** «Pedir el comprobante de pago» de un negocio (spec 039), como las citas con varios pacientes. */
 export function useSetPaymentReminders() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ businessId, input }: { businessId: string; input: PaymentRemindersInput }) => data.admin.setPaymentReminders(businessId, input),
-    onSuccess: (business) => {
-      onBusinessSettingSaved(queryClient, business);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.professionals(business.id) });
-    },
+    onSuccess: (business) => onBusinessSettingSaved(queryClient, business),
   });
 }
 

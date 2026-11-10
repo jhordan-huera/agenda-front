@@ -11,19 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ImageUploadField } from "@/features/settings/image-upload-field";
 import { useThemeMode } from "@/features/theme/use-theme-mode";
-import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useProfessionals, useSaveProfessional } from "@/hooks/queries/use-professionals";
 import { useServices } from "@/hooks/queries/use-services";
 import { useTeam } from "@/hooks/queries/use-team";
 import { useErrorToast } from "@/hooks/use-error-toast";
-import { paymentRemindersOf } from "@/lib/constants/business";
 import { getInitials } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { BankAccountsFields } from "./bank-account-fields";
 import { CalendarInvitesField } from "./calendar-invites-field";
 import { PROFESSIONAL_COLORS, professionalColor } from "./colors";
-import { PaymentReminderModeField } from "./payment-reminder-mode-field";
 import { professionalSchema, type ProfessionalInput } from "@/lib/validations/professional";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
 import type { Professional } from "@/types";
@@ -58,9 +55,6 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
   const { data: services = [] } = useServices();
   const { data: professionals = [] } = useProfessionals();
   const { resolved } = useThemeMode();
-  const { data: business } = useCurrentBusiness();
-  // El modo de los recordatorios del comprobante (spec 039): sólo con el negocio activado.
-  const paymentReminders = paymentRemindersOf(business).enabled;
   const save = useSaveProfessional();
   const showError = useErrorToast();
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -81,7 +75,6 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
     notifyNewAppointments: professional?.notifyNewAppointments ?? true,
     dailyAgenda: professional?.dailyAgenda ?? true,
     calendarInvites: professional?.calendarInvites ?? false,
-    paymentReminderMode: professional?.paymentReminderMode ?? "before",
     isActive: professional?.isActive ?? true,
   }));
   const set = <K extends keyof ProfessionalInput>(key: K, value: ProfessionalInput[K]) =>
@@ -118,12 +111,7 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
     event.preventDefault();
     if (uploading || save.isPending) return;
     // Sin email no hay invitaciones: el interruptor se ve apagado y se guarda apagado.
-    const { paymentReminderMode, ...rest } = values;
-    const result = validate(professionalSchema, {
-      ...rest,
-      calendarInvites: Boolean(values.calendarInvites && calendarEmail),
-      ...(paymentReminders && { paymentReminderMode }),
-    });
+    const result = validate(professionalSchema, { ...values, calendarInvites: Boolean(values.calendarInvites && calendarEmail) });
     setErrors(result.errors);
     if (!result.success) return;
     try {
@@ -248,13 +236,6 @@ function ProfessionalForm({ professional, onDone }: { professional?: Professiona
         checked={values.calendarInvites ?? false}
         onCheckedChange={(checked) => set("calendarInvites", checked)}
       />
-      {paymentReminders && (
-        <PaymentReminderModeField
-          person="other"
-          value={values.paymentReminderMode ?? "before"}
-          onChange={(mode) => set("paymentReminderMode", mode)}
-        />
-      )}
       <FormField
         label="Enlace de videollamada"
         error={errors.meetingUrl}

@@ -104,7 +104,7 @@ export default function CalendarPage() {
   const professionalsById = new Map(agendas.all.map((p) => [p.id, p]));
   // «Sin comprobante» (spec 039): la misma regla que la ficha de la cita; sin el interruptor, ninguna.
   const missingReceipt = paymentReminders
-    ? (appointment: Appointment) => isMissingReceipt(appointment, business, professionalsById.get(appointment.professionalId))
+    ? (appointment: Appointment) => isMissingReceipt(appointment, business, professionalsById.get(appointment.professionalId), now)
     : undefined;
   const filterByReceipt = onlyMissingReceipt && missingReceipt !== undefined;
   const appointments = (appointmentsQuery.data ?? []).filter(

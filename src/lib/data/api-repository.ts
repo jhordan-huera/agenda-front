@@ -103,8 +103,6 @@ export const apiRepository: DataRepository = {
       api.put<Professional>(`${business(businessId)}/professionals/${id(professionalId)}`, input),
     setCalendarInvites: (businessId, professionalId, calendarInvites) =>
       api.patch<Professional>(`${business(businessId)}/professionals/${id(professionalId)}/calendar-invites`, { calendarInvites }),
-    setPaymentReminderMode: (businessId, professionalId, mode) =>
-      api.patch<Professional>(`${business(businessId)}/professionals/${id(professionalId)}/payment-reminder-mode`, { mode }),
     remove: (businessId, professionalId) => api.delete(`${business(businessId)}/professionals/${id(professionalId)}`),
   },
 
