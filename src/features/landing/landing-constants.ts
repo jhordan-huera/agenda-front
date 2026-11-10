@@ -1,22 +1,14 @@
 /** La página de reservas de ejemplo de la portada («Probar una página de reservas»). */
 export const DEMO_BOOKING_PATH = "/book/jhordan";
 
-/** Las anclas de la portada: las usan la barra de arriba, la regla de la derecha y el pie. */
+/** Las anclas de la portada (spec 032): las usan la barra de arriba y el pie. */
 export const LANDING_SECTIONS = {
-  features: "funciones",
-  data: "tus-datos",
+  highlights: "funciones",
+  flow: "como-avanza-una-cita",
+  integrations: "funciona-con",
   testimonial: "testimonio",
   faq: "preguntas",
-  start: "empezar",
 } as const;
-
-/** Las secciones que siguen la barra de arriba y la regla, en su orden, con su nombre. */
-export const TRACKED_SECTIONS: { id: string; label: string }[] = [
-  { id: LANDING_SECTIONS.features, label: "Funciones" },
-  { id: LANDING_SECTIONS.data, label: "Tus datos" },
-  { id: LANDING_SECTIONS.faq, label: "Preguntas" },
-  { id: LANDING_SECTIONS.start, label: "Empezar" },
-];
 
 /** Un testimonio de una clienta de Agenda360, con su permiso. */
 export interface Testimonial {
