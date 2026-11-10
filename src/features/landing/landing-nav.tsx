@@ -18,8 +18,17 @@ const NAV_LINK = cn(
  * La barra de arriba (prueba en dev, 2026-10-27), al estilo de getartcraft.com: el símbolo en su casilla,
  * las secciones en mayúsculas monoespaciadas, con la actual en un recuadro, y «Crear mi agenda» como un
  * bloque al borde. Sus piezas entran escalonadas al cargar. En el celular, las secciones van en un menú.
+ * `sections`: las de la página (por defecto, las de la portada; las páginas por especialidad, spec 041, las suyas).
  */
-export function LandingNav({ signup, active }: { signup: SignupContact; active: string | null }) {
+export function LandingNav({
+  signup,
+  active,
+  sections = TRACKED_SECTIONS,
+}: {
+  signup: SignupContact;
+  active: string | null;
+  sections?: { id: string; label: string }[];
+}) {
   const [open, setOpen] = useState(false);
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-wall/85 backdrop-blur-md print:hidden">
@@ -38,7 +47,7 @@ export function LandingNav({ signup, active }: { signup: SignupContact; active: 
           <BrandMark className="size-6" />
         </Link>
         <ul className="hidden items-center gap-1 px-4 md:flex">
-          {TRACKED_SECTIONS.map((section, index) => (
+          {sections.map((section, index) => (
             <li key={section.id} className="landing-rise" style={riseDelay(500 + index * 70)}>
               <a
                 href={`#${section.id}`}
@@ -83,7 +92,7 @@ export function LandingNav({ signup, active }: { signup: SignupContact; active: 
       </nav>
       {open && (
         <ul id="menu-portada" className="border-t border-border bg-wall px-2 py-2 md:hidden">
-          {TRACKED_SECTIONS.map((section) => (
+          {sections.map((section) => (
             <li key={section.id}>
               <a href={`#${section.id}`} onClick={() => setOpen(false)} className={cn(NAV_LINK, "flex min-h-11 items-center px-3")}>
                 {section.label}

@@ -110,7 +110,7 @@ export default function AppointmentPage() {
               icon={LinkIcon}
               className="w-full max-w-md"
               title="Este enlace no está disponible"
-              description="Revisa que el enlace esté completo o escríbele al negocio."
+              description="Revisa que el enlace esté completo. Si tu cita fue hace más de 30 días, el enlace ya caducó: escríbele al negocio."
             />
           ) : (
             <ErrorState className="w-full max-w-md" onRetry={() => refetch()} />
@@ -180,6 +180,7 @@ export default function AppointmentPage() {
           ) : (
             outcome !== "cancelled" && <ClosedNotice appointment={appointment} />
           )}
+          <p className="text-center text-xs text-muted-foreground">Este enlace es sólo para ti: no lo compartas con otras personas.</p>
         </main>
         <MadeWithAgenda360 slug={business.slug} />
       </div>

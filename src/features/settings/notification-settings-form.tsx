@@ -177,3 +177,41 @@ export function WhatsAppNoticeSettingsForm({ business }: { business: Business })
     </SettingsSection>
   );
 }
+
+/**
+ * El informe mensual (spec 040): el día 1, el resumen del mes anterior por email al propietario. Sólo lo ve
+ * y lo cambia él: la API ignora el campo si lo manda otra persona del equipo o el modo soporte.
+ */
+export function MonthlyReportSettingsForm({ business }: { business: Business }) {
+  const current = settingsOf(business);
+  const { values, setField, dirty, reset } = useSettingsForm({ monthlyReport: current.monthlyReport });
+  const { save, saving } = useSaveNotificationSettings(business);
+
+  const submit = async () => {
+    try {
+      await save(values);
+      reset(values);
+      toast.success("Preferencia del informe mensual guardada");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  return (
+    <SettingsSection
+      title="Tu informe mensual"
+      description="Un resumen de lo que pasó en tu negocio cada mes, con tus cifras reales. Sólo lo recibes tú."
+      dirty={dirty}
+      saving={saving}
+      onSubmit={submit}
+      onDiscard={() => reset()}
+    >
+      <SwitchField
+        label="Informe mensual por email"
+        description="El día 1 de cada mes: tus citas, reservas online, recordatorios y confirmaciones del mes anterior."
+        checked={values.monthlyReport}
+        onCheckedChange={(checked) => setField("monthlyReport", checked)}
+      />
+    </SettingsSection>
+  );
+}

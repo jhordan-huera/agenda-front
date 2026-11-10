@@ -2,7 +2,7 @@ import { useId, type KeyboardEvent } from "react";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import type { BusinessAnalytics } from "@/types";
-import { BusinessStatusBadge, PlanBadge } from "../business-badges";
+import { PlanBadge } from "../business-badges";
 import { typicalRate } from "./analytics-format";
 import { FEW_DATA_HINT, FewDataTag } from "./analytics-parts";
 import { barScale, type CompareContext, type Direction, type Metric } from "./compare-metrics";
@@ -16,7 +16,7 @@ const NEGATIVE_BAR = "bg-rose-500 dark:bg-rose-500/90";
 
 const percent = (fraction: number) => `${fraction * 100}%`;
 
-/** El negocio: su nombre (enlace a la ficha), «Pocos datos» junto al nombre, su tipo, su plan y, si lo está, «Suspendido». */
+/** El negocio: su nombre (enlace a la ficha), «Pocos datos» junto al nombre, su tipo y su plan. */
 function BusinessName({ business }: { business: BusinessAnalytics }) {
   return (
     <div className="min-w-0">
@@ -33,7 +33,6 @@ function BusinessName({ business }: { business: BusinessAnalytics }) {
       <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
         <span className="truncate">{business.category.name}</span>
         <PlanBadge plan={business.plan} />
-        {business.status === "suspended" && <BusinessStatusBadge status="suspended" />}
       </div>
     </div>
   );

@@ -7,12 +7,13 @@ import { meetingUrlPlace, useMultiAgendaAccess } from "@/features/professionals/
 import { openPaymentReceipt, useAppointmentReceipts, useSetAppointmentPaid } from "@/hooks/queries/use-appointments";
 import { useBusinessNow } from "@/hooks/use-business-now";
 import { useErrorToast } from "@/hooks/use-error-toast";
+import { APPOINTMENT_PAGE_DAYS } from "@/lib/constants/business";
 import { formatDateTime, formatLongDate } from "@/lib/format";
 import { RECEIPT_RETENTION_MONTHS } from "@/lib/validations/payment";
 import { isMissingReceipt } from "@/lib/payment-reminders";
 import { buildPaymentReminderMessage, describeBankAccounts, getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Appointment, Business, Client, Professional } from "@/types";
-import { paymentLinkOf } from "./appointment-utils";
+import { isPaymentLinkOpen, paymentLinkOf } from "./appointment-utils";
 import { MissingReceiptBadge } from "./receipt-badge";
 
 /**
@@ -46,9 +47,11 @@ export function AppointmentPayment({
   const bankAccounts = professional?.bankAccounts ?? [];
   const transfers = bankAccounts.length > 0;
   const link = paymentLinkOf(appointment);
+  // El enlace deja de abrirse APPOINTMENT_PAGE_DAYS días después de la cita: pasado eso no se ofrece.
+  const linkOpen = isPaymentLinkOpen(appointment, now.date);
   // Los datos de todas las cuentas (vale cualquiera) y el enlace para enviar el comprobante.
   const whatsAppUrl =
-    client?.phone && business && transfers && !paid
+    client?.phone && business && transfers && !paid && linkOpen
       ? getWhatsAppUrl(
           client.phone,
           business.timezone,
@@ -139,7 +142,7 @@ export function AppointmentPayment({
         <Button variant={paid ? "outline" : "default"} size="sm" disabled={setPaid.isPending} onClick={togglePaid}>
           {paid ? <Undo2 /> : <CircleCheck />} {paid ? "Quitar el pago" : "Marcar como pagada"}
         </Button>
-        {transfers && !paid && (
+        {transfers && !paid && linkOpen && (
           <>
             <Button variant="outline" size="sm" onClick={copyLink}>
               <Copy /> Copiar enlace de pago
@@ -161,6 +164,12 @@ export function AppointmentPayment({
           </>
         )}
       </div>
+      {transfers && !paid && !linkOpen && (
+        <p className="flex items-start gap-2 text-xs text-muted-foreground">
+          <Landmark className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          El enlace de pago ya no se abre: caduca {APPOINTMENT_PAGE_DAYS} días después de la cita.
+        </p>
+      )}
       {!transfers && !paid && appointment.price > 0 && (
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
           <Landmark className="mt-0.5 size-3.5 shrink-0" aria-hidden />

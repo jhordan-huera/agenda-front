@@ -1,7 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": { "deploymentEnabled": { "main": true, "**": false } },
-  "rewrites": [{ "source": "/((?!assets/|_vercel/).*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/psicologos", "destination": "/especialidades/psicologos.html" },
+    { "source": "/fisioterapeutas", "destination": "/especialidades/fisioterapeutas.html" },
+    { "source": "/odontologos", "destination": "/especialidades/odontologos.html" },
+    { "source": "/((?!assets/|_vercel/).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -15,6 +20,14 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), payment=(), usb=(), geolocation=(self)" }
       ]
+    },
+    {
+      "source": "/pago/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/cita/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
     }
   ]
 }

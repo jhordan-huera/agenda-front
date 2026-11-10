@@ -1,4 +1,4 @@
-import { CalendarCheck, Check, MousePointer2, Paperclip, Stamp } from "lucide-react";
+import { CalendarCheck, Check, FileImage, Home, MapPin, MousePointer2, Navigation, Paperclip, Stamp } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -27,13 +27,16 @@ function Badge({ children, className, tone = "brand" }: { children: ReactNode; c
   );
 }
 
-/** 01 · La página de reservas: se elige una hora libre y queda reservada. */
-export function BookingVisual() {
+/**
+ * 01 · La página de reservas: se elige una hora libre y queda reservada. Las páginas por especialidad (spec 041)
+ * cambian el servicio de ejemplo.
+ */
+export function BookingVisual({ service = "Consulta psicológica", detail = "50 min · jueves 30" }: { service?: string; detail?: string }) {
   const times = ["09:00", "09:50", "10:40", "11:30", "15:00", "15:50"];
   return (
     <div className={WINDOW}>
-      <p className={TITLE}>Consulta psicológica</p>
-      <p className="text-muted-foreground">50 min · jueves 30</p>
+      <p className={TITLE}>{service}</p>
+      <p className="text-muted-foreground">{detail}</p>
       <p className={cn(LABEL, "mt-4 mb-2")}>Elige una hora</p>
       <div className="grid grid-cols-3 gap-2">
         {times.map((time) => (
@@ -252,6 +255,68 @@ export function TeamVisual() {
           <span aria-hidden className={cn("size-2.5 shrink-0 rounded-full", person.color)} />
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Páginas por especialidad (spec 041) · La historia clínica con archivos: la evolución de la sesión y un adjunto
+ * (una radiografía, un examen) que se sube.
+ */
+export function ClinicalFilesVisual({ title, file }: { title: string; file: string }) {
+  return (
+    <div className={WINDOW}>
+      <p className={LABEL}>{title}</p>
+      <div className="mt-3 space-y-1.5">
+        {["w-11/12", "w-4/5", "w-2/3"].map((width) => (
+          <span key={width} className={cn("block h-2 rounded-full bg-muted", width)} />
+        ))}
+      </div>
+      <div className="mt-4 flex items-center gap-2 rounded-lg border border-border p-2.5">
+        <FileImage className="size-4 shrink-0 text-muted-foreground" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold">{file}</p>
+          <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-muted">
+            <span className="lv-a-fill block h-full rounded-full bg-ink" />
+          </span>
+        </div>
+      </div>
+      <div className="lv-a-in55 mt-3">
+        <Badge tone="confirmed">
+          <Check className="size-3.5" /> Guardado en su historia
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Páginas por especialidad (spec 041) · La visita a domicilio: la cita con la dirección que marcó el paciente al
+ * reservar, un plano de ejemplo y «Cómo llegar».
+ */
+export function HomeVisitVisual() {
+  return (
+    <div className={WINDOW}>
+      <div className="flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-ink">
+          <Home className="size-4" />
+        </span>
+        <div className="min-w-0">
+          <p className={TITLE}>Fisioterapia a domicilio</p>
+          <p className="text-muted-foreground">Ana T. · jueves 30, 16:00</p>
+          <p className="mt-1 truncate text-muted-foreground">Av. de Ejemplo N12-34</p>
+        </div>
+      </div>
+      <div aria-hidden className="relative mt-4 h-20 overflow-hidden rounded-lg border border-border bg-muted">
+        <span className="absolute inset-x-0 top-1/3 h-px bg-border" />
+        <span className="absolute inset-x-0 top-2/3 h-px bg-border" />
+        <span className="absolute inset-y-0 left-1/4 w-px bg-border" />
+        <span className="absolute inset-y-0 left-2/3 w-px bg-border" />
+        <MapPin className="lv-a-in30 absolute top-1/2 left-1/2 size-6 -translate-x-1/2 -translate-y-full fill-ink text-ink" />
+      </div>
+      <span className="lv-a-press mt-3 inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-[11px] font-semibold text-background">
+        <Navigation className="size-3" /> Cómo llegar
+      </span>
     </div>
   );
 }

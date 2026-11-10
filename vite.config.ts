@@ -3,6 +3,8 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { robotsTxt, siteUrlFrom, sitemapXml, SPECIALTY_HTML_DIR, specialtyHtml } from "./scripts/specialty-pages.ts";
+import { SPECIALTIES } from "./src/features/landing/specialties.ts";
 
 /**
  * La hoja de estilos de la app, al final del <body>: el navegador dibuja antes la pantalla de carga
@@ -25,6 +27,29 @@ function stylesheetAfterBootScreen(): Plugin {
   };
 }
 
+/**
+ * Las páginas por especialidad (spec 041) para Google y para compartir: un HTML por especialidad con su título,
+ * su descripción y sus etiquetas para la vista previa (vercel.json sirve cada dirección con el suyo), el mapa del
+ * sitio y robots.txt. Ver scripts/specialty-pages.ts.
+ */
+function specialtyPages(siteUrl: string): Plugin {
+  return {
+    name: "agenda:specialty-pages",
+    apply: "build",
+    enforce: "post",
+    generateBundle(_options, bundle) {
+      const index = bundle["index.html"];
+      if (!index || index.type !== "asset") throw new Error("No encontré index.html en el build para las páginas por especialidad.");
+      const html = String(index.source);
+      for (const specialty of SPECIALTIES) {
+        this.emitFile({ type: "asset", fileName: `${SPECIALTY_HTML_DIR}/${specialty.slug}.html`, source: specialtyHtml(html, specialty, siteUrl) });
+      }
+      this.emitFile({ type: "asset", fileName: "sitemap.xml", source: sitemapXml(siteUrl) });
+      this.emitFile({ type: "asset", fileName: "robots.txt", source: robotsTxt(siteUrl) });
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -36,6 +61,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       stylesheetAfterBootScreen(),
+      specialtyPages(siteUrlFrom(env)),
       // Aplicación instalable: service worker propio (src/sw.ts) con la lista de archivos de cada
       // versión. El manifiesto es public/manifest.webmanifest y lo enlaza sólo el panel
       // (src/lib/installable-app.ts), no la portada ni la página de reservas.

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { PLANS, getPlan } from "@/lib/constants/plans";
 import { downloadCsv } from "@/lib/csv";
 import { normalizeSearch, plural } from "@/lib/format";
-import type { AnalyticsSnapshot, BusinessAnalytics, BusinessStatus, ISODate, PlanId } from "@/types";
+import type { AnalyticsSnapshot, BusinessAnalytics, ISODate, PlanId } from "@/types";
 import { FilterChips } from "../filter-chips";
 import { categoryOf } from "./analytics-format";
 import { BusinessAnalyticsSheet } from "./business-analytics-sheet";
@@ -28,7 +28,6 @@ import { CompareRanking } from "./compare-ranking";
 import { CompareSummary } from "./compare-summary";
 
 type PlanFilter = PlanId | "all";
-type StatusFilter = BusinessStatus | "all";
 /** El tipo elegido: su id, «Sin tipo» (none) o todos. */
 type TypeFilter = string;
 const ALL_TYPES = "all";
@@ -38,16 +37,16 @@ const typeKey = (business: BusinessAnalytics) => business.category.id ?? NO_TYPE
 
 /**
  * Pestaña «Comparar» (Historia 1): arriba, el resumen de los negocios que se ven; debajo, el ranking por
- * la cifra elegida («Comparar por»), con su barra. Se filtra por tipo, plan y estado (por defecto, los
- * activos), se busca por nombre y se descarga en CSV con todas las cifras, sea cual sea la elegida. Tocar
- * un negocio abre su detalle. La cifra va en la dirección (`?cifra=`) para poder compartirla.
+ * la cifra elegida («Comparar por»), con su barra. Se filtra por tipo y plan, se busca por nombre y se
+ * descarga en CSV con todas las cifras, sea cual sea la elegida. Tocar un negocio abre su detalle. La cifra
+ * va en la dirección (`?cifra=`) para poder compartirla. Sólo salen los negocios activos: los suspendidos
+ * no están en la analítica (2026-11-10).
  */
 export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; today: ISODate }) {
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [type, setType] = useState<TypeFilter>(ALL_TYPES);
   const [plan, setPlan] = useState<PlanFilter>("all");
-  const [status, setStatus] = useState<StatusFilter>("active");
   const [order, setOrder] = useState<{ metric: MetricKey; direction: Direction }>(() => {
     const requested = params.get("cifra");
     return { metric: isMetricKey(requested) ? requested : DEFAULT_METRIC, direction: "desc" };
@@ -59,7 +58,8 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
   const labelId = useId();
 
   const ctx = useMemo<CompareContext>(() => ({ category: (business) => categoryOf(snapshot, business), today }), [snapshot, today]);
-  const all = snapshot.businesses;
+  // Una foto de antes del 2026-11-10 todavía puede traer suspendidos: no salen.
+  const all = useMemo(() => snapshot.businesses.filter((business) => business.status === "active"), [snapshot]);
   const types = useMemo(() => {
     const seen = new Map<string, string>();
     for (const business of all) seen.set(typeKey(business), business.category.name);
@@ -70,12 +70,10 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
   const matchesSearch = (business: BusinessAnalytics) => !term || normalizeSearch(business.name).includes(term);
   const matchesType = (business: BusinessAnalytics) => type === ALL_TYPES || typeKey(business) === type;
   const matchesPlan = (business: BusinessAnalytics, value: PlanFilter) => value === "all" || business.plan === value;
-  const matchesStatus = (business: BusinessAnalytics, value: StatusFilter) => value === "all" || business.status === value;
-  // Cada número cuenta con la búsqueda, el tipo y el otro filtro: lo que quedaría al tocarlo.
+  // Cada número cuenta con la búsqueda y el tipo: lo que quedaría al tocarlo.
   const searched = all.filter((business) => matchesSearch(business) && matchesType(business));
-  const planCount = (value: PlanFilter) => searched.filter((business) => matchesStatus(business, status) && matchesPlan(business, value)).length;
-  const statusCount = (value: StatusFilter) => searched.filter((business) => matchesPlan(business, plan) && matchesStatus(business, value)).length;
-  const visible = searched.filter((business) => matchesPlan(business, plan) && matchesStatus(business, status));
+  const planCount = (value: PlanFilter) => searched.filter((business) => matchesPlan(business, value)).length;
+  const visible = searched.filter((business) => matchesPlan(business, plan));
   const metric = metricOf(order.metric);
   const rows = rankRows(visible, metric, order.direction, ctx);
   const selectedBusiness = selected ? (all.find((business) => business.id === selected.id) ?? null) : null;
@@ -110,17 +108,15 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
     setSearch("");
     setType(ALL_TYPES);
     setPlan("all");
-    setStatus("active");
   };
   const exportCsv = () =>
     downloadCsv(
       [
-        ["Negocio", "Tipo", "Plan", "Estado", ...CSV_METRICS.map((key) => metricOf(key).label)],
+        ["Negocio", "Tipo", "Plan", ...CSV_METRICS.map((key) => metricOf(key).label)],
         ...rows.map((business) => [
           business.name,
           business.category.name,
           getPlan(business.plan).name,
-          business.status === "active" ? "Activo" : "Suspendido",
           ...CSV_METRICS.map((key) => metricOf(key).text(business, ctx)),
         ]),
       ],
@@ -173,16 +169,6 @@ export function CompareTab({ snapshot, today }: { snapshot: AnalyticsSnapshot; t
             options={[
               { value: "all", label: "Todos los planes", count: planCount("all") },
               ...PLANS.map((option) => ({ value: option.id, label: option.name, count: planCount(option.id) })),
-            ]}
-          />
-          <FilterChips
-            label="Estado"
-            value={status}
-            onChange={setStatus}
-            options={[
-              { value: "active", label: "Activos", count: statusCount("active") },
-              { value: "suspended", label: "Suspendidos", count: statusCount("suspended") },
-              { value: "all", label: "Todos", count: statusCount("all") },
             ]}
           />
         </div>

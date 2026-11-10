@@ -474,8 +474,8 @@ export default function AdminBusinessDetailPage() {
         title={suspended ? `¿Reactivar ${business.name}?` : `¿Suspender ${business.name}?`}
         description={
           suspended
-            ? "Su equipo podrá volver a entrar y su página de reservas estará disponible de nuevo. Avisaremos al propietario por email."
-            : "Su equipo no podrá usar el panel y su página de reservas dejará de estar disponible. Los datos se conservan. Avisaremos al propietario por email."
+            ? "Su equipo podrá volver a entrar y su página de reservas estará disponible de nuevo. Las mensualidades siguen desde el próximo cobro. Avisaremos al propietario por email."
+            : "Su equipo no podrá usar el panel y su página de reservas dejará de estar disponible. Sus mensualidades sin pagar se anulan y no sale en la analítica. Los datos se conservan. Avisaremos al propietario por email."
         }
         confirmLabel={suspended ? "Reactivar" : "Suspender"}
         destructive={!suspended}
