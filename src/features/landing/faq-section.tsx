@@ -4,9 +4,8 @@ import { Link } from "react-router";
 import { APP_NAME } from "@/lib/constants/app";
 import { cn } from "@/lib/utils";
 import { LANDING_SECTIONS, TESTIMONIAL } from "./landing-constants";
-import { revealRef } from "./landing-motion";
-import { revealDelay, TECH_LABEL, WIDE_HEADING } from "./landing-styles";
-import { Accent, SectionBar, SectionIntro } from "./landing-ui";
+import { CONTAINER, DISPLAY } from "./landing-styles";
+import { SectionHeading } from "./landing-ui";
 import { usePricingContact, type SupportContact } from "./use-signup-contact";
 
 /** Un enlace dentro de una frase: su zona para el dedo crece hasta 44 px de alto sin mover el texto. */
@@ -30,12 +29,11 @@ function Testimonial() {
   if (!TESTIMONIAL) return null;
   const { quote, name, role, city } = TESTIMONIAL;
   return (
-    <figure id={LANDING_SECTIONS.testimonial} ref={revealRef} data-reveal className="border-b border-border px-5 py-16 sm:px-10 sm:py-20">
-      <p className={cn(TECH_LABEL, "text-muted-foreground")}>Lo que dicen</p>
-      <blockquote className={cn(WIDE_HEADING, "mt-6 max-w-4xl text-[clamp(1.5rem,3vw,2.25rem)] leading-tight font-bold [font-stretch:105%]")}>
+    <figure id={LANDING_SECTIONS.testimonial} className={cn(CONTAINER, "pt-24 sm:pt-32")}>
+      <blockquote className={cn(DISPLAY, "max-w-4xl px-1 text-[clamp(1.5rem,3vw,2.25rem)] leading-tight font-bold tracking-[-0.02em]")}>
         «{quote}»
       </blockquote>
-      <figcaption className="mt-6">
+      <figcaption className="mt-6 px-1">
         <span className="block font-semibold">{name}</span>
         <span className="block text-muted-foreground">{[role, city].filter(Boolean).join(", ")}</span>
       </figcaption>
@@ -44,9 +42,9 @@ function Testimonial() {
 }
 
 /**
- * 03 / Preguntas (prueba en dev, 2026-10-27). Donde getartcraft.com pone las películas de su comunidad,
- * Agenda360 pone las preguntas frecuentes: no hay testimonios inventados (el de una clienta sale antes, sólo
- * con su permiso). Con `<details>` nativo, numeradas como las casillas, y sin precios (constitución).
+ * «Preguntas» (spec 043): el título a la izquierda y las preguntas a la derecha, que se abren y se cierran
+ * (`<details>` nativo, también con el teclado). Sin precios ni testimonios inventados (constitución): el de una
+ * clienta sale antes, sólo con su permiso.
  */
 export function FaqSection() {
   const pricing = usePricingContact();
@@ -101,40 +99,29 @@ export function FaqSection() {
   ];
 
   return (
-    <section aria-labelledby="titulo-preguntas" id={LANDING_SECTIONS.faq}>
-      <SectionBar index="03" title="Preguntas" note="Lo que más nos preguntan" />
+    <>
       <Testimonial />
-      <SectionIntro
-        id="titulo-preguntas"
-        title={
-          <>
-            Lo que querías <Accent>saber</Accent>.
-          </>
-        }
-      >
-        ¿Te queda otra duda? {pricing ? <ContactLink contact={pricing}>Escríbenos</ContactLink> : "Escríbenos"}.
-      </SectionIntro>
-      <div className="border-b border-border">
-        {questions.map(({ question, answer }, index) => (
-          <details
-            key={question}
-            ref={revealRef}
-            data-reveal
-            style={revealDelay(Math.min(index, 4) * 60)}
-            className="group border-border not-last:border-b"
-          >
-            <summary className="flex min-h-16 cursor-pointer list-none items-center gap-5 px-5 py-4 text-left outline-none transition-colors hover:bg-foreground/[0.03] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset sm:px-8 [&::-webkit-details-marker]:hidden">
-              <span className={cn(TECH_LABEL, "w-6 shrink-0 text-muted-foreground tabular-nums")}>{String(index + 1).padStart(2, "0")}</span>
-              <span className="flex-1 text-[1.0625rem] font-semibold">{question}</span>
-              <Plus
-                aria-hidden
-                className="size-5 shrink-0 text-muted-foreground transition-transform duration-300 ease-out-soft group-open:rotate-45 motion-reduce:transition-none"
-              />
-            </summary>
-            <p className="max-w-3xl pr-5 pb-6 pl-[4.25rem] leading-relaxed text-muted-foreground sm:pr-8 sm:pl-[5.25rem]">{answer}</p>
-          </details>
-        ))}
-      </div>
-    </section>
+      <section aria-labelledby="titulo-preguntas" id={LANDING_SECTIONS.faq} className={cn(CONTAINER, "pt-24 sm:pt-32")}>
+        <div className="grid gap-10 px-1 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)] lg:gap-16">
+          <SectionHeading id="titulo-preguntas" title="Lo que querías saber.">
+            ¿Te queda otra duda? {pricing ? <ContactLink contact={pricing}>Escríbenos</ContactLink> : "Escríbenos"}.
+          </SectionHeading>
+          <div className="border-t border-border">
+            {questions.map(({ question, answer }) => (
+              <details key={question} className="group border-b border-border">
+                <summary className="flex min-h-16 cursor-pointer list-none items-center gap-5 rounded-lg py-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                  <span className="font-display flex-1 text-[1.0625rem] font-bold">{question}</span>
+                  <Plus
+                    aria-hidden
+                    className="size-5 shrink-0 text-muted-foreground transition-transform duration-300 ease-out-soft group-open:rotate-45 motion-reduce:transition-none"
+                  />
+                </summary>
+                <p className="max-w-3xl pr-10 pb-6 leading-relaxed text-muted-foreground">{answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

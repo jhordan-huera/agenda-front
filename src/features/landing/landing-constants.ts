@@ -1,8 +1,16 @@
 /** La página de reservas de ejemplo de la portada («Probar una página de reservas»). */
 export const DEMO_BOOKING_PATH = "/book/jhordan";
 
-/** Las anclas de la portada: las usan la barra de arriba, la regla de la derecha y el pie. */
+/** El título y el texto del panel de marca (spec 043, respuesta 3): los revisa `npm run check:landing`. */
+export const LANDING_HERO = {
+  title: "Tu consulta, ordenada desde la primera reserva.",
+  text: "Tus pacientes eligen su hora en tu página, reciben su recordatorio y confirman que van. Tú ves la semana entera de un vistazo.",
+  note: "Gratis para empezar, sin tarjeta. Tus pacientes no crean cuenta.",
+};
+
+/** Las anclas de la portada: las usan la barra de arriba y el pie. Las de antes de la spec 043 siguen igual. */
 export const LANDING_SECTIONS = {
+  specialties: "especialidades",
   features: "funciones",
   data: "tus-datos",
   testimonial: "testimonio",
@@ -10,12 +18,11 @@ export const LANDING_SECTIONS = {
   start: "empezar",
 } as const;
 
-/** Las secciones que siguen la barra de arriba y la regla, en su orden, con su nombre. */
+/** Las secciones de la barra de arriba, en su orden, con su nombre (spec 043). */
 export const TRACKED_SECTIONS: { id: string; label: string }[] = [
   { id: LANDING_SECTIONS.features, label: "Funciones" },
-  { id: LANDING_SECTIONS.data, label: "Tus datos" },
+  { id: LANDING_SECTIONS.specialties, label: "Especialidades" },
   { id: LANDING_SECTIONS.faq, label: "Preguntas" },
-  { id: LANDING_SECTIONS.start, label: "Empezar" },
 ];
 
 /** Un testimonio de una clienta de Agenda360, con su permiso. */

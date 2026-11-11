@@ -40,6 +40,15 @@ export interface Specialty {
   questions: { question: string; answer: string }[];
   /** El mensaje ya escrito de «Escríbenos por WhatsApp». */
   whatsappMessage: string;
+  /** Los servicios de ejemplo de la semana del panel de marca (spec 043): el de siempre, la primera cita y otro. */
+  week: WeekServices;
+}
+
+/** Los servicios de ejemplo de la agenda de la semana (week-preview.tsx). */
+export interface WeekServices {
+  main: string;
+  first: string;
+  other: string;
 }
 
 const PRICE_ANSWER = "Puedes empezar gratis, sin tarjeta. Para los planes con más funciones, escríbenos y te contamos.";
@@ -48,6 +57,7 @@ export const SPECIALTIES: Specialty[] = [
   {
     slug: "psicologos",
     name: "Psicólogos",
+    week: { main: "Terapia individual", first: "Primera consulta", other: "Terapia de pareja" },
     meta: {
       title: "Agenda360 para psicólogos · Agenda y reservas online",
       description:
@@ -131,6 +141,7 @@ export const SPECIALTIES: Specialty[] = [
   },
   {
     slug: "fisioterapeutas",
+    week: { main: "Rehabilitación", first: "Valoración inicial", other: "Sesión a domicilio" },
     name: "Fisioterapeutas",
     meta: {
       title: "Agenda360 para fisioterapeutas · Agenda y reservas online",
@@ -215,6 +226,7 @@ export const SPECIALTIES: Specialty[] = [
   },
   {
     slug: "odontologos",
+    week: { main: "Limpieza dental", first: "Primera consulta", other: "Control de ortodoncia" },
     name: "Odontólogos",
     meta: {
       title: "Agenda360 para odontólogos · Agenda y reservas online",

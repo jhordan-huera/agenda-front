@@ -189,6 +189,14 @@ Hay dos caminos, y el super admin decide cuáles están abiertos:
   pago y «Tu cita» terminan con «Agenda online con Agenda360 · ¿Eres profesional? Crea tu agenda». Es
   un solo enlace, pequeño, que abre la portada en otra pestaña con `/?desde=<slug>`. Siempre visible:
   ningún negocio ni plan lo oculta.
+- **La portada «Panel de marca»** (spec 043, `pages/landing-page.tsx` y `features/landing/`):
+  - **el orden:** la barra; el panel tomate (`brand-panel.tsx`) con la agenda de la semana de ejemplo
+    (`week-preview.tsx`); «Hecho para» (`#especialidades`); las 8 funciones con sus ilustraciones fijas
+    (`feature-visuals.tsx`); «Tus datos»; las preguntas; el cierre y el pie;
+  - **el estilo:** una sola familia de letra (Schibsted Grotesk, `--font-display`), sin mayúsculas espaciadas,
+    letra monoespaciada ni palabras sueltas en cursiva, y un solo movimiento al cargar (la semana aparece);
+  - **las páginas por especialidad** usan las mismas piezas, con la semana con sus servicios;
+  - **`npm run check:landing`** revisa sus textos y que no vuelva lo que se quitó.
 - **La portada con el registro cerrado** (`features/landing/use-signup-contact.ts` y `signup-link.tsx`):
   los «Crear mi agenda» del menú, de la portada, del cierre y del pie pasan a «Quiero mi agenda» y abren
   un WhatsApp al teléfono de soporte (`/admin/settings`) con «Hola, quiero mi agenda en Agenda360». Si
