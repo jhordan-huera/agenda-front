@@ -7,7 +7,7 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "28 de octubre de 2026";
+const LAST_UPDATED = "11 de noviembre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
@@ -183,6 +183,11 @@ export default function PrivacyPage() {
               <li>
                 <strong>Nominatim (Fundación OpenStreetMap)</strong>, que busca en el mapa la dirección que escribes (por
                 ejemplo, la de una cita a domicilio): recibe el texto que buscas y tu dirección IP.
+              </li>
+              <li>
+                <strong>Google Maps</strong>, que muestra en la página de reservas el mapa de los negocios que escribieron su
+                dirección sin marcar su punto: se carga desde Google cuando bajas hasta él, así que ve tu dirección IP y la
+                dirección del negocio, nunca tus datos.
               </li>
               <li>
                 <strong>Vercel Analytics</strong>, que mide qué páginas se visitan y cuánto tardan en cargar, sin cookies y

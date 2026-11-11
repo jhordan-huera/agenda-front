@@ -368,7 +368,9 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   aclaraciones); cada acceso queda en la auditoría; un paciente con historia no se puede eliminar.
 - **Ubicación del local**: en Configuración → Negocio se marca la puerta del local en un mapa. La
   página de reservas muestra el mapa con "Cómo llegar" (salvo en citas a domicilio), y la
-  confirmación, la pantalla final y los emails llevan a ese punto exacto en Google Maps.
+  confirmación, la pantalla final y los emails llevan a ese punto exacto en Google Maps. Si el negocio
+  sólo escribió la dirección, la página de reservas muestra un mapa de Google con esa dirección
+  (`getEmbeddedMapUrl`, sin clave), que entiende direcciones que Nominatim no encuentra (2026-11-11).
 - **Modalidades: en el local, a domicilio y virtual**: cada servicio admite una o varias (con varias,
   el cliente elige al reservar). Lo **virtual** es por videollamada con la sala fija de cada
   profesional (Profesionales → Editar → "Enlace de videollamada": Meet, Zoom o Teams, con https://):
@@ -620,7 +622,8 @@ clientes nuevos y recurrentes), las calcula la API (`useClientActivity`).
 En Vercel, como proyecto Vite (build `npm run build`, salida `dist/`). `vercel.json` incluye la
 reescritura SPA para que las rutas profundas (`/dashboard/...`, `/book/...`) funcionen y las
 cabeceras de seguridad: la política de contenido (CSP) sólo deja cargar código de este dominio y
-de Cloudflare (CAPTCHA de la página de reservas), conectarse a los mapas (OpenFreeMap), al
+de Cloudflare (CAPTCHA de la página de reservas), mostrar el mapa de Google de los negocios sin punto
+marcado (`frame-src`), conectarse a los mapas (OpenFreeMap), al
 buscador de direcciones (Nominatim) y a Supabase (los archivos de la historia clínica, los
 comprobantes de pago y las imágenes se suben directo desde el navegador), y nadie puede mostrar la web dentro de otra (clickjacking).
 Si se añade un servicio externo nuevo, hay que permitirlo ahí.
