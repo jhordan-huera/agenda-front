@@ -59,6 +59,7 @@ import type {
   AdminCalendar,
   AdminCalendarDay,
   AdminCalendarFilters,
+  AdminGrowthDetail,
   AdminPlanRequest,
   AdminUserSummary,
   AnalyticsPeriodDays,
@@ -459,6 +460,11 @@ export interface AdminAuditFilters extends AuditLogFilters {
  */
 export interface PlatformAdminRepository {
   getStats(): Promise<PlatformStats>;
+  /**
+   * El detalle de las tarjetas de «Crecimiento del mes» (spec 042): las mismas cifras por negocio. Sólo cifras:
+   * ni pacientes ni citas sueltas. Se pide al abrir un panel del Resumen.
+   */
+  getGrowthDetail(): Promise<AdminGrowthDetail>;
   /**
    * La analítica (spec 016): la última foto de ese periodo, que prepara el cron cada mañana (la API no
    * calcula nada). null: todavía no hay ninguna.

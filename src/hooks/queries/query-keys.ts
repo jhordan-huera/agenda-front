@@ -73,6 +73,8 @@ export const queryKeys = {
   admin: {
     all: ["admin"] as const,
     stats: ["admin", "stats"] as const,
+    /** El detalle de las tarjetas de «Crecimiento del mes» (spec 042). */
+    growthDetail: ["admin", "growth"] as const,
     /** La foto de la analítica de 30 o de 90 días (spec 016). */
     analytics: (days: number) => ["admin", "analytics", days] as const,
     /** El calendario de la plataforma (spec 035): el rango y el panel de un día o una hora. */

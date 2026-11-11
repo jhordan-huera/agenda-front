@@ -10,6 +10,7 @@ import type {
   AdminBusinessSummary,
   AdminCalendar,
   AdminCalendarDay,
+  AdminGrowthDetail,
   AdminPlanRequest,
   AdminUserSummary,
   AnalyticsSnapshot,
@@ -280,6 +281,7 @@ export const apiRepository: DataRepository = {
 
   admin: {
     getStats: () => api.get<PlatformStats>("/admin/stats"),
+    getGrowthDetail: () => api.get<AdminGrowthDetail>("/admin/growth"),
     getAnalytics: (days) => api.get<{ snapshot: AnalyticsSnapshot | null }>("/admin/analytics", { days }).then((result) => result.snapshot),
     getCalendar: (from, to, filters) => api.get<AdminCalendar>("/admin/calendar", { from, to, ...filters }),
     getCalendarDay: (date, hour, filters) => api.get<AdminCalendarDay>("/admin/calendar/day", { date, hour, ...filters }),

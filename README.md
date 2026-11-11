@@ -249,6 +249,11 @@ active con una app de autenticación. Después, el panel aparece solo.
     al paciente (el cupo menos la reserva del equipo), y cuántos esperan en la cola, al paciente y al
     negocio. Lo que no cabe no se pierde: sale en cuanto hay cupo (primero el equipo, después el
     paciente y al final las copias al profesional y los avisos al negocio).
+  - **Detalle del crecimiento del mes** (spec 042, `features/admin/growth-detail-sheet.tsx`): cada tarjeta
+    (citas agendadas, reservas online, pacientes nuevos y negocios nuevos) abre un panel con su cifra por
+    negocio, la de los mismos días del mes pasado y el enlace a su ficha; los pacientes nuevos, también por
+    origen (página de reservas o panel). Sólo cifras: sin pacientes ni citas sueltas. Se pide a
+    `/admin/growth` al abrir el primer panel y vale 5 minutos.
 - **Negocios**: búsqueda y filtros por plan/estado; ficha con uso del plan, desde cuándo está en su
   plan («En Pro desde el 3 oct»: sin cobro, no hay fecha de renovación), equipo, actividad, cambio
   de plan, suspender/reactivar y restablecer la contraseña del propietario.
