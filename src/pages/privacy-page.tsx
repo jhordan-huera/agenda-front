@@ -7,7 +7,7 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "11 de noviembre de 2026";
+const LAST_UPDATED = "12 de noviembre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
@@ -174,7 +174,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>GitHub</strong>, que ejecuta las tareas automáticas (por ejemplo, los recordatorios de las citas y
-                la copia de seguridad semanal).
+                la copia de seguridad diaria).
               </li>
               <li>
                 <strong>OpenFreeMap</strong>, que dibuja los mapas: tu navegador le pide las imágenes del mapa, así que ve tu
@@ -205,6 +205,13 @@ export default function PrivacyPage() {
                 las alertas de seguridad, el email de la cuenta parcialmente oculto.
               </li>
               <li>
+                <strong>Sentry</strong>, en Estados Unidos, que avisa al equipo de {APP_NAME} cuando la aplicación falla: recibe
+                el error técnico (en qué parte del código falló), la página sin nombres, números ni enlaces privados, el
+                navegador y el tipo de aparato, y un número al azar de la visita que se borra al cerrar la pestaña. No
+                recibe nombres, contactos, cédulas ni nada de la historia clínica. Si el aviso sale de tu navegador, Sentry
+                ve tu dirección IP al recibirlo, pero no la guarda.
+              </li>
+              <li>
                 <strong>Avisos en el celular:</strong> si el propietario de un negocio o el super admin los activan, cada
                 aviso viaja cifrado por el servicio de avisos de su navegador (Google, Apple, Mozilla o Microsoft), que no
                 puede leer su contenido. Sólo lleva el nombre del paciente abreviado, nunca su contacto ni su historia
@@ -222,7 +229,7 @@ export default function PrivacyPage() {
               <li>Los datos de cada negocio, sus clientes y sus citas, mientras el negocio tenga su cuenta.</li>
               <li>
                 Al eliminar un negocio se borran de forma definitiva sus datos, sus archivos y las cuentas de su equipo.
-                Las copias de seguridad de la base de datos ya hechas (semanales y cifradas) guardan esos datos hasta que
+                Las copias de seguridad de la base de datos ya hechas (diarias y cifradas) guardan esos datos hasta que
                 se borra cada copia.
               </li>
               <li>
@@ -253,7 +260,7 @@ export default function PrivacyPage() {
               </li>
               <li>Verificación anti-robots en la página de reservas.</li>
               <li>
-                Una copia de seguridad semanal de la base de datos, cifrada: sólo {APP_NAME} tiene la clave para abrirla.
+                Una copia de seguridad diaria de la base de datos, cifrada: sólo {APP_NAME} tiene la clave para abrirla.
               </li>
               <li>Verificación en dos pasos (código del celular) en la cuenta de administración de la plataforma.</li>
               <li>Un registro de actividad que nadie puede modificar ni borrar desde la aplicación.</li>

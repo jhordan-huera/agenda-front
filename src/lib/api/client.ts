@@ -1,4 +1,5 @@
 import { DataError, type DataErrorCode } from "@/lib/data/errors";
+import { recordApiCall, reportServerFailure } from "@/lib/error-reports";
 
 /**
  * Cliente HTTP de la API (agenda-backend).
@@ -58,8 +59,11 @@ export async function apiRequest<T>(method: string, path: string, options: Reque
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
     }));
   } catch {
+    recordApiCall(method, path, "sin conexión");
     throw new DataError("network", "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.");
   }
+  // Para el aviso de un error (spec 044): el método, la ruta limpia y el estado, sin la consulta.
+  recordApiCall(method, path, response.status);
 
   if (response.status === 204) return undefined as T;
   const payload: unknown = await response.json().catch(() => undefined);
@@ -68,6 +72,9 @@ export async function apiRequest<T>(method: string, path: string, options: Reque
     const error = (payload as { error?: { code?: DataErrorCode; message?: string } } | undefined)?.error;
     // Sin respuesta de la API (p. ej. está apagada y responde el proxy): no es un error de la operación.
     if (!error && response.status >= 500) {
+      // La API no llegó a responder (el proxy, el tiempo de espera o la API apagada): la API no lo pudo
+      // avisar, así que lo avisa la web (spec 044). Los 5xx con el cuerpo de la API ya los avisó la API.
+      reportServerFailure(method, path, response.status);
       throw new DataError("network", "No se pudo conectar con el servidor. Inténtalo de nuevo en unos minutos.");
     }
     throw new DataError(

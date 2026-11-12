@@ -25,11 +25,14 @@ import { daysSince } from "./sales-lists";
 
 type Status = "ok" | "warn" | "bad" | "unknown";
 
-/** Umbrales de la spec 006. */
+/**
+ * Umbrales de la spec 006. La copia es diaria desde el 2026-11-11 (antes, semanal: 8 y 15 días): en ámbar si
+ * falta una, en rojo si faltan tres seguidas.
+ */
 const CRON_WARN_MINUTES = 30;
 const CRON_BAD_MINUTES = 120;
-const BACKUP_WARN_DAYS = 8;
-const BACKUP_BAD_DAYS = 15;
+const BACKUP_WARN_DAYS = 1;
+const BACKUP_BAD_DAYS = 3;
 /** Cupo de Gmail (spec 015): en ámbar desde el 80 % del cupo; en rojo al llegar al límite del paciente. */
 const QUOTA_WARN_SHARE = 0.8;
 /** Base de datos: en ámbar desde el 70 % del tope (como el aviso de ntfy de la copia, 350 de 500 MB); en rojo desde el 90 %. */
@@ -152,7 +155,7 @@ function tiles(health: PlatformStats["health"], today: ISODate, databaseLink: st
         ? backup.ok
           ? `${ago(backup.ranAt)}${backup.sizeBytes ? ` · ${formatSize(backup.sizeBytes)}` : ""}`
           : backup.error || ago(backup.ranAt)
-        : "La próxima del viernes quedará anotada",
+        : "La próxima, a las 03:00, quedará anotada",
     },
     // Una API anterior a esta tarjeta no trae `database` (undefined): no se muestra.
     ...(database === undefined ? [] : [databaseTile(database, databaseLink)]),

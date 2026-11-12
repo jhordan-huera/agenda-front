@@ -4,6 +4,7 @@ import { forgetBootColors } from "@/features/branding/brand-boot";
 import { authService, isTwoFactorChallenge, type Session } from "@/lib/auth";
 import { setApiUnreachable } from "@/lib/connection-status";
 import { DataError } from "@/lib/data/errors";
+import { setErrorContext } from "@/lib/error-reports";
 import { SessionContext, type SessionContextValue, type SessionStatus } from "./use-session";
 
 /** Cada cuánto se vuelve a pedir la sesión si la API no responde al arrancar. */
@@ -127,6 +128,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         : session,
     [session, support],
   );
+
+  // Los avisos de errores (spec 044) dicen el tipo de usuario y, en el panel, el negocio por su identificador.
+  useEffect(() => {
+    setErrorContext({
+      businessId: effectiveSession?.businessId ?? null,
+      superAdmin: effectiveSession?.platformRole === "super_admin",
+      signedIn: Boolean(effectiveSession),
+    });
+  }, [effectiveSession]);
 
   const value = useMemo<SessionContextValue>(
     () => ({
