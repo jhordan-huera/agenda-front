@@ -50,6 +50,34 @@ así a Vercel no llega a qué cliente o negocio se entró. El plan Hobby incluye
 (entre todos los proyectos); al pasarlas, Vercel deja de contar hasta el ciclo siguiente, la web sigue
 igual. `vercel.json` excluye `/_vercel/` de la reescritura a `index.html`.
 
+## Avisos de errores (Sentry, spec 044)
+
+- **Qué se avisa:**
+  - las pantallas que se rompen (`route-error-page.tsx`), salvo la versión vieja que se recarga sola y los 404;
+  - los errores sin atrapar (`main.tsx`);
+  - los 5xx sin el cuerpo de error de la API (`src/lib/api/client.ts`): no llegaron a la API o la API no
+    respondió.
+
+  No se avisan los errores de la API (los 500 los avisa la API), la falta de conexión, una petición cortada ni
+  lo que sale de una extensión del navegador.
+- **Cómo se carga:** en el arranque va sólo `src/lib/error-reports.ts`, pequeño: decide qué se avisa, recuerda
+  las últimas páginas y pedidos y guarda los errores en una cola. Con el primer error se descarga
+  `src/lib/sentry-client.ts` (`@sentry/browser`, ~31 KB), en una parte aparte de la web.
+- **Qué no sale de la web:** `src/lib/error-report-rules.ts` limpia la página, las rutas, los mensajes y lo
+  último que pasó:
+  - sin identificadores, tokens, emails, números largos ni parámetros;
+  - `/book/<negocio>` → `/book/[negocio]`.
+
+  Sentry recibe además el `User-Agent` (navegador y aparato) y un número al azar de la visita, en
+  `sessionStorage`. No hay migas automáticas, grabación ni medición de rendimiento. Lo comprueba
+  `npm run check:error-reports`.
+- **Los mapas de código:** con `SENTRY_AUTH_TOKEN` (sólo en Vercel), `@sentry/vite-plugin` marca cada archivo,
+  sube los mapas a Sentry con la versión (el commit) y los borra. El paso `agenda:sin-mapas` de
+  `vite.config.ts` borra lo que quede y falla si no puede. `SOURCEMAPS=local npm run build` hace lo mismo sin
+  subirlos, para comprobarlo.
+- **Cuándo envía:** sólo con `VITE_SENTRY_DSN`, fuera de este equipo, o con un DSN de este equipo (un Sentry de
+  prueba). La CSP permite `https://*.ingest.us.sentry.io`.
+
 ## Stack
 
 React 19 · TypeScript · Vite · React Router 8 · Tailwind CSS v4 · shadcn/ui (Radix) · Lucide ·
@@ -656,6 +684,15 @@ middleware, nunca llegan al navegador):
 | --- | --- |
 | `API_URL` | URL de la API, p. ej. `https://agenda-backend.vercel.app` |
 | `PROXY_SECRET` | El mismo valor que en la API |
+
+Para los avisos de errores (ver «Avisos de errores»), también en Vercel:
+
+| Variable | Valor |
+| --- | --- |
+| `VITE_SENTRY_DSN` | El DSN del proyecto `agenda-web` de Sentry (llega al navegador: es la clave pública del proyecto) |
+| `SENTRY_AUTH_TOKEN` | Un token de la organización (Organization Settings → Auth Tokens), sólo para subir los mapas al compilar |
+| `SENTRY_ORG` | El nombre corto de la organización en Sentry |
+| `SENTRY_PROJECT` | `agenda-web` |
 
 En local no se usa el middleware: el proxy de Vite (`vite.config.ts`) reenvía `/api` sin firma, y la
 API usa la IP de la conexión.

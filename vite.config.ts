@@ -1,4 +1,6 @@
+import { readdirSync, rmSync } from "node:fs";
 import path from "node:path";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
@@ -50,11 +52,43 @@ function specialtyPages(siteUrl: string): Plugin {
   };
 }
 
+/**
+ * Ningún mapa de código en lo que se publica (spec 044): los mapas sólo se suben a Sentry. Va al final, después
+ * del plugin de Sentry, que ya los borra al subirlos: éste borra lo que quede y falla si no puede.
+ */
+function withoutSourceMaps(): Plugin {
+  let outDir = "dist";
+  return {
+    name: "agenda:sin-mapas",
+    apply: "build",
+    enforce: "post",
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir);
+    },
+    closeBundle: {
+      order: "post",
+      sequential: true,
+      handler() {
+        const maps = () => readdirSync(outDir, { recursive: true, encoding: "utf8" }).filter((file) => file.endsWith(".map"));
+        for (const file of maps()) rmSync(path.join(outDir, file));
+        const left = maps();
+        if (left.length) throw new Error(`Quedaron mapas de código en ${outDir}: ${left.join(", ")}`);
+      },
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   // API de agenda-backend. En desarrollo, /api se redirige allí: mismo origen, sin CORS.
   const apiTarget = env.API_PROXY_TARGET || "http://localhost:4000";
+  // Avisos de errores (spec 044): la versión es el commit que publica Vercel. Los mapas de código se crean
+  // con SENTRY_AUTH_TOKEN (en Vercel: se suben a Sentry) o con SOURCEMAPS=local (para comprobar en este
+  // equipo que no se publican, sin subirlos). Sin ninguno de los dos, no hay mapas, como antes.
+  const release = env.VERCEL_GIT_COMMIT_SHA ?? "";
+  const uploadMaps = Boolean(env.SENTRY_AUTH_TOKEN);
+  const sourceMaps = uploadMaps || env.SOURCEMAPS === "local";
 
   return {
     plugins: [
@@ -78,7 +112,25 @@ export default defineConfig(({ mode }) => {
         },
         devOptions: { enabled: false },
       }),
+      ...(sourceMaps
+        ? [
+            sentryVitePlugin({
+              org: env.SENTRY_ORG,
+              project: env.SENTRY_PROJECT,
+              authToken: env.SENTRY_AUTH_TOKEN,
+              telemetry: false,
+              release: { name: release || undefined, inject: false, setCommits: false, deploy: false },
+              sourcemaps: {
+                disable: uploadMaps ? false : "disable-upload",
+                filesToDeleteAfterUpload: ["dist/**/*.map"],
+              },
+            }),
+          ]
+        : []),
+      withoutSourceMaps(),
     ],
+    define: { "import.meta.env.VITE_RELEASE": JSON.stringify(release) },
+    build: { sourcemap: sourceMaps ? "hidden" : false },
     // El worker de MapLibre es un módulo ES (ver src/components/shared/map-base.ts).
     worker: { format: "es" },
     resolve: {

@@ -3,6 +3,7 @@ import { isRouteErrorResponse, Link, useRouteError } from "react-router";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants/app";
+import { reportError } from "@/lib/error-reports";
 import { isStaleAssetError, publishedVersion, reloadForNewVersion, runningVersion } from "@/lib/new-version";
 
 /**
@@ -31,14 +32,20 @@ export default function RouteErrorPage() {
 
   // Justo después de publicar, una pestaña con la versión anterior puede fallar al mezclarse con la
   // nueva (otra forma de los datos de la API, otra pieza de la app): si ya hay otra versión
-  // publicada, se recarga sola una vez para traerla.
+  // publicada, se recarga sola una vez para traerla. Si no, es un error de verdad: se avisa a Sentry
+  // (spec 044). Los 404 y la versión vieja no se avisan.
   useEffect(() => {
     if (isRouteErrorResponse(error) || stale) return;
     const running = runningVersion();
-    if (!running) return;
+    if (!running) {
+      reportError(error);
+      return;
+    }
     let cancelled = false;
     void publishedVersion().then((published) => {
-      if (!cancelled && published && published !== running) reloadForNewVersion();
+      if (cancelled) return;
+      if (published && published !== running && reloadForNewVersion()) return;
+      reportError(error);
     });
     return () => {
       cancelled = true;

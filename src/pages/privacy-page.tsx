@@ -205,6 +205,13 @@ export default function PrivacyPage() {
                 las alertas de seguridad, el email de la cuenta parcialmente oculto.
               </li>
               <li>
+                <strong>Sentry</strong>, en Estados Unidos, que avisa al equipo de {APP_NAME} cuando la aplicación falla: recibe
+                el error técnico (en qué parte del código falló), la página sin nombres, números ni enlaces privados, el
+                navegador y el tipo de aparato, y un número al azar de la visita que se borra al cerrar la pestaña. No
+                recibe nombres, contactos, cédulas ni nada de la historia clínica. Si el aviso sale de tu navegador, Sentry
+                ve tu dirección IP al recibirlo, pero no la guarda.
+              </li>
+              <li>
                 <strong>Avisos en el celular:</strong> si el propietario de un negocio o el super admin los activan, cada
                 aviso viaja cifrado por el servicio de avisos de su navegador (Google, Apple, Mozilla o Microsoft), que no
                 puede leer su contenido. Sólo lleva el nombre del paciente abreviado, nunca su contacto ni su historia
