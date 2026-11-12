@@ -15,8 +15,8 @@ export type ResolvedTheme = "light" | "dark";
  */
 export const THEME_STORAGE_KEY = "agenda360:modo-pantalla";
 
-/** Las páginas de los pacientes (reservas, pago y su cita): siempre siguen a su aparato. */
-const PATIENT_PATH = /^\/(book|pago|cita)\//;
+/** Las páginas de los pacientes (reservas, pago, su cita y su lista de espera): siempre siguen a su aparato. */
+const PATIENT_PATH = /^\/(book|pago|cita|lista-de-espera)\//;
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 export const isPatientPath = (pathname: string) => PATIENT_PATH.test(pathname);

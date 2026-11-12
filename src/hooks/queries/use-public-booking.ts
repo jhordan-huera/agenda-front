@@ -1,15 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { data } from "@/lib/data";
 import type { PublicBookingInput } from "@/lib/validations/booking";
+import type { PublicWaitlistInput } from "@/lib/validations/waitlist";
 import type { ReceiptInput } from "@/lib/validations/payment";
 import type { PublicAppointmentResult } from "@/types";
 import { prepareReceipt, uploadToStorage } from "@/lib/upload";
 import { queryKeys } from "./query-keys";
 
-export function usePublicProfile(slug: string) {
+/** `fresh`: sin la copia guardada (ver getProfile), al llegar desde «Reservar esta hora». */
+export function usePublicProfile(slug: string, fresh = false) {
   return useQuery({
     queryKey: queryKeys.publicProfile(slug),
-    queryFn: () => data.publicBooking.getProfile(slug),
+    queryFn: () => data.publicBooking.getProfile(slug, fresh),
   });
 }
 
@@ -85,3 +87,29 @@ export const useConfirmAppointment = (token: string) => useAppointmentAction(tok
 
 /** «Cancelar mi cita». */
 export const useCancelAppointment = (token: string) => useAppointmentAction(token, data.publicBooking.cancelAppointment);
+
+/** Lista de espera (spec 047): anotarse desde la página de reservas, con el CAPTCHA de la reserva. */
+export function useJoinWaitlist(slug: string, getCaptchaToken: GetCaptchaToken) {
+  return useMutation({
+    mutationFn: async (input: PublicWaitlistInput) => data.publicBooking.joinWaitlist(slug, input, await getCaptchaToken()),
+  });
+}
+
+/** El enlace personal de quien espera (/lista-de-espera/:token). */
+export function usePublicWaitlist(token: string | null) {
+  return useQuery({
+    queryKey: queryKeys.publicWaitlist(token ?? ""),
+    queryFn: () => data.publicBooking.getWaitlistEntry(token!),
+    enabled: Boolean(token),
+    retry: false,
+  });
+}
+
+/** «Salir de la lista» desde el enlace de los emails. */
+export function useLeaveWaitlist(token: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => data.publicBooking.leaveWaitlist(token),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.publicWaitlist(token) }),
+  });
+}

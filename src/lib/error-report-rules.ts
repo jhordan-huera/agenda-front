@@ -24,18 +24,18 @@ function cleanSegment(segment: string): string {
 
 const cleanPath = (pathname: string) => pathname.split("?")[0].split("#")[0].split("/").map(cleanSegment).join("/");
 
-/** La página: "/book/psicovalle" → "/book/[negocio]", "/cita/<token>" → "/cita/[token]". */
+/** La página: "/book/psicovalle" → "/book/[negocio]", "/cita/<token>" → "/cita/[token]" (también el pago y la lista de espera). */
 export function errorPagePath(pathname: string): string {
   return cleanPath(pathname)
     .replace(/^\/book\/[^/]+/, "/book/[negocio]")
-    .replace(/^\/(cita|pago)\/[^/]+/, "/$1/[token]");
+    .replace(/^\/(cita|pago|lista-de-espera)\/[^/]+/, "/$1/[token]");
 }
 
 /** Una ruta de la API: "/public/businesses/psicovalle/slots?…" → "/public/businesses/[negocio]/slots". */
 export function errorApiPath(path: string): string {
   return cleanPath(path)
     .replace(/^\/public\/businesses\/[^/]+/, "/public/businesses/[negocio]")
-    .replace(/^\/public\/(appointments|payments)\/[^/]+/, "/public/$1/[token]")
+    .replace(/^\/public\/(appointments|payments|waitlist)\/[^/]+/, "/public/$1/[token]")
     .replace(/^\/public\/referrals\/[^/]+/, "/public/referrals/[código]");
 }
 
@@ -48,9 +48,9 @@ export function scrubMessage(message: string): string {
     .slice(0, 300);
 }
 
-/** Quién vio el error, sin decir quién es: «paciente» (reservas, pago y «Tu cita»), «super admin», «equipo» o «visitante». */
+/** Quién vio el error, sin decir quién es: «paciente» (reservas, pago, «Tu cita» y la lista de espera), «super admin», «equipo» o «visitante». */
 export function userTypeFor(pathname: string, current: { superAdmin: boolean; signedIn: boolean }): string {
-  if (/^\/(?:book|cita|pago)(?:\/|$)/.test(pathname)) return "paciente";
+  if (/^\/(?:book|cita|pago|lista-de-espera)(?:\/|$)/.test(pathname)) return "paciente";
   if (current.superAdmin) return "super admin";
   return current.signedIn ? "equipo" : "visitante";
 }

@@ -10,7 +10,7 @@ import { escapeHtml as esc, htmlPage } from "./html-page";
 export interface ReadmeInput {
   summary: DataExportSummary;
   /** Lo que se metió en el ZIP de verdad (puede faltar algún archivo adjunto). */
-  included: { clients: number; appointments: number; clinicalRecords: number; attachments: number };
+  included: { clients: number; appointments: number; clinicalRecords: number; attachments: number; waitlist: number };
   /** Los archivos adjuntos que fallaron: de qué paciente y cuál. */
   missing: { patient: string; fileName: string }[];
 }
@@ -29,6 +29,11 @@ export function readmeHtml({ summary, included, missing }: ReadmeInput): string 
   const items = [
     `<li><strong>pacientes.xlsx</strong>: ${esc(count(included.clients, "paciente", "pacientes"))}, con sus datos de contacto, sus notas, si está activo, si está «Por verificar» y la fecha de alta. Tiene las columnas de la importación de pacientes de Agenda360: se puede volver a subir tal cual.</li>`,
     `<li><strong>citas.xlsx</strong>: ${esc(count(included.appointments, "cita", "citas"))}, con la fecha y la hora, los pacientes, el servicio, el profesional, el estado, la modalidad, el precio, si se pagó y las notas.</li>`,
+    ...(included.waitlist > 0
+      ? [
+          `<li><strong>lista-de-espera.xlsx</strong>: ${esc(count(included.waitlist, "persona", "personas"))} de la lista de espera, con sus datos de contacto, lo que pidió y, si ya salió, cuándo y por qué. Las que salieron hace más de 30 días ya se borraron.</li>`,
+        ]
+      : []),
     summary.clinical === "included"
       ? `<li><strong>historias-clinicas/</strong>: ${esc(count(included.clinicalRecords, "historia clínica", "historias clínicas"))}, una página por paciente con sus antecedentes, el consentimiento y todas sus evoluciones con sus aclaraciones, como «Imprimir / PDF».${
           summary.counts.attachments > 0

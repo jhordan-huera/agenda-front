@@ -83,6 +83,10 @@ export interface AppointmentDefaults {
   clientId?: string;
   /** Agenda propuesta (p. ej. la columna del calendario donde se hizo clic). */
   professionalId?: string;
+  /** Servicio propuesto (p. ej. el que espera alguien de la lista de espera, spec 047), con su duración y precio. */
+  serviceId?: string;
+  /** Al crear la cita (p. ej. «Agendar» desde la lista de espera: la persona sale de la lista). */
+  onCreated?: (appointment: Appointment) => void;
 }
 
 interface AppointmentFormDialogProps {
@@ -160,14 +164,15 @@ function AppointmentForm({
 
   const [values, setValues] = useState<FormValues>(() => {
     const date = appointment?.date ?? defaults?.date ?? now.date;
+    const presetService = appointment ? undefined : services.find((s) => s.id === defaults?.serviceId);
     return {
       clientId: appointment?.clientId ?? defaults?.clientId ?? "",
       extraClientIds: appointment?.extraClientIds ?? [],
-      serviceId: appointment?.serviceId ?? "",
+      serviceId: appointment?.serviceId ?? presetService?.id ?? "",
       date,
       startTime: appointment?.startTime ?? defaults?.startTime ?? (date === now.date ? suggestStartTime(now) : "09:00"),
-      durationMinutes: appointment ? durationInMinutes(appointment.startTime, appointment.endTime) : 60,
-      price: appointment?.price ?? 0,
+      durationMinutes: appointment ? durationInMinutes(appointment.startTime, appointment.endTime) : (presetService?.durationMinutes ?? 60),
+      price: appointment?.price ?? (presetService ? getListPrice(presetService, false) : 0),
       status: appointment?.status ?? "confirmed",
       notes: appointment?.notes ?? "",
       homeVisit: appointment?.homeVisit ?? null,
@@ -353,6 +358,7 @@ function AppointmentForm({
       toast.success(appointment ? "Cita actualizada" : "Cita creada", {
         description: `${capitalize(formatShortDate(saved.date))} · ${formatTimeRange(saved.startTime, saved.endTime)}`,
       });
+      if (!appointment) defaults?.onCreated?.(saved);
       onDone();
     } catch (error) {
       showError(error);

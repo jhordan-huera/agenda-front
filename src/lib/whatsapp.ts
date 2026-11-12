@@ -219,6 +219,16 @@ export function buildPendingPaymentsMessage(data: {
   );
 }
 
+/**
+ * Lista de espera (spec 047): el WhatsApp para ofrecerle una hora a quien espera. Termina en «: » para que el
+ * profesional escriba la hora antes de enviarlo.
+ */
+export function buildWaitlistWhatsAppMessage(data: { name: string; businessName: string; serviceName: string }): string {
+  const first = data.name.trim().split(/\s+/)[0] ?? "";
+  const hello = first ? `Hola ${first}` : "Hola";
+  return `${hello}, te escribimos de ${data.businessName} por tu lugar en la lista de espera de ${data.serviceName}. Se liberó una hora que podría servirte: `;
+}
+
 /** Para recuperar a un paciente que no ha vuelto (Reportes): se puede editar en WhatsApp antes de enviarlo. */
 export function buildWinBackMessage(data: { clientName: string; businessName: string; bookingUrl: string }): string {
   const name = data.clientName.trim().split(/\s+/)[0] ?? "";

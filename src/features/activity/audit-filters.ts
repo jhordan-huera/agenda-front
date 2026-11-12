@@ -23,6 +23,7 @@ export const AUDIT_TYPE_LABELS: Record<AuditEntityType, string> = {
   team: "Equipo",
   subscription: "Suscripción",
   clinical_record: "Historias clínicas",
+  waitlist: "Lista de espera",
   user: "Usuarios",
   platform: "Plataforma",
   session: "Sesiones",

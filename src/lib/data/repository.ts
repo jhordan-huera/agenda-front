@@ -32,6 +32,7 @@ import type {
   ClinicalTemplateInput,
 } from "@/lib/validations/clinical";
 import type { PublicBookingInput } from "@/lib/validations/booking";
+import type { PublicWaitlistInput, WaitlistEntryInput } from "@/lib/validations/waitlist";
 import type {
   BookingSettingsInput,
   BusinessProfileInput,
@@ -77,6 +78,8 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicWaitlistEntry,
+  WaitlistEntry,
   PublicPayment,
   AuditEntityType,
   AuditLogPage,
@@ -104,6 +107,7 @@ import type {
   ClinicalRecord,
   ClinicalTemplate,
   DataExportAppointment,
+  DataExportWaitlistEntry,
   DataExportClient,
   DataExportClinicalPage,
   DataExportPage,
@@ -265,6 +269,8 @@ export interface DataExportRepository {
   clients(businessId: string, cursor?: string): Promise<DataExportPage<DataExportClient>>;
   /** De 1000 en 1000. */
   appointments(businessId: string, cursor?: string): Promise<DataExportPage<DataExportAppointment>>;
+  /** La lista de espera (spec 047), de 1000 en 1000. */
+  waitlist(businessId: string, cursor?: string): Promise<DataExportPage<DataExportWaitlistEntry>>;
   /** De hasta 50 pacientes (`forbidden` si la descarga no lleva lo clínico). */
   clinical(businessId: string, cursor?: string): Promise<DataExportClinicalPage>;
   /** El enlace de unos minutos de un archivo de la historia, sin registrar cada apertura. */
@@ -408,7 +414,11 @@ export interface AuditLogRepository {
 
 /** Operaciones públicas (sin sesión): página de reservas /book/:slug. */
 export interface PublicBookingRepository {
-  getProfile(slug: string): Promise<PublicBusinessProfile | null>;
+  /**
+   * `fresh`: sin la copia guardada (la CDN y el navegador la guardan hasta 90 s). Lo usa «Reservar esta hora» de la
+   * lista de espera (spec 047): la hora se acaba de liberar y una copia vieja la mostraría ocupada.
+   */
+  getProfile(slug: string, fresh?: boolean): Promise<PublicBusinessProfile | null>;
   /**
    * Revalida la disponibilidad, los topes del día y el plan, une la reserva a la ficha de la cédula
    * (si coinciden su email o su teléfono) o crea el cliente, crea la cita y envía emails.
@@ -428,6 +438,20 @@ export interface PublicBookingRepository {
   confirmAppointment(token: string): Promise<PublicAppointmentResult>;
   /** «Cancelar mi cita»: sólo el paciente principal, si el negocio lo permite y aún está en plazo. */
   cancelAppointment(token: string): Promise<PublicAppointmentResult>;
+  /** Lista de espera (spec 047): anotarse desde la página de reservas, con el CAPTCHA. */
+  joinWaitlist(slug: string, input: PublicWaitlistInput, captchaToken?: string): Promise<{ until: ISODate }>;
+  /** El enlace personal de quien espera: lo que pidió y sus datos. */
+  getWaitlistEntry(token: string): Promise<PublicWaitlistEntry>;
+  leaveWaitlist(token: string): Promise<{ closed: true }>;
+}
+
+/** La lista de espera del panel (spec 047): el rol Profesional, sólo la de su agenda. */
+export interface WaitlistRepository {
+  list(businessId: string): Promise<WaitlistEntry[]>;
+  /** «Anotar»: un paciente que ya existe o datos nuevos (si ya esperaba con ese email, se actualiza). */
+  add(businessId: string, input: WaitlistEntryInput): Promise<WaitlistEntry>;
+  /** «Quitar» o, al guardar su cita, «Agendar». */
+  close(businessId: string, entryId: string, reason: "removed" | "scheduled"): Promise<{ closed: true }>;
 }
 
 /** Logos y fotos: URL firmada para subir la imagen al almacenamiento y su dirección pública. */
@@ -649,6 +673,7 @@ export interface DataRepository {
   notifications: NotificationRepository;
   auditLogs: AuditLogRepository;
   publicBooking: PublicBookingRepository;
+  waitlist: WaitlistRepository;
   images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;

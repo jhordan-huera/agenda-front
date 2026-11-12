@@ -31,6 +31,8 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicWaitlistEntry,
+  WaitlistEntry,
   PublicPayment,
   BlockedTime,
   BookingConfirmation,
@@ -48,6 +50,7 @@ import type {
   ClinicalRecord,
   ClinicalTemplate,
   DataExportAppointment,
+  DataExportWaitlistEntry,
   DataExportClient,
   DataExportClinicalPage,
   DataExportPage,
@@ -177,6 +180,8 @@ export const apiRepository: DataRepository = {
     clients: (businessId, cursor) => api.get<DataExportPage<DataExportClient>>(`${business(businessId)}/export/clients`, { cursor }),
     appointments: (businessId, cursor) =>
       api.get<DataExportPage<DataExportAppointment>>(`${business(businessId)}/export/appointments`, { cursor }),
+    waitlist: (businessId, cursor) =>
+      api.get<DataExportPage<DataExportWaitlistEntry>>(`${business(businessId)}/export/waitlist`, { cursor }),
     clinical: (businessId, cursor) => api.get<DataExportClinicalPage>(`${business(businessId)}/export/clinical`, { cursor }),
     attachmentUrl: (businessId, attachmentId) =>
       api.post<{ url: string }>(`${business(businessId)}/export/attachments/${id(attachmentId)}`),
@@ -255,7 +260,8 @@ export const apiRepository: DataRepository = {
   },
 
   publicBooking: {
-    getProfile: (slug) => api.get<PublicBusinessProfile | null>(`/public/businesses/${id(slug)}`),
+    getProfile: (slug, fresh) =>
+      api.get<PublicBusinessProfile | null>(`/public/businesses/${id(slug)}`, fresh ? { al: String(Date.now()) } : undefined),
     book: (slug, input, captchaToken) =>
       api.post<BookingConfirmation>(`/public/businesses/${id(slug)}/bookings`, { ...input, captchaToken }),
     getCaptchaSiteKey: async () => (await api.get<{ siteKey: string | null }>("/public/captcha")).siteKey,
@@ -266,6 +272,17 @@ export const apiRepository: DataRepository = {
     getAppointment: (token) => api.get<PublicAppointment>(`/public/appointments/${id(token)}`),
     confirmAppointment: (token) => api.post<PublicAppointmentResult>(`/public/appointments/${id(token)}/confirm`),
     cancelAppointment: (token) => api.post<PublicAppointmentResult>(`/public/appointments/${id(token)}/cancel`),
+    joinWaitlist: (slug, input, captchaToken) =>
+      api.post<{ until: string }>(`/public/businesses/${id(slug)}/waitlist`, { ...input, captchaToken }),
+    getWaitlistEntry: (token) => api.get<PublicWaitlistEntry>(`/public/waitlist/${id(token)}`),
+    leaveWaitlist: (token) => api.post<{ closed: true }>(`/public/waitlist/${id(token)}/leave`),
+  },
+
+  waitlist: {
+    list: (businessId) => api.get<WaitlistEntry[]>(`${business(businessId)}/waitlist`),
+    add: (businessId, input) => api.post<WaitlistEntry>(`${business(businessId)}/waitlist`, input),
+    close: (businessId, entryId, reason) =>
+      api.post<{ closed: true }>(`${business(businessId)}/waitlist/${id(entryId)}/close`, { reason }),
   },
 
   images: {

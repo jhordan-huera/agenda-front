@@ -51,6 +51,10 @@ export const queryKeys = {
   publicPayment: (token: string) => ["public-payment", token] as const,
   /** Página «Tu cita» (/cita/:token, spec 010). */
   publicAppointment: (token: string) => ["public-appointment", token] as const,
+  /** El enlace personal de quien espera (spec 047). */
+  publicWaitlist: (token: string) => ["public-waitlist", token] as const,
+  /** La lista de espera del panel (spec 047). */
+  waitlist: (businessId: string) => ["waitlist", businessId] as const,
   /** Site Key del CAPTCHA del registro. */
   captchaSiteKey: ["captcha-site-key"] as const,
   platformSettings: ["platform-settings"] as const,

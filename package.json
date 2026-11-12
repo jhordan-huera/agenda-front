@@ -16,6 +16,7 @@
     "check:error-reports": "node scripts/check-error-reports.ts",
     "check:landing": "node scripts/check-landing.ts",
     "check:pending-payments": "node scripts/check-pending-payments.ts",
+    "check:waitlist": "node scripts/check-waitlist.ts",
     "check:specialties": "node scripts/check-specialties.ts"
   },
   "dependencies": {

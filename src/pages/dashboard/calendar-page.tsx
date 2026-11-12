@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarOff, ChevronLeft, ChevronRight, ClipboardCheck, Loader2, Plus, ReceiptText } from "lucide-react";
+import { CalendarCheck, CalendarOff, ChevronLeft, ChevronRight, ClipboardCheck, Hourglass, Loader2, Plus, ReceiptText } from "lucide-react";
 import { useState, type ComponentProps } from "react";
 import { useSearchParams } from "react-router";
 import { ErrorState } from "@/components/shared/error-state";
@@ -32,6 +32,11 @@ import { TimeGridView, type GridColumn } from "@/features/calendar/time-grid-vie
 import { ALL_AGENDAS, ProfessionalSelect } from "@/features/professionals/professional-select";
 import { useAgendas } from "@/features/professionals/use-agendas";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
+import { ClientFormDialog } from "@/features/clients/client-form-dialog";
+import { WaitlistSheet } from "@/features/waitlist/waitlist-sheet";
+import { useCloseWaitlistEntry, useWaitlist } from "@/hooks/queries/use-waitlist";
+import { WAITLIST_PARAM } from "@/lib/constants/notices";
+import type { WaitlistEntry } from "@/types";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments, useMoveAppointment } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
@@ -97,7 +102,57 @@ export default function CalendarPage() {
   const appointmentsQuery = useAppointments({ from: days[0], to: days.at(-1) }, { keepPrevious: true });
   const { data: allSchedules = [] } = useSchedules();
   const { data: blockedTimes = [] } = useBlockedTimes();
-  const { clientsById, servicesById } = useLookups();
+  const { clients, clientsById, servicesById } = useLookups();
+
+  // La lista de espera (spec 047), sólo en los negocios que la tienen encendida. `?espera=1` (los avisos de la
+  // campana) la abre; el parámetro se quita para que no vuelva a abrirse al recargar.
+  const waitlistOn = business?.bookingSettings.waitlist === true;
+  const waitlist = useWaitlist(waitlistOn);
+  const waitlistCount = (waitlist.data ?? []).filter(
+    (entry) => agenda === ALL_AGENDAS || entry.professionalId === agenda || entry.professionalId === null,
+  ).length;
+  const [waitlistOpenState, setWaitlistOpenState] = useState(false);
+  const openWaitlistParam = searchParams.get(WAITLIST_PARAM) === "1";
+  const waitlistOpen = waitlistOpenState || openWaitlistParam;
+  const setWaitlistOpen = (open: boolean) => {
+    setWaitlistOpenState(open);
+    if (!open && openWaitlistParam) {
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          next.delete(WAITLIST_PARAM);
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  };
+  const closeWaitlistEntry = useCloseWaitlistEntry();
+  // «Agendar»: si ya es paciente (su ficha o el mismo email o teléfono), la cita nueva sale con él; si no, primero
+  // «Nuevo cliente» con sus datos. Al guardar la cita, sale de la lista.
+  const [newClientFor, setNewClientFor] = useState<WaitlistEntry | null>(null);
+  const digits = (value: string) => value.replace(/\D/g, "").slice(-9);
+  const scheduleFromWaitlist = (entry: WaitlistEntry, clientId?: string) => {
+    const match =
+      clientId ??
+      entry.clientId ??
+      clients.find(
+        (client) =>
+          (entry.email && client.email?.toLowerCase() === entry.email.toLowerCase()) ||
+          (entry.phone && client.phone && digits(client.phone) === digits(entry.phone)),
+      )?.id;
+    setWaitlistOpen(false);
+    if (!match) {
+      setNewClientFor(entry);
+      return;
+    }
+    dialogs.openCreate({
+      clientId: match,
+      serviceId: entry.serviceId,
+      professionalId: entry.professionalId ?? (agenda !== ALL_AGENDAS ? agenda : undefined),
+      onCreated: () => closeWaitlistEntry.mutate({ entryId: entry.id, reason: "scheduled" }),
+    });
+  };
   // ?appointment=<id> (enlace del email "Comprobante de pago"): abre la ficha de esa cita.
   const dialogs = useAppointmentDialogs(searchParams.get("appointment"));
 
@@ -176,6 +231,11 @@ export default function CalendarPage() {
             {toCloseTotal > 0 && (
               <Button size="lg" variant="outline" onClick={toClose?.open}>
                 <ClipboardCheck /> Por cerrar ({toCloseTotal})
+              </Button>
+            )}
+            {waitlistOn && (
+              <Button size="lg" variant="outline" onClick={() => setWaitlistOpen(true)}>
+                <Hourglass /> Lista de espera{waitlist.data ? ` (${waitlistCount})` : ""}
               </Button>
             )}
             {can("schedule.manage") && (
@@ -377,6 +437,27 @@ export default function CalendarPage() {
       )}
 
       {dialogs.dialogs}
+      {waitlistOn && business && (
+        <WaitlistSheet
+          open={waitlistOpen}
+          onOpenChange={setWaitlistOpen}
+          business={business}
+          agendaId={agenda !== ALL_AGENDAS ? agenda : null}
+          onSchedule={(entry) => scheduleFromWaitlist(entry)}
+        />
+      )}
+      <ClientFormDialog
+        open={newClientFor !== null}
+        onOpenChange={(open) => !open && setNewClientFor(null)}
+        defaultName={newClientFor?.name}
+        defaultEmail={newClientFor?.email ?? ""}
+        defaultPhone={newClientFor?.phone}
+        onSaved={(client) => {
+          const entry = newClientFor;
+          setNewClientFor(null);
+          if (entry) scheduleFromWaitlist(entry, client.id);
+        }}
+      />
       <BlockedTimeFormDialog
         open={blockDialogOpen}
         onOpenChange={setBlockDialogOpen}

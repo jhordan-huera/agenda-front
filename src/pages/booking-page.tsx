@@ -1,5 +1,5 @@
 import { CalendarX2, SearchX } from "lucide-react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { Logo } from "@/components/shared/logo";
@@ -15,7 +15,9 @@ import { usePublicProfile } from "@/hooks/queries/use-public-booking";
 /** Página pública de reservas: /book/:username (sin sesión ni panel). */
 export default function BookingPage() {
   const { username = "" } = useParams<{ username: string }>();
-  const profileQuery = usePublicProfile(username);
+  // Desde «Reservar esta hora» (spec 047), los horarios al día: la hora se acaba de liberar.
+  const [searchParams] = useSearchParams();
+  const profileQuery = usePublicProfile(username, searchParams.has("espera"));
 
   if (profileQuery.isPending) {
     return (
