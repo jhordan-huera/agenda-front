@@ -31,7 +31,9 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicSurvey,
   PublicWaitlistEntry,
+  SurveySummary,
   WaitlistEntry,
   PublicPayment,
   BlockedTime,
@@ -50,6 +52,7 @@ import type {
   ClinicalRecord,
   ClinicalTemplate,
   DataExportAppointment,
+  DataExportSurvey,
   DataExportWaitlistEntry,
   DataExportClient,
   DataExportClinicalPage,
@@ -182,6 +185,7 @@ export const apiRepository: DataRepository = {
       api.get<DataExportPage<DataExportAppointment>>(`${business(businessId)}/export/appointments`, { cursor }),
     waitlist: (businessId, cursor) =>
       api.get<DataExportPage<DataExportWaitlistEntry>>(`${business(businessId)}/export/waitlist`, { cursor }),
+    surveys: (businessId, cursor) => api.get<DataExportPage<DataExportSurvey>>(`${business(businessId)}/export/surveys`, { cursor }),
     clinical: (businessId, cursor) => api.get<DataExportClinicalPage>(`${business(businessId)}/export/clinical`, { cursor }),
     attachmentUrl: (businessId, attachmentId) =>
       api.post<{ url: string }>(`${business(businessId)}/export/attachments/${id(attachmentId)}`),
@@ -276,6 +280,13 @@ export const apiRepository: DataRepository = {
       api.post<{ until: string }>(`/public/businesses/${id(slug)}/waitlist`, { ...input, captchaToken }),
     getWaitlistEntry: (token) => api.get<PublicWaitlistEntry>(`/public/waitlist/${id(token)}`),
     leaveWaitlist: (token) => api.post<{ closed: true }>(`/public/waitlist/${id(token)}/leave`),
+    getSurvey: (token) => api.get<PublicSurvey>(`/public/surveys/${id(token)}`),
+    answerSurvey: (token, input) => api.post<PublicSurvey>(`/public/surveys/${id(token)}`, input),
+    surveyOptOut: (token) => api.post<{ optedOut: true }>(`/public/surveys/${id(token)}/opt-out`),
+  },
+
+  surveys: {
+    summary: (businessId, filters) => api.get<SurveySummary>(`${business(businessId)}/surveys`, filters),
   },
 
   waitlist: {

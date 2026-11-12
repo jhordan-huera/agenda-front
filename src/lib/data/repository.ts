@@ -32,6 +32,7 @@ import type {
   ClinicalTemplateInput,
 } from "@/lib/validations/clinical";
 import type { PublicBookingInput } from "@/lib/validations/booking";
+import type { SurveyAnswerInput } from "@/lib/validations/survey";
 import type { PublicWaitlistInput, WaitlistEntryInput } from "@/lib/validations/waitlist";
 import type {
   BookingSettingsInput,
@@ -78,7 +79,9 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicSurvey,
   PublicWaitlistEntry,
+  SurveySummary,
   WaitlistEntry,
   PublicPayment,
   AuditEntityType,
@@ -107,6 +110,7 @@ import type {
   ClinicalRecord,
   ClinicalTemplate,
   DataExportAppointment,
+  DataExportSurvey,
   DataExportWaitlistEntry,
   DataExportClient,
   DataExportClinicalPage,
@@ -271,6 +275,8 @@ export interface DataExportRepository {
   appointments(businessId: string, cursor?: string): Promise<DataExportPage<DataExportAppointment>>;
   /** La lista de espera (spec 047), de 1000 en 1000. */
   waitlist(businessId: string, cursor?: string): Promise<DataExportPage<DataExportWaitlistEntry>>;
+  /** Las encuestas respondidas (spec 048), de 1000 en 1000. */
+  surveys(businessId: string, cursor?: string): Promise<DataExportPage<DataExportSurvey>>;
   /** De hasta 50 pacientes (`forbidden` si la descarga no lleva lo clínico). */
   clinical(businessId: string, cursor?: string): Promise<DataExportClinicalPage>;
   /** El enlace de unos minutos de un archivo de la historia, sin registrar cada apertura. */
@@ -443,6 +449,16 @@ export interface PublicBookingRepository {
   /** El enlace personal de quien espera: lo que pidió y sus datos. */
   getWaitlistEntry(token: string): Promise<PublicWaitlistEntry>;
   leaveWaitlist(token: string): Promise<{ closed: true }>;
+  /** La encuesta después de la cita (spec 048), en /encuesta/:token. */
+  getSurvey(token: string): Promise<PublicSurvey>;
+  answerSurvey(token: string, input: SurveyAnswerInput): Promise<PublicSurvey>;
+  /** «No quiero recibir estas encuestas». Repetirlo no hace nada. */
+  surveyOptOut(token: string): Promise<{ optedOut: true }>;
+}
+
+/** Las opiniones de los pacientes (spec 048): quien ve Reportes; el rol Profesional, sólo las de su agenda. */
+export interface SurveyRepository {
+  summary(businessId: string, filters: { from?: string; to?: string; professionalId?: string; clientId?: string }): Promise<SurveySummary>;
 }
 
 /** La lista de espera del panel (spec 047): el rol Profesional, sólo la de su agenda. */
@@ -674,6 +690,7 @@ export interface DataRepository {
   auditLogs: AuditLogRepository;
   publicBooking: PublicBookingRepository;
   waitlist: WaitlistRepository;
+  surveys: SurveyRepository;
   images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;

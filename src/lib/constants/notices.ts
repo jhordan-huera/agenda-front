@@ -17,6 +17,7 @@ export const BUSINESS_NOTICE_KINDS = [
   "morning_summary",
   "waitlist_joined",
   "waitlist_slot",
+  "survey_low",
 ] as const satisfies readonly NoticeKind[];
 
 export type BusinessNoticeKind = (typeof BUSINESS_NOTICE_KINDS)[number];
@@ -44,6 +45,7 @@ export const APPOINTMENT_NOTICE_KINDS = [
   "patient_cancel",
   "new_appointment",
   "unclosed",
+  "survey_low",
 ] as const satisfies readonly BusinessNoticeKind[];
 
 /**
@@ -82,6 +84,8 @@ export const NOTICE_AUDIENCE: Record<BusinessNoticeKind, NoticeAudience> = {
   // Lista de espera (spec 047): como las reservas online. Las de «Cualquiera» no tienen agenda: las ve el equipo.
   waitlist_joined: { owner: "all", team: "all", agenda: true },
   waitlist_slot: { owner: "all", team: "all", agenda: true },
+  // Encuesta (spec 048): una respuesta de 1 o 2 estrellas, al propietario y a quien tiene esa agenda.
+  survey_low: { owner: "all", team: null, agenda: true },
 };
 
 /**

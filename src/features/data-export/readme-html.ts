@@ -10,7 +10,7 @@ import { escapeHtml as esc, htmlPage } from "./html-page";
 export interface ReadmeInput {
   summary: DataExportSummary;
   /** Lo que se metió en el ZIP de verdad (puede faltar algún archivo adjunto). */
-  included: { clients: number; appointments: number; clinicalRecords: number; attachments: number; waitlist: number };
+  included: { clients: number; appointments: number; clinicalRecords: number; attachments: number; waitlist: number; surveys: number };
   /** Los archivos adjuntos que fallaron: de qué paciente y cuál. */
   missing: { patient: string; fileName: string }[];
 }
@@ -32,6 +32,11 @@ export function readmeHtml({ summary, included, missing }: ReadmeInput): string 
     ...(included.waitlist > 0
       ? [
           `<li><strong>lista-de-espera.xlsx</strong>: ${esc(count(included.waitlist, "persona", "personas"))} de la lista de espera, con sus datos de contacto, lo que pidió y, si ya salió, cuándo y por qué. Las que salieron hace más de 30 días ya se borraron.</li>`,
+        ]
+      : []),
+    ...(included.surveys > 0
+      ? [
+          `<li><strong>encuestas.xlsx</strong>: ${esc(count(included.surveys, "opinión", "opiniones"))} de tus pacientes después de su cita, con la fecha, el profesional, el servicio, las estrellas y el comentario. Son privadas: no se publican.</li>`,
         ]
       : []),
     summary.clinical === "included"

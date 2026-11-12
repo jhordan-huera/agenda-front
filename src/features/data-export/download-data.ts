@@ -2,6 +2,7 @@ import { data, DataError } from "@/lib/data";
 import { toZonedDate } from "@/lib/format";
 import type {
   DataExportAppointment,
+  DataExportSurvey,
   DataExportWaitlistEntry,
   DataExportClient,
   DataExportClinicalPage,
@@ -17,6 +18,8 @@ import {
   appointmentRows,
   CLIENT_COLUMN_WIDTHS,
   clientRows,
+  SURVEY_COLUMN_WIDTHS,
+  surveyRows,
   WAITLIST_COLUMN_WIDTHS,
   waitlistRows,
   xlsxFile,
@@ -30,7 +33,7 @@ import {
  * fflate y write-excel-file se descargan sólo al tocar «Descargar».
  */
 
-export type ExportStep = "summary" | "clients" | "appointments" | "waitlist" | "clinical" | "zip";
+export type ExportStep = "summary" | "clients" | "appointments" | "waitlist" | "surveys" | "clinical" | "zip";
 type Counts = DataExportSummary["counts"];
 
 export interface ExportProgress {
@@ -152,7 +155,7 @@ function fetchAttachment(businessId: string, attachmentId: string): Promise<Uint
 
 /** Arma el ZIP con todo lo que la persona se puede llevar e informa del avance. */
 export async function buildDataExport(businessId: string, onProgress: (progress: ExportProgress) => void): Promise<ExportResult> {
-  const done: Counts = { clients: 0, appointments: 0, clinicalRecords: 0, attachments: 0, waitlist: 0 };
+  const done: Counts = { clients: 0, appointments: 0, clinicalRecords: 0, attachments: 0, waitlist: 0, surveys: 0 };
   let total: Counts | null = null;
   const report = (step: ExportStep) => onProgress({ step, total, done: { ...done } });
   report("summary");
@@ -199,6 +202,21 @@ export async function buildDataExport(businessId: string, onProgress: (progress:
       },
     );
     zip.add("lista-de-espera.xlsx", await xlsxFile(waitlistRows(waitlist, timezone), "Lista de espera", WAITLIST_COLUMN_WIDTHS), false);
+  }
+
+  // Las opiniones de los pacientes (spec 048), sólo si alguien respondió.
+  if (summary.counts.surveys > 0) {
+    report("surveys");
+    const surveys: DataExportSurvey[] = [];
+    await allPages(
+      (cursor) => data.dataExport.surveys(businessId, cursor),
+      (page) => {
+        surveys.push(...page.items);
+        done.surveys = surveys.length;
+        report("surveys");
+      },
+    );
+    zip.add("encuestas.xlsx", await xlsxFile(surveyRows(surveys, timezone), "Encuestas", SURVEY_COLUMN_WIDTHS), false);
   }
 
   const missing: { patient: string; fileName: string }[] = [];

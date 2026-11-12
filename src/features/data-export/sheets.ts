@@ -2,7 +2,7 @@ import type { SheetData } from "write-excel-file/browser";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
 import { describeDayParts, describeWaitlistDays, SERVICE_MODES } from "@/lib/constants/business";
 import { toZonedDate } from "@/lib/format";
-import type { DataExportAppointment, DataExportClient, DataExportWaitlistEntry, ISODate, WaitlistCloseReason } from "@/types";
+import type { DataExportAppointment, DataExportClient, DataExportSurvey, DataExportWaitlistEntry, ISODate, WaitlistCloseReason } from "@/types";
 
 /**
  * Los Excel de la descarga (spec 028): pacientes.xlsx y citas.xlsx. El escritor de Excel
@@ -130,10 +130,30 @@ export function waitlistRows(entries: readonly DataExportWaitlistEntry[], timezo
   return [header(WAITLIST_SHEET_HEADERS), ...rows];
 }
 
+/** Las columnas de encuestas.xlsx (spec 048). */
+export const SURVEY_SHEET_HEADERS = ["Fecha de la cita", "Paciente", "Profesional", "Servicio", "Estrellas", "Comentario", "Respondió el"] as const;
+
+/** Las filas de encuestas.xlsx, de la cita más antigua a la más reciente. La fecha de la respuesta, en la zona del negocio. */
+export function surveyRows(surveys: readonly DataExportSurvey[], timezone: string): SheetData {
+  const rows = surveys
+    .toSorted((a, b) => a.appointmentDate.localeCompare(b.appointmentDate) || a.answeredAt.localeCompare(b.answeredAt))
+    .map((survey) => [
+      excelDate(survey.appointmentDate),
+      text(survey.client),
+      text(survey.professional),
+      text(survey.service),
+      { value: survey.rating, type: Number },
+      text(survey.comment),
+      excelDate(toZonedDate(survey.answeredAt, timezone)),
+    ]);
+  return [header(SURVEY_SHEET_HEADERS), ...rows];
+}
+
 /** Ancho de cada columna, en caracteres. */
 export const CLIENT_COLUMN_WIDTHS = [30, 14, 30, 16, 30, 40, 8, 13, 13];
 export const APPOINTMENT_COLUMN_WIDTHS = [12, 8, 8, 32, 26, 24, 13, 13, 30, 10, 8, 40];
 export const WAITLIST_COLUMN_WIDTHS = [30, 30, 16, 26, 24, 28, 22, 12, 22, 12, 12, 30];
+export const SURVEY_COLUMN_WIDTHS = [14, 30, 24, 26, 10, 60, 14];
 
 /** El archivo .xlsx de una hoja, con la fila de títulos fija. */
 export async function xlsxFile(rows: SheetData, sheet: string, widths: readonly number[]): Promise<Uint8Array> {

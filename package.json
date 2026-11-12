@@ -17,7 +17,8 @@
     "check:landing": "node scripts/check-landing.ts",
     "check:pending-payments": "node scripts/check-pending-payments.ts",
     "check:waitlist": "node scripts/check-waitlist.ts",
-    "check:specialties": "node scripts/check-specialties.ts"
+    "check:specialties": "node scripts/check-specialties.ts",
+    "check:surveys": "node scripts/check-surveys.ts"
   },
   "dependencies": {
     "@fontsource-variable/schibsted-grotesk": "^5.3.0",

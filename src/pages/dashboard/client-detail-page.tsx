@@ -47,6 +47,7 @@ import { getClientSummary, summarizeByClient } from "@/features/clients/client-s
 import { DeleteClientDialog } from "@/features/clients/delete-client-dialog";
 import { clientMissingFields, missingDataText } from "@/features/clients/missing-fields";
 import { PendingPaymentsCard } from "@/features/payments/pending-payments-card";
+import { PatientFeedbackCard } from "@/features/reports/patient-feedback-card";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useClient } from "@/hooks/queries/use-clients";
@@ -221,6 +222,8 @@ export default function ClientDetailPage() {
         </div>
 
         <div className="space-y-6">
+          {/* Sus opiniones en la encuesta después de la cita (spec 048): sólo para quien ve Reportes. */}
+          {can("reports.view") && <PatientFeedbackCard clientId={client.id} hideWhenEmpty />}
           <Card>
             <CardHeader>
               <CardTitle>Información</CardTitle>

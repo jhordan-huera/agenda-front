@@ -9,7 +9,7 @@
   } catch {
     // Sin almacenamiento.
   }
-  if (/^\/(book|pago|cita|lista-de-espera)\//.test(location.pathname)) mode = "auto";
+  if (/^\/(book|pago|cita|lista-de-espera|encuesta)\//.test(location.pathname)) mode = "auto";
   var dark = mode === "dark" || (mode === "auto" && !!window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
   if (dark) document.documentElement.classList.add("dark");
 

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { data } from "@/lib/data";
 import type { PublicBookingInput } from "@/lib/validations/booking";
+import type { SurveyAnswerInput } from "@/lib/validations/survey";
 import type { PublicWaitlistInput } from "@/lib/validations/waitlist";
 import type { ReceiptInput } from "@/lib/validations/payment";
 import type { PublicAppointmentResult } from "@/types";
@@ -112,4 +113,27 @@ export function useLeaveWaitlist(token: string) {
     mutationFn: () => data.publicBooking.leaveWaitlist(token),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.publicWaitlist(token) }),
   });
+}
+
+/** La encuesta después de la cita (spec 048), en /encuesta/:token. */
+export function usePublicSurvey(token: string) {
+  return useQuery({
+    queryKey: queryKeys.publicSurvey(token),
+    queryFn: () => data.publicBooking.getSurvey(token),
+    retry: false,
+  });
+}
+
+/** Responder la encuesta: la página pasa a «Gracias por contarnos». */
+export function useAnswerSurvey(token: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SurveyAnswerInput) => data.publicBooking.answerSurvey(token, input),
+    onSuccess: (survey) => queryClient.setQueryData(queryKeys.publicSurvey(token), survey),
+  });
+}
+
+/** «No quiero recibir estas encuestas». */
+export function useSurveyOptOut(token: string) {
+  return useMutation({ mutationFn: () => data.publicBooking.surveyOptOut(token) });
 }

@@ -53,6 +53,9 @@ export const queryKeys = {
   publicAppointment: (token: string) => ["public-appointment", token] as const,
   /** El enlace personal de quien espera (spec 047). */
   publicWaitlist: (token: string) => ["public-waitlist", token] as const,
+  /** La encuesta después de la cita (spec 048): la página del paciente y las opiniones del panel. */
+  publicSurvey: (token: string) => ["public-survey", token] as const,
+  surveys: (businessId: string, filters: Record<string, string | undefined>) => ["surveys", businessId, filters] as const,
   /** La lista de espera del panel (spec 047). */
   waitlist: (businessId: string) => ["waitlist", businessId] as const,
   /** Site Key del CAPTCHA del registro. */

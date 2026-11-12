@@ -25,6 +25,7 @@ import { TopClientsCards } from "@/features/reports/top-clients-cards";
 import { Trend } from "@/features/reports/trend";
 import { ALL_AGENDAS, ProfessionalDot, ProfessionalSelect } from "@/features/professionals/professional-select";
 import { useAgendas } from "@/features/professionals/use-agendas";
+import { PatientFeedbackCard } from "@/features/reports/patient-feedback-card";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments, useClientActivity } from "@/hooks/queries/use-appointments";
 import { useClients } from "@/hooks/queries/use-clients";
@@ -327,6 +328,13 @@ function ReportsPageContent() {
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <TopClientsCards top={report.topClients} noShows={report.noShows} clientsById={clientsById} currency={currency} />
               </div>
+              {/* La encuesta después de la cita (spec 048): con ella encendida o si ya hay respuestas en el periodo. */}
+              <PatientFeedbackCard
+                from={period.range.from}
+                to={period.range.to}
+                professionalId={agenda !== ALL_AGENDAS ? agenda : undefined}
+                hideWhenEmpty={!business?.notificationSettings.surveys}
+              />
             </>
           )}
 

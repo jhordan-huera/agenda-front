@@ -51,6 +51,7 @@ const TYPE_LABELS: Record<EmailType, string> = {
   monthly_report: "Informe mensual",
   waitlist_joined: "Alta en la lista de espera",
   waitlist_offer: "Hora libre para la lista de espera",
+  survey_request: "Encuesta después de la cita",
 };
 
 /** El estado de cada email: si salió, si espera en la cola o si falló (o se descartó a propósito). */
