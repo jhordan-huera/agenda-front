@@ -112,6 +112,8 @@ ok(!isReportingEnabled(DSN, "localhost"), "con el DSN real, no desde este equipo
 ok(isReportingEnabled("http://prueba@127.0.0.1:9999/1", "localhost"), "con un Sentry de prueba de este equipo, sí (el recorrido)");
 ok(!isReportingEnabled("no-es-un-dsn", "agenda-3-6-0.vercel.app"), "un DSN mal escrito, no");
 
+ok(false, "prueba roja a propósito (spec 045): este PR se cierra sin fusionar");
+
 if (failures) {
   console.log(`\n${failures} comprobación(es) fallida(s)`);
   process.exit(1);
