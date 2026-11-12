@@ -25,7 +25,7 @@ import { normalizeSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/types";
 
-type ClientFilter = "all" | "active" | "inactive" | "upcoming" | "incomplete";
+type ClientFilter = "all" | "active" | "inactive" | "upcoming" | "incomplete" | "pending";
 
 const FILTERS: { value: ClientFilter; label: string }[] = [
   { value: "all", label: "Todos" },
@@ -34,11 +34,18 @@ const FILTERS: { value: ClientFilter; label: string }[] = [
   { value: "upcoming", label: "Con próxima cita" },
   // Les falta algún dato obligatorio del negocio (spec 012): p. ej. los importados sin cédula o sin email.
   { value: "incomplete", label: "Por completar" },
+  // Deben sesiones atendidas sin marcar como pagadas (spec 046): del que más debe al que menos.
+  { value: "pending", label: "Con pagos pendientes" },
 ];
 
-/** Al volver de una importación con «Ver los por completar», la lista se abre con ese filtro. */
-const initialFilter = (state: unknown): ClientFilter =>
-  (state as { filter?: unknown } | null)?.filter === "incomplete" ? "incomplete" : "all";
+/**
+ * Al volver de una importación con «Ver los por completar», la lista se abre con ese filtro; desde la tarjeta
+ * «Por cobrar» de Inicio (spec 046), con «Con pagos pendientes».
+ */
+const initialFilter = (state: unknown): ClientFilter => {
+  const filter = (state as { filter?: unknown } | null)?.filter;
+  return filter === "incomplete" || filter === "pending" ? filter : "all";
+};
 
 type ClientView = "cards" | "list";
 
@@ -91,9 +98,17 @@ export default function ClientsPage() {
       (filter === "active" && client.isActive) ||
       (filter === "inactive" && !client.isActive) ||
       (filter === "upcoming" && Boolean(getClientSummary(summaries, client.id).nextAppointment)) ||
-      (filter === "incomplete" && clientMissingFields(client, business).length > 0);
+      (filter === "incomplete" && clientMissingFields(client, business).length > 0) ||
+      (filter === "pending" && getClientSummary(summaries, client.id).pendingAmount > 0);
     return matchesSearch && matchesFilter;
   });
+  if (filter === "pending") {
+    filtered.sort(
+      (a, b) =>
+        getClientSummary(summaries, b.id).pendingAmount - getClientSummary(summaries, a.id).pendingAmount ||
+        a.name.localeCompare(b.name, "es"),
+    );
+  }
 
   const openCreate = () => setFormState({ open: true });
   const chooseView = (next: ClientView) => {
@@ -210,11 +225,19 @@ export default function ClientsPage() {
           {filtered.length === 0 ? (
             <EmptyState
               icon={Search}
-              title={filter === "incomplete" && !search.trim() ? "Nadie por completar" : "Sin resultados"}
+              title={
+                filter === "incomplete" && !search.trim()
+                  ? "Nadie por completar"
+                  : filter === "pending" && !search.trim()
+                    ? "Nadie tiene pagos pendientes"
+                    : "Sin resultados"
+              }
               description={
                 filter === "incomplete" && !search.trim()
                   ? "Todos tus clientes tienen los datos obligatorios de tu negocio."
-                  : "No hay clientes que coincidan con la búsqueda o el filtro."
+                  : filter === "pending" && !search.trim()
+                    ? "Todas las sesiones atendidas están marcadas como pagadas."
+                    : "No hay clientes que coincidan con la búsqueda o el filtro."
               }
               action={
                 <Button

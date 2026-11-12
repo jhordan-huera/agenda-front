@@ -94,6 +94,7 @@ import type {
   BusinessStatus,
   Client,
   ClientActivity,
+  PendingPaymentsSummary,
   ClientImportResult,
   ClientRequiredFields,
   ClinicalNote,
@@ -357,6 +358,10 @@ export interface AppointmentRepository {
   setArrival(businessId: string, appointmentId: string, arrived: boolean): Promise<Appointment>;
   /** Marca la cita como pagada (o lo deshace). */
   setPaid(businessId: string, appointmentId: string, paid: boolean): Promise<Appointment>;
+  /** «Por cobrar» (spec 046): el total de Inicio, con el alcance de quien lo pide. */
+  pendingPaymentsSummary(businessId: string): Promise<PendingPaymentsSummary>;
+  /** «Marcar todas como pagadas»: sólo las pedidas que siguen por cobrar. Devuelve cuántas marcó. */
+  payPending(businessId: string, clientId: string, appointmentIds: string[]): Promise<{ paid: number }>;
   /** Comprobantes de pago que envió el paciente, del más antiguo al más reciente. */
   listReceipts(businessId: string, appointmentId: string): Promise<PaymentReceipt[]>;
   /** URL de unos minutos para ver el comprobante. */

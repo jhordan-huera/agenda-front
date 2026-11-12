@@ -39,6 +39,7 @@ import type {
   BusinessReferrals,
   Client,
   ClientActivity,
+  PendingPaymentsSummary,
   ClientImportResult,
   ClinicalNote,
   ClinicalProfile,
@@ -224,6 +225,9 @@ export const apiRepository: DataRepository = {
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/arrival`, { arrived }),
     setPaid: (businessId, appointmentId, paid) =>
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/payment`, { paid }),
+    pendingPaymentsSummary: (businessId) => api.get<PendingPaymentsSummary>(`${business(businessId)}/pending-payments/summary`),
+    payPending: (businessId, clientId, appointmentIds) =>
+      api.post<{ paid: number }>(`${business(businessId)}/clients/${id(clientId)}/pending-payments/pay`, { appointmentIds }),
     listReceipts: (businessId, appointmentId) =>
       api.get<PaymentReceipt[]>(`${business(businessId)}/appointments/${id(appointmentId)}/receipts`),
     getReceiptUrl: (businessId, receiptId) =>

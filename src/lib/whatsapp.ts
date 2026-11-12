@@ -1,6 +1,6 @@
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { BANK_ACCOUNT_TYPE_LABELS, TIMEZONES } from "@/lib/constants/business";
-import { formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import type { Appointment, AppointmentStatus, BankAccount, Business, ISODate, WhatsAppNoticeKind } from "@/types";
 
 /**
@@ -179,6 +179,43 @@ export function buildPaymentReminderMessage(data: {
   return (
     `${hello}, te escribimos de ${data.businessName} para recordarte el comprobante de la transferencia de tu cita de ${data.serviceName} ${when}. ` +
     `Puedes enviarnos la foto o el PDF aquí: ${data.paymentUrl}\n\nSi ya nos lo enviaste, no te preocupes. ¡Gracias!`
+  );
+}
+
+/**
+ * «Recordar el pago por WhatsApp» desde «Por cobrar» (spec 046): un recordatorio amable con las sesiones
+ * atendidas que siguen sin pagar, el total y, si las agendas las tienen, las cuentas para transferir (sin
+ * repetir la misma cuenta). Nunca «deuda» ni «debes»: es un recordatorio. El profesional lo revisa antes de
+ * enviarlo.
+ */
+export function buildPendingPaymentsMessage(data: {
+  clientName: string;
+  businessName: string;
+  sessions: { date: ISODate; serviceName: string }[];
+  total: number;
+  currency?: string;
+  accounts: BankAccount[];
+}): string {
+  const name = data.clientName.trim().split(/\s+/)[0] ?? "";
+  const hello = name ? `Hola ${name}` : "Hola";
+  const single = data.sessions.length === 1;
+  const sessions = data.sessions
+    .map((session) => `• ${formatDate(session.date, "EEEE d 'de' MMMM")}: ${session.serviceName}`)
+    .join("\n");
+  const seen = new Set<string>();
+  const accounts = data.accounts.filter((account) => {
+    const key = `${account.bank}|${account.number}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const transfer =
+    accounts.length === 0
+      ? ""
+      : `\n\n${accounts.length === 1 ? "Puedes transferir a esta cuenta" : "Puedes transferir a cualquiera de estas cuentas"}:\n${describeBankAccounts(accounts)}`;
+  return (
+    `${hello}, te escribimos de ${data.businessName} para recordarte el pago de ${single ? "tu sesión" : "tus sesiones"}:\n${sessions}\n\n` +
+    `Total: ${formatCurrency(data.total, data.currency)}${transfer}\n\nSi ya lo pagaste, no te preocupes. ¡Gracias!`
   );
 }
 

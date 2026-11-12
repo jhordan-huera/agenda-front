@@ -298,6 +298,30 @@ export function useSetAppointmentPaid() {
   });
 }
 
+/** «Por cobrar» de Inicio (spec 046): el total, los pacientes y las sesiones. Un minuto de caché. */
+export function usePendingPaymentsSummary() {
+  const businessId = useBusinessId();
+  return useQuery({
+    queryKey: queryKeys.pendingPayments(businessId),
+    queryFn: () => data.appointments.pendingPaymentsSummary(businessId),
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * «Marcar todas como pagadas» (spec 046): las sesiones que se ven en la ficha del paciente. Después se recargan
+ * las citas, el resumen por paciente y el total de Inicio (todos cuelgan de "appointments").
+ */
+export function usePayPendingPayments() {
+  const businessId = useBusinessId();
+  const invalidate = useInvalidateAppointments();
+  return useMutation({
+    mutationFn: ({ clientId, appointmentIds }: { clientId: string; appointmentIds: string[] }) =>
+      data.appointments.payPending(businessId, clientId, appointmentIds),
+    onSuccess: () => invalidate(),
+  });
+}
+
 /** Comprobantes de pago que envió el paciente (sólo si la cita tiene alguno). */
 export function useAppointmentReceipts(appointment: Pick<Appointment, "id" | "receiptAt"> | null | undefined) {
   const businessId = useBusinessId();

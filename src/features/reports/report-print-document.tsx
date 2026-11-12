@@ -83,7 +83,7 @@ export function ReportPrintDocument({
       trend: trend(summary.estimatedRevenue, previousSummary.estimatedRevenue, "up"),
     },
     {
-      label: "Cobrado (completadas)",
+      label: "Ingresos de citas atendidas",
       value: formatCurrency(summary.completedRevenue, currency),
       previous: formatCurrency(previousSummary.completedRevenue, currency),
       trend: trend(summary.completedRevenue, previousSummary.completedRevenue, "up"),
@@ -157,12 +157,14 @@ export function ReportPrintDocument({
         </div>
         <p className="mt-1.5 text-[10px] text-muted-foreground">
           Al día de hoy: hoy {formatCurrency(report.revenue.day, currency)} · esta semana {formatCurrency(report.revenue.week, currency)} · este mes{" "}
-          {formatCurrency(report.revenue.month, currency)}. Asistencia del periodo:{" "}
+          {formatCurrency(report.revenue.month, currency)}. Por cobrar del periodo: {formatCurrency(summary.pendingRevenue, currency)}.
+          Asistencia del periodo:{" "}
           {summary.attendanceRate === null ? "sin citas pasadas" : percent(summary.attendanceRate)}.
         </p>
         <p className="mt-0.5 text-[9px] text-muted-foreground">
           ▲▼ frente a {period.previousLabel}: en verde si mejoró y en rojo si empeoró. "Ingresos estimados" suma las citas
-          pendientes, confirmadas y completadas; "Cobrado", sólo las completadas. La ocupación compara las horas con citas con las
+          pendientes, confirmadas y completadas; "Ingresos de citas atendidas", sólo las completadas, pagadas o no; "Por cobrar", las
+          atendidas que aún no se marcan como pagadas. La ocupación compara las horas con citas con las
           horas de trabajo de tu horario actual.
         </p>
       </Section>
@@ -205,7 +207,7 @@ export function ReportPrintDocument({
           <div className="mt-5 grid grid-cols-2 gap-5">
             <Section title="Los que más vienen" keepTogether flush>
               <PrintTable
-                head={["Paciente", "Citas", "Cobrado"]}
+                head={["Paciente", "Citas", "Ingresos"]}
                 rows={report.topClients.map((rank) => [nameOf(rank.clientId), rank.appointments, formatCurrency(rank.spent, currency)])}
                 empty="Sin citas en este periodo."
               />
@@ -238,7 +240,7 @@ export function ReportPrintDocument({
           {professionalsById && (
             <Section title="Por profesional">
               <PrintTable
-                head={["Profesional", "Citas", "Atendidas", "No asistió", "Canceladas", "Asistencia", "Cobrado", "Ocupación"]}
+                head={["Profesional", "Citas", "Atendidas", "No asistió", "Canceladas", "Asistencia", "Ingresos", "Ocupación"]}
                 rows={report.byProfessional.map(({ professionalId, summary: own, occupancy }) => [
                   professionalsById.get(professionalId)?.displayName ?? "Profesional",
                   own.total - own.byStatus.cancelled,

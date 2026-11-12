@@ -46,6 +46,7 @@ import { ClientNotesCard } from "@/features/clients/client-notes-card";
 import { getClientSummary, summarizeByClient } from "@/features/clients/client-summary";
 import { DeleteClientDialog } from "@/features/clients/delete-client-dialog";
 import { clientMissingFields, missingDataText } from "@/features/clients/missing-fields";
+import { PendingPaymentsCard } from "@/features/payments/pending-payments-card";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments } from "@/hooks/queries/use-appointments";
 import { useClient } from "@/hooks/queries/use-clients";
@@ -135,6 +136,7 @@ export default function ClientDetailPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="min-w-0 space-y-6 lg:col-span-2">
+          <PendingPaymentsCard client={client} business={business} appointments={appointments} onOpen={dialogs.openDetails} />
           <Card>
             <CardHeader>
               <CardTitle>Próximas citas</CardTitle>

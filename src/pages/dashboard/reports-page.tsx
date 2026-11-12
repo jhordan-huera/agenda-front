@@ -189,12 +189,22 @@ function ReportsPageContent() {
               )}
               <p className="mt-2 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
                 <span>
-                  Cobrado en citas completadas:{" "}
+                  Ingresos de citas atendidas:{" "}
                   <span className="font-semibold text-foreground tabular-nums">
                     {loading ? "…" : formatCurrency(summary.completedRevenue, currency)}
                   </span>
                 </span>
                 {!loading && trend(summary.completedRevenue, previousSummary.completedRevenue, "up")}
+              </p>
+              {/* Lo atendido que aún no se marca como pagado (spec 046): parte de los ingresos de arriba. */}
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+                <span>
+                  Por cobrar:{" "}
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {loading ? "…" : formatCurrency(summary.pendingRevenue, currency)}
+                  </span>
+                </span>
+                {!loading && trend(summary.pendingRevenue, previousSummary.pendingRevenue, "down")}
               </p>
             </div>
             <dl className="grid grid-cols-3 gap-4 lg:border-l lg:pl-6">
@@ -421,7 +431,7 @@ function ProfessionalBreakdownCard({
                   <span className="truncate">{professional?.displayName ?? "Profesional"}</span>
                 </span>
                 <span className="shrink-0 text-right">
-                  <span className="block text-xs text-muted-foreground">Cobrado</span>
+                  <span className="block text-xs text-muted-foreground">Ingresos</span>
                   <span className="font-semibold tabular-nums">{formatCurrency(summary.completedRevenue, currency)}</span>
                 </span>
               </div>
@@ -447,7 +457,7 @@ function ProfessionalBreakdownCard({
               <TableHead className="text-right">No asistió</TableHead>
               <TableHead className="text-right">Canceladas</TableHead>
               <TableHead className="text-right">Asistencia</TableHead>
-              <TableHead className="text-right">Cobrado</TableHead>
+              <TableHead className="text-right">Ingresos</TableHead>
               <TableHead className="text-right">Ocupación</TableHead>
             </TableRow>
           </TableHeader>

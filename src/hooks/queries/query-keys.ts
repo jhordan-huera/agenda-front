@@ -23,6 +23,8 @@ export const queryKeys = {
   appointment: (businessId: string, appointmentId: string) => ["appointments", businessId, "one", appointmentId] as const,
   /** Bajo "appointments": se recarga cuando cambia cualquier cita. */
   clientActivity: (businessId: string) => ["appointments", businessId, "client-activity"] as const,
+  /** «Por cobrar» de Inicio (spec 046). Bajo "appointments": marcar un pago lo pone al día. */
+  pendingPayments: (businessId: string) => ["appointments", businessId, "pending-payments"] as const,
   appointmentList: (businessId: string, filters: AppointmentFilters) =>
     ["appointments", businessId, filters] as const,
   /** Bajo "appointments": un comprobante nuevo llega con la cita recargada. */
