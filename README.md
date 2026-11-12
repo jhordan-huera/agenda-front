@@ -50,6 +50,15 @@ así a Vercel no llega a qué cliente o negocio se entró. El plan Hobby incluye
 (entre todos los proyectos); al pasarlas, Vercel deja de contar hasta el ciclo siguiente, la web sigue
 igual. `vercel.json` excluye `/_vercel/` de la reescritura a `index.html`.
 
+## Pruebas automáticas (spec 045)
+
+`.github/workflows/pruebas.yml` («Pruebas», trabajo «Comprobar») corre `npm run build`, `npm run lint` y todas las
+comprobaciones `check:*` (las lee de `package.json`: una nueva entra sola) en cada PR a `dev` o `main` y en cada subida
+a `dev`, con Node 24. No usa secretos: corre igual en los PR de Dependabot, y sin `SENTRY_AUTH_TOKEN` no crea ni sube
+mapas. El resultado sale en el PR.
+
+`main` exige que «Comprobar» pase: la regla es la misma que en agenda-backend (ver su README, «Pruebas automáticas»).
+
 ## Avisos de errores (Sentry, spec 044)
 
 - **Qué se avisa:**
