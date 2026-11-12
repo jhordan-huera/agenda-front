@@ -174,7 +174,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>GitHub</strong>, que ejecuta las tareas automáticas (por ejemplo, los recordatorios de las citas y
-                la copia de seguridad semanal).
+                la copia de seguridad diaria).
               </li>
               <li>
                 <strong>OpenFreeMap</strong>, que dibuja los mapas: tu navegador le pide las imágenes del mapa, así que ve tu
@@ -222,7 +222,7 @@ export default function PrivacyPage() {
               <li>Los datos de cada negocio, sus clientes y sus citas, mientras el negocio tenga su cuenta.</li>
               <li>
                 Al eliminar un negocio se borran de forma definitiva sus datos, sus archivos y las cuentas de su equipo.
-                Las copias de seguridad de la base de datos ya hechas (semanales y cifradas) guardan esos datos hasta que
+                Las copias de seguridad de la base de datos ya hechas (diarias y cifradas) guardan esos datos hasta que
                 se borra cada copia.
               </li>
               <li>
@@ -253,7 +253,7 @@ export default function PrivacyPage() {
               </li>
               <li>Verificación anti-robots en la página de reservas.</li>
               <li>
-                Una copia de seguridad semanal de la base de datos, cifrada: sólo {APP_NAME} tiene la clave para abrirla.
+                Una copia de seguridad diaria de la base de datos, cifrada: sólo {APP_NAME} tiene la clave para abrirla.
               </li>
               <li>Verificación en dos pasos (código del celular) en la cuenta de administración de la plataforma.</li>
               <li>Un registro de actividad que nadie puede modificar ni borrar desde la aplicación.</li>
