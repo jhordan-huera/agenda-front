@@ -1,37 +1,13 @@
-import { ArrowDownRight, ArrowUpRight, Minus, Sparkles } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, ChevronRight, Minus, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { GrowthPair, ISODate, PlatformStats } from "@/types";
+import type { GrowthPair, PlatformStats } from "@/types";
 import { GrowthChart } from "./growth-chart";
+import { GrowthDetailSheet } from "./growth-detail-sheet";
+import { currentLabel, GROWTH_METRICS, periodLabel, type GrowthMetric } from "./growth-labels";
 import { growthChange } from "./sales-lists";
-
-/**
- * El periodo, para leerlo después de "frente a": "el 1–13 de septiembre", "el 1 de octubre" o
- * "todo febrero" (cuando el mes pasado fue más corto y se compara entero).
- */
-function periodLabel(from: ISODate, to: ISODate): string {
-  const month = formatDate(from, "MMMM");
-  if (from.slice(0, 7) !== to.slice(0, 7)) return `todo ${month}`;
-  const first = Number(from.slice(8));
-  const last = Number(to.slice(8));
-  return first === last ? `el ${first} de ${month}` : `el ${first}–${last} de ${month}`;
-}
-
-/** "Del 1 al 13 de octubre" o "El 1 de octubre". */
-function currentLabel(from: ISODate, to: ISODate): string {
-  const first = Number(from.slice(8));
-  const last = Number(to.slice(8));
-  return first === last ? `El ${first} de ${formatDate(from, "MMMM")}` : `Del ${first} al ${last} de ${formatDate(from, "MMMM")}`;
-}
-
-const METRICS: { key: keyof Pick<PlatformStats["growth"], "appointments" | "onlineBookings" | "newClients" | "newBusinesses">; label: string }[] = [
-  { key: "appointments", label: "Citas agendadas" },
-  { key: "onlineBookings", label: "Reservas online" },
-  { key: "newClients", label: "Pacientes nuevos" },
-  { key: "newBusinesses", label: "Negocios nuevos" },
-];
 
 function Change({ pair }: { pair: GrowthPair }) {
   const { kind, percent } = growthChange(pair);
@@ -51,8 +27,12 @@ function Change({ pair }: { pair: GrowthPair }) {
   );
 }
 
-/** «Crecimiento del mes»: lo que va del mes frente a los mismos días del mes pasado (spec 006). */
+/**
+ * «Crecimiento del mes»: lo que va del mes frente a los mismos días del mes pasado (spec 006). Cada tarjeta abre su
+ * detalle por negocio (spec 042).
+ */
 export function GrowthSection({ growth }: { growth: PlatformStats["growth"] | undefined }) {
+  const [open, setOpen] = useState<GrowthMetric | null>(null);
   return (
     <section aria-labelledby="growth-title" className="space-y-3">
       <div>
@@ -66,29 +46,47 @@ export function GrowthSection({ growth }: { growth: PlatformStats["growth"] | un
         </p>
       </div>
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {METRICS.map(({ key, label }) => {
+        {GROWTH_METRICS.map(({ key, label }) => {
           const pair = growth?.[key];
-          return (
-            <Card key={key} className="gap-1.5 px-4 py-4 sm:px-5">
-              <p className="text-sm text-muted-foreground">{label}</p>
-              {!pair ? (
+          if (!growth || !pair) {
+            return (
+              <Card key={key} className="gap-1.5 px-4 py-4 sm:px-5">
+                <p className="text-sm text-muted-foreground">{label}</p>
                 <Skeleton className="h-8 w-24" />
-              ) : (
-                <>
-                  <p className="flex flex-wrap items-center gap-2">
-                    <span className="text-2xl font-extrabold tracking-[-0.02em] tabular-nums sm:text-3xl">{pair.current}</span>
-                    <Change pair={pair} />
-                  </p>
-                  <p className="text-xs text-muted-foreground tabular-nums">
-                    {pair.previous} {growth && periodLabel(growth.previousFrom, growth.previousTo).replace(/^el /, "del ").replace(/^todo /, "en todo ")}
-                  </p>
-                </>
-              )}
+              </Card>
+            );
+          }
+          return (
+            <Card
+              key={key}
+              className="gap-0 p-0 transition-shadow has-[button:focus-visible]:ring-[3px] has-[button:focus-visible]:ring-ring/50 hover:ring-foreground/20"
+            >
+              {/* Toda la tarjeta abre su detalle por negocio (spec 042). */}
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                onClick={() => setOpen(key)}
+                className="group flex h-full flex-col gap-1.5 px-4 py-4 text-left outline-none hover:bg-muted/40 sm:px-5"
+              >
+                <span className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                  {label}
+                  <ChevronRight aria-hidden className="size-4 shrink-0 transition-[color,translate] group-hover:translate-x-0.5 group-hover:text-foreground" />
+                </span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="text-2xl font-extrabold tracking-[-0.02em] tabular-nums sm:text-3xl">{pair.current}</span>
+                  <Change pair={pair} />
+                </span>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {pair.previous} {periodLabel(growth.previousFrom, growth.previousTo).replace(/^el /, "del ").replace(/^todo /, "en todo ")}
+                </span>
+                <span className="sr-only">. Ver de qué negocios son.</span>
+              </button>
             </Card>
           );
         })}
       </div>
       {growth?.daily && <GrowthChart growth={growth} />}
+      {growth && <GrowthDetailSheet metric={open} growth={growth} onClose={() => setOpen(null)} />}
     </section>
   );
 }

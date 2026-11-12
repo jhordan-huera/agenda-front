@@ -1,10 +1,9 @@
-import "@fontsource-variable/archivo/wdth.css";
-import "@fontsource-variable/geist-mono/wght.css";
-import "@fontsource/instrument-serif/400-italic.css";
+import "@fontsource-variable/schibsted-grotesk/wght.css";
 import "@/features/landing/landing.css";
-import { ArrowRight, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { PageTitle } from "@/components/shared/page-title";
+import { BrandPanel } from "@/features/landing/brand-panel";
 import {
   BookingVisual,
   CalendarVisual,
@@ -16,15 +15,17 @@ import {
   TeamVisual,
   WeekVisual,
 } from "@/features/landing/feature-visuals";
+import { FeatureItem } from "@/features/landing/features-section";
 import { LandingFooter } from "@/features/landing/landing-footer";
-import { revealAndPlayRef, revealRef, useActiveSection } from "@/features/landing/landing-motion";
+import { useActiveSection } from "@/features/landing/landing-motion";
 import { LandingNav } from "@/features/landing/landing-nav";
-import { FRAME, PRIMARY_BUTTON, revealDelay, SECONDARY_BUTTON, TECH_LABEL, WIDE_HEADING } from "@/features/landing/landing-styles";
-import { Accent, SectionBar, SectionIntro } from "@/features/landing/landing-ui";
+import { CONTAINER, PANEL_BUTTON, PANEL_OUTLINE_BUTTON } from "@/features/landing/landing-styles";
+import { SectionHeading } from "@/features/landing/landing-ui";
 import { SignupLink } from "@/features/landing/signup-link";
 import { SPECIALTIES, specialtyBySlug, type AccentTitle, type SpecialtyVisual } from "@/features/landing/specialties";
 import { StartSection } from "@/features/landing/start-section";
 import { useSignupContact } from "@/features/landing/use-signup-contact";
+import { WeekPreview } from "@/features/landing/week-preview";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { cn } from "@/lib/utils";
 import { getSupportWhatsAppUrl } from "@/lib/whatsapp";
@@ -35,7 +36,6 @@ const SECTIONS = [
   { id: "dia-a-dia", label: "Tu día a día" },
   { id: "como-empezar", label: "Cómo empezar" },
   { id: "preguntas", label: "Preguntas" },
-  { id: "empezar", label: "Empezar" },
 ];
 const SECTION_IDS = SECTIONS.map((section) => section.id);
 
@@ -62,22 +62,36 @@ function Visual({ visual }: { visual: SpecialtyVisual }) {
   }
 }
 
-/** «Tu consulta, sin *perseguir* a nadie.»: la palabra en cursiva, sin espacio antes de un punto. */
-function Title({ title }: { title: AccentTitle }) {
+/** El título entero, con la misma letra (spec 043: sin palabras sueltas en cursiva), sin espacio antes de un punto. */
+const titleText = (title: AccentTitle) => `${title.before} ${title.accent}${/^[.,]/.test(title.after) ? title.after : ` ${title.after}`}`;
+
+/** «Fisioterapeutas y odontólogos»: las otras dos, en una frase. */
+function OtherSpecialties({ slug }: { slug: string }) {
+  const others = SPECIALTIES.filter((other) => other.slug !== slug);
   return (
     <>
-      {title.before} <Accent>{title.accent}</Accent>
-      {/^[.,]/.test(title.after) ? title.after : ` ${title.after}`}
+      También para{" "}
+      {others.map((other, index) => (
+        <span key={other.slug}>
+          {index > 0 && (index === others.length - 1 ? " y " : ", ")}
+          <Link
+            to={`/${other.slug}`}
+            className="rounded-sm font-semibold text-hero-foreground underline decoration-hero-foreground/50 underline-offset-4 outline-none hover:decoration-current focus-visible:ring-3 focus-visible:ring-hero-foreground/70"
+          >
+            {other.name.toLowerCase()}
+          </Link>
+        </span>
+      ))}
+      .
     </>
   );
 }
 
 /**
- * Una página por especialidad (spec 041): /psicologos, /fisioterapeutas y /odontologos, con las piezas de la
- * portada nueva y los textos de specialties.ts. La estructura es la del prototipo que aprobó el dueño del producto
- * (specs/041-paginas-por-especialidad/prototipo): el encabezado con los botones, 01 / Tu día a día, 02 / Cómo
- * empezar, 03 / Preguntas, el cierre y el pie. «Escríbenos por WhatsApp» lleva al WhatsApp de soporte con el
- * mensaje de la especialidad; sin WhatsApp de soporte, no sale.
+ * Una página por especialidad (spec 041): /psicologos, /fisioterapeutas y /odontologos, con las piezas de la portada
+ * «Panel de marca» (spec 043) y los textos de specialties.ts: el panel tomate con la agenda de la semana con sus
+ * servicios, «Tu día a día», «Cómo empezar», «Preguntas», el cierre y el pie. «Escríbenos por WhatsApp» lleva al
+ * WhatsApp de soporte con el mensaje de la especialidad; sin WhatsApp de soporte, no sale.
  */
 export default function SpecialtyPage() {
   const { pathname } = useLocation();
@@ -87,115 +101,78 @@ export default function SpecialtyPage() {
   const active = useActiveSection(SECTION_IDS);
   if (!specialty) return <NotFoundPage />;
   const whatsAppUrl = settings.data?.supportPhone ? getSupportWhatsAppUrl(settings.data.supportPhone, specialty.whatsappMessage) : null;
-  const others = SPECIALTIES.filter((other) => other.slug !== specialty.slug);
 
   return (
-    <div data-landing className="min-h-screen bg-wall text-foreground">
+    <div data-landing className="font-display min-h-screen bg-wall text-foreground">
       <PageTitle title={specialty.meta.title} />
       <LandingNav signup={signup} active={active} sections={SECTIONS} />
       <main id="contenido" tabIndex={-1} className="outline-none">
-        <div className={FRAME}>
-          <section aria-labelledby="titulo-especialidad" className="border-b border-border px-5 pt-28 pb-14 sm:px-10 sm:pt-40 sm:pb-20">
-            <p className={cn(TECH_LABEL, "landing-rise text-muted-foreground")}>
-              <Link to="/" className="hover:text-foreground">
-                Agenda360
-              </Link>{" "}
-              · <span className="text-ink">Para {specialty.name.toLowerCase()}</span>
-            </p>
-            <h1 id="titulo-especialidad" className={cn(WIDE_HEADING, "landing-rise mt-6 max-w-5xl text-[clamp(2.75rem,7.5vw,6rem)] leading-[0.95]")}>
-              <Title title={specialty.hero} />
-            </h1>
-            <p className="landing-rise mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">{specialty.hero.text}</p>
-            <div className="landing-rise mt-10 flex flex-col gap-3 sm:flex-row">
-              <SignupLink contact={signup} registerLabel="Crear mi agenda gratis" className={PRIMARY_BUTTON} after={<ArrowRight className="size-4" />} />
+        <BrandPanel
+          titleId="titulo-especialidad"
+          title={titleText(specialty.hero)}
+          text={specialty.hero.text}
+          actions={
+            <>
+              <SignupLink contact={signup} registerLabel="Crear mi agenda gratis" className={PANEL_BUTTON} />
               {whatsAppUrl && (
-                <a href={whatsAppUrl} target="_blank" rel="noreferrer" className={SECONDARY_BUTTON}>
+                <a href={whatsAppUrl} target="_blank" rel="noreferrer" className={PANEL_OUTLINE_BUTTON}>
                   Escríbenos por WhatsApp
                 </a>
               )}
-            </div>
-            <p className={cn(TECH_LABEL, "landing-rise mt-10 text-muted-foreground")}>
-              También para:{" "}
-              {others.map((other, index) => (
-                <span key={other.slug}>
-                  {index > 0 && " · "}
-                  <Link to={`/${other.slug}`} className="text-foreground underline decoration-ink/40 underline-offset-4 hover:decoration-current">
-                    {other.name}
-                  </Link>
+            </>
+          }
+          note={<OtherSpecialties slug={specialty.slug} />}
+          aside={<WeekPreview services={specialty.week} />}
+        />
+
+        <section aria-labelledby="titulo-dia" id="dia-a-dia" className={cn(CONTAINER, "pt-20 sm:pt-28")}>
+          <SectionHeading id="titulo-dia" title={titleText(specialty.intro)} className="px-1">
+            {specialty.intro.text}
+          </SectionHeading>
+          <div className="mt-12 grid gap-x-10 gap-y-14 md:grid-cols-2 lg:gap-x-14 lg:gap-y-20">
+            {specialty.blocks.map((block) => (
+              <FeatureItem key={block.label} title={block.title} description={block.description} visual={<Visual visual={block.visual} />} />
+            ))}
+          </div>
+          <p className="mt-10 px-1 text-sm text-muted-foreground">Las ilustraciones usan datos de ejemplo.</p>
+        </section>
+
+        <section aria-labelledby="titulo-pasos" id="como-empezar" className={cn(CONTAINER, "pt-24 sm:pt-32")}>
+          <SectionHeading id="titulo-pasos" title="Cómo empezar" className="px-1" />
+          <ol className="mt-10 grid gap-10 px-1 md:grid-cols-3 md:gap-8">
+            {specialty.steps.map((step, index) => (
+              <li key={step.title}>
+                <span className="font-display flex size-9 items-center justify-center rounded-full bg-foreground text-[0.9375rem] font-bold text-background">
+                  {index + 1}
                 </span>
-              ))}
-            </p>
-          </section>
+                <h3 className="font-display mt-5 text-xl leading-tight font-bold tracking-[-0.02em]">{step.title}</h3>
+                <p className="mt-2 leading-relaxed text-muted-foreground">{step.text}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-          <section aria-labelledby="titulo-dia" id="dia-a-dia">
-            <SectionBar index="01" title="Tu día a día" note="Ilustraciones · datos de ejemplo" />
-            <SectionIntro id="titulo-dia" title={<Title title={specialty.intro} />}>
-              {specialty.intro.text}
-            </SectionIntro>
-            <div className="grid md:grid-cols-2">
-              {specialty.blocks.map((block, index) => (
-                <article
-                  key={block.label}
-                  ref={revealAndPlayRef}
-                  data-reveal
-                  style={revealDelay((index % 2) * 120)}
-                  className="flex flex-col border-b border-border md:odd:border-r"
-                >
-                  <header className={cn(TECH_LABEL, "flex h-11 items-center justify-between border-b border-border px-5 text-muted-foreground sm:px-8")}>
-                    <span>{block.label}</span>
-                    <span className="tabular-nums">{String(index + 1).padStart(2, "0")}</span>
-                  </header>
-                  <div aria-hidden className="lv flex h-64 items-center justify-center overflow-hidden bg-canvas px-5 sm:h-72 sm:px-10">
-                    <Visual visual={block.visual} />
-                  </div>
-                  <div className="p-5 sm:p-8">
-                    <h3 className={cn(WIDE_HEADING, "text-xl leading-tight font-bold tracking-[-0.02em] [font-stretch:108%] sm:text-2xl")}>{block.title}</h3>
-                    <p className="mt-2 leading-relaxed text-muted-foreground">{block.description}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section aria-labelledby="titulo-pasos" id="como-empezar">
-            <SectionBar index="02" title="Cómo empezar" note="En una tarde" />
-            <h2 id="titulo-pasos" className="sr-only">
-              Cómo empezar
-            </h2>
-            <ol className="grid md:grid-cols-3">
-              {specialty.steps.map((step, index) => (
-                <li key={step.title} ref={revealRef} data-reveal style={revealDelay(index * 100)} className="border-b border-border p-5 sm:p-8 md:not-last:border-r">
-                  <p className={cn(TECH_LABEL, "text-ink")}>Paso {index + 1}</p>
-                  <h3 className={cn(WIDE_HEADING, "mt-4 text-2xl leading-tight font-bold tracking-[-0.02em]")}>{step.title}</h3>
-                  <p className="mt-2 leading-relaxed text-muted-foreground">{step.text}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <section aria-labelledby="titulo-preguntas" id="preguntas">
-            <SectionBar index="03" title="Preguntas" note={`De ${specialty.name.toLowerCase()}`} />
-            <h2 id="titulo-preguntas" className="sr-only">
-              Preguntas frecuentes de {specialty.name.toLowerCase()}
-            </h2>
-            <div className="divide-y divide-border border-b border-border">
+        <section aria-labelledby="titulo-preguntas" id="preguntas" className={cn(CONTAINER, "pt-24 sm:pt-32")}>
+          <div className="grid gap-10 px-1 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)] lg:gap-16">
+            <SectionHeading id="titulo-preguntas" title={`Preguntas de ${specialty.name.toLowerCase()}`} />
+            <div className="border-t border-border">
               {specialty.questions.map((item, index) => (
-                <details key={item.question} className="group px-5 sm:px-10" open={index === 0}>
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-6 py-6 outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-                    <span className="flex items-baseline gap-5">
-                      <span className={cn(TECH_LABEL, "text-muted-foreground tabular-nums")}>{String(index + 1).padStart(2, "0")}</span>
-                      <span className={cn(WIDE_HEADING, "text-lg font-bold tracking-[-0.02em] sm:text-xl")}>{item.question}</span>
-                    </span>
-                    <Plus aria-hidden className="size-5 shrink-0 transition-transform group-open:rotate-45" />
+                <details key={item.question} className="group border-b border-border" open={index === 0}>
+                  <summary className="flex min-h-16 cursor-pointer list-none items-center gap-5 rounded-lg py-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                    <span className="font-display flex-1 text-[1.0625rem] font-bold">{item.question}</span>
+                    <Plus
+                      aria-hidden
+                      className="size-5 shrink-0 text-muted-foreground transition-transform duration-300 ease-out-soft group-open:rotate-45 motion-reduce:transition-none"
+                    />
                   </summary>
-                  <p className="max-w-3xl pb-6 pl-11 leading-relaxed text-muted-foreground">{item.answer}</p>
+                  <p className="max-w-3xl pr-10 pb-6 leading-relaxed text-muted-foreground">{item.answer}</p>
                 </details>
               ))}
             </div>
-          </section>
+          </div>
+        </section>
 
-          <StartSection signup={signup} />
-        </div>
+        <StartSection signup={signup} />
       </main>
       <LandingFooter signup={signup} />
     </div>

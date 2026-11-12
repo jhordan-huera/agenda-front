@@ -189,6 +189,14 @@ Hay dos caminos, y el super admin decide cuáles están abiertos:
   pago y «Tu cita» terminan con «Agenda online con Agenda360 · ¿Eres profesional? Crea tu agenda». Es
   un solo enlace, pequeño, que abre la portada en otra pestaña con `/?desde=<slug>`. Siempre visible:
   ningún negocio ni plan lo oculta.
+- **La portada «Panel de marca»** (spec 043, `pages/landing-page.tsx` y `features/landing/`):
+  - **el orden:** la barra; el panel tomate (`brand-panel.tsx`) con la agenda de la semana de ejemplo
+    (`week-preview.tsx`); «Hecho para» (`#especialidades`); las 8 funciones con sus ilustraciones fijas
+    (`feature-visuals.tsx`); «Tus datos»; las preguntas; el cierre y el pie;
+  - **el estilo:** una sola familia de letra (Schibsted Grotesk, `--font-display`), sin mayúsculas espaciadas,
+    letra monoespaciada ni palabras sueltas en cursiva, y un solo movimiento al cargar (la semana aparece);
+  - **las páginas por especialidad** usan las mismas piezas, con la semana con sus servicios;
+  - **`npm run check:landing`** revisa sus textos y que no vuelva lo que se quitó.
 - **La portada con el registro cerrado** (`features/landing/use-signup-contact.ts` y `signup-link.tsx`):
   los «Crear mi agenda» del menú, de la portada, del cierre y del pie pasan a «Quiero mi agenda» y abren
   un WhatsApp al teléfono de soporte (`/admin/settings`) con «Hola, quiero mi agenda en Agenda360». Si
@@ -249,6 +257,11 @@ active con una app de autenticación. Después, el panel aparece solo.
     al paciente (el cupo menos la reserva del equipo), y cuántos esperan en la cola, al paciente y al
     negocio. Lo que no cabe no se pierde: sale en cuanto hay cupo (primero el equipo, después el
     paciente y al final las copias al profesional y los avisos al negocio).
+  - **Detalle del crecimiento del mes** (spec 042, `features/admin/growth-detail-sheet.tsx`): cada tarjeta
+    (citas agendadas, reservas online, pacientes nuevos y negocios nuevos) abre un panel con su cifra por
+    negocio, la de los mismos días del mes pasado y el enlace a su ficha; los pacientes nuevos, también por
+    origen (página de reservas o panel). Sólo cifras: sin pacientes ni citas sueltas. Se pide a
+    `/admin/growth` al abrir el primer panel y vale 5 minutos.
 - **Negocios**: búsqueda y filtros por plan/estado; ficha con uso del plan, desde cuándo está en su
   plan («En Pro desde el 3 oct»: sin cobro, no hay fecha de renovación), equipo, actividad, cambio
   de plan, suspender/reactivar y restablecer la contraseña del propietario.
@@ -363,7 +376,9 @@ Cada operación de plataforma comprueba en la API que la sesión es de un super 
   aclaraciones); cada acceso queda en la auditoría; un paciente con historia no se puede eliminar.
 - **Ubicación del local**: en Configuración → Negocio se marca la puerta del local en un mapa. La
   página de reservas muestra el mapa con "Cómo llegar" (salvo en citas a domicilio), y la
-  confirmación, la pantalla final y los emails llevan a ese punto exacto en Google Maps.
+  confirmación, la pantalla final y los emails llevan a ese punto exacto en Google Maps. Si el negocio
+  sólo escribió la dirección, la página de reservas muestra un mapa de Google con esa dirección
+  (`getEmbeddedMapUrl`, sin clave), que entiende direcciones que Nominatim no encuentra (2026-11-11).
 - **Modalidades: en el local, a domicilio y virtual**: cada servicio admite una o varias (con varias,
   el cliente elige al reservar). Lo **virtual** es por videollamada con la sala fija de cada
   profesional (Profesionales → Editar → "Enlace de videollamada": Meet, Zoom o Teams, con https://):
@@ -615,7 +630,8 @@ clientes nuevos y recurrentes), las calcula la API (`useClientActivity`).
 En Vercel, como proyecto Vite (build `npm run build`, salida `dist/`). `vercel.json` incluye la
 reescritura SPA para que las rutas profundas (`/dashboard/...`, `/book/...`) funcionen y las
 cabeceras de seguridad: la política de contenido (CSP) sólo deja cargar código de este dominio y
-de Cloudflare (CAPTCHA de la página de reservas), conectarse a los mapas (OpenFreeMap), al
+de Cloudflare (CAPTCHA de la página de reservas), mostrar el mapa de Google de los negocios sin punto
+marcado (`frame-src`), conectarse a los mapas (OpenFreeMap), al
 buscador de direcciones (Nominatim) y a Supabase (los archivos de la historia clínica, los
 comprobantes de pago y las imágenes se suben directo desde el navegador), y nadie puede mostrar la web dentro de otra (clickjacking).
 Si se añade un servicio externo nuevo, hay que permitirlo ahí.

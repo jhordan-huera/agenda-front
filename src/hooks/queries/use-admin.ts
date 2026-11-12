@@ -34,6 +34,19 @@ import { queryKeys } from "./query-keys";
 export const useAdminStats = () => useQuery({ queryKey: queryKeys.admin.stats, queryFn: () => data.admin.getStats() });
 
 /**
+ * El detalle de las tarjetas de «Crecimiento del mes» (spec 042): se pide sólo con un panel abierto y vale 5
+ * minutos, así que pasar de una tarjeta a otra no vuelve a pedirlo.
+ */
+export const useAdminGrowthDetail = (enabled: boolean) =>
+  useQuery({
+    queryKey: queryKeys.admin.growthDetail,
+    queryFn: () => data.admin.getGrowthDetail(),
+    enabled,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+/**
  * La analítica (spec 016): la foto que prepara el cron una vez al día. Cambia una vez por mañana, así que
  * no se vuelve a pedir al volver a la pestaña; al cambiar de periodo se ve la anterior mientras llega.
  */

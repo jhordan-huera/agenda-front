@@ -3,7 +3,7 @@ import { BrandMark } from "@/components/shared/brand-mark";
 import { APP_NAME } from "@/lib/constants/app";
 import { cn } from "@/lib/utils";
 import { DEMO_BOOKING_PATH, LANDING_SECTIONS, TESTIMONIAL } from "./landing-constants";
-import { FRAME, TECH_LABEL } from "./landing-styles";
+import { CONTAINER } from "./landing-styles";
 import { SignupLink } from "./signup-link";
 import { SPECIALTIES } from "./specialties";
 import type { SignupContact } from "./use-signup-contact";
@@ -37,29 +37,29 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
 
 /** Cada enlace del pie ocupa 44 px de alto: se toca bien con el dedo. */
 const LINK =
-  "inline-flex min-h-11 items-center rounded-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50";
+  "inline-flex min-h-11 items-center rounded-md text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none";
 
 /**
- * El pie (prueba en dev, 2026-10-27), como el de getartcraft.com: dentro del marco, una casilla por
- * columna separadas por líneas, los títulos en mayúsculas monoespaciadas y, abajo, el año y «Hecho en
- * Ecuador».
+ * El pie (spec 043): el logo con una línea que dice qué es, las columnas de enlaces y, abajo, el año y «Hecho en
+ * Ecuador». Sin casillas ni mayúsculas. Los enlaces a las secciones de la portada funcionan desde cualquier página.
  */
 export function LandingFooter({ signup }: { signup: SignupContact }) {
   return (
-    <footer className={cn(FRAME, "mb-0")}>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]">
-        <div className="border-b border-border p-6 sm:col-span-2 sm:p-8 lg:col-span-1 lg:border-r lg:border-b-0">
-          <Link to="/" aria-label={APP_NAME} className="inline-flex rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-            <BrandMark className="size-9" />
+    <footer className={cn(CONTAINER, "mt-24 sm:mt-32")}>
+      <div className="grid gap-10 border-t border-border pt-12 pb-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))] lg:gap-8">
+        <div className="sm:col-span-2 lg:col-span-1">
+          <Link to="/" className="font-display inline-flex items-center gap-2.5 rounded-lg text-xl font-extrabold tracking-[-0.02em] outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+            <BrandMark className="size-8" />
+            {APP_NAME}
           </Link>
           <p className="mt-4 max-w-xs leading-relaxed text-muted-foreground">
             Agenda y reservas online para profesionales: tus pacientes eligen su hora y tú solo atiendes.
           </p>
         </div>
         {COLUMNS.map((column) => (
-          <nav key={column.title} aria-label={column.title} className="border-border p-6 not-last:border-b sm:p-8 lg:not-last:border-r lg:not-last:border-b-0">
-            <p className={cn(TECH_LABEL, "text-muted-foreground")}>{column.title}</p>
-            <ul className="mt-3">
+          <nav key={column.title} aria-label={column.title}>
+            <p className="font-display font-bold">{column.title}</p>
+            <ul className="mt-2">
               {column.links.map((link) => (
                 <li key={link.label}>
                   {/* Las secciones de la portada: desde ella, sólo baja; desde las páginas por especialidad, vuelve a ella. */}
@@ -80,7 +80,7 @@ export function LandingFooter({ signup }: { signup: SignupContact }) {
           </nav>
         ))}
       </div>
-      <div className={cn(TECH_LABEL, "flex flex-col gap-2 border-t border-border px-6 py-5 text-muted-foreground sm:flex-row sm:justify-between sm:px-8")}>
+      <div className="flex flex-col gap-1 border-t border-border py-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">
         <p>
           © {CURRENT_YEAR} {APP_NAME}
         </p>
