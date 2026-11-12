@@ -1,3 +1,4 @@
+import { isPendingPayment } from "@/lib/pending-payments";
 import { APPOINTMENT_STATUSES, REVENUE_STATUSES } from "@/lib/constants/appointment-status";
 import { formatDate } from "@/lib/format";
 import { getBlockedRanges, getWorkingRanges, type BlockedRange } from "@/lib/availability";
@@ -34,8 +35,10 @@ export interface ReportSummary {
   byStatus: StatusCounts;
   /** Suma de citas pendientes, confirmadas y completadas. */
   estimatedRevenue: number;
-  /** Suma de citas completadas. */
+  /** Suma de citas completadas, pagadas o no: «Ingresos de citas atendidas» (spec 046). */
   completedRevenue: number;
+  /** «Por cobrar» (spec 046): las atendidas que aún no se marcan como pagadas (`isPendingPayment`). */
+  pendingRevenue: number;
   /** Completadas / (completadas + no asistió); null si no hay datos. */
   attendanceRate: number | null;
 }
@@ -48,6 +51,7 @@ export function summarize(appointments: Appointment[]): ReportSummary {
     byStatus,
     estimatedRevenue: appointments.filter((a) => REVENUE_STATUSES.has(a.status)).reduce((sum, a) => sum + a.price, 0),
     completedRevenue: appointments.filter((a) => a.status === "completed").reduce((sum, a) => sum + a.price, 0),
+    pendingRevenue: appointments.filter(isPendingPayment).reduce((sum, a) => sum + a.price, 0),
     attendanceRate: attended > 0 ? byStatus.completed / attended : null,
   };
 }

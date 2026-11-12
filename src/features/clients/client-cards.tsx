@@ -17,6 +17,7 @@ import type { ZonedNow } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { Business, Client } from "@/types";
+import { PendingBadge } from "@/features/payments/pending-badge";
 import { getClientSummary, type ClientSummary } from "./client-summary";
 import { clientMissingFields, missingDataText } from "./missing-fields";
 
@@ -73,10 +74,11 @@ export function ClientCards({ clients, summaries, now, business, onEdit, onDelet
                   {client.documentId ? `Cédula ${client.documentId}` : "Sin cédula"}
                   {!client.isActive && ", inactivo"}
                 </p>
-                {(client.claimedClientId || missing.length > 0) && (
+                {(client.claimedClientId || missing.length > 0 || summary.pendingAmount > 0) && (
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {client.claimedClientId && <VerifyBadge />}
                     {missing.length > 0 && <IncompleteBadge detail={missingDataText(missing)} />}
+                    <PendingBadge amount={summary.pendingAmount} currency={business?.currency} />
                   </div>
                 )}
               </div>

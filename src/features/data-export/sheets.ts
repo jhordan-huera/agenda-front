@@ -1,8 +1,8 @@
 import type { SheetData } from "write-excel-file/browser";
 import { APPOINTMENT_STATUS_CONFIG } from "@/lib/constants/appointment-status";
-import { SERVICE_MODES } from "@/lib/constants/business";
+import { describeDayParts, describeWaitlistDays, SERVICE_MODES } from "@/lib/constants/business";
 import { toZonedDate } from "@/lib/format";
-import type { DataExportAppointment, DataExportClient, ISODate } from "@/types";
+import type { DataExportAppointment, DataExportClient, DataExportSurvey, DataExportWaitlistEntry, ISODate, WaitlistCloseReason } from "@/types";
 
 /**
  * Los Excel de la descarga (spec 028): pacientes.xlsx y citas.xlsx. El escritor de Excel
@@ -84,9 +84,76 @@ export function appointmentRows(appointments: readonly DataExportAppointment[]):
   return [header(APPOINTMENT_SHEET_HEADERS), ...rows];
 }
 
+/** Las columnas de lista-de-espera.xlsx (spec 047). */
+export const WAITLIST_SHEET_HEADERS = [
+  "Nombre",
+  "Email",
+  "Teléfono",
+  "Servicio",
+  "Profesional",
+  "Días",
+  "Horario",
+  "Espera hasta",
+  "Se anotó desde",
+  "Se anotó el",
+  "Salió el",
+  "Por qué salió",
+] as const;
+
+const CLOSE_REASON_LABELS: Record<WaitlistCloseReason, string> = {
+  booked: "Reservó",
+  left: "Salió con su enlace",
+  removed: "La quitó el equipo",
+  scheduled: "La agendó el equipo",
+  expired: "Pasó su fecha",
+  inactive: "El servicio o el profesional ya no está",
+};
+
+/** Las filas de lista-de-espera.xlsx, de la más antigua a la más reciente. Las fechas de alta y salida, en la zona del negocio. */
+export function waitlistRows(entries: readonly DataExportWaitlistEntry[], timezone: string): SheetData {
+  const rows = entries
+    .toSorted((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .map((entry) => [
+      text(entry.name),
+      text(entry.email),
+      text(entry.phone),
+      text(entry.service),
+      text(entry.professional || "Cualquiera"),
+      text(describeWaitlistDays(entry.days)),
+      text(describeDayParts(entry.dayParts)),
+      excelDate(entry.until),
+      text(entry.source === "booking_page" ? "La página de reservas" : "El panel"),
+      excelDate(toZonedDate(entry.createdAt, timezone)),
+      entry.closedAt ? excelDate(toZonedDate(entry.closedAt, timezone)) : text(""),
+      text(entry.closedReason ? CLOSE_REASON_LABELS[entry.closedReason] : ""),
+    ]);
+  return [header(WAITLIST_SHEET_HEADERS), ...rows];
+}
+
+/** Las columnas de encuestas.xlsx (spec 048). */
+export const SURVEY_SHEET_HEADERS = ["Fecha de la cita", "Paciente", "Profesional", "Servicio", "Estrellas", "Comentario", "Respondió el"] as const;
+
+/** Las filas de encuestas.xlsx, de la cita más antigua a la más reciente. La fecha de la respuesta, en la zona del negocio. */
+export function surveyRows(surveys: readonly DataExportSurvey[], timezone: string): SheetData {
+  const rows = surveys
+    .toSorted((a, b) => a.appointmentDate.localeCompare(b.appointmentDate) || a.answeredAt.localeCompare(b.answeredAt))
+    .map((survey) => [
+      excelDate(survey.appointmentDate),
+      text(survey.client),
+      text(survey.professional),
+      text(survey.service),
+      { value: survey.rating, type: Number },
+      text(survey.comment),
+      excelDate(toZonedDate(survey.answeredAt, timezone)),
+    ]);
+  return [header(SURVEY_SHEET_HEADERS), ...rows];
+}
+
 /** Ancho de cada columna, en caracteres. */
 export const CLIENT_COLUMN_WIDTHS = [30, 14, 30, 16, 30, 40, 8, 13, 13];
 export const APPOINTMENT_COLUMN_WIDTHS = [12, 8, 8, 32, 26, 24, 13, 13, 30, 10, 8, 40];
+export const WAITLIST_COLUMN_WIDTHS = [30, 30, 16, 26, 24, 28, 22, 12, 22, 12, 12, 30];
+export const SURVEY_COLUMN_WIDTHS = [14, 30, 24, 26, 10, 60, 14];
 
 /** El archivo .xlsx de una hoja, con la fila de títulos fija. */
 export async function xlsxFile(rows: SheetData, sheet: string, widths: readonly number[]): Promise<Uint8Array> {

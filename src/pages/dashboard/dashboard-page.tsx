@@ -18,6 +18,7 @@ import { dayBounds, freeHoursLeft } from "@/features/dashboard/day-plan";
 import { DayRibbon } from "@/features/dashboard/day-ribbon";
 import { NextUp } from "@/features/dashboard/next-up";
 import { PendingBookings } from "@/features/dashboard/pending-bookings";
+import { PendingPaymentsTile } from "@/features/dashboard/pending-payments-tile";
 import { PlanLimitBanner } from "@/features/dashboard/plan-limit-banner";
 import { TodayList } from "@/features/dashboard/today-list";
 import { WeekBars } from "@/features/dashboard/week-bars";
@@ -231,6 +232,7 @@ export default function DashboardPage() {
               confirmingIds={confirmingIds}
             />
           )}
+          <PendingPaymentsTile currency={business?.currency} />
           {business ? <BookingLinkCard slug={business.slug} /> : <Skeleton className="h-40 rounded-xl" />}
         </aside>
       </div>

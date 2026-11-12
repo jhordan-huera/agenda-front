@@ -31,6 +31,10 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicSurvey,
+  PublicWaitlistEntry,
+  SurveySummary,
+  WaitlistEntry,
   PublicPayment,
   BlockedTime,
   BookingConfirmation,
@@ -39,6 +43,7 @@ import type {
   BusinessReferrals,
   Client,
   ClientActivity,
+  PendingPaymentsSummary,
   ClientImportResult,
   ClinicalNote,
   ClinicalProfile,
@@ -47,6 +52,8 @@ import type {
   ClinicalRecord,
   ClinicalTemplate,
   DataExportAppointment,
+  DataExportSurvey,
+  DataExportWaitlistEntry,
   DataExportClient,
   DataExportClinicalPage,
   DataExportPage,
@@ -176,6 +183,9 @@ export const apiRepository: DataRepository = {
     clients: (businessId, cursor) => api.get<DataExportPage<DataExportClient>>(`${business(businessId)}/export/clients`, { cursor }),
     appointments: (businessId, cursor) =>
       api.get<DataExportPage<DataExportAppointment>>(`${business(businessId)}/export/appointments`, { cursor }),
+    waitlist: (businessId, cursor) =>
+      api.get<DataExportPage<DataExportWaitlistEntry>>(`${business(businessId)}/export/waitlist`, { cursor }),
+    surveys: (businessId, cursor) => api.get<DataExportPage<DataExportSurvey>>(`${business(businessId)}/export/surveys`, { cursor }),
     clinical: (businessId, cursor) => api.get<DataExportClinicalPage>(`${business(businessId)}/export/clinical`, { cursor }),
     attachmentUrl: (businessId, attachmentId) =>
       api.post<{ url: string }>(`${business(businessId)}/export/attachments/${id(attachmentId)}`),
@@ -224,6 +234,9 @@ export const apiRepository: DataRepository = {
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/arrival`, { arrived }),
     setPaid: (businessId, appointmentId, paid) =>
       api.patch<Appointment>(`${business(businessId)}/appointments/${id(appointmentId)}/payment`, { paid }),
+    pendingPaymentsSummary: (businessId) => api.get<PendingPaymentsSummary>(`${business(businessId)}/pending-payments/summary`),
+    payPending: (businessId, clientId, appointmentIds) =>
+      api.post<{ paid: number }>(`${business(businessId)}/clients/${id(clientId)}/pending-payments/pay`, { appointmentIds }),
     listReceipts: (businessId, appointmentId) =>
       api.get<PaymentReceipt[]>(`${business(businessId)}/appointments/${id(appointmentId)}/receipts`),
     getReceiptUrl: (businessId, receiptId) =>
@@ -251,7 +264,8 @@ export const apiRepository: DataRepository = {
   },
 
   publicBooking: {
-    getProfile: (slug) => api.get<PublicBusinessProfile | null>(`/public/businesses/${id(slug)}`),
+    getProfile: (slug, fresh) =>
+      api.get<PublicBusinessProfile | null>(`/public/businesses/${id(slug)}`, fresh ? { al: String(Date.now()) } : undefined),
     book: (slug, input, captchaToken) =>
       api.post<BookingConfirmation>(`/public/businesses/${id(slug)}/bookings`, { ...input, captchaToken }),
     getCaptchaSiteKey: async () => (await api.get<{ siteKey: string | null }>("/public/captcha")).siteKey,
@@ -262,6 +276,24 @@ export const apiRepository: DataRepository = {
     getAppointment: (token) => api.get<PublicAppointment>(`/public/appointments/${id(token)}`),
     confirmAppointment: (token) => api.post<PublicAppointmentResult>(`/public/appointments/${id(token)}/confirm`),
     cancelAppointment: (token) => api.post<PublicAppointmentResult>(`/public/appointments/${id(token)}/cancel`),
+    joinWaitlist: (slug, input, captchaToken) =>
+      api.post<{ until: string }>(`/public/businesses/${id(slug)}/waitlist`, { ...input, captchaToken }),
+    getWaitlistEntry: (token) => api.get<PublicWaitlistEntry>(`/public/waitlist/${id(token)}`),
+    leaveWaitlist: (token) => api.post<{ closed: true }>(`/public/waitlist/${id(token)}/leave`),
+    getSurvey: (token) => api.get<PublicSurvey>(`/public/surveys/${id(token)}`),
+    answerSurvey: (token, input) => api.post<PublicSurvey>(`/public/surveys/${id(token)}`, input),
+    surveyOptOut: (token) => api.post<{ optedOut: true }>(`/public/surveys/${id(token)}/opt-out`),
+  },
+
+  surveys: {
+    summary: (businessId, filters) => api.get<SurveySummary>(`${business(businessId)}/surveys`, filters),
+  },
+
+  waitlist: {
+    list: (businessId) => api.get<WaitlistEntry[]>(`${business(businessId)}/waitlist`),
+    add: (businessId, input) => api.post<WaitlistEntry>(`${business(businessId)}/waitlist`, input),
+    close: (businessId, entryId, reason) =>
+      api.post<{ closed: true }>(`${business(businessId)}/waitlist/${id(entryId)}/close`, { reason }),
   },
 
   images: {

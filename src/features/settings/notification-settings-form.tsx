@@ -15,9 +15,10 @@ import { useSettingsForm } from "./use-settings-form";
 const REMINDER_OPTIONS = [2, 12, 24, 48];
 
 /** Con los valores por defecto: los negocios de antes no traen los ajustes nuevos. */
-const settingsOf = (business: Business): NotificationSettings => ({
+const settingsOf = (business: Business): Required<NotificationSettings> => ({
   ...DEFAULT_NOTIFICATION_SETTINGS,
   ...business.notificationSettings,
+  surveys: business.notificationSettings.surveys ?? false,
 });
 
 /** Guardados de las dos secciones en fila: cada uno parte de lo que dejó el anterior. */
@@ -211,6 +212,44 @@ export function MonthlyReportSettingsForm({ business }: { business: Business }) 
         description="El día 1 de cada mes: tus citas, reservas online, recordatorios y confirmaciones del mes anterior."
         checked={values.monthlyReport}
         onCheckedChange={(checked) => setField("monthlyReport", checked)}
+      />
+    </SettingsSection>
+  );
+}
+
+/**
+ * La encuesta después de la cita (spec 048): al día siguiente de una cita Atendida, el paciente recibe «¿Cómo te
+ * fue?» con 5 estrellas. Apagada al principio; la cambia el propietario. Las respuestas salen en Reportes.
+ */
+export function SurveySettingsForm({ business }: { business: Business }) {
+  const current = settingsOf(business);
+  const { values, setField, dirty, reset } = useSettingsForm({ surveys: current.surveys });
+  const { save, saving } = useSaveNotificationSettings(business);
+
+  const submit = async () => {
+    try {
+      await save(values);
+      reset(values);
+      toast.success(values.surveys ? "Encuesta encendida" : "Encuesta apagada");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  return (
+    <SettingsSection
+      title="Encuesta después de la cita"
+      description="Para saber cómo les fue a tus pacientes y llamar a quien tuvo una mala experiencia. Las opiniones son privadas: sólo las ve tu equipo, en Reportes."
+      dirty={dirty}
+      saving={saving}
+      onSubmit={submit}
+      onDiscard={() => reset()}
+    >
+      <SwitchField
+        label="Preguntar al paciente cómo le fue"
+        description="Al día siguiente de su cita atendida, un email con 5 estrellas y un comentario opcional. A cada paciente se le pregunta como mucho una vez cada 3 meses, y puede pedir no recibirlas."
+        checked={values.surveys}
+        onCheckedChange={(checked) => setField("surveys", checked)}
       />
     </SettingsSection>
   );

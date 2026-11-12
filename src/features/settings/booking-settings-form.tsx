@@ -26,6 +26,7 @@ const toFormValues = (settings: BookingSettings) => ({
   cancellationPolicy: settings.cancellationPolicy,
   maxClientBookingsPerDay: String(settings.maxClientBookingsPerDay ?? DEFAULT_MAX_CLIENT_BOOKINGS_PER_DAY),
   chooseProfessional: settings.chooseProfessional ?? true,
+  waitlist: settings.waitlist === true,
 });
 
 /** Citas por día por persona desde la página pública ("0" = sin límite). */
@@ -165,6 +166,12 @@ export function BookingSettingsForm({ business }: { business: Business }) {
           onCheckedChange={(checked) => setField("chooseProfessional", checked)}
         />
       )}
+      <SwitchField
+        label="Lista de espera"
+        description="En tu página de reservas, quien no encuentra una hora se anota con los días y el horario que le sirven. Cuando alguien cancela o cambia su cita, le avisamos por email a quien espera esa hora y la reserva el primero que llega. La lista está en tu Agenda."
+        checked={values.waitlist}
+        onCheckedChange={(checked) => setField("waitlist", checked)}
+      />
       <SwitchField
         label="Permitir cancelaciones"
         description="Tus pacientes pueden cancelar desde el enlace de sus emails («Tu cita») hasta la antelación que fijes. Tu política se muestra al reservar y en los emails."

@@ -36,7 +36,7 @@ export function TopClientsCards({
       <Card>
         <CardHeader>
           <CardTitle>Los que más vienen</CardTitle>
-          <CardDescription>Pacientes con más citas en el periodo (sin canceladas) y lo cobrado en las completadas.</CardDescription>
+          <CardDescription>Pacientes con más citas en el periodo (sin canceladas) y los ingresos de las atendidas.</CardDescription>
         </CardHeader>
         <CardContent>
           {top.length === 0 ? (

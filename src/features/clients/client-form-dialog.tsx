@@ -29,10 +29,13 @@ interface ClientFormDialogProps {
   client?: Client;
   /** Nombre inicial al crear (p. ej. lo que se escribió en el buscador de clientes). */
   defaultName?: string;
+  /** Email y teléfono iniciales al crear (p. ej. los de alguien de la lista de espera, spec 047). */
+  defaultEmail?: string;
+  defaultPhone?: string;
   onSaved?: (client: Client) => void;
 }
 
-export function ClientFormDialog({ open, onOpenChange, client, defaultName, onSaved }: ClientFormDialogProps) {
+export function ClientFormDialog({ open, onOpenChange, client, defaultName, defaultEmail, defaultPhone, onSaved }: ClientFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
@@ -45,6 +48,8 @@ export function ClientFormDialog({ open, onOpenChange, client, defaultName, onSa
         <ClientForm
           client={client}
           defaultName={defaultName}
+          defaultEmail={defaultEmail}
+          defaultPhone={defaultPhone}
           onCancel={() => onOpenChange(false)}
           onSaved={(saved) => {
             onOpenChange(false);
@@ -59,11 +64,15 @@ export function ClientFormDialog({ open, onOpenChange, client, defaultName, onSa
 function ClientForm({
   client,
   defaultName = "",
+  defaultEmail = "",
+  defaultPhone = "",
   onCancel,
   onSaved,
 }: {
   client?: Client;
   defaultName?: string;
+  defaultEmail?: string;
+  defaultPhone?: string;
   onCancel: () => void;
   onSaved: (client: Client) => void;
 }) {
@@ -75,8 +84,8 @@ function ClientForm({
   const [values, setValues] = useState<ClientInput>({
     name: client?.name ?? defaultName,
     documentId: client?.documentId ?? "",
-    email: client?.email ?? "",
-    phone: client?.phone ?? "",
+    email: client?.email ?? defaultEmail,
+    phone: client?.phone ?? defaultPhone,
     address: client?.address ?? "",
     notes: client?.notes ?? "",
     isActive: client?.isActive ?? true,

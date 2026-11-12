@@ -25,6 +25,7 @@ import { TopClientsCards } from "@/features/reports/top-clients-cards";
 import { Trend } from "@/features/reports/trend";
 import { ALL_AGENDAS, ProfessionalDot, ProfessionalSelect } from "@/features/professionals/professional-select";
 import { useAgendas } from "@/features/professionals/use-agendas";
+import { PatientFeedbackCard } from "@/features/reports/patient-feedback-card";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments, useClientActivity } from "@/hooks/queries/use-appointments";
 import { useClients } from "@/hooks/queries/use-clients";
@@ -189,12 +190,22 @@ function ReportsPageContent() {
               )}
               <p className="mt-2 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
                 <span>
-                  Cobrado en citas completadas:{" "}
+                  Ingresos de citas atendidas:{" "}
                   <span className="font-semibold text-foreground tabular-nums">
                     {loading ? "…" : formatCurrency(summary.completedRevenue, currency)}
                   </span>
                 </span>
                 {!loading && trend(summary.completedRevenue, previousSummary.completedRevenue, "up")}
+              </p>
+              {/* Lo atendido que aún no se marca como pagado (spec 046): parte de los ingresos de arriba. */}
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+                <span>
+                  Por cobrar:{" "}
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {loading ? "…" : formatCurrency(summary.pendingRevenue, currency)}
+                  </span>
+                </span>
+                {!loading && trend(summary.pendingRevenue, previousSummary.pendingRevenue, "down")}
               </p>
             </div>
             <dl className="grid grid-cols-3 gap-4 lg:border-l lg:pl-6">
@@ -317,6 +328,13 @@ function ReportsPageContent() {
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <TopClientsCards top={report.topClients} noShows={report.noShows} clientsById={clientsById} currency={currency} />
               </div>
+              {/* La encuesta después de la cita (spec 048): con ella encendida o si ya hay respuestas en el periodo. */}
+              <PatientFeedbackCard
+                from={period.range.from}
+                to={period.range.to}
+                professionalId={agenda !== ALL_AGENDAS ? agenda : undefined}
+                hideWhenEmpty={!business?.notificationSettings.surveys}
+              />
             </>
           )}
 
@@ -421,7 +439,7 @@ function ProfessionalBreakdownCard({
                   <span className="truncate">{professional?.displayName ?? "Profesional"}</span>
                 </span>
                 <span className="shrink-0 text-right">
-                  <span className="block text-xs text-muted-foreground">Cobrado</span>
+                  <span className="block text-xs text-muted-foreground">Ingresos</span>
                   <span className="font-semibold tabular-nums">{formatCurrency(summary.completedRevenue, currency)}</span>
                 </span>
               </div>
@@ -447,7 +465,7 @@ function ProfessionalBreakdownCard({
               <TableHead className="text-right">No asistió</TableHead>
               <TableHead className="text-right">Canceladas</TableHead>
               <TableHead className="text-right">Asistencia</TableHead>
-              <TableHead className="text-right">Cobrado</TableHead>
+              <TableHead className="text-right">Ingresos</TableHead>
               <TableHead className="text-right">Ocupación</TableHead>
             </TableRow>
           </TableHeader>

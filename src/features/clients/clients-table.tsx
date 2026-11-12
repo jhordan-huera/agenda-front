@@ -15,6 +15,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { capitalize, formatShortDate } from "@/lib/format";
 import type { Appointment, Business, Client } from "@/types";
+import { PendingBadge } from "@/features/payments/pending-badge";
 import { getClientSummary, type ClientSummary } from "./client-summary";
 import { clientMissingFields, missingDataText } from "./missing-fields";
 
@@ -100,6 +101,7 @@ export function ClientsTable({ clients, summaries, business, onEdit, onDelete }:
                     <ActiveBadge active={client.isActive} />
                     {client.claimedClientId && <VerifyBadge />}
                     {missing.length > 0 && <IncompleteBadge detail={missingDataText(missing)} />}
+                    <PendingBadge amount={summary.pendingAmount} currency={business?.currency} />
                   </span>
                 </TableCell>
                 <TableCell className="pr-4" onClick={(e) => e.stopPropagation()}>

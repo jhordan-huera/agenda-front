@@ -15,7 +15,12 @@ import { BookingSettingsForm } from "@/features/settings/booking-settings-form";
 import { BusinessSettingsForm } from "@/features/settings/business-settings-form";
 import { ClinicalSettingsCard } from "@/features/settings/clinical-settings-card";
 import { EmailOutbox } from "@/features/settings/email-outbox";
-import { MonthlyReportSettingsForm, NotificationSettingsForm, WhatsAppNoticeSettingsForm } from "@/features/settings/notification-settings-form";
+import {
+  MonthlyReportSettingsForm,
+  NotificationSettingsForm,
+  SurveySettingsForm,
+  WhatsAppNoticeSettingsForm,
+} from "@/features/settings/notification-settings-form";
 import { OwnAgendaCard } from "@/features/settings/own-agenda-card";
 import { ProfileSettingsForm } from "@/features/settings/profile-settings-form";
 import { ReferralCard } from "@/features/settings/referral-card";
@@ -130,6 +135,7 @@ export default function SettingsPage() {
                 <WhatsAppNoticeSettingsForm business={business} />
                 {/* Spec 040: sólo el propietario, fuera del modo soporte. */}
                 {session?.role === "owner" && !session.support && <MonthlyReportSettingsForm business={business} />}
+                <SurveySettingsForm business={business} />
               </>
             ))}
             <EmailOutbox />

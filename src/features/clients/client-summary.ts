@@ -1,4 +1,5 @@
 import { BLOCKING_STATUSES } from "@/lib/constants/appointment-status";
+import { isPendingPayment } from "@/lib/pending-payments";
 import { isPast, type ZonedNow } from "@/lib/time";
 import type { Appointment, ClientActivity } from "@/types";
 import { appointmentClientIds } from "@/features/appointments/appointment-utils";
@@ -13,9 +14,20 @@ export interface ClientSummary {
   noShow: number;
   /** Suma de citas completadas. */
   totalSpent: number;
+  /** «Por cobrar» (spec 046): sus sesiones atendidas sin pagar, sólo como paciente principal. */
+  pendingAmount: number;
+  pendingCount: number;
 }
 
-const EMPTY_SUMMARY: ClientSummary = { totalAppointments: 0, completed: 0, cancelled: 0, noShow: 0, totalSpent: 0 };
+const EMPTY_SUMMARY: ClientSummary = {
+  totalAppointments: 0,
+  completed: 0,
+  cancelled: 0,
+  noShow: 0,
+  totalSpent: 0,
+  pendingAmount: 0,
+  pendingCount: 0,
+};
 
 /**
  * Resumen por cliente a partir de las citas del negocio (una sola pasada). Una cita con varios pacientes
@@ -32,6 +44,10 @@ export function summarizeByClient(appointments: Appointment[], now: ZonedNow): M
       if (appointment.status === "completed") {
         summary.completed += 1;
         if (clientId === appointment.clientId) summary.totalSpent += appointment.price;
+      }
+      if (clientId === appointment.clientId && isPendingPayment(appointment)) {
+        summary.pendingAmount += appointment.price;
+        summary.pendingCount += 1;
       }
       if (appointment.status === "cancelled") summary.cancelled += 1;
       if (appointment.status === "no_show") summary.noShow += 1;
@@ -58,6 +74,8 @@ export function summariesFromActivity(activity: ClientActivity[]): Map<string, C
         cancelled: row.cancelled,
         noShow: row.noShow,
         totalSpent: row.totalSpent,
+        pendingAmount: row.pendingAmount ?? 0,
+        pendingCount: row.pendingCount ?? 0,
         lastAppointment: row.lastAppointment ?? undefined,
         nextAppointment: row.nextAppointment ?? undefined,
       },

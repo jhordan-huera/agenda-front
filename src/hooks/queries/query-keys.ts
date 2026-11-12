@@ -23,6 +23,8 @@ export const queryKeys = {
   appointment: (businessId: string, appointmentId: string) => ["appointments", businessId, "one", appointmentId] as const,
   /** Bajo "appointments": se recarga cuando cambia cualquier cita. */
   clientActivity: (businessId: string) => ["appointments", businessId, "client-activity"] as const,
+  /** «Por cobrar» de Inicio (spec 046). Bajo "appointments": marcar un pago lo pone al día. */
+  pendingPayments: (businessId: string) => ["appointments", businessId, "pending-payments"] as const,
   appointmentList: (businessId: string, filters: AppointmentFilters) =>
     ["appointments", businessId, filters] as const,
   /** Bajo "appointments": un comprobante nuevo llega con la cita recargada. */
@@ -49,6 +51,13 @@ export const queryKeys = {
   publicPayment: (token: string) => ["public-payment", token] as const,
   /** Página «Tu cita» (/cita/:token, spec 010). */
   publicAppointment: (token: string) => ["public-appointment", token] as const,
+  /** El enlace personal de quien espera (spec 047). */
+  publicWaitlist: (token: string) => ["public-waitlist", token] as const,
+  /** La encuesta después de la cita (spec 048): la página del paciente y las opiniones del panel. */
+  publicSurvey: (token: string) => ["public-survey", token] as const,
+  surveys: (businessId: string, filters: Record<string, string | undefined>) => ["surveys", businessId, filters] as const,
+  /** La lista de espera del panel (spec 047). */
+  waitlist: (businessId: string) => ["waitlist", businessId] as const,
   /** Site Key del CAPTCHA del registro. */
   captchaSiteKey: ["captcha-site-key"] as const,
   platformSettings: ["platform-settings"] as const,

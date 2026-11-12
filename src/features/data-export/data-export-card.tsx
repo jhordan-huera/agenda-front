@@ -35,7 +35,7 @@ export function DataExportCard({ place }: { place: Place }) {
  * El avance de 0 a 100, a ojo: cada archivo adjunto tarda mucho más que un paciente o una cita (se pide
  * su enlace y se baja entero), y cada historia, más que una fila de Excel.
  */
-const WEIGHTS = { clients: 1, appointments: 1, clinicalRecords: 10, attachments: 200 } as const;
+const WEIGHTS = { clients: 1, appointments: 1, waitlist: 1, surveys: 1, clinicalRecords: 10, attachments: 200 } as const;
 
 function percentOf({ step, total, done }: ExportProgress): number {
   if (!total) return 0;
@@ -56,6 +56,10 @@ function progressText({ step, total, done }: ExportProgress): string {
       return `Preparando… ${of("clients", "pacientes")}`;
     case "appointments":
       return `Preparando… ${of("appointments", "citas")}`;
+    case "waitlist":
+      return `Preparando… ${of("waitlist", "personas de la lista de espera")}`;
+    case "surveys":
+      return `Preparando… ${of("surveys", "opiniones")}`;
     case "clinical":
       return `Preparando… ${of("clinicalRecords", "historias clínicas")}${total?.attachments ? ` · ${of("attachments", "archivos")}` : ""}`;
     case "zip":
@@ -81,7 +85,7 @@ function DataExportPanel({ place, clinicalAccess }: { place: Place; clinicalAcce
   }, [running]);
 
   const start = async () => {
-    setState({ status: "running", progress: { step: "summary", total: null, done: { clients: 0, appointments: 0, clinicalRecords: 0, attachments: 0 } } });
+    setState({ status: "running", progress: { step: "summary", total: null, done: { clients: 0, appointments: 0, clinicalRecords: 0, attachments: 0, waitlist: 0, surveys: 0 } } });
     try {
       const result = await buildDataExport(businessId, (progress) => setState({ status: "running", progress }));
       saveFile(result.file, result.fileName);

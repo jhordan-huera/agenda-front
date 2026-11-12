@@ -32,6 +32,8 @@ import type {
   ClinicalTemplateInput,
 } from "@/lib/validations/clinical";
 import type { PublicBookingInput } from "@/lib/validations/booking";
+import type { SurveyAnswerInput } from "@/lib/validations/survey";
+import type { PublicWaitlistInput, WaitlistEntryInput } from "@/lib/validations/waitlist";
 import type {
   BookingSettingsInput,
   BusinessProfileInput,
@@ -77,6 +79,10 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicSurvey,
+  PublicWaitlistEntry,
+  SurveySummary,
+  WaitlistEntry,
   PublicPayment,
   AuditEntityType,
   AuditLogPage,
@@ -94,6 +100,7 @@ import type {
   BusinessStatus,
   Client,
   ClientActivity,
+  PendingPaymentsSummary,
   ClientImportResult,
   ClientRequiredFields,
   ClinicalNote,
@@ -103,6 +110,8 @@ import type {
   ClinicalRecord,
   ClinicalTemplate,
   DataExportAppointment,
+  DataExportSurvey,
+  DataExportWaitlistEntry,
   DataExportClient,
   DataExportClinicalPage,
   DataExportPage,
@@ -264,6 +273,10 @@ export interface DataExportRepository {
   clients(businessId: string, cursor?: string): Promise<DataExportPage<DataExportClient>>;
   /** De 1000 en 1000. */
   appointments(businessId: string, cursor?: string): Promise<DataExportPage<DataExportAppointment>>;
+  /** La lista de espera (spec 047), de 1000 en 1000. */
+  waitlist(businessId: string, cursor?: string): Promise<DataExportPage<DataExportWaitlistEntry>>;
+  /** Las encuestas respondidas (spec 048), de 1000 en 1000. */
+  surveys(businessId: string, cursor?: string): Promise<DataExportPage<DataExportSurvey>>;
   /** De hasta 50 pacientes (`forbidden` si la descarga no lleva lo clínico). */
   clinical(businessId: string, cursor?: string): Promise<DataExportClinicalPage>;
   /** El enlace de unos minutos de un archivo de la historia, sin registrar cada apertura. */
@@ -357,6 +370,10 @@ export interface AppointmentRepository {
   setArrival(businessId: string, appointmentId: string, arrived: boolean): Promise<Appointment>;
   /** Marca la cita como pagada (o lo deshace). */
   setPaid(businessId: string, appointmentId: string, paid: boolean): Promise<Appointment>;
+  /** «Por cobrar» (spec 046): el total de Inicio, con el alcance de quien lo pide. */
+  pendingPaymentsSummary(businessId: string): Promise<PendingPaymentsSummary>;
+  /** «Marcar todas como pagadas»: sólo las pedidas que siguen por cobrar. Devuelve cuántas marcó. */
+  payPending(businessId: string, clientId: string, appointmentIds: string[]): Promise<{ paid: number }>;
   /** Comprobantes de pago que envió el paciente, del más antiguo al más reciente. */
   listReceipts(businessId: string, appointmentId: string): Promise<PaymentReceipt[]>;
   /** URL de unos minutos para ver el comprobante. */
@@ -403,7 +420,11 @@ export interface AuditLogRepository {
 
 /** Operaciones públicas (sin sesión): página de reservas /book/:slug. */
 export interface PublicBookingRepository {
-  getProfile(slug: string): Promise<PublicBusinessProfile | null>;
+  /**
+   * `fresh`: sin la copia guardada (la CDN y el navegador la guardan hasta 90 s). Lo usa «Reservar esta hora» de la
+   * lista de espera (spec 047): la hora se acaba de liberar y una copia vieja la mostraría ocupada.
+   */
+  getProfile(slug: string, fresh?: boolean): Promise<PublicBusinessProfile | null>;
   /**
    * Revalida la disponibilidad, los topes del día y el plan, une la reserva a la ficha de la cédula
    * (si coinciden su email o su teléfono) o crea el cliente, crea la cita y envía emails.
@@ -423,6 +444,30 @@ export interface PublicBookingRepository {
   confirmAppointment(token: string): Promise<PublicAppointmentResult>;
   /** «Cancelar mi cita»: sólo el paciente principal, si el negocio lo permite y aún está en plazo. */
   cancelAppointment(token: string): Promise<PublicAppointmentResult>;
+  /** Lista de espera (spec 047): anotarse desde la página de reservas, con el CAPTCHA. */
+  joinWaitlist(slug: string, input: PublicWaitlistInput, captchaToken?: string): Promise<{ until: ISODate }>;
+  /** El enlace personal de quien espera: lo que pidió y sus datos. */
+  getWaitlistEntry(token: string): Promise<PublicWaitlistEntry>;
+  leaveWaitlist(token: string): Promise<{ closed: true }>;
+  /** La encuesta después de la cita (spec 048), en /encuesta/:token. */
+  getSurvey(token: string): Promise<PublicSurvey>;
+  answerSurvey(token: string, input: SurveyAnswerInput): Promise<PublicSurvey>;
+  /** «No quiero recibir estas encuestas». Repetirlo no hace nada. */
+  surveyOptOut(token: string): Promise<{ optedOut: true }>;
+}
+
+/** Las opiniones de los pacientes (spec 048): quien ve Reportes; el rol Profesional, sólo las de su agenda. */
+export interface SurveyRepository {
+  summary(businessId: string, filters: { from?: string; to?: string; professionalId?: string; clientId?: string }): Promise<SurveySummary>;
+}
+
+/** La lista de espera del panel (spec 047): el rol Profesional, sólo la de su agenda. */
+export interface WaitlistRepository {
+  list(businessId: string): Promise<WaitlistEntry[]>;
+  /** «Anotar»: un paciente que ya existe o datos nuevos (si ya esperaba con ese email, se actualiza). */
+  add(businessId: string, input: WaitlistEntryInput): Promise<WaitlistEntry>;
+  /** «Quitar» o, al guardar su cita, «Agendar». */
+  close(businessId: string, entryId: string, reason: "removed" | "scheduled"): Promise<{ closed: true }>;
 }
 
 /** Logos y fotos: URL firmada para subir la imagen al almacenamiento y su dirección pública. */
@@ -644,6 +689,8 @@ export interface DataRepository {
   notifications: NotificationRepository;
   auditLogs: AuditLogRepository;
   publicBooking: PublicBookingRepository;
+  waitlist: WaitlistRepository;
+  surveys: SurveyRepository;
   images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;
