@@ -50,3 +50,8 @@ export function toAuditQuery(state: AuditFilterState): Omit<AuditLogFilters, "cu
 export function describeChange(change: AuditChange): string {
   return change.before === null ? `${change.label}: modificado` : `${change.label}: ${change.before} → ${change.after}`;
 }
+
+const FAILED_LOGIN_ACTIONS = new Set(["session.login_failed", "session.login_blocked", "session.login_locked"]);
+
+/** Un intento fallido de inicio de sesión (o bloqueado): se ve en rojo en la auditoría. */
+export const isFailedLogin = (action: string) => FAILED_LOGIN_ACTIONS.has(action);

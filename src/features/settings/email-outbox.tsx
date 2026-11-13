@@ -9,50 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useEmailOutbox } from "@/hooks/queries/use-activity";
 import { groupItemsByDay } from "@/features/activity/day-groups";
-import type { EmailNotification, EmailType } from "@/types";
+import type { EmailNotification } from "@/types";
+import { EMAIL_TYPE_LABELS as TYPE_LABELS } from "./email-type-labels";
 import { formatClockTime, formatDateTime, plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-const TYPE_LABELS: Record<EmailType, string> = {
-  welcome: "Bienvenida",
-  password_reset: "Contraseña",
-  team_invite: "Invitación",
-  platform_admin_added: "Alta de super admin",
-  booking_created: "Reserva",
-  booking_received: "Nueva reserva",
-  professional_new_appointment: "Cita nueva (al profesional)",
-  professional_daily_agenda: "Agenda del día (al profesional)",
-  appointment_copy: "Copia al profesional",
-  payment_receipt_received: "Comprobante de pago recibido (al negocio)",
-  appointment_confirmed: "Confirmación",
-  appointment_updated: "Modificación",
-  appointment_cancelled: "Cancelación",
-  appointment_reminder: "Recordatorio",
-  business_created: "Alta de negocio",
-  business_suspended: "Suspensión",
-  business_reactivated: "Reactivación",
-  plan_change_requested: "Solicitud de plan",
-  plan_change_approved: "Plan aprobado",
-  plan_changed: "Cambio de plan",
-  plan_change_rejected: "Plan rechazado",
-  appointment_pending: "Pendiente de confirmar",
-  appointment_completed: "Gracias por la visita",
-  appointment_no_show: "No asistió",
-  account_security_changed: "Seguridad de la cuenta",
-  patient_cancelled: "Cancelación del paciente (al negocio)",
-  appointment_series: "Serie de citas",
-  appointment_series_cancelled: "Serie cancelada",
-  calendar_invite: "Invitación de calendario (al profesional)",
-  billing_reminder: "Mensualidad por vencer",
-  billing_paid: "Mensualidad pagada",
-  billing_rejected: "Comprobante de mensualidad rechazado",
-  billing_voided: "Cobro de mensualidad anulado",
-  payment_reminder: "Recordatorio del comprobante de pago",
-  monthly_report: "Informe mensual",
-  waitlist_joined: "Alta en la lista de espera",
-  waitlist_offer: "Hora libre para la lista de espera",
-  survey_request: "Encuesta después de la cita",
-};
 
 /** El estado de cada email: si salió, si espera en la cola o si falló (o se descartó a propósito). */
 function deliveryOf(email: EmailNotification): { label: string; variant: "outline" | "destructive" } {
@@ -139,23 +99,38 @@ export function EmailOutboxCard({
         )}
       </CardContent>
 
-      <Dialog open={Boolean(preview)} onOpenChange={(open) => !open && setPreview(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{preview?.subject}</DialogTitle>
-            <DialogDescription>
-              Para {preview?.to} · {preview && formatDateTime(preview.createdAt, timezone)}
-              {preview?.businessName && ` · ${preview.businessName}`}
-            </DialogDescription>
-          </DialogHeader>
-          {preview && <DeliveryDetail email={preview} timezone={timezone} />}
-          <pre className="max-h-96 overflow-y-auto rounded-lg bg-muted/60 p-4 font-sans text-sm whitespace-pre-wrap">
-            {/* Cada lunes al mediodía se borra el contenido para no llenar la base; queda el registro. */}
-            {preview?.body || "El contenido de los emails se borra cada lunes al mediodía. De este queda sólo el registro: a quién se envió, el asunto y la fecha."}
-          </pre>
-        </DialogContent>
-      </Dialog>
+      <EmailPreviewDialog email={preview} timezone={timezone} onClose={() => setPreview(null)} />
     </Card>
+  );
+}
+
+/** El contenido de un email al tocarlo en la lista (también la de /admin → Actividad, spec 049). */
+export function EmailPreviewDialog({
+  email,
+  timezone,
+  onClose,
+}: {
+  email: EmailNotification | null;
+  timezone?: string;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={Boolean(email)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{email?.subject}</DialogTitle>
+          <DialogDescription>
+            Para {email?.to} · {email && formatDateTime(email.createdAt, timezone)}
+            {email?.businessName && ` · ${email.businessName}`}
+          </DialogDescription>
+        </DialogHeader>
+        {email && <DeliveryDetail email={email} timezone={timezone} />}
+        <pre className="max-h-96 overflow-y-auto rounded-lg bg-muted/60 p-4 font-sans text-sm whitespace-pre-wrap">
+          {/* Cada lunes al mediodía se borra el contenido para no llenar la base; queda el registro. */}
+          {email?.body || "El contenido de los emails se borra cada lunes al mediodía. De este queda sólo el registro: a quién se envió, el asunto y la fecha."}
+        </pre>
+      </DialogContent>
+    </Dialog>
   );
 }
 
