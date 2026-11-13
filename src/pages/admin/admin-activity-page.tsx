@@ -1,36 +1,31 @@
-import { Download, Loader2, MailCheck, MailX, ShieldAlert, UserRoundX } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Download, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AuditFeed } from "@/features/activity/audit-feed";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EMPTY_AUDIT_FILTERS, toAuditQuery } from "@/features/activity/audit-filters";
 import { AuditFiltersBar } from "@/features/activity/audit-filters-bar";
 import { exportAuditCsv } from "@/features/activity/export-audit";
-import { StatGrid } from "@/features/admin/stat-cards";
-import { EmailOutboxCard } from "@/features/settings/email-outbox";
+import { ActivityLedger } from "@/features/admin/activity/activity-ledger";
+import { activitySearch, readActivityUrl, type ActivityTab } from "@/features/admin/activity/activity-url";
+import { AdminEmailList } from "@/features/admin/activity/admin-email-list";
+import { DateRangeButton } from "@/features/admin/activity/date-range-button";
+import { tabBadges, type SummaryAction, type TabBadge } from "@/features/admin/activity/today-summary";
+import { TodaySummaryCard } from "@/features/admin/activity/today-summary-card";
+import { useSession } from "@/features/auth/use-session";
 import { useAdminAuditFeed, useAdminBusinesses, useAdminEmails, useAdminStats } from "@/hooks/queries/use-admin";
-import { data, getErrorMessage, type AdminAuditFilters, type AdminAuditScope } from "@/lib/data";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
+import { data, getErrorMessage, type AdminAuditFilters } from "@/lib/data";
 import { plural } from "@/lib/format";
 import { getZonedNow } from "@/lib/time";
+import { cn } from "@/lib/utils";
 import type { AdminEmailFilter, AuditEntityType } from "@/types";
-
-const SCOPES: { value: AdminAuditScope; label: string; description: string }[] = [
-  { value: "admin", label: "Super admin", description: "Tus acciones en la plataforma." },
-  {
-    value: "security",
-    label: "Seguridad",
-    description: "Inicios y cierres de sesión e intentos fallidos, con navegador e IP. Sólo los ves tú.",
-  },
-  { value: "all", label: "Todo", description: "Toda la actividad de todos los negocios." },
-];
 
 // Sin «Historias clínicas»: sus eventos no salen en /admin (spec 025).
 const TYPES: AuditEntityType[] = [
@@ -47,86 +42,65 @@ const TYPES: AuditEntityType[] = [
   "session",
 ];
 
-/** «Actividad → Seguridad» se abre directamente con ?ver=seguridad (los avisos del super admin, spec 013). */
-const scopeFromUrl = (value: string | null): AdminAuditScope | null => (value === "seguridad" ? "security" : null);
-
-/** Los filtros de los emails, con su texto cuando no hay ninguno. */
-const EMAIL_FILTERS: { value: AdminEmailFilter; label: string; empty: { title: string; detail: string } }[] = [
-  {
-    value: "today",
-    label: "Hoy",
-    empty: { title: "Hoy todavía no salió ningún email", detail: "Ni hay emails en cola: los de «Emails de hoy» del Inicio salen aquí." },
-  },
-  {
-    value: "failed",
-    label: "Fallidos",
-    empty: { title: "No hay emails fallidos", detail: "Los que Gmail no pudo entregar salen aquí, con el motivo." },
-  },
-  { value: "all", label: "Todos", empty: { title: "Todavía no se ha enviado ningún email", detail: "Los emails de la plataforma salen aquí." } },
-];
+type AuditQuery = Omit<AdminAuditFilters, "cursor">;
 
 /**
- * «Ver emails» de la tarjeta «Emails de hoy» del Inicio abre esta pantalla con ?emails=hoy (o =fallidos si hubo
- * fallidos) y baja hasta la lista.
+ * /admin → Actividad (spec 049): arriba, cómo va hoy en una frase; debajo, una pestaña a la vez (Acciones,
+ * Seguridad y Emails). La pestaña va en la dirección: siguen valiendo `?ver=seguridad` (los avisos de seguridad)
+ * y `?emails=hoy|fallidos|todos` («Ver emails» del Inicio).
  */
-const emailFilterFromUrl = (value: string | null): AdminEmailFilter | null =>
-  value === "hoy" ? "today" : value === "fallidos" ? "failed" : value === "todos" ? "all" : null;
-
 export default function AdminActivityPage() {
-  const [searchParams] = useSearchParams();
-  const requested = scopeFromUrl(searchParams.get("ver"));
-  const [scope, setScope] = useState<AdminAuditScope>(requested ?? "admin");
-  // Tocar un aviso con esta pantalla ya abierta: cambia de pestaña sin recargar.
-  const [seenRequest, setSeenRequest] = useState(requested);
-  if (requested !== seenRequest) {
-    setSeenRequest(requested);
-    if (requested) setScope(requested);
-  }
+  const [searchParams, setSearchParams] = useSearchParams();
+  const request = readActivityUrl(searchParams);
+  const tab: ActivityTab = request.tab ?? "actions";
+  const emailFilter: AdminEmailFilter = request.emailFilter ?? "all";
+
+  const [scope, setScope] = useState<"admin" | "all">("admin");
   const [filters, setFilters] = useState(EMPTY_AUDIT_FILTERS);
   const [businessId, setBusinessId] = useState("all");
   const [onlyFailed, setOnlyFailed] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const businesses = useAdminBusinesses();
-  const requestedEmails = emailFilterFromUrl(searchParams.get("emails"));
-  const [emailFilter, setEmailFilter] = useState<AdminEmailFilter>(requestedEmails ?? "all");
-  const [seenEmailsRequest, setSeenEmailsRequest] = useState(requestedEmails);
-  if (requestedEmails !== seenEmailsRequest) {
-    setSeenEmailsRequest(requestedEmails);
-    if (requestedEmails) setEmailFilter(requestedEmails);
-  }
-  const emails = useAdminEmails(emailFilter);
   const stats = useAdminStats();
   const health = stats.data?.health;
-  const [exporting, setExporting] = useState(false);
+  const badges = health ? tabBadges(health) : { security: null, emails: null };
+  const { session } = useSession();
 
-  const query = useMemo<Omit<AdminAuditFilters, "cursor">>(
+  const actionsQuery = useMemo<AuditQuery>(
+    () => ({ ...toAuditQuery(filters), scope, businessId: businessId === "all" ? undefined : businessId }),
+    [filters, scope, businessId],
+  );
+  const securityQuery = useMemo<AuditQuery>(
     () => ({
       ...toAuditQuery(filters),
-      ...(scope === "security" ? { entityType: undefined } : {}),
-      scope,
+      entityType: undefined,
+      scope: "security",
       businessId: businessId === "all" ? undefined : businessId,
-      action: scope === "security" && onlyFailed ? "session.login_failed" : undefined,
+      action: onlyFailed ? "session.login_failed" : undefined,
     }),
-    [filters, scope, businessId, onlyFailed],
+    [filters, businessId, onlyFailed],
   );
-  const feed = useAdminAuditFeed(query);
 
-  // Al llegar desde el Inicio, baja hasta la lista de emails, una vez por pedido y cuando ya cargó lo de arriba
-  // (las cifras y la actividad): si no, al llegar empujarían la lista hacia abajo.
-  const scrolledFor = useRef<AdminEmailFilter | null>(null);
-  const settled = emails.isSuccess && !feed.isPending && !stats.isPending;
-  useEffect(() => {
-    if (!requestedEmails || !settled || scrolledFor.current === requestedEmails) return;
-    scrolledFor.current = requestedEmails;
-    document.getElementById("emails")?.scrollIntoView({ block: "start" });
-  }, [requestedEmails, settled]);
-  const current = SCOPES.find((option) => option.value === scope)!;
+  // Cambiar de pestaña queda en el historial (Atrás vuelve); cambiar el filtro de los emails, no.
+  const goTo = (next: ActivityTab, filter?: AdminEmailFilter, replace = false) =>
+    setSearchParams(new URLSearchParams(activitySearch(next, next === "emails" ? (filter ?? emailFilter) : undefined)), { replace });
+  const runAction = (action: SummaryAction) => {
+    if (action.onlyFailed) setOnlyFailed(true);
+    goTo(action.tab, action.emailFilter);
+  };
+  const clearFilters = () => {
+    setFilters(EMPTY_AUDIT_FILTERS);
+    setBusinessId("all");
+    setOnlyFailed(false);
+  };
 
   const exportCsv = async () => {
+    const query = tab === "security" ? securityQuery : actionsQuery;
     setExporting(true);
     try {
       const count = await exportAuditCsv(
         (cursor) => data.admin.listAuditLogs({ ...query, cursor, limit: 1000 }),
-        `auditoria-${scope}-${getZonedNow(DEFAULT_TIMEZONE).date}.csv`,
+        `auditoria-${query.scope}-${getZonedNow(DEFAULT_TIMEZONE).date}.csv`,
       );
       toast.success(count ? `Exportaste ${plural(count, "entrada", "entradas")}` : "No hay actividad con esos filtros");
     } catch (error) {
@@ -136,106 +110,136 @@ export default function AdminActivityPage() {
     }
   };
 
+  const businessSelect = (
+    <Select value={businessId} onValueChange={setBusinessId}>
+      <SelectTrigger aria-label="Negocio" className="w-full sm:w-52">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent position="popper">
+        <SelectItem value="all">Todos los negocios</SelectItem>
+        {(businesses.data ?? []).map(({ business }) => (
+          <SelectItem key={business.id} value={business.id}>
+            {business.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+  const dates = (
+    <DateRangeButton value={{ from: filters.from, to: filters.to }} onChange={(range) => setFilters({ ...filters, ...range })} />
+  );
+
   return (
     <div className="space-y-6">
       <PageTitle title="Actividad de la plataforma" />
-      <PageHeader title="Actividad" description="Auditoría de la plataforma y emails enviados por el sistema." />
+      <PageHeader title="Actividad" description="Lo que pasó en la plataforma: acciones, inicios de sesión y emails." />
 
-      {!stats.isError && (
-        <StatGrid
-          loading={stats.isPending}
-          items={
-            health
-              ? [
-                  { label: "Emails enviados hoy", value: health.emailsToday.sent, icon: MailCheck, hint: `${health.emailsToday.queued} en cola` },
-                  {
-                    label: "Emails fallidos hoy",
-                    value: health.emailsToday.failed,
-                    icon: MailX,
-                    tone: health.emailsToday.failed > 0 ? "warning" : "default",
-                    hint: health.emailsToday.failed > 0 ? "Revisa la lista de abajo" : "Ninguno",
-                  },
-                  {
-                    label: "Intentos fallidos (24 h)",
-                    value: health.security.failedLogins24h,
-                    icon: UserRoundX,
-                    hint: "Inicios de sesión con contraseña incorrecta",
-                  },
-                  {
-                    label: "Cuentas en alerta",
-                    value: health.security.accountsOnAlert,
-                    icon: ShieldAlert,
-                    tone: health.security.accountsOnAlert > 0 ? "danger" : "default",
-                    hint: "10 o más intentos en la última hora",
-                  },
-                ]
-              : []
-          }
-        />
-      )}
+      {stats.isPending ? (
+        <Skeleton className="h-24 rounded-xl" />
+      ) : health ? (
+        <TodaySummaryCard health={health} onAction={runAction} />
+      ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Auditoría</CardTitle>
-          <CardDescription>{current.description}</CardDescription>
-          <CardAction>
-            <Button variant="outline" size="sm" disabled={exporting} onClick={exportCsv}>
-              {exporting ? <Loader2 className="animate-spin" aria-hidden /> : <Download />} Exportar
+      <Tabs value={tab} onValueChange={(value) => goTo(value as ActivityTab)} className="gap-5">
+        <div className="flex items-end justify-between gap-3 border-b">
+          <div className="min-w-0 overflow-x-auto">
+            <TabsList variant="line" aria-label="Qué ver" className="gap-3 p-0 group-data-horizontal/tabs:h-11 sm:gap-7">
+              <TabsTrigger value="actions" className={TAB_CLASS}>
+                Acciones
+              </TabsTrigger>
+              <TabsTrigger value="security" className={TAB_CLASS}>
+                Seguridad
+                <CountBadge badge={badges.security} />
+              </TabsTrigger>
+              <TabsTrigger value="emails" className={TAB_CLASS}>
+                Emails
+                <CountBadge badge={badges.emails} />
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          {tab !== "emails" && (
+            <Button type="button" variant="outline" size="sm" className="mb-2 shrink-0" disabled={exporting} onClick={exportCsv}>
+              {exporting ? <Loader2 className="animate-spin" aria-hidden /> : <Download aria-hidden />}
+              <span className="sr-only sm:not-sr-only">Exportar</span>
             </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <Tabs value={scope} onValueChange={(value) => setScope(value as AdminAuditScope)}>
-            <TabsList>
-              {SCOPES.map((option) => (
-                <TabsTrigger key={option.value} value={option.value} className="px-3">
-                  {option.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-          <AuditFiltersBar value={filters} onChange={setFilters} types={scope === "security" ? undefined : TYPES}>
-            <Select value={businessId} onValueChange={setBusinessId}>
-              <SelectTrigger aria-label="Negocio" className="w-full sm:w-52">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper">
-                <SelectItem value="all">Todos los negocios</SelectItem>
-                {(businesses.data ?? []).map(({ business }) => (
-                  <SelectItem key={business.id} value={business.id}>
-                    {business.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {scope === "security" && (
-              <label className="flex h-9 items-center gap-2 text-sm">
-                <Switch checked={onlyFailed} onCheckedChange={setOnlyFailed} /> Sólo intentos fallidos
-              </label>
-            )}
-          </AuditFiltersBar>
-          <AuditFeed feed={feed} showBusiness groupByDay />
-        </CardContent>
-      </Card>
+          )}
+        </div>
 
-      <EmailOutboxCard
-        id="emails"
-        outbox={emails}
-        groupByDay
-        description="Los emails de la plataforma (los 200 más recientes): altas, contraseñas, reservas y recordatorios, con su negocio y si salieron. Toca uno para ver su contenido."
-        empty={EMAIL_FILTERS.find((option) => option.value === emailFilter)!.empty}
-        toolbar={
-          <Tabs value={emailFilter} onValueChange={(value) => setEmailFilter(value as AdminEmailFilter)}>
-            <TabsList aria-label="Qué emails ver">
-              {EMAIL_FILTERS.map((option) => (
-                <TabsTrigger key={option.value} value={option.value} className="px-3">
-                  {option.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        }
-      />
+        <TabsContent value="actions" className="grid gap-4">
+          <AuditFiltersBar
+            value={filters}
+            onChange={setFilters}
+            types={TYPES}
+            dates={false}
+            leading={
+              <Tabs value={scope} onValueChange={(value) => setScope(value as "admin" | "all")}>
+                <TabsList aria-label="De quién" className="group-data-horizontal/tabs:h-9">
+                  <TabsTrigger value="admin" className="px-3">
+                    Super admin
+                  </TabsTrigger>
+                  <TabsTrigger value="all" className="px-3">
+                    Todo
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            }
+          >
+            {businessSelect}
+            {dates}
+          </AuditFiltersBar>
+          <AuditPanel query={actionsQuery} currentUserId={session?.userId} onClearFilters={clearFilters} />
+        </TabsContent>
+
+        <TabsContent value="security" className="grid gap-4">
+          <AuditFiltersBar value={filters} onChange={setFilters} dates={false}>
+            {businessSelect}
+            {dates}
+            <label className="flex h-9 items-center gap-2 text-sm">
+              <Switch checked={onlyFailed} onCheckedChange={setOnlyFailed} /> Sólo intentos fallidos
+            </label>
+          </AuditFiltersBar>
+          <AuditPanel query={securityQuery} currentUserId={session?.userId} onClearFilters={clearFilters} />
+        </TabsContent>
+
+        <TabsContent value="emails">
+          <EmailsPanel filter={emailFilter} onFilterChange={(filter) => goTo("emails", filter, true)} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
+}
+
+const TAB_CLASS = "flex-none px-1 text-sm sm:text-[0.9375rem] after:bg-primary group-data-horizontal/tabs:after:bottom-0 data-active:text-ink";
+
+/** La cifra de una pestaña: los intentos fallidos o los emails fallidos (en rojo) o en cola. */
+function CountBadge({ badge }: { badge: TabBadge | null }) {
+  if (!badge) return null;
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2 py-px text-xs font-semibold tabular-nums",
+        badge.tone === "alert" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground",
+      )}
+    >
+      <span aria-hidden className="sm:hidden">
+        {badge.count}
+      </span>
+      <span aria-hidden className="hidden sm:inline">
+        {badge.label}
+      </span>
+      <span className="sr-only">, {badge.srLabel}</span>
+    </span>
+  );
+}
+
+/** Acciones o Seguridad: cada pestaña pide su actividad sólo cuando está abierta. */
+function AuditPanel({ query, currentUserId, onClearFilters }: { query: AuditQuery; currentUserId?: string; onClearFilters: () => void }) {
+  const feed = useAdminAuditFeed(query);
+  return <ActivityLedger feed={feed} currentUserId={currentUserId} onClearFilters={onClearFilters} />;
+}
+
+/** Emails: los pide sólo con la pestaña abierta. */
+function EmailsPanel({ filter, onFilterChange }: { filter: AdminEmailFilter; onFilterChange: (filter: AdminEmailFilter) => void }) {
+  const outbox = useAdminEmails(filter);
+  return <AdminEmailList outbox={outbox} filter={filter} onFilterChange={onFilterChange} />;
 }

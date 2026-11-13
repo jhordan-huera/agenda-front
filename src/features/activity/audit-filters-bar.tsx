@@ -15,10 +15,14 @@ interface AuditFiltersBarProps {
   people?: { value: string; label: string }[];
   /** Filtros propios de la vista (p. ej. el negocio en la del super admin). */
   children?: ReactNode;
+  /** Lo que va antes del buscador (Super admin / Todo en /admin → Actividad, spec 049). */
+  leading?: ReactNode;
+  /** Los campos Desde y Hasta; `false` cuando la vista pone su propio botón de fechas (spec 049). */
+  dates?: boolean;
 }
 
 /** Buscador, tipo, persona y rango de fechas de la auditoría. */
-export function AuditFiltersBar({ value, onChange, types, people, children }: AuditFiltersBarProps) {
+export function AuditFiltersBar({ value, onChange, types, people, children, leading, dates = true }: AuditFiltersBarProps) {
   const [search, setSearch] = useState(value.q);
   const set = (patch: Partial<AuditFilterState>) => onChange({ ...value, ...patch });
 
@@ -33,6 +37,7 @@ export function AuditFiltersBar({ value, onChange, types, people, children }: Au
 
   return (
     <div className="flex flex-wrap items-end gap-2">
+      {leading}
       <div className="relative min-w-52 flex-1">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
@@ -75,14 +80,18 @@ export function AuditFiltersBar({ value, onChange, types, people, children }: Au
         </Select>
       )}
       {children}
-      <label className="grid gap-1 text-xs text-muted-foreground">
-        Desde
-        <Input type="date" className="w-38" max={value.to || undefined} value={value.from} onChange={(e) => set({ from: e.target.value })} />
-      </label>
-      <label className="grid gap-1 text-xs text-muted-foreground">
-        Hasta
-        <Input type="date" className="w-38" min={value.from || undefined} value={value.to} onChange={(e) => set({ to: e.target.value })} />
-      </label>
+      {dates && (
+        <>
+          <label className="grid gap-1 text-xs text-muted-foreground">
+            Desde
+            <Input type="date" className="w-38" max={value.to || undefined} value={value.from} onChange={(e) => set({ from: e.target.value })} />
+          </label>
+          <label className="grid gap-1 text-xs text-muted-foreground">
+            Hasta
+            <Input type="date" className="w-38" min={value.from || undefined} value={value.to} onChange={(e) => set({ to: e.target.value })} />
+          </label>
+        </>
+      )}
       {filtered && (
         <Button
           type="button"
