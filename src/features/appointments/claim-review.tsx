@@ -20,7 +20,7 @@ import type { Client } from "@/types";
 
 /**
  * Aviso de un paciente «Por verificar» (spec 009): reservó online con la cédula de otra ficha, pero con
- * otro email y otro teléfono. La reserva quedó aparte y nada llega a esa ficha hasta que el negocio la
+ * otro email (desde la spec 050 el teléfono solo no basta). La reserva quedó aparte y nada llega a esa ficha hasta que el negocio la
  * revisa: si es la misma persona, la une a su ficha; si no, cancela la cita. El rol Profesional no la
  * une (se daría acceso a la ficha sin que recepción lo confirme). Si quien mira no puede ver la ficha
  * de esa cédula, el aviso no la nombra.
@@ -39,8 +39,8 @@ export function ClaimReview({ patient, onMerged }: { patient: Client; /** Tras u
       </p>
       <p>
         {claimed
-          ? `La cédula es de ${claimed.name}, pero el email y el teléfono no coinciden con su ficha.`
-          : "La cédula es de otro paciente del negocio, pero el email y el teléfono no coinciden con su ficha."}{" "}
+          ? `La cédula es de ${claimed.name}, pero el email no coincide con el de su ficha.`
+          : "La cédula es de otro paciente del negocio, pero el email no coincide con el de su ficha."}{" "}
         La reserva quedó aparte: no le llega nada a esa ficha hasta que se revise.
       </p>
       {canMerge ? (

@@ -132,10 +132,10 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
     if (date === offer.date && time === offer.time) setStep("details");
     else setOfferTaken(true);
   }
-  // Los datos de quien espera, en los campos vacíos (la cédula la escribe al reservar).
+  // Los datos de quien espera, en los campos vacíos (la cédula la escribe al reservar). Una espera cerrada ya no los trae.
   const waitlistData = waitlistEntry.data;
   const [prefilled, setPrefilled] = useState(false);
-  if (!prefilled && waitlistData) {
+  if (!prefilled && waitlistData && !waitlistData.closed) {
     setPrefilled(true);
     setContact((current) => ({
       ...current,
