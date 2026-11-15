@@ -151,7 +151,9 @@ export default function SurveyPage() {
       <header className="border-b bg-background">
         <div className="mx-auto max-w-xl px-4 py-6">
           <p className="truncate text-sm text-muted-foreground">{survey.businessName}</p>
-          <h1 className="text-2xl leading-tight font-extrabold tracking-[-0.02em]">¿Cómo te fue, {survey.firstName}?</h1>
+          <h1 className="text-2xl leading-tight font-extrabold tracking-[-0.02em]">
+            {survey.status === "expired" ? "¿Cómo te fue?" : `¿Cómo te fue, ${survey.firstName}?`}
+          </h1>
         </div>
       </header>
       <main className="mx-auto grid w-full max-w-xl flex-1 content-start gap-4 px-4 py-6">

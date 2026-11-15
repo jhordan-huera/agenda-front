@@ -60,13 +60,16 @@ export default function WaitlistPage() {
     );
   }
 
-  const rows = [
-    { label: "Servicio", value: entry.serviceName },
-    { label: "Con", value: entry.professionalName ?? "Cualquier profesional" },
-    { label: "Días", value: describeWaitlistDays(entry.days) },
-    { label: "Horario", value: describeDayParts(entry.dayParts) },
-    { label: "Hasta", value: capitalize(formatLongDate(entry.until)) },
-  ];
+  // Cerrada, la API ya no manda lo que pidió.
+  const rows = entry.closed
+    ? []
+    : [
+        { label: "Servicio", value: entry.serviceName },
+        { label: "Con", value: entry.professionalName ?? "Cualquier profesional" },
+        { label: "Días", value: describeWaitlistDays(entry.days) },
+        { label: "Horario", value: describeDayParts(entry.dayParts) },
+        { label: "Hasta", value: capitalize(formatLongDate(entry.until)) },
+      ];
 
   return (
     <div className="flex min-h-screen flex-col bg-muted dark:bg-canvas">
@@ -91,19 +94,21 @@ export default function WaitlistPage() {
           )}
         </div>
 
-        <section aria-labelledby="waitlist-request" className="rounded-2xl border bg-background p-5">
-          <h2 id="waitlist-request" className="text-base font-bold">
-            Lo que pediste
-          </h2>
-          <dl className="mt-3 grid gap-2 text-sm">
-            {rows.map((row) => (
-              <div key={row.label} className="grid grid-cols-[6rem_1fr] gap-3">
-                <dt className="text-muted-foreground">{row.label}</dt>
-                <dd className="min-w-0 font-medium">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+        {rows.length > 0 && (
+          <section aria-labelledby="waitlist-request" className="rounded-2xl border bg-background p-5">
+            <h2 id="waitlist-request" className="text-base font-bold">
+              Lo que pediste
+            </h2>
+            <dl className="mt-3 grid gap-2 text-sm">
+              {rows.map((row) => (
+                <div key={row.label} className="grid grid-cols-[6rem_1fr] gap-3">
+                  <dt className="text-muted-foreground">{row.label}</dt>
+                  <dd className="min-w-0 font-medium">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button asChild size="lg">
