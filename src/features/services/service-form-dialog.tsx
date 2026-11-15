@@ -13,12 +13,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { meetingUrlPlace, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useSaveService } from "@/hooks/queries/use-services";
-import { SERVICE_MODES } from "@/lib/constants/business";
+import { RETURN_AFTER_OPTIONS, SERVICE_MODES } from "@/lib/constants/business";
 import { getErrorMessage } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { serviceSchema } from "@/lib/validations/service";
@@ -88,6 +89,8 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
     modes: service?.modes ?? (["business"] as ServiceMode[]),
     homeVisitFee: String(service?.homeVisitFee ?? 0),
     peoplePerSession: service?.peoplePerSession ?? 1,
+    // «Volver en» (spec 051): "no" o los días, como texto para el Select.
+    returnAfter: service?.returnAfterDays ? String(service.returnAfterDays) : "no",
     isActive: service?.isActive ?? true,
   });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -105,9 +108,10 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const { priceDisplay, peoplePerSession, ...rest } = values;
+    const { priceDisplay, peoplePerSession, returnAfter, ...rest } = values;
     const result = validate(serviceSchema, {
       ...rest,
+      returnAfterDays: returnAfter === "no" ? null : Number(returnAfter),
       // Sin el permiso del negocio no se manda: el servidor conserva el que tenía.
       ...(canChoosePeople ? { peoplePerSession } : {}),
       price: free ? 0 : rest.price || "0",
@@ -310,6 +314,32 @@ function ServiceForm({ service, onDone }: { service?: Service; onDone: () => voi
           )}
         </FormField>
       )}
+
+      <FormField
+        label="Volver en"
+        error={errors.returnAfterDays}
+        hint={
+          values.returnAfter === "no"
+            ? "Si a tus pacientes les toca volver (una limpieza, un control), elige cada cuánto. Los verás en Agenda → Controles."
+            : "Contado desde su cita atendida. Lo ves en Agenda → Controles y, si lo enciendes en Notificaciones, le escribimos ese día."
+        }
+      >
+        {(field) => (
+          <Select value={values.returnAfter} onValueChange={(value) => set("returnAfter", value)}>
+            <SelectTrigger {...field} className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="no">No</SelectItem>
+              {RETURN_AFTER_OPTIONS.map((option) => (
+                <SelectItem key={option.days} value={String(option.days)}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </FormField>
 
       <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3">
         <span>

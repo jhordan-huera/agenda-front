@@ -31,6 +31,7 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicControlReminder,
   PublicSurvey,
   PublicWaitlistEntry,
   SurveySummary,
@@ -42,6 +43,7 @@ import type {
   BusinessCategoryInfo,
   BusinessReferrals,
   Client,
+  ControlReminder,
   ClientActivity,
   PendingPaymentsSummary,
   ClientImportResult,
@@ -283,10 +285,18 @@ export const apiRepository: DataRepository = {
     getSurvey: (token) => api.get<PublicSurvey>(`/public/surveys/${id(token)}`),
     answerSurvey: (token, input) => api.post<PublicSurvey>(`/public/surveys/${id(token)}`, input),
     surveyOptOut: (token) => api.post<{ optedOut: true }>(`/public/surveys/${id(token)}/opt-out`),
+    getControlReminder: (token) => api.get<PublicControlReminder>(`/public/control-reminders/${id(token)}`),
+    controlReminderOptOut: (token) => api.post<{ optedOut: true }>(`/public/control-reminders/${id(token)}/opt-out`),
   },
 
   surveys: {
     summary: (businessId, filters) => api.get<SurveySummary>(`${business(businessId)}/surveys`, filters),
+  },
+
+  controlReminders: {
+    list: (businessId, clientId) => api.get<ControlReminder[]>(`${business(businessId)}/control-reminders`, { clientId }),
+    remove: (businessId, appointmentId) =>
+      api.post<{ removed: true }>(`${business(businessId)}/control-reminders/${id(appointmentId)}/remove`),
   },
 
   waitlist: {

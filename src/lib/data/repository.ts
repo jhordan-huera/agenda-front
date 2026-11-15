@@ -79,6 +79,7 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicControlReminder,
   PublicSurvey,
   PublicWaitlistEntry,
   SurveySummary,
@@ -99,6 +100,7 @@ import type {
   BusinessRole,
   BusinessStatus,
   Client,
+  ControlReminder,
   ClientActivity,
   PendingPaymentsSummary,
   ClientImportResult,
@@ -454,6 +456,20 @@ export interface PublicBookingRepository {
   answerSurvey(token: string, input: SurveyAnswerInput): Promise<PublicSurvey>;
   /** «No quiero recibir estas encuestas». Repetirlo no hace nada. */
   surveyOptOut(token: string): Promise<{ optedOut: true }>;
+  /** El recordatorio de control (spec 051), en /recordatorio/:token: el negocio y si ya pidió no recibirlos. */
+  getControlReminder(token: string): Promise<PublicControlReminder>;
+  /** «No quiero recibir estos recordatorios». Repetirlo no hace nada. */
+  controlReminderOptOut(token: string): Promise<{ optedOut: true }>;
+}
+
+/**
+ * Los controles (spec 051): la hoja «Controles» de la Agenda (los vencidos y los de los próximos 30 días) o, con
+ * `clientId`, los de ese paciente. El rol Profesional, sólo los de su agenda.
+ */
+export interface ControlReminderRepository {
+  list(businessId: string, clientId?: string): Promise<ControlReminder[]>;
+  /** «Quitar»: ese control sale de la lista y no se le escribe. */
+  remove(businessId: string, appointmentId: string): Promise<{ removed: true }>;
 }
 
 /** Las opiniones de los pacientes (spec 048): quien ve Reportes; el rol Profesional, sólo las de su agenda. */
@@ -691,6 +707,7 @@ export interface DataRepository {
   publicBooking: PublicBookingRepository;
   waitlist: WaitlistRepository;
   surveys: SurveyRepository;
+  controlReminders: ControlReminderRepository;
   images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;

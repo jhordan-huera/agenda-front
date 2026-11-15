@@ -236,6 +236,13 @@ export function buildWinBackMessage(data: { clientName: string; businessName: st
   return `${hello}, hace tiempo que no te vemos en ${data.businessName}. Cuando quieras agendar tu próxima cita, puedes elegir tu hora aquí: ${data.bookingUrl}`;
 }
 
+/** Le toca su control (spec 051): se puede editar en WhatsApp antes de enviarlo. */
+export function buildControlWhatsAppMessage(data: { clientName: string; businessName: string; serviceName: string; bookingUrl: string }): string {
+  const name = data.clientName.trim().split(/\s+/)[0] ?? "";
+  const hello = name ? `Hola ${name}` : "Hola";
+  return `${hello}, te escribimos de ${data.businessName}. Ya es momento de tu control de ${data.serviceName}. Puedes elegir tu hora aquí: ${data.bookingUrl}`;
+}
+
 /** Mensaje de WhatsApp al cliente según el cambio de su cita; el profesional lo revisa antes de enviarlo. */
 export function buildAppointmentNotice(kind: AppointmentNoticeKind, data: AppointmentNoticeData): string {
   const name = data.clientName.trim().split(/\s+/)[0] ?? "";

@@ -58,6 +58,10 @@ export const queryKeys = {
   surveys: (businessId: string, filters: Record<string, string | undefined>) => ["surveys", businessId, filters] as const,
   /** La lista de espera del panel (spec 047). */
   waitlist: (businessId: string) => ["waitlist", businessId] as const,
+  /** Los controles (spec 051): la hoja de la Agenda (sin paciente) y la ficha de un paciente. */
+  controlReminders: (businessId: string, clientId?: string) => ["control-reminders", businessId, clientId ?? "all"] as const,
+  /** La página del enlace del recordatorio de control (spec 051). */
+  publicControlReminder: (token: string) => ["public-control-reminder", token] as const,
   /** Site Key del CAPTCHA del registro. */
   captchaSiteKey: ["captcha-site-key"] as const,
   platformSettings: ["platform-settings"] as const,

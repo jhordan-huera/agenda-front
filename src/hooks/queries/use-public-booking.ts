@@ -137,3 +137,21 @@ export function useAnswerSurvey(token: string) {
 export function useSurveyOptOut(token: string) {
   return useMutation({ mutationFn: () => data.publicBooking.surveyOptOut(token) });
 }
+
+/** El enlace del recordatorio de control (spec 051): el negocio y si ya pidió no recibirlos. */
+export function usePublicControlReminder(token: string) {
+  return useQuery({
+    queryKey: queryKeys.publicControlReminder(token),
+    queryFn: () => data.publicBooking.getControlReminder(token),
+    retry: false,
+  });
+}
+
+/** «No quiero recibir estos recordatorios»: la página pasa a «Listo». */
+export function useControlReminderOptOut(token: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => data.publicBooking.controlReminderOptOut(token),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.publicControlReminder(token) }),
+  });
+}

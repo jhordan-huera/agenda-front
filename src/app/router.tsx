@@ -94,6 +94,8 @@ export const router = createBrowserRouter([
       { path: "/lista-de-espera/:token", lazy: lazyPage(() => import("@/pages/waitlist-page")) },
       // La encuesta después de la cita (spec 048): el enlace del email del día siguiente, sin sesión.
       { path: "/encuesta/:token", lazy: lazyPage(() => import("@/pages/survey-page")) },
+      // El recordatorio de control (spec 051): «No quiero recibir estos recordatorios», sin sesión.
+      { path: "/recordatorio/:token", lazy: lazyPage(() => import("@/pages/control-reminder-page")) },
       { path: "/privacidad", lazy: lazyPage(() => import("@/pages/privacy-page")) },
       // Las páginas por especialidad (spec 041); las direcciones con tilde llevan a la de siempre.
       ...["/psicologos", "/fisioterapeutas", "/odontologos"].map((path) => ({ path, lazy: lazyPage(() => import("@/pages/specialty-page")) })),

@@ -173,6 +173,8 @@ function useInvalidateAppointments() {
           ),
         ),
       invalidateActivity(),
+      // Una cita nueva o un cambio de estado cambia quién tiene un control (spec 051).
+      queryClient.invalidateQueries({ queryKey: ["control-reminders", businessId] }),
     ]);
 }
 

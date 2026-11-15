@@ -28,7 +28,7 @@ const cleanPath = (pathname: string) => pathname.split("?")[0].split("#")[0].spl
 export function errorPagePath(pathname: string): string {
   return cleanPath(pathname)
     .replace(/^\/book\/[^/]+/, "/book/[negocio]")
-    .replace(/^\/(cita|pago|lista-de-espera|encuesta)\/[^/]+/, "/$1/[token]");
+    .replace(/^\/(cita|pago|lista-de-espera|encuesta|recordatorio)\/[^/]+/, "/$1/[token]");
 }
 
 /** Una ruta de la API: "/public/businesses/psicovalle/slots?…" → "/public/businesses/[negocio]/slots". */
@@ -50,7 +50,7 @@ export function scrubMessage(message: string): string {
 
 /** Quién vio el error, sin decir quién es: «paciente» (reservas, pago, «Tu cita» y la lista de espera), «super admin», «equipo» o «visitante». */
 export function userTypeFor(pathname: string, current: { superAdmin: boolean; signedIn: boolean }): string {
-  if (/^\/(?:book|cita|pago|lista-de-espera|encuesta)(?:\/|$)/.test(pathname)) return "paciente";
+  if (/^\/(?:book|cita|pago|lista-de-espera|encuesta|recordatorio)(?:\/|$)/.test(pathname)) return "paciente";
   if (current.superAdmin) return "super admin";
   return current.signedIn ? "equipo" : "visitante";
 }
