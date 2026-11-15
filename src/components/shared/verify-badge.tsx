@@ -2,8 +2,8 @@ import { ShieldQuestion } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Reserva «Por verificar» (spec 009): la cédula es de otro paciente del negocio, pero el email y el
- * teléfono no coinciden con su ficha. Con texto y no sólo color, también para el lector de pantalla.
+ * Reserva «Por verificar» (spec 009): la cédula es de otro paciente del negocio, pero el email no
+ * coincide con el de su ficha (spec 050). Con texto y no sólo color, también para el lector de pantalla.
  */
 export function VerifyBadge({ className }: { className?: string }) {
   return (

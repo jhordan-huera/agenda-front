@@ -427,7 +427,7 @@ export interface PublicBookingRepository {
   getProfile(slug: string, fresh?: boolean): Promise<PublicBusinessProfile | null>;
   /**
    * Revalida la disponibilidad, los topes del día y el plan, une la reserva a la ficha de la cédula
-   * (si coinciden su email o su teléfono) o crea el cliente, crea la cita y envía emails.
+   * (si coincide su email, spec 050) o crea el cliente, crea la cita y envía emails.
    * `captchaToken`: token de Turnstile, si el perfil trae `captchaSiteKey` (cada token sirve una vez).
    */
   book(slug: string, input: PublicBookingInput, captchaToken?: string): Promise<BookingConfirmation>;
