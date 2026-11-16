@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@fontsource-variable/sora";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 
 /*
  * Modo oscuro (spec 019): la clase `dark` en <html>, que ponen public/theme-boot.js y
@@ -71,8 +72,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Geist en todo (2026-11-16, elegida por el dueño entre Sora, Inter y Geist); Geist Mono para las cédulas, los teléfonos
+     y los números de cuenta, donde ayuda que los dígitos queden en columna. */
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
   /* La portada «Panel de marca» (spec 043) y las páginas por especialidad: una sola familia, que cargan sólo ellas. */
   --font-display: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
   --color-highlight: var(--highlight);
@@ -154,7 +158,7 @@
  * - Durazno (#FCD9C2, --highlight): marca lo elegido o lo nuevo (la hora reservada, el día elegido, la
  *   reserva que entra), con el trazo de marcador (.marker). Su tono suave (#FBEAE0, --secondary), con
  *   el texto en --lilac-ink (el nombre viene del lila de antes), viste insignias y botones secundarios.
- * - Tipografía: Sora; las horas, grandes, gruesas y con cifras tabulares.
+ * - Tipografía: Geist; las horas, grandes, gruesas y con cifras tabulares.
  * - Panel (diseño de aplicación SaaS, claro): el lienzo (--canvas) con el menú y las tarjetas en
  *   blanco; lo destacado, en un degradado del principal al tono del resaltado. --shell (casi negro con
  *   el tono de la marca) viste etiquetas y el cierre y el pie de la portada. Con los colores de un

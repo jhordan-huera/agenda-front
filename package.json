@@ -23,8 +23,9 @@
     "check:control-reminders": "node scripts/check-control-reminders.ts"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
     "@fontsource-variable/schibsted-grotesk": "^5.3.0",
-    "@fontsource-variable/sora": "^5.3.0",
     "@sentry/browser": "^11.11.0",
     "@tanstack/react-query": "^5.107.1",
     "@vercel/analytics": "^2.0.1",

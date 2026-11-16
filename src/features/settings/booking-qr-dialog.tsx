@@ -24,7 +24,7 @@ function sheetColors(palettes: BrandPalettes | null): SheetColors {
   const { light } = palettes ?? resolveBrandPalette(DEFAULT_BRAND_COLORS);
   return { qr: light.text, ink: light.ink, muted: light.graphite, paper: "#ffffff" };
 }
-const FONT = '"Sora Variable", ui-sans-serif, system-ui, sans-serif';
+const FONT = '"Geist Variable", ui-sans-serif, system-ui, sans-serif';
 
 interface BookingQrDialogProps {
   open: boolean;

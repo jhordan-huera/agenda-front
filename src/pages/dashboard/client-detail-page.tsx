@@ -238,7 +238,9 @@ export default function ClientDetailPage() {
               <p className="flex items-center gap-3">
                 <IdCard className="size-4 text-muted-foreground" aria-hidden />
                 {client.documentId ? (
-                  <span>Cédula {client.documentId}</span>
+                  <span>
+                    Cédula <span className="font-mono">{client.documentId}</span>
+                  </span>
                 ) : (
                   <span className="text-muted-foreground">Sin cédula</span>
                 )}
@@ -246,7 +248,7 @@ export default function ClientDetailPage() {
               <p className="flex items-center gap-3">
                 <Phone className="size-4 text-muted-foreground" aria-hidden />
                 {client.phone ? (
-                  <a href={`tel:${client.phone}`} className="hover:underline">
+                  <a href={`tel:${client.phone}`} className="font-mono hover:underline">
                     {client.phone}
                   </a>
                 ) : (

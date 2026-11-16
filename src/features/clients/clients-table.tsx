@@ -80,15 +80,21 @@ export function ClientsTable({ clients, summaries, business, onEdit, onDelete }:
                         {client.name}
                       </Link>
                       <p className="truncate text-xs text-muted-foreground tabular-nums md:hidden">
-                        {client.documentId ? `Cédula ${client.documentId}` : client.phone || client.email}
+                        {client.documentId ? (
+                          <>
+                            Cédula <span className="font-mono">{client.documentId}</span>
+                          </>
+                        ) : (
+                          client.phone || client.email
+                        )}
                       </p>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="hidden whitespace-nowrap tabular-nums md:table-cell">
-                  {client.documentId || <span className="text-muted-foreground">Sin cédula</span>}
+                <TableCell className="hidden whitespace-nowrap font-mono md:table-cell">
+                  {client.documentId || <span className="font-sans text-muted-foreground">Sin cédula</span>}
                 </TableCell>
-                <TableCell className="hidden whitespace-nowrap md:table-cell">{client.phone || "—"}</TableCell>
+                <TableCell className="hidden whitespace-nowrap font-mono md:table-cell">{client.phone || "—"}</TableCell>
                 <TableCell className="hidden max-w-56 truncate xl:table-cell">{client.email || "—"}</TableCell>
                 <TableCell className="hidden lg:table-cell">
                   <AppointmentDate appointment={summary.lastAppointment} />

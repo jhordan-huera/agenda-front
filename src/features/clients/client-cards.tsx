@@ -71,7 +71,13 @@ export function ClientCards({ clients, summaries, now, business, onEdit, onDelet
                   {client.name}
                 </Link>
                 <p className="text-sm text-muted-foreground tabular-nums">
-                  {client.documentId ? `Cédula ${client.documentId}` : "Sin cédula"}
+                  {client.documentId ? (
+                    <>
+                      Cédula <span className="font-mono">{client.documentId}</span>
+                    </>
+                  ) : (
+                    "Sin cédula"
+                  )}
                   {!client.isActive && ", inactivo"}
                 </p>
                 {(client.claimedClientId || missing.length > 0 || summary.pendingAmount > 0) && (
