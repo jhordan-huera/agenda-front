@@ -41,4 +41,5 @@ export const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   waitlist_offer: "Hora libre para la lista de espera",
   survey_request: "Encuesta después de la cita",
   control_reminder: "Recordatorio de control",
+  loyalty_reward: "Premio de la tarjeta",
 };

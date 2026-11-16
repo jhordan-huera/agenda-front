@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DEFAULT_MAX_CLIENT_BOOKINGS_PER_DAY, isValidTimezone } from "@/lib/constants/business";
+import { normalizeSocialLink } from "@/lib/constants/loyalty";
 import { emailField, optionalEmailField, optionalText, phoneField, requiredText } from "./fields";
 import { imageUrlField } from "./images";
 
@@ -88,6 +89,27 @@ const hexColorField = z
   .trim()
   .toLowerCase()
   .regex(/^#[0-9a-f]{6}$/, "Escribe el color como #RRGGBB");
+
+/** Una red del negocio (spec 052): el enlace o el @usuario, guardado como enlace de esa red; vacío = no la tiene. */
+const socialLinkField = (network: "facebook" | "instagram" | "tiktok", label: string) =>
+  z
+    .string()
+    .max(200, `${label}: máximo 200 caracteres`)
+    .transform((value, ctx) => {
+      const url = normalizeSocialLink(network, value);
+      if (url === null) {
+        ctx.addIssue({ code: "custom", message: `Escribe tu usuario de ${label} (@usuario) o el enlace de tu página` });
+        return z.NEVER;
+      }
+      return url;
+    });
+
+/** Las redes del negocio: salen en la página de reservas y en la tarjeta del paciente, sólo las que tiene. */
+export const socialLinksSchema = z.object({
+  facebook: socialLinkField("facebook", "Facebook"),
+  instagram: socialLinkField("instagram", "Instagram"),
+  tiktok: socialLinkField("tiktok", "TikTok"),
+});
 
 /** Colores de marca; null vuelve a los de Agenda360. */
 export const brandColorsSchema = z.object({ primary: hexColorField, highlight: hexColorField }).nullable();
