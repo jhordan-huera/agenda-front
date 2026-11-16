@@ -20,7 +20,8 @@ import { controlBookingUrl, describeControlDue } from "./control-reminder-text";
 
 /**
  * Los controles de la Agenda (spec 051): a la derecha en el computador y desde abajo en el celular, como la lista de
- * espera. Los vencidos y los de los próximos 30 días; con varias agendas, los de la agenda elegida. Cada paciente:
+ * espera. Los vencidos de los últimos 90 días (lo más antiguo está en Reportes → «Pacientes que no volvieron», revisión
+ * del EGM) y los de los próximos 30 días; con varias agendas, los de la agenda elegida. Cada paciente:
  * escribirle por WhatsApp, «Agendar» (la cita nueva con el paciente, el servicio y el profesional) y «Quitar».
  */
 export function ControlRemindersSheet({
@@ -134,7 +135,7 @@ export function ControlRemindersSheet({
                     agendaName(agendas, agendaId) ? ` con ${agendaName(agendas, agendaId)}` : ""
                   }. ${
                     emailOn
-                      ? "El día que les toca les escribimos por email."
+                      ? "A quien tiene email y no pidió dejar de recibirlos, le escribimos el día que le toca."
                       : "El email automático está apagado: escríbeles por WhatsApp o enciéndelo en Configuración → Notificaciones."
                   }`}
             </SheetDescription>
@@ -153,7 +154,7 @@ export function ControlRemindersSheet({
               </div>
             ) : (
               <>
-                {group("Vencidos", overdue)}
+                {group("Vencidos en los últimos 90 días", overdue)}
                 {group("Próximos 30 días", upcoming)}
               </>
             )}
