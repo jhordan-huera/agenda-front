@@ -100,7 +100,17 @@ import type {
   BusinessRole,
   BusinessStatus,
   Client,
+  ClientLoyalty,
   ControlReminder,
+  LoyaltyBenefit,
+  LoyaltyMember,
+  LoyaltyProgram,
+  LoyaltyReward,
+  LoyaltySummary,
+  PatientAccount,
+  PatientCard,
+  PatientResetLink,
+  ScanResult,
   ClientActivity,
   PendingPaymentsSummary,
   ClientImportResult,
@@ -462,6 +472,54 @@ export interface PublicBookingRepository {
   controlReminderOptOut(token: string): Promise<{ optedOut: true }>;
 }
 
+/** Filtros de «Recompensas» (spec 052). `code`: busca una por su código, escrito como sea. */
+export interface LoyaltyRewardFilters {
+  clientId?: string;
+  benefitId?: string;
+  status?: string;
+  code?: string;
+}
+
+/**
+ * La tarjeta de fidelización (spec 052), lo del equipo: el programa y los beneficios (propietario y administrador), la
+ * ficha, el canje (también Recepción) y «Escanear» (quien maneja citas; el Profesional, en su agenda).
+ */
+export interface LoyaltyRepository {
+  program(businessId: string): Promise<LoyaltyProgram>;
+  saveProgram(businessId: string, input: unknown): Promise<LoyaltyProgram>;
+  benefits(businessId: string): Promise<LoyaltyBenefit[]>;
+  createBenefit(businessId: string, input: unknown): Promise<LoyaltyBenefit>;
+  updateBenefit(businessId: string, benefitId: string, input: unknown): Promise<LoyaltyBenefit>;
+  /** Lo borra si nadie lo ganó; si no, lo archiva (`archived`). */
+  deleteBenefit(businessId: string, benefitId: string): Promise<{ archived: boolean }>;
+  members(businessId: string): Promise<LoyaltyMember[]>;
+  rewards(businessId: string, filters?: LoyaltyRewardFilters): Promise<LoyaltyReward[]>;
+  summary(businessId: string): Promise<LoyaltySummary>;
+  /** Canjear, en una cita del paciente (su precio baja si no está pagada) o sin cita. */
+  redeem(businessId: string, rewardId: string, appointmentId: string | null): Promise<LoyaltyReward>;
+  clientLoyalty(businessId: string, clientId: string): Promise<ClientLoyalty>;
+  scan(businessId: string, token: string): Promise<ScanResult>;
+  link(businessId: string, input: { token: string; appointmentId: string; clientId: string }): Promise<ScanResult>;
+  complete(businessId: string, input: { token: string; appointmentId: string }): Promise<ScanResult>;
+  /** El enlace de un solo uso para que el paciente cree otra contraseña (con el teléfono para el WhatsApp). */
+  resetLink(businessId: string, clientId: string): Promise<PatientResetLink>;
+}
+
+/** La cuenta del paciente (spec 052): /api/patient, con su propia cookie, aparte de la sesión del equipo. */
+export interface PatientRepository {
+  config(): Promise<{ captchaSiteKey: string | null }>;
+  signup(input: { name: string; phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
+  login(input: { phone: string; password: string }): Promise<PatientAccount>;
+  logout(): Promise<void>;
+  me(): Promise<PatientAccount>;
+  cards(): Promise<PatientCard[]>;
+  newQr(): Promise<PatientAccount>;
+  changePassword(input: { currentPassword: string; newPassword: string }): Promise<void>;
+  deleteAccount(): Promise<void>;
+  resetInfo(token: string): Promise<{ valid: boolean; firstName: string | null }>;
+  resetPassword(token: string, password: string): Promise<PatientAccount>;
+}
+
 /**
  * Los controles (spec 051): la hoja «Controles» de la Agenda (los vencidos y los de los próximos 30 días) o, con
  * `clientId`, los de ese paciente. El rol Profesional, sólo los de su agenda.
@@ -708,6 +766,8 @@ export interface DataRepository {
   waitlist: WaitlistRepository;
   surveys: SurveyRepository;
   controlReminders: ControlReminderRepository;
+  loyalty: LoyaltyRepository;
+  patient: PatientRepository;
   images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;

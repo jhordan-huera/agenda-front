@@ -43,7 +43,17 @@ import type {
   BusinessCategoryInfo,
   BusinessReferrals,
   Client,
+  ClientLoyalty,
   ControlReminder,
+  LoyaltyBenefit,
+  LoyaltyMember,
+  LoyaltyProgram,
+  LoyaltyReward,
+  LoyaltySummary,
+  PatientAccount,
+  PatientCard,
+  PatientResetLink,
+  ScanResult,
   ClientActivity,
   PendingPaymentsSummary,
   ClientImportResult,
@@ -297,6 +307,42 @@ export const apiRepository: DataRepository = {
     list: (businessId, clientId) => api.get<ControlReminder[]>(`${business(businessId)}/control-reminders`, { clientId }),
     remove: (businessId, appointmentId) =>
       api.post<{ removed: true }>(`${business(businessId)}/control-reminders/${id(appointmentId)}/remove`),
+  },
+
+  loyalty: {
+    program: (businessId) => api.get<LoyaltyProgram>(`${business(businessId)}/loyalty`),
+    saveProgram: (businessId, input) => api.put<LoyaltyProgram>(`${business(businessId)}/loyalty`, input),
+    benefits: (businessId) => api.get<LoyaltyBenefit[]>(`${business(businessId)}/loyalty/benefits`),
+    createBenefit: (businessId, input) => api.post<LoyaltyBenefit>(`${business(businessId)}/loyalty/benefits`, input),
+    updateBenefit: (businessId, benefitId, input) =>
+      api.put<LoyaltyBenefit>(`${business(businessId)}/loyalty/benefits/${id(benefitId)}`, input),
+    deleteBenefit: (businessId, benefitId) =>
+      api.delete<{ archived: boolean }>(`${business(businessId)}/loyalty/benefits/${id(benefitId)}`),
+    members: (businessId) => api.get<LoyaltyMember[]>(`${business(businessId)}/loyalty/members`),
+    rewards: (businessId, filters = {}) => api.get<LoyaltyReward[]>(`${business(businessId)}/loyalty/rewards`, { ...filters }),
+    summary: (businessId) => api.get<LoyaltySummary>(`${business(businessId)}/loyalty/summary`),
+    redeem: (businessId, rewardId, appointmentId) =>
+      api.post<LoyaltyReward>(`${business(businessId)}/loyalty/rewards/${id(rewardId)}/redeem`, { appointmentId }),
+    clientLoyalty: (businessId, clientId) => api.get<ClientLoyalty>(`${business(businessId)}/clients/${id(clientId)}/loyalty`),
+    scan: (businessId, token) => api.post<ScanResult>(`${business(businessId)}/scan`, { token }),
+    link: (businessId, input) => api.post<ScanResult>(`${business(businessId)}/scan/link`, input),
+    complete: (businessId, input) => api.post<ScanResult>(`${business(businessId)}/scan/complete`, input),
+    resetLink: (businessId, clientId) =>
+      api.post<PatientResetLink>(`${business(businessId)}/clients/${id(clientId)}/patient-reset-link`),
+  },
+
+  patient: {
+    config: () => api.get<{ captchaSiteKey: string | null }>("/patient/config"),
+    signup: (input) => api.post<PatientAccount>("/patient/signup", input),
+    login: (input) => api.post<PatientAccount>("/patient/login", input),
+    logout: () => api.post<void>("/patient/logout"),
+    me: () => api.get<PatientAccount>("/patient/me"),
+    cards: () => api.get<PatientCard[]>("/patient/cards"),
+    newQr: () => api.post<PatientAccount>("/patient/qr"),
+    changePassword: (input) => api.put<void>("/patient/password", input),
+    deleteAccount: () => api.delete<void>("/patient/account"),
+    resetInfo: (token) => api.get<{ valid: boolean; firstName: string | null }>(`/patient/reset/${id(token)}`),
+    resetPassword: (token, password) => api.post<PatientAccount>(`/patient/reset/${id(token)}`, { password }),
   },
 
   waitlist: {
