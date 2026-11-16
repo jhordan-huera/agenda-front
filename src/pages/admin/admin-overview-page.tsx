@@ -4,6 +4,7 @@ import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { BillingOverviewCard } from "@/features/admin/billing-overview-card";
 import { CreateBusinessDialog } from "@/features/admin/create-business-dialog";
 import { GrowthSection } from "@/features/admin/growth-section";
@@ -13,7 +14,7 @@ import { ReferralRewardsSection } from "@/features/admin/referral-rewards-sectio
 import { SalesSection } from "@/features/admin/sales-section";
 import { getGreeting } from "@/features/dashboard/dashboard-metrics";
 import { useCurrentUser } from "@/hooks/queries/use-account";
-import { useAdminBusinesses, useAdminPlanRequests, useAdminStats } from "@/hooks/queries/use-admin";
+import { useAdminBusinesses, useAdminPlanRequests, useAdminStats, useReferralRewards } from "@/hooks/queries/use-admin";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { PLANS } from "@/lib/constants/plans";
 import { capitalize, formatLongDate, plural } from "@/lib/format";
@@ -29,12 +30,28 @@ export default function AdminOverviewPage() {
   const stats = useAdminStats();
   const businesses = useAdminBusinesses();
   const requests = useAdminPlanRequests();
-  const { data: user } = useCurrentUser();
+  const userQuery = useCurrentUser();
+  const user = userQuery.data;
+  // La página sale toda junta, con sus datos: si cada sección apareciera al llegar lo suyo (la línea de los negocios
+  // por plan, los cobros, las solicitudes, el crecimiento), las de abajo saltarían (Speed Insights, 2026-11-15).
+  const rewards = useReferralRewards();
+  const ready = [stats, businesses, requests, rewards, userQuery].every(
+    (query) => query.data !== undefined || query.isError || query.fetchStatus === "idle",
+  );
   const [creating, setCreating] = useState(false);
   const data = stats.data;
   const now = getZonedNow(DEFAULT_TIMEZONE);
   const pendingRequests = (requests.data ?? []).filter((request) => request.status === "pending").length;
   const byPlan = data && PLANS.map((plan) => `${data.businessesByPlan[plan.id]} ${plan.name}`).join(" · ");
+
+  if (!ready) {
+    return (
+      <div className="space-y-8" aria-busy="true">
+        <PageTitle title="Plataforma" />
+        <OverviewSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -82,6 +99,23 @@ export default function AdminOverviewPage() {
       <ReferralRewardsSection />
 
       <CreateBusinessDialog open={creating} onOpenChange={setCreating} />
+    </div>
+  );
+}
+
+/** El Resumen mientras llegan sus datos: la forma de la página, para que nada salte cuando aparece. */
+function OverviewSkeleton() {
+  return (
+    <div className="space-y-8" aria-hidden>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-72" />
+          <Skeleton className="h-5 w-96 max-w-full" />
+        </div>
+        <Skeleton className="h-10 w-40" />
+      </div>
+      <Skeleton className="h-[38rem] rounded-xl" />
+      <Skeleton className="h-64 rounded-xl" />
     </div>
   );
 }
