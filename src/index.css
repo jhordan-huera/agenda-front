@@ -4,21 +4,6 @@
 @import "@fontsource-variable/geist-mono";
 
 /*
- * Las cifras con el cero tachado (pedido del dueño, 2026-11-16): sólo los dígitos 0-9 se dibujan con Geist Mono, que
- * tacha el cero y da a todas las cifras el mismo ancho; las letras, los dos puntos y las comas siguen en Geist, así
- * «11:00» no queda con espacios. Va primero en --font-sans (el panel y las páginas del paciente). La portada y el
- * nombre «Agenda360» (logo.tsx, made-with.tsx) usan --font-display, sin esta letra: el «0» de la marca no se tacha.
- */
-@font-face {
-  font-family: "Geist Digits";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url("../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2") format("woff2-variations");
-  unicode-range: U+0030-0039;
-}
-
-/*
  * Modo oscuro (spec 019): la clase `dark` en <html>, que ponen public/theme-boot.js y
  * ThemeModeProvider. Sólo en pantalla: al imprimir no vale, así lo impreso sale claro. Un contenedor
  * con la clase `light` dentro del oscuro vuelve al claro (la vista previa de los colores).
@@ -87,13 +72,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Geist en todo (2026-11-16, elegida por el dueño entre Sora, Inter y Geist); Geist Mono para las cédulas, los teléfonos
-     y los números de cuenta, donde ayuda que los dígitos queden en columna. */
-  --font-sans: "Geist Digits", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Geist Digits", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Geist Mono en todo el panel y en las páginas del paciente (pedido del dueño, 2026-11-16: primero Geist, después las
+     cifras con el cero tachado y al final también las letras). */
+  --font-sans: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
-  /* La portada «Panel de marca» (spec 043) y las páginas por especialidad: una sola familia, la de la app (Geist desde el
-     2026-11-16; antes Schibsted Grotesk). */
+  /* La portada «Panel de marca» (spec 043), las páginas por especialidad y el nombre «Agenda360» (logo.tsx,
+     made-with.tsx): Geist, sin monoespaciada (decisión del dueño para la portada; antes Schibsted Grotesk). */
   --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
@@ -174,7 +159,7 @@
  * - Durazno (#FCD9C2, --highlight): marca lo elegido o lo nuevo (la hora reservada, el día elegido, la
  *   reserva que entra), con el trazo de marcador (.marker). Su tono suave (#FBEAE0, --secondary), con
  *   el texto en --lilac-ink (el nombre viene del lila de antes), viste insignias y botones secundarios.
- * - Tipografía: Geist; las horas, grandes, gruesas y con cifras tabulares.
+ * - Tipografía: Geist Mono en el panel y las páginas del paciente; Geist en la portada y el logotipo.
  * - Panel (diseño de aplicación SaaS, claro): el lienzo (--canvas) con el menú y las tarjetas en
  *   blanco; lo destacado, en un degradado del principal al tono del resaltado. --shell (casi negro con
  *   el tono de la marca) viste etiquetas y el cierre y el pie de la portada. Con los colores de un

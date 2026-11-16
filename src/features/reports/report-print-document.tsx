@@ -25,7 +25,7 @@ const PRINT_LAPSED_LIMIT = 30;
  * quitan desmarcando "Encabezados y pies de página"). Sólo mientras Reportes está abierto.
  */
 function pageRules(footer: string): string {
-  const box = 'font-family: "Geist Variable", ui-sans-serif, sans-serif; font-size: 8pt; color: #5b6478;';
+  const box = 'font-family: "Geist Mono Variable", ui-monospace, monospace; font-size: 8pt; color: #5b6478;';
   return `@page {
   size: A4;
   margin: 14mm 12mm 16mm;
