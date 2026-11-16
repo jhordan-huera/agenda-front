@@ -1,4 +1,3 @@
-import "@fontsource-variable/schibsted-grotesk/wght.css";
 import "@/features/landing/landing.css";
 import { Plus } from "lucide-react";
 import { Link, useLocation } from "react-router";

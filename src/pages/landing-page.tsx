@@ -1,4 +1,3 @@
-import "@fontsource-variable/schibsted-grotesk/wght.css";
 import "@/features/landing/landing.css";
 import { Link } from "react-router";
 import { PageTitle } from "@/components/shared/page-title";

@@ -84,7 +84,9 @@ export function WeekPreview({ services = DEFAULT_SERVICES, className }: { servic
             {DAYS.map((day) => (
               <th key={day.name} scope="col" className={cn("pb-1 text-center font-normal", wideOnly(day.wideOnly))}>
                 <span className="block text-xs text-muted-foreground">{day.name}</span>
-                <span className={cn("font-display block text-lg leading-tight font-bold", day.today && "text-ink")}>{day.number}</span>
+                <span className={cn("font-display block text-lg leading-tight font-bold", day.today && "mx-auto w-fit rounded-md bg-ink px-1.5 text-primary-foreground")}>
+                  {day.number}
+                </span>
               </th>
             ))}
           </tr>

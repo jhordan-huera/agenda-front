@@ -74,13 +74,10 @@ for (const { file, source } of all) {
   ok(found.length === 0, `${file}: sin lo que se quitó`, found);
 }
 const css = read(path.join(ROOT, "src/index.css"));
-ok(!/--font-(wide|tech|accent)\b/.test(css) && /--font-display:\s*"Schibsted Grotesk Variable"/.test(css), "index.css: una sola familia para la portada (--font-display)");
+// Desde el 2026-11-16 la portada usa la letra de la app, Geist (pedido del dueño): ninguna otra se carga para ella.
+ok(!/--font-(wide|tech|accent)\b/.test(css) && /--font-display:\s*"Geist Variable"/.test(css), "index.css: una sola familia para la portada (--font-display, Geist)");
 const fontImports = all.flatMap(({ source }) => [...source.matchAll(/import "@fontsource[^"]+"/g)].map((match) => match[0]));
-ok(
-  fontImports.length > 0 && fontImports.every((line) => line.includes("@fontsource-variable/schibsted-grotesk")),
-  "la portada y las páginas por especialidad sólo cargan Schibsted Grotesk",
-  fontImports,
-);
+ok(fontImports.length === 0, "la portada y las páginas por especialidad no cargan otra letra", fontImports);
 
 console.log("Lo que tiene que estar");
 const source = (name: string) => pieces.find((piece) => piece.file.endsWith(`/${name}`))?.source ?? "";

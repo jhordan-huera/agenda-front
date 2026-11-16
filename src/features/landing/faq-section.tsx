@@ -10,7 +10,7 @@ import { usePricingContact, type SupportContact } from "./use-signup-contact";
 
 /** Un enlace dentro de una frase: su zona para el dedo crece hasta 44 px de alto sin mover el texto. */
 const TEXT_LINK =
-  "relative rounded-sm font-semibold text-ink underline decoration-ink/40 underline-offset-4 outline-none before:absolute before:-inset-x-1 before:-inset-y-2 before:content-[''] hover:decoration-current focus-visible:ring-3 focus-visible:ring-ring/50";
+  "relative rounded-sm font-semibold text-foreground underline decoration-ink decoration-2 underline-offset-4 outline-none before:absolute before:-inset-x-1 before:-inset-y-2 before:content-[''] hover:decoration-current focus-visible:ring-3 focus-visible:ring-ring/50";
 
 /** «Escríbenos»: el WhatsApp de soporte (en otra pestaña) o su email, con la pregunta ya escrita. */
 function ContactLink({ contact, children }: { contact: SupportContact; children: ReactNode }) {

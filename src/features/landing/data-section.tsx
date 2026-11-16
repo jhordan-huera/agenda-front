@@ -39,7 +39,7 @@ export function DataSection() {
               {promise.link && (
                 <Link
                   to={promise.link.to}
-                  className="mt-3 inline-flex min-h-11 items-center rounded-md font-semibold text-ink underline decoration-ink/40 underline-offset-4 outline-none hover:decoration-current focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="mt-3 inline-flex min-h-11 items-center rounded-md font-semibold text-foreground underline decoration-ink decoration-2 underline-offset-4 outline-none hover:decoration-current focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   {promise.link.label}
                 </Link>
