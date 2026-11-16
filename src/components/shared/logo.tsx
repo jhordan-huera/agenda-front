@@ -39,9 +39,10 @@ export function LogoMark({ className, markClassName }: { className?: string; mar
   );
 }
 
+// font-display: Geist sin las cifras de Geist Mono, para que el «0» de la marca no salga tachado.
 function Wordmark() {
   return (
-    <span>
+    <span className="font-display">
       <span className="font-extrabold">{WORD}</span>
       {NUMBER && <span className="font-medium">{NUMBER}</span>}
     </span>

@@ -32,7 +32,7 @@ export function AuthLayout() {
           </div>
         </main>
         <footer className="flex flex-wrap items-center gap-x-5 pb-3 text-sm text-muted-foreground">
-          <span>
+          <span className="font-display">
             © {CURRENT_YEAR} {APP_NAME}
           </span>
           <Link

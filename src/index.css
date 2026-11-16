@@ -4,6 +4,21 @@
 @import "@fontsource-variable/geist-mono";
 
 /*
+ * Las cifras con el cero tachado (pedido del dueño, 2026-11-16): sólo los dígitos 0-9 se dibujan con Geist Mono, que
+ * tacha el cero y da a todas las cifras el mismo ancho; las letras, los dos puntos y las comas siguen en Geist, así
+ * «11:00» no queda con espacios. Va primero en --font-sans (el panel y las páginas del paciente). La portada y el
+ * nombre «Agenda360» (logo.tsx, made-with.tsx) usan --font-display, sin esta letra: el «0» de la marca no se tacha.
+ */
+@font-face {
+  font-family: "Geist Digits";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0030-0039;
+}
+
+/*
  * Modo oscuro (spec 019): la clase `dark` en <html>, que ponen public/theme-boot.js y
  * ThemeModeProvider. Sólo en pantalla: al imprimir no vale, así lo impreso sale claro. Un contenedor
  * con la clase `light` dentro del oscuro vuelve al claro (la vista previa de los colores).
@@ -74,8 +89,8 @@
   --color-foreground: var(--foreground);
   /* Geist en todo (2026-11-16, elegida por el dueño entre Sora, Inter y Geist); Geist Mono para las cédulas, los teléfonos
      y los números de cuenta, donde ayuda que los dígitos queden en columna. */
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Digits", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Geist Digits", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
   /* La portada «Panel de marca» (spec 043) y las páginas por especialidad: una sola familia, la de la app (Geist desde el
      2026-11-16; antes Schibsted Grotesk). */

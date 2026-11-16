@@ -107,7 +107,7 @@ export default defineConfig(({ mode }) => {
         injectRegister: false,
         injectManifest: {
           // La letra, sólo en alfabeto latino (las otras variantes no se usan en español).
-          globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}", "assets/geist-latin-wght-*.woff2"],
+          globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}", "assets/geist-latin-wght-*.woff2", "assets/geist-mono-latin-wght-*.woff2"],
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         },
         devOptions: { enabled: false },

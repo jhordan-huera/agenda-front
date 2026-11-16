@@ -20,7 +20,7 @@ export function MadeWithAgenda360({ slug, children, className }: MadeWithAgenda3
   return (
     <footer className={cn("px-4 py-6 text-center text-xs text-muted-foreground", className)}>
       <a href={href} target="_blank" rel="noopener" className="group rounded-sm hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none">
-        Agenda online con <span className="font-semibold text-foreground">{APP_NAME}</span>
+        Agenda online con <span className="font-display font-semibold text-foreground">{APP_NAME}</span>
         {" · "}
         {/* En el celular pasa de línea entero: «Crea tu agenda» no se parte. */}
         <span className="whitespace-nowrap">
