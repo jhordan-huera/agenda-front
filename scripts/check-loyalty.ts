@@ -49,6 +49,7 @@ const { normalizePhone } = await import("../src/lib/validations/fields.ts");
 const { socialLinksSchema } = await import("../src/lib/validations/business.ts");
 const { describeMissing, progressSlots, redeemPriceNote, rewardDetail, sortRewards } = await import("../src/features/loyalty/loyalty-text.ts");
 const { buildLoyaltyWhatsAppMessage, buildPatientResetWhatsAppMessage } = await import("../src/lib/whatsapp.ts");
+const { nextPrizeText } = await import("../src/features/patient/patient-card-text.ts");
 
 let failures = 0;
 const ok = (cond: unknown, label: string, extra?: unknown) => {
@@ -151,6 +152,12 @@ const prizes = buildLoyaltyWhatsAppMessage({ ...common, next: null, availableRew
 ok(prizes.includes("Tienes 1 premio por canjear") && prizes.includes("úsalo"), "sin próximo premio, con uno por canjear", prizes);
 const reset = buildPatientResetWhatsAppMessage({ clientName: "Ana María", businessName: "Clínica Sonrisa", url: "https://ejemplo.invalid/mi-tarjeta/clave/abc", hours: 24 });
 ok(reset.startsWith("Hola Ana,") && reset.includes("https://ejemplo.invalid/mi-tarjeta/clave/abc") && reset.includes("24 horas") && reset.includes("una sola vez"), "el enlace de la contraseña", reset);
+
+const benefits = [{ visitsRequired: 5, name: "Kit", description: "", conditions: "", validDays: null }];
+const oneLeft = nextPrizeText({ slots: 5, stamps: 4, benefits, next: { benefitId: "b", name: "Kit", visitsRequired: 5, missing: 1 } });
+ok(oneLeft === "Te falta 1 cita para Kit.", "la tarjeta del paciente: «Te falta 1 cita» (en singular)", oneLeft);
+const threeLeft = nextPrizeText({ slots: 5, stamps: 2, benefits, next: { benefitId: "b", name: "Kit", visitsRequired: 5, missing: 3 } });
+ok(threeLeft === "Te faltan 3 citas para Kit.", "y «Te faltan 3 citas»", threeLeft);
 
 if (failures) {
   console.error(`\n${failures} comprobación(es) fallaron`);

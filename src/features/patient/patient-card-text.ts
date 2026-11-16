@@ -42,9 +42,11 @@ export function stampsSummary(card: Pick<PatientCard, "slots" | "stamps" | "prog
   return `Llevas ${card.stamps} de ${card.slots} sellos en ${card.program.name}.`;
 }
 
-/** «Te faltan 3 citas para Blanqueamiento gratis.» */
+/** «Te faltan 3 citas para Blanqueamiento gratis.» («Te falta 1 cita…» con una sola.) */
 export function nextPrizeText(card: CardProgress): string {
-  if (card.next) return `Te faltan ${plural(card.next.missing, "cita", "citas")} para ${card.next.name}.`;
+  if (card.next) {
+    return `${card.next.missing === 1 ? "Te falta" : "Te faltan"} ${plural(card.next.missing, "cita", "citas")} para ${card.next.name}.`;
+  }
   if (card.benefits.length === 0) return "Todavía no hay premios en esta tarjeta.";
   if (card.stamps > card.slots) return "Ganaste todos los premios de esta tarjeta y sigues sumando sellos.";
   return "Ganaste todos los premios de esta tarjeta.";
