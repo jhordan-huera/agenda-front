@@ -72,14 +72,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Geist Mono en todo el panel y en las páginas del paciente (pedido del dueño, 2026-11-16: primero Geist, después las
-     cifras con el cero tachado y al final también las letras). */
+  /* Geist Mono en todo: el panel, las páginas del paciente, la portada y las páginas por especialidad (pedido del dueño,
+     2026-11-16: primero Geist, después las cifras con el cero tachado y al final también las letras, y la portada). */
   --font-sans: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
-  /* La portada «Panel de marca» (spec 043), las páginas por especialidad y el nombre «Agenda360» (logo.tsx,
-     made-with.tsx): Geist, sin monoespaciada (decisión del dueño para la portada; antes Schibsted Grotesk). */
-  --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  /* La portada «Panel de marca» (spec 043) y las páginas por especialidad (antes Schibsted Grotesk y después Geist). */
+  --font-display: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Sólo el logotipo (el símbolo con «Agenda360»: logo.tsx, la barra y el pie de la portada) sigue en Geist. */
+  --font-brand: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
   --color-ink: var(--ink);
@@ -159,7 +160,7 @@
  * - Durazno (#FCD9C2, --highlight): marca lo elegido o lo nuevo (la hora reservada, el día elegido, la
  *   reserva que entra), con el trazo de marcador (.marker). Su tono suave (#FBEAE0, --secondary), con
  *   el texto en --lilac-ink (el nombre viene del lila de antes), viste insignias y botones secundarios.
- * - Tipografía: Geist Mono en el panel y las páginas del paciente; Geist en la portada y el logotipo.
+ * - Tipografía: Geist Mono en todo (el panel, las páginas del paciente y la portada); Geist sólo en el logotipo.
  * - Panel (diseño de aplicación SaaS, claro): el lienzo (--canvas) con el menú y las tarjetas en
  *   blanco; lo destacado, en un degradado del principal al tono del resaltado. --shell (casi negro con
  *   el tono de la marca) viste etiquetas y el cierre y el pie de la portada. Con los colores de un

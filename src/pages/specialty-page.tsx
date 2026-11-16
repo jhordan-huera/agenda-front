@@ -152,7 +152,8 @@ export default function SpecialtyPage() {
         </section>
 
         <section aria-labelledby="titulo-preguntas" id="preguntas" className={cn(CONTAINER, "pt-24 sm:pt-32")}>
-          <div className="grid gap-10 px-1 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)] lg:gap-16">
+          {/* El título, más ancho que antes: con Geist Mono, «fisioterapeutas» no cabía a 1024 px. */}
+          <div className="grid gap-10 px-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-16">
             <SectionHeading id="titulo-preguntas" title={`Preguntas de ${specialty.name.toLowerCase()}`} />
             <div className="border-t border-border">
               {specialty.questions.map((item, index) => (

@@ -37,12 +37,12 @@ export function LandingNav({
         Saltar al contenido
       </a>
       <nav aria-label="Principal" className={cn(CONTAINER, "flex h-[4.5rem] items-center gap-2")}>
-        <Link to="/" aria-label={APP_NAME} className="font-display flex shrink-0 items-center gap-2.5 rounded-lg pr-2 text-xl font-extrabold tracking-[-0.02em] outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+        <Link to="/" aria-label={APP_NAME} className="font-brand flex shrink-0 items-center gap-2 rounded-lg pr-1 text-lg font-extrabold tracking-[-0.02em] outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:gap-2.5 sm:pr-2 sm:text-xl">
           <BrandMark className="size-8" />
           {/* En las pantallas más angostas (320 px) sólo cabe el símbolo junto al botón y el menú. */}
           <span className="max-[379px]:sr-only">{APP_NAME}</span>
         </Link>
-        <ul className="mx-auto hidden items-center gap-1 md:flex">
+        <ul className="mx-auto hidden items-center gap-1 lg:flex">
           {sections.map((section) => (
             <li key={section.id}>
               <a
@@ -55,7 +55,7 @@ export function LandingNav({
             </li>
           ))}
         </ul>
-        <div className="ml-auto flex items-center gap-2 md:ml-0">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2 lg:ml-0">
           <Link to="/login" className={cn(NAV_LINK, "hidden text-foreground sm:inline-flex")}>
             Iniciar sesión
           </Link>
@@ -66,14 +66,14 @@ export function LandingNav({
             aria-expanded={open}
             aria-controls="menu-portada"
             aria-label={open ? "Cerrar el menú" : "Abrir el menú"}
-            className="flex size-11 items-center justify-center rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:hidden"
+            className="flex size-11 items-center justify-center rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50 lg:hidden"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
       </nav>
       {open && (
-        <ul id="menu-portada" className={cn(CONTAINER, "border-t border-border pb-3 md:hidden")}>
+        <ul id="menu-portada" className={cn(CONTAINER, "border-t border-border pb-3 lg:hidden")}>
           {sections.map((section) => (
             <li key={section.id}>
               <a href={`#${section.id}`} onClick={() => setOpen(false)} className={cn(NAV_LINK, "w-full")}>

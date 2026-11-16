@@ -2,9 +2,9 @@ import { cn } from "@/lib/utils";
 
 /*
  * Los estilos de la portada «Panel de marca» (spec 043) y de las páginas por especialidad: el contenedor, el panel,
- * los títulos y los botones. Una sola familia (Geist, --font-display) y, desde el 2026-11-16, los colores propios de
- * la portada (src/index.css, [data-landing]): 60 % crema, 30 % verde (--hero, el texto) y 10 % rojo (--ink), en claro
- * y en oscuro.
+ * los títulos y los botones. Una sola familia (Geist Mono, --font-display; el logotipo en Geist) y, desde el
+ * 2026-11-16, los colores propios de la portada (src/index.css, [data-landing]): 60 % crema, 30 % verde (--hero, el
+ * texto) y 10 % rojo (--ink), en claro y en oscuro.
  */
 
 /** El ancho de la página: hasta 1280 px, centrado, con margen a los lados. */
@@ -34,8 +34,11 @@ export const PANEL_OUTLINE_BUTTON = cn(
   "text-hero-foreground ring-1 ring-hero-foreground/55 ring-inset hover:bg-hero-foreground/10 focus-visible:ring-hero-foreground/70 focus-visible:ring-offset-hero",
 );
 
-/** El botón oscuro de la barra: el color del texto sobre el fondo. */
+/**
+ * El botón oscuro de la barra: el color del texto sobre el fondo. En el celular, más chico: con Geist Mono, el
+ * logotipo, este botón y el del menú no cabían juntos entre 380 y 413 px.
+ */
 export const INK_BUTTON = cn(
   BUTTON,
-  "min-h-11 bg-foreground px-4 text-[0.9375rem] whitespace-nowrap text-background hover:bg-foreground/85 focus-visible:ring-ring/60 focus-visible:ring-offset-wall sm:px-5",
+  "min-h-11 bg-foreground px-3 text-sm whitespace-nowrap text-background hover:bg-foreground/85 focus-visible:ring-ring/60 focus-visible:ring-offset-wall sm:px-5 sm:text-[0.9375rem]",
 );

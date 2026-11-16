@@ -3,8 +3,8 @@
  *
  * - Las reglas de la portada en sus textos: sin la LOPDP (sólo en /privacidad), sin precios, porcentajes ni
  *   testimonios inventados, y sin funciones paradas (la sincronización con Google y la suscripción de iPhone/iPad).
- * - Lo que se quitó no vuelve: ni mayúsculas espaciadas, ni letra monoespaciada, ni palabras sueltas en cursiva,
- *   ni las fuentes de la portada anterior.
+ * - Lo que se quitó no vuelve: ni mayúsculas espaciadas, ni palabras sueltas en cursiva, ni las fuentes de la
+ *   portada anterior. La monoespaciada sí volvió el 2026-11-16 (pedido del dueño): la de la app, Geist Mono.
  * - Lo que tiene que estar: el título aprobado, las 8 funciones, las 3 promesas, las 7 preguntas, la marca «Ejemplo»
  *   en la agenda de la semana y una sola familia de letra.
  *
@@ -65,8 +65,8 @@ console.log("Lo que se quitó (spec 043)");
 const REMOVED: [RegExp, string][] = [
   [/\buppercase\b/, "mayúsculas"],
   [/tracking-\[0\.1\d*em\]|tracking-widest/, "letras espaciadas"],
-  [/font-tech|font-mono|font-wide|font-accent|\bitalic\b/, "monoespaciada, ancha o cursiva"],
-  [/@fontsource-variable\/archivo|@fontsource-variable\/geist-mono|@fontsource\/instrument-serif/, "las fuentes de la portada anterior"],
+  [/font-tech|font-wide|font-accent|\bitalic\b/, "ancha o cursiva"],
+  [/@fontsource-variable\/archivo|@fontsource\/instrument-serif/, "las fuentes de la portada anterior"],
   [/TECH_LABEL|WIDE_HEADING|SectionBar|<Accent/, "las piezas de la portada anterior"],
 ];
 for (const { file, source } of all) {
@@ -74,8 +74,12 @@ for (const { file, source } of all) {
   ok(found.length === 0, `${file}: sin lo que se quitó`, found);
 }
 const css = read(path.join(ROOT, "src/index.css"));
-// Desde el 2026-11-16 la portada usa la letra de la app, Geist (pedido del dueño): ninguna otra se carga para ella.
-ok(!/--font-(wide|tech|accent)\b/.test(css) && /--font-display:\s*"Geist Variable"/.test(css), "index.css: una sola familia para la portada (--font-display, Geist)");
+// Desde el 2026-11-16 la portada usa la letra de la app, Geist Mono (pedido del dueño), y sólo el logotipo va en Geist
+// (--font-brand): ninguna otra se carga para ella.
+ok(
+  !/--font-(wide|tech|accent)\b/.test(css) && /--font-display:\s*"Geist Mono Variable"/.test(css) && /--font-brand:\s*"Geist Variable"/.test(css),
+  "index.css: la letra de la app para la portada (--font-display, Geist Mono) y Geist sólo en el logotipo (--font-brand)",
+);
 const fontImports = all.flatMap(({ source }) => [...source.matchAll(/import "@fontsource[^"]+"/g)].map((match) => match[0]));
 ok(fontImports.length === 0, "la portada y las páginas por especialidad no cargan otra letra", fontImports);
 

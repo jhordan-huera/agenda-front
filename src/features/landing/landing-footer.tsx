@@ -48,7 +48,7 @@ export function LandingFooter({ signup }: { signup: SignupContact }) {
     <footer className={cn(CONTAINER, "mt-24 sm:mt-32")}>
       <div className="grid gap-10 border-t border-border pt-12 pb-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))] lg:gap-8">
         <div className="sm:col-span-2 lg:col-span-1">
-          <Link to="/" className="font-display inline-flex items-center gap-2.5 rounded-lg text-xl font-extrabold tracking-[-0.02em] outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+          <Link to="/" className="font-brand inline-flex items-center gap-2.5 rounded-lg text-xl font-extrabold tracking-[-0.02em] outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
             <BrandMark className="size-8" />
             {APP_NAME}
           </Link>
