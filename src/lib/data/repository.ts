@@ -506,19 +506,22 @@ export interface LoyaltyRepository {
   complete(businessId: string, input: { token: string; appointmentId: string }): Promise<ScanResult>;
   /** El enlace de un solo uso para que el paciente cree otra contraseña (con el teléfono para el WhatsApp). */
   resetLink(businessId: string, clientId: string): Promise<PatientResetLink>;
+  /** «Desunir la cuenta»: la ficha conserva sus sellos; la cuenta deja de ver esta tarjeta. */
+  unlink(businessId: string, clientId: string): Promise<{ unlinked: true }>;
 }
 
 /** La cuenta del paciente (spec 052): /api/patient, con su propia cookie, aparte de la sesión del equipo. */
 export interface PatientRepository {
   config(): Promise<{ captchaSiteKey: string | null }>;
   signup(input: { name: string; phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
-  login(input: { phone: string; password: string }): Promise<PatientAccount>;
+  login(input: { phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
   logout(): Promise<void>;
   me(): Promise<PatientAccount>;
   cards(): Promise<PatientCard[]>;
   newQr(): Promise<PatientAccount>;
   changePassword(input: { currentPassword: string; newPassword: string }): Promise<void>;
-  deleteAccount(): Promise<void>;
+  /** Pide la contraseña de la cuenta. */
+  deleteAccount(password: string): Promise<void>;
   resetInfo(token: string): Promise<{ valid: boolean; firstName: string | null }>;
   resetPassword(token: string, password: string): Promise<PatientAccount>;
 }

@@ -2602,6 +2602,11 @@ export interface ScanAppointment {
   professionalName: string;
   startTime: TimeString;
   status: AppointmentStatus;
+  /**
+   * El teléfono de la ficha es el de la cuenta (normalizado): la señal para elegir quién es al unir. El nombre no
+   * sirve: lo escribe el dueño de la cuenta (revisión de seguridad de la spec 052).
+   */
+  phoneMatches: boolean;
 }
 
 /**
@@ -2609,7 +2614,13 @@ export interface ScanAppointment {
  * elegir quién es; si ya está unida, el paciente y sus citas de hoy.
  */
 export type ScanResult =
-  | { status: "unlinked"; accountName: string; appointments: ScanAppointment[] }
+  | {
+      status: "unlinked";
+      accountName: string;
+      /** Los 4 últimos dígitos del teléfono de la cuenta, para comparar con la ficha. */
+      accountPhoneEnd: string;
+      appointments: ScanAppointment[];
+    }
   | { status: "linked"; clientId: string; clientName: string; appointments: ScanAppointment[] };
 
 /** El enlace de un solo uso para que el paciente cree otra contraseña, con el teléfono para el WhatsApp. */

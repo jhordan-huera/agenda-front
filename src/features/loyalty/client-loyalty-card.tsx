@@ -1,4 +1,4 @@
-import { Gift, KeyRound, Smartphone, Ticket } from "lucide-react";
+import { Gift, KeyRound, Smartphone, Ticket, Unlink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { usePermissions } from "@/features/auth/use-permissions";
-import { useClientLoyalty, usePatientResetLink } from "@/hooks/queries/use-loyalty";
+import { useClientLoyalty, usePatientResetLink, useUnlinkPatientAccount } from "@/hooks/queries/use-loyalty";
 import { LOYALTY_LEVELS, PATIENT_RESET_HOURS, describeBenefit, formatRewardCode } from "@/lib/constants/loyalty";
 import { getErrorMessage } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,18 @@ export function ClientLoyaltyCard({ client, business }: { client: Client; busine
   const [redeeming, setRedeeming] = useState<LoyaltyReward | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmUnlink, setConfirmUnlink] = useState(false);
   const resetLink = usePatientResetLink();
+  const unlink = useUnlinkPatientAccount();
+  const unlinkAccount = async () => {
+    try {
+      await unlink.mutateAsync(client.id);
+      toast.success("Desunimos la cuenta de esta ficha.");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+      throw error;
+    }
+  };
 
   const loyalty = query.data;
   if (!loyalty) return null;
@@ -126,11 +137,23 @@ export function ClientLoyaltyCard({ client, business }: { client: Client; busine
               <KeyRound /> Enlace para cambiar la contraseña
             </Button>
             <p className="mt-1.5 text-xs text-muted-foreground">Si olvidó su contraseña: se lo envías por WhatsApp a su cuenta.</p>
+            <Button variant="ghost" size="sm" className="mt-2" onClick={() => setConfirmUnlink(true)}>
+              <Unlink /> Desunir la cuenta
+            </Button>
           </div>
         )}
       </CardContent>
 
       <RedeemRewardDialog reward={redeeming} onOpenChange={(open) => !open && setRedeeming(null)} />
+      <ConfirmDialog
+        open={confirmUnlink}
+        onOpenChange={setConfirmUnlink}
+        title="¿Desunir la cuenta de esta ficha?"
+        description="Si se unió a la ficha equivocada. La ficha conserva sus sellos y sus premios; la cuenta deja de ver esta tarjeta hasta que vuelvas a escanear su QR. Queda en la actividad."
+        confirmLabel="Desunir la cuenta"
+        destructive
+        onConfirm={unlinkAccount}
+      />
       <ConfirmDialog
         open={confirmReset}
         onOpenChange={setConfirmReset}

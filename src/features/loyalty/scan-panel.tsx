@@ -13,7 +13,6 @@ import { useAgendas } from "@/features/professionals/use-agendas";
 import { useCompleteScan, useLinkScan, useScanQr } from "@/hooks/queries/use-loyalty";
 import { readQrToken } from "@/lib/constants/loyalty";
 import { getErrorMessage } from "@/lib/data";
-import { normalizeSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ScanAppointment, ScanResult } from "@/types";
 import { createQrDetector, type QrDetector } from "./qr-detector";
@@ -293,7 +292,11 @@ function QrReader({ onToken }: { onToken: (token: string) => void }) {
 
 const isOpen = (appointment: ScanAppointment) => appointment.status === "pending" || appointment.status === "confirmed";
 
-/** La primera vez: quién es, entre las citas de hoy. Los del mismo nombre que la cuenta, primero (sin elegirlos solos). */
+/**
+ * La primera vez: quién es, entre las citas de hoy. Las fichas con el mismo teléfono que la cuenta, primero (sin
+ * elegirlas solas): el nombre de la cuenta lo escribe quien la creó, el teléfono es con el que entra (revisión de
+ * seguridad de la spec 052).
+ */
 function ChoosePatient({
   token,
   result,
@@ -308,8 +311,7 @@ function ChoosePatient({
   const [chosen, setChosen] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const keyOf = (appointment: ScanAppointment) => `${appointment.id}:${appointment.clientId}`;
-  const sameName = (appointment: ScanAppointment) => normalizeSearch(appointment.clientName) === normalizeSearch(result.accountName);
-  const rows = [...result.appointments].sort((a, b) => Number(sameName(b)) - Number(sameName(a)));
+  const rows = [...result.appointments].sort((a, b) => Number(b.phoneMatches) - Number(a.phoneMatches));
   const selected = rows.find((appointment) => keyOf(appointment) === chosen) ?? null;
 
   const submit = async () => {
@@ -330,7 +332,8 @@ function ChoosePatient({
         <h3 className="text-base font-semibold">¿Quién es {result.accountName}?</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Es la primera vez que escaneas su QR aquí. Elige su cita de hoy: su cuenta queda unida a esa ficha y desde entonces
-          ve su tarjeta.
+          ve su tarjeta. Su cuenta es del teléfono terminado en {result.accountPhoneEnd}: confírmalo con el paciente si no
+          coincide con el de la ficha.
         </p>
       </div>
       {rows.length === 0 ? (
@@ -369,7 +372,7 @@ function ChoosePatient({
                   <span className="block text-xs text-muted-foreground">
                     {appointment.serviceName}
                     {agendas.multiple && ` · ${appointment.professionalName}`}
-                    {sameName(appointment) && " · mismo nombre que la cuenta"}
+                    {appointment.phoneMatches ? " · mismo teléfono que la cuenta" : " · otro teléfono"}
                   </span>
                 </span>
                 <StatusBadge status={appointment.status} />

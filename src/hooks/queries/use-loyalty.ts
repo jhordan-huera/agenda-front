@@ -197,6 +197,20 @@ export function useCompleteScan() {
 }
 
 /** «Enlace para cambiar la contraseña»: de un solo uso, vence en 24 horas y queda en la actividad. */
+/** «Desunir la cuenta» de la ficha (revisión de seguridad): la tarjeta de la ficha y la actividad se ponen al día. */
+export function useUnlinkPatientAccount() {
+  const businessId = useBusinessId();
+  const queryClient = useQueryClient();
+  const invalidateActivity = useInvalidateActivity();
+  return useMutation({
+    mutationFn: (clientId: string) => data.loyalty.unlink(businessId, clientId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.loyalty.all(businessId) });
+      invalidateActivity();
+    },
+  });
+}
+
 export function usePatientResetLink() {
   const businessId = useBusinessId();
   const invalidateActivity = useInvalidateActivity();

@@ -33,6 +33,8 @@ export function PatientSettingsSheet({
   const { setAccount, updateAccount, run } = usePatientSession();
   const [confirm, setConfirm] = useState<"qr" | "delete" | null>(null);
   const [leaving, setLeaving] = useState(false);
+  // Eliminar la cuenta pide la contraseña (revisión de seguridad): con una sesión olvidada abierta, nadie la borra.
+  const [deletePassword, setDeletePassword] = useState("");
 
   const newQr = async () => {
     try {
@@ -46,7 +48,8 @@ export function PatientSettingsSheet({
 
   const deleteAccount = async () => {
     try {
-      await run(() => data.patient.deleteAccount());
+      if (!deletePassword) throw new Error("Escribe tu contraseña para eliminar la cuenta.");
+      await run(() => data.patient.deleteAccount(deletePassword));
     } catch (error) {
       toast.error(getErrorMessage(error));
       throw error;
@@ -138,9 +141,32 @@ export function PatientSettingsSheet({
       />
       <ConfirmDialog
         open={confirm === "delete"}
-        onOpenChange={(next) => !next && setConfirm(null)}
+        onOpenChange={(next) => {
+          if (!next) {
+            setConfirm(null);
+            setDeletePassword("");
+          }
+        }}
         title="¿Eliminar tu cuenta?"
-        description="Se borran tu cuenta y tu QR, y ya no podrás ver tu tarjeta. Tus consultorios conservan tu ficha, tus sellos y tus premios como parte de sus registros. Si después creas otra cuenta, tu consultorio tendrá que escanear tu QR nuevo."
+        description={
+          <>
+            Se borran tu cuenta y tu QR, y ya no podrás ver tu tarjeta. Tus consultorios conservan tu ficha, tus sellos y tus
+            premios como parte de sus registros. Si después creas otra cuenta, tu consultorio tendrá que escanear tu QR nuevo.
+            <span className="mt-3 block text-left">
+              <FormField label="Tu contraseña">
+                {(field) => (
+                  <PasswordInput
+                    {...field}
+                    className="h-11"
+                    autoComplete="current-password"
+                    value={deletePassword}
+                    onChange={(event) => setDeletePassword(event.target.value)}
+                  />
+                )}
+              </FormField>
+            </span>
+          </>
+        }
         confirmLabel="Eliminar la cuenta"
         destructive
         onConfirm={deleteAccount}

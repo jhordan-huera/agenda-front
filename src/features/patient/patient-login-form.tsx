@@ -5,6 +5,8 @@ import { PasswordInput } from "@/components/shared/password-input";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Input } from "@/components/ui/input";
 import { FORM_ALERT } from "@/features/auth/auth-styles";
+import { CAPTCHA_BOX_CLASS, useCaptcha } from "@/features/booking/use-captcha";
+import { usePatientConfig } from "@/hooks/queries/use-patient-account";
 import { data, getErrorMessage } from "@/lib/data";
 import { patientLoginSchema } from "@/lib/validations/loyalty";
 import { validate, type FieldErrors } from "@/lib/validations/validate";
@@ -25,6 +27,9 @@ export function PatientLoginForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // El CAPTCHA también al entrar (revisión de seguridad): sin él, un programa prueba contraseñas contra muchos teléfonos.
+  const config = usePatientConfig();
+  const { containerRef: captchaRef, getToken: getCaptchaToken } = useCaptcha(config.data?.captchaSiteKey ?? null);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -34,7 +39,7 @@ export function PatientLoginForm({
     if (!result.success) return;
     setPending(true);
     try {
-      onSignedIn(await data.patient.login({ phone: result.data.phone, password: result.data.password }));
+      onSignedIn(await data.patient.login({ phone: result.data.phone, password: result.data.password, captchaToken: await getCaptchaToken() }));
     } catch (error) {
       setFormError(getErrorMessage(error));
       setPending(false);
@@ -78,9 +83,13 @@ export function PatientLoginForm({
           />
         )}
       </FormField>
-      <SubmitButton size="lg" className="h-11 w-full text-base" loading={pending} loadingText="Entrando…">
-        Entrar
-      </SubmitButton>
+      <div>
+        {/* Sólo ocupa espacio si Cloudflare pide marcar la casilla. */}
+        <div ref={captchaRef} className={CAPTCHA_BOX_CLASS} />
+        <SubmitButton size="lg" className="h-11 w-full text-base" loading={pending} disabled={config.isPending} loadingText="Entrando…">
+          Entrar
+        </SubmitButton>
+      </div>
       <p className="text-sm text-muted-foreground">
         ¿Olvidaste tu contraseña? Pídele a tu consultorio un enlace para crear otra.
       </p>

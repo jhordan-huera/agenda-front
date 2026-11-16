@@ -329,6 +329,7 @@ export const apiRepository: DataRepository = {
     complete: (businessId, input) => api.post<ScanResult>(`${business(businessId)}/scan/complete`, input),
     resetLink: (businessId, clientId) =>
       api.post<PatientResetLink>(`${business(businessId)}/clients/${id(clientId)}/patient-reset-link`),
+    unlink: (businessId, clientId) => api.post<{ unlinked: true }>(`${business(businessId)}/clients/${id(clientId)}/patient-unlink`),
   },
 
   patient: {
@@ -340,7 +341,7 @@ export const apiRepository: DataRepository = {
     cards: () => api.get<PatientCard[]>("/patient/cards"),
     newQr: () => api.post<PatientAccount>("/patient/qr"),
     changePassword: (input) => api.put<void>("/patient/password", input),
-    deleteAccount: () => api.delete<void>("/patient/account"),
+    deleteAccount: (password) => api.delete<void>("/patient/account", { password }),
     resetInfo: (token) => api.get<{ valid: boolean; firstName: string | null }>(`/patient/reset/${id(token)}`),
     resetPassword: (token, password) => api.post<PatientAccount>(`/patient/reset/${id(token)}`, { password }),
   },
