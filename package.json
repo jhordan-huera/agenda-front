@@ -20,7 +20,8 @@
     "check:waitlist": "node scripts/check-waitlist.ts",
     "check:specialties": "node scripts/check-specialties.ts",
     "check:surveys": "node scripts/check-surveys.ts",
-    "check:control-reminders": "node scripts/check-control-reminders.ts"
+    "check:control-reminders": "node scripts/check-control-reminders.ts",
+    "check:loyalty": "node scripts/check-loyalty.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
@@ -30,6 +31,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.11.1",
     "@vercel/speed-insights": "^2.1.0",
+    "barcode-detector": "3.2.3",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
     "date-fns": "^4.4.0",

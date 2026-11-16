@@ -7,6 +7,7 @@ import {
   ConciergeBell,
   Contact,
   CreditCard,
+  Gift,
   History,
   LayoutDashboard,
   Settings,
@@ -38,6 +39,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard/professionals", label: "Profesionales", icon: Contact, permission: "professionals.manage", multiAgenda: true },
   { to: "/dashboard/schedule", label: "Horarios", icon: Clock, permission: "schedule.manage" },
   { to: "/dashboard/reports", label: "Reportes", icon: BarChart3, permission: "reports.view" },
+  // La tarjeta de fidelización (spec 052): el propietario y los administradores.
+  { to: "/dashboard/fidelizacion", label: "Fidelización", icon: Gift, permission: "loyalty.manage" },
   { to: "/dashboard/settings", label: "Configuración", icon: Settings },
 ];
 

@@ -23,6 +23,7 @@ import { PlanLimitBanner } from "@/features/dashboard/plan-limit-banner";
 import { TodayList } from "@/features/dashboard/today-list";
 import { WeekBars } from "@/features/dashboard/week-bars";
 import { InstallAppCard } from "@/features/install/install-app";
+import { ScanButton } from "@/features/loyalty/scan-dialog";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
 import { useAgendas } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness, useCurrentUser, usePlanUsage } from "@/hooks/queries/use-account";
@@ -126,7 +127,8 @@ export default function DashboardPage() {
       <PageTitle title="Inicio" />
       <PageHeader
         title={capitalize(formatDate(now.date, "EEEE d 'de' MMMM"))}
-        description={ready ? summary : "…"}
+        // Con su ancho, los botones caben en una fila (con «Escanear», spec 052).
+        description={<span className="block max-w-lg">{ready ? summary : "…"}</span>}
         actions={
           <>
             {can("schedule.manage") && (
@@ -137,6 +139,8 @@ export default function DashboardPage() {
             <Button variant="outline" size="lg" onClick={() => setQuickDialog("client")}>
               <UserPlus /> Nuevo cliente
             </Button>
+            {/* El QR de la tarjeta del paciente (spec 052): marca su cita de hoy como atendida. */}
+            {can("appointments.manage") && <ScanButton compact />}
             <Button size="lg" onClick={() => dialogs.openCreate()}>
               <CalendarPlus /> Nueva cita
             </Button>

@@ -243,6 +243,43 @@ export function buildControlWhatsAppMessage(data: { clientName: string; business
   return `${hello}, te escribimos de ${data.businessName}. Ya es momento de tu control de ${data.serviceName}. Puedes elegir tu hora aquí: ${data.bookingUrl}`;
 }
 
+/**
+ * Tarjeta de fidelización (spec 052), «Pacientes» de Fidelización: cuánto le falta para su próximo premio y, si tiene,
+ * los premios por canjear. Se puede editar en WhatsApp antes de enviarlo.
+ */
+export function buildLoyaltyWhatsAppMessage(data: {
+  clientName: string;
+  businessName: string;
+  programName: string;
+  stamps: number;
+  next: { name: string; missing: number } | null;
+  availableRewards: number;
+  bookingUrl: string;
+}): string {
+  const name = data.clientName.trim().split(/\s+/)[0] ?? "";
+  const hello = name ? `Hola ${name}` : "Hola";
+  const card = `tu tarjeta «${data.programName}»`;
+  const prizes = data.availableRewards === 1 ? "1 premio" : `${data.availableRewards} premios`;
+  let body: string;
+  if (data.next) {
+    const missing = data.next.missing === 1 ? "Te falta 1 cita" : `Te faltan ${data.next.missing} citas`;
+    body = `${missing} para ganar «${data.next.name}» en ${card}.`;
+    if (data.availableRewards > 0) body += ` Y ya tienes ${prizes} por canjear en tu próxima cita.`;
+  } else if (data.availableRewards > 0) {
+    body = `Tienes ${prizes} por canjear en ${card}: ${data.availableRewards === 1 ? "úsalo" : "úsalos"} en tu próxima cita.`;
+  } else {
+    body = `Gracias por tus visitas: llevas ${data.stamps === 1 ? "1 sello" : `${data.stamps} sellos`} en ${card}.`;
+  }
+  return `${hello}, te escribimos de ${data.businessName}. ${body} Puedes elegir tu hora aquí: ${data.bookingUrl}`;
+}
+
+/** El enlace para que el paciente cree otra contraseña de su cuenta (spec 052): de un solo uso y por unas horas. */
+export function buildPatientResetWhatsAppMessage(data: { clientName: string; businessName: string; url: string; hours: number }): string {
+  const name = data.clientName.trim().split(/\s+/)[0] ?? "";
+  const hello = name ? `Hola ${name}` : "Hola";
+  return `${hello}, te escribimos de ${data.businessName}. Para crear una contraseña nueva para tu tarjeta de fidelización, abre este enlace: ${data.url} Sirve una sola vez y vence en ${data.hours} horas.`;
+}
+
 /** Mensaje de WhatsApp al cliente según el cambio de su cita; el profesional lo revisa antes de enviarlo. */
 export function buildAppointmentNotice(kind: AppointmentNoticeKind, data: AppointmentNoticeData): string {
   const name = data.clientName.trim().split(/\s+/)[0] ?? "";

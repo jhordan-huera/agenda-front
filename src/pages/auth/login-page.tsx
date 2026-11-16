@@ -20,10 +20,19 @@ export default function LoginPage() {
         }
       />
       <LoginForm />
-      {/* Los pacientes a veces llegan aquí buscando cómo reservar: no necesitan cuenta. Aparte, bajo una línea: es para otra persona. */}
-      <p className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground">
-        ¿Vienes a reservar una cita? No necesitas cuenta: usa el enlace que te compartió tu profesional.
-      </p>
+      {/*
+        Los pacientes a veces llegan aquí buscando cómo reservar (no necesitan cuenta) o su tarjeta de fidelización (su
+        cuenta es otra, spec 052). Aparte, bajo una línea: es para otra persona.
+      */}
+      <div className="mt-8 space-y-2 border-t border-border pt-6 text-sm text-muted-foreground">
+        <p>¿Vienes a reservar una cita? No necesitas cuenta: usa el enlace que te compartió tu profesional.</p>
+        <p>
+          ¿Tienes tarjeta de fidelización?{" "}
+          <Link to="/mi-tarjeta" className={AUTH_LINK}>
+            Entra aquí
+          </Link>
+        </p>
+      </div>
     </>
   );
 }

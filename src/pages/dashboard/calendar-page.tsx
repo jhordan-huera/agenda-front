@@ -34,6 +34,7 @@ import { useAgendas } from "@/features/professionals/use-agendas";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
 import { ControlRemindersSheet } from "@/features/control-reminders/control-reminders-sheet";
+import { ScanButton } from "@/features/loyalty/scan-dialog";
 import { WaitlistSheet } from "@/features/waitlist/waitlist-sheet";
 import { useControlReminders } from "@/hooks/queries/use-control-reminders";
 import { useCloseWaitlistEntry, useWaitlist } from "@/hooks/queries/use-waitlist";
@@ -237,7 +238,10 @@ export default function CalendarPage() {
       <PageHeader
         title="Agenda"
         description={
-          agendas.multiple ? "Las citas de todos los profesionales, por día, semana, mes o en el tablero." : "Gestiona tus citas por día, semana, mes o en el tablero."
+          // Con su ancho, los botones caben en una fila (con «Escanear», spec 052).
+          <span className="block max-w-lg">
+            {agendas.multiple ? "Las citas de todos los profesionales, por día, semana, mes o en el tablero." : "Gestiona tus citas por día, semana, mes o en el tablero."}
+          </span>
         }
         actions={
           <>
@@ -261,6 +265,8 @@ export default function CalendarPage() {
                 <CalendarOff /> Bloquear horario
               </Button>
             )}
+            {/* El QR de la tarjeta del paciente (spec 052): marca su cita de hoy como atendida. */}
+            {can("appointments.manage") && <ScanButton compact />}
             <Button
               size="lg"
               onClick={() =>

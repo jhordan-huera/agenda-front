@@ -111,6 +111,7 @@ import type {
   PatientCard,
   PatientResetLink,
   ScanResult,
+  SocialLinks,
   ClientActivity,
   PendingPaymentsSummary,
   ClientImportResult,
@@ -185,6 +186,8 @@ export interface UpdateBusinessInput extends Partial<BusinessProfileInput> {
   brandColors?: BrandColors | null;
   /** Qué pacientes ve quien tiene el rol Profesional. */
   professionalScope?: ProfessionalScope;
+  /** Las redes del negocio (spec 052), ya como enlaces; sin el campo, no se tocan. */
+  socialLinks?: SocialLinks;
 }
 
 export interface BusinessRepository {

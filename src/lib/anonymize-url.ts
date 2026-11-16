@@ -11,9 +11,12 @@
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 /** Tokens de los enlaces privados (el de pago, /pago/<32 hex>): quien los tiene entra sin sesión. */
 const TOKEN = /\b[0-9a-f]{16,}\b/gi;
+/** El enlace para crear otra contraseña del paciente (spec 052) no es hexadecimal: se tapa por su ruta. */
+const PATIENT_RESET = /^\/mi-tarjeta\/clave\/[^/]+/;
 
 /** La página para la analítica (ver arriba). */
-export const anonymizePath = (pathname: string) => pathname.replace(UUID, "[id]").replace(TOKEN, "[token]");
+export const anonymizePath = (pathname: string) =>
+  pathname.replace(PATIENT_RESET, "/mi-tarjeta/clave/[token]").replace(UUID, "[id]").replace(TOKEN, "[token]");
 
 /** La dirección entera para la analítica: la página limpia, sin parámetros ni `#`. */
 export function anonymizeUrl(value: string): string {

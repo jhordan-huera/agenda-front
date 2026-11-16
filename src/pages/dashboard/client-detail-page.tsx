@@ -47,6 +47,7 @@ import { getClientSummary, summarizeByClient } from "@/features/clients/client-s
 import { DeleteClientDialog } from "@/features/clients/delete-client-dialog";
 import { clientMissingFields, missingDataText } from "@/features/clients/missing-fields";
 import { ClientControls } from "@/features/control-reminders/client-controls";
+import { ClientLoyaltyCard } from "@/features/loyalty/client-loyalty-card";
 import { PendingPaymentsCard } from "@/features/payments/pending-payments-card";
 import { PatientFeedbackCard } from "@/features/reports/patient-feedback-card";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
@@ -299,6 +300,8 @@ export default function ClientDetailPage() {
             </CardContent>
           </Card>
           <ClientNotesCard client={client} />
+          {/* La tarjeta de fidelización (spec 052): al final, para que nada salte cuando llega. */}
+          {business && <ClientLoyaltyCard client={client} business={business} />}
         </div>
       </div>
     </>

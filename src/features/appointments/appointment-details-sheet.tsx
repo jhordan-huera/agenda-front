@@ -39,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/features/auth/use-session";
 import { ClinicalNoteDialog } from "@/features/clinical/clinical-note-dialog";
 import { useClinicalAccess, useClinicalSupportBlocked } from "@/features/clinical/use-clinical-access";
+import { AppointmentRewards } from "@/features/loyalty/appointment-rewards";
 import { ProfessionalDot } from "@/features/professionals/professional-select";
 import { meetingUrlPlace, useAgendas, useMultiAgendaAccess } from "@/features/professionals/use-agendas";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
@@ -349,6 +350,14 @@ function AppointmentDetails({
             )}
           </Button>
         )}
+
+        {/* Tarjeta de fidelización (spec 052): «Tiene 1 premio disponible», antes de cobrar. */}
+        <AppointmentRewards
+          appointment={appointment}
+          patients={patients.filter((patient) => !patient.restricted)}
+          currency={business?.currency}
+          timezone={business?.timezone ?? DEFAULT_TIMEZONE}
+        />
 
         <AppointmentPayment
           appointment={appointment}

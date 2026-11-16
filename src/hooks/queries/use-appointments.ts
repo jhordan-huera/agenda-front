@@ -175,6 +175,8 @@ function useInvalidateAppointments() {
       invalidateActivity(),
       // Una cita nueva o un cambio de estado cambia quién tiene un control (spec 051).
       queryClient.invalidateQueries({ queryKey: ["control-reminders", businessId] }),
+      // Una cita atendida (o corregida) suma o quita sellos de la tarjeta de fidelización (spec 052).
+      queryClient.invalidateQueries({ queryKey: queryKeys.loyalty.all(businessId) }),
     ]);
 }
 

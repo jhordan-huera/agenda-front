@@ -62,6 +62,19 @@ export const queryKeys = {
   controlReminders: (businessId: string, clientId?: string) => ["control-reminders", businessId, clientId ?? "all"] as const,
   /** La página del enlace del recordatorio de control (spec 051). */
   publicControlReminder: (token: string) => ["public-control-reminder", token] as const,
+  /**
+   * La tarjeta de fidelización (spec 052): «Fidelización», la ficha y la cita. Todo cuelga de `all`: un canje, una
+   * cita atendida o un beneficio nuevo lo ponen al día de una vez.
+   */
+  loyalty: {
+    all: (businessId: string) => ["loyalty", businessId] as const,
+    program: (businessId: string) => ["loyalty", businessId, "program"] as const,
+    benefits: (businessId: string) => ["loyalty", businessId, "benefits"] as const,
+    members: (businessId: string) => ["loyalty", businessId, "members"] as const,
+    rewards: (businessId: string, filters: object) => ["loyalty", businessId, "rewards", filters] as const,
+    summary: (businessId: string) => ["loyalty", businessId, "summary"] as const,
+    client: (businessId: string, clientId: string) => ["loyalty", businessId, "client", clientId] as const,
+  },
   /** Site Key del CAPTCHA del registro. */
   captchaSiteKey: ["captcha-site-key"] as const,
   platformSettings: ["platform-settings"] as const,
