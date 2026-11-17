@@ -9,6 +9,7 @@ import { BrandPaletteContext } from "@/features/branding/brand-palette-context";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { usePatientInvite } from "@/hooks/queries/use-patient-account";
 import { patientInviteUrl } from "@/lib/constants/loyalty";
+import { publicOrigin } from "@/lib/public-url";
 import {
   AGENDA360_MARK,
   canvasToPng,
@@ -54,7 +55,7 @@ export function PatientInviteDialog({ open, onOpenChange }: { open: boolean; onO
   const invite = usePatientInvite(open && business ? business.slug : null);
   const colors = sheetColors(useContext(BrandPaletteContext));
   const [pending, setPending] = useState(false);
-  const url = business ? patientInviteUrl(window.location.origin, business.slug) : "";
+  const url = business ? patientInviteUrl(publicOrigin(), business.slug) : "";
   const logo = business?.logoUrl ?? null;
   const programName = invite.data?.programName ?? null;
 
@@ -102,6 +103,12 @@ export function PatientInviteDialog({ open, onOpenChange }: { open: boolean; onO
               {displayUrl(url)}
             </p>
           </div>
+        )}
+        {invite.data && !invite.data.programName && (
+          <p role="status" className="rounded-lg bg-muted/60 p-3 text-sm">
+            <span className="font-medium">Tu tarjeta está apagada.</span> Tus pacientes pueden crear su cuenta, pero no verán su
+            tarjeta ni sumarán sellos hasta que la enciendas en Fidelización.
+          </p>
         )}
         <p className="text-xs text-muted-foreground">
           Después de crear su cuenta, escanea el QR de su cuenta en su próxima cita para unirla a su ficha: desde ahí suma

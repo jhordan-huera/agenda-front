@@ -177,6 +177,13 @@ const { patientInviteUrl } = await import("../src/lib/constants/loyalty.ts");
 ok(patientInviteUrl("https://agenda360.app/", "clinica-sonrisa") === "https://agenda360.app/mi-tarjeta?consultorio=clinica-sonrisa", "«Mi tarjeta» con el consultorio", patientInviteUrl("https://agenda360.app/", "clinica-sonrisa"));
 ok(readQrToken(patientInviteUrl("https://agenda360.app", "clinica-sonrisa")) === null, "«Escanear» no lo confunde con el QR de un paciente");
 
+console.log("\nRevisión del 2026-11-16");
+ok(normalizePhone("+593 099 123 4567") === "+593991234567", "«+593 099…»: sin el 0 del número local", normalizePhone("+593 099 123 4567"));
+ok(normalizePhone("5930991234567") === "+593991234567", "y «5930…» igual");
+const { startsSoon } = await import("../src/lib/constants/loyalty.ts");
+ok(startsSoon("10:00", 9 * 60) && startsSoon("10:00", 9 * 60 + 30) && startsSoon("08:00", 15 * 60), "se marca sola desde una hora antes de su inicio (y las que ya empezaron)");
+ok(!startsSoon("16:00", 10 * 60) && !startsSoon("10:01", 9 * 60), "no la de más tarde");
+
 if (failures) {
   console.error(`\n${failures} comprobación(es) fallaron`);
   process.exit(1);

@@ -133,7 +133,11 @@ export default defineConfig(({ mode }) => {
         : []),
       withoutSourceMaps(),
     ],
-    define: { "import.meta.env.VITE_RELEASE": JSON.stringify(release) },
+    define: {
+      "import.meta.env.VITE_RELEASE": JSON.stringify(release),
+      // La dirección pública para los QR y el enlace de reservas (src/lib/public-url.ts): sólo en lo que se publica.
+      "import.meta.env.VITE_PUBLIC_SITE_URL": JSON.stringify(mode === "production" ? siteUrlFrom(env) : ""),
+    },
     build: { sourcemap: sourceMaps ? "hidden" : false },
     // El worker de MapLibre es un módulo ES (ver src/components/shared/map-base.ts).
     worker: { format: "es" },

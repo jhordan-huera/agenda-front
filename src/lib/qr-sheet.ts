@@ -71,7 +71,8 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
 /** El lado de la placa del logo, en proporción al QR: con la corrección alta (30 %) se lee igual. */
 export const LOGO_PLATE_RATIO = 0.24;
 
-const encodeFor = (url: string, withLogo: boolean) => encode(url, { border: 0, ecc: withLogo ? "H" : "M" });
+// Sin logo, la corrección de errores de siempre de uqr («L», que sube sola si cabe): el PNG igual que la vista previa.
+const encodeFor = (url: string, withLogo: boolean) => encode(url, withLogo ? { border: 0, ecc: "H" } : { border: 0 });
 
 /** El lado real del QR de `url` en un espacio de `maxSize` px (módulos enteros: queda un poco más chico). */
 export function qrSide(url: string, maxSize: number, withLogo: boolean): number {

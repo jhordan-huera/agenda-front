@@ -18,9 +18,11 @@ import { PATIENT_INVITE_PARAM } from "@/lib/constants/loyalty";
 export default function PatientCardPage() {
   const accountQuery = usePatientAccount();
   const [searchParams] = useSearchParams();
-  const invite = usePatientInvite(searchParams.get(PATIENT_INVITE_PARAM)).data ?? null;
+  const inviteQuery = usePatientInvite(searchParams.get(PATIENT_INVITE_PARAM));
+  const invite = inviteQuery.data ?? null;
 
-  if (accountQuery.isPending) {
+  // Con el QR del consultorio, también se espera su nombre y su logo: la página no salta ni borra lo ya escrito.
+  if (accountQuery.isPending || (inviteQuery.isPending && inviteQuery.fetchStatus !== "idle" && !accountQuery.data)) {
     return (
       <PatientShell business={null}>
         <PageTitle title="Mi tarjeta" />
@@ -48,7 +50,7 @@ export default function PatientCardPage() {
       <BrandThemeProvider colors={invite?.brandColors ?? null}>
         <PatientShell business={invite}>
           <PageTitle title="Mi tarjeta" />
-          <PatientAuth key={invite ? "invitado" : "directo"} invite={invite} />
+          <PatientAuth invite={invite} />
         </PatientShell>
       </BrandThemeProvider>
     );

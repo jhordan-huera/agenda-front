@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { patientQrUrl } from "@/lib/constants/loyalty";
+import { publicOrigin } from "@/lib/public-url";
 import { cn } from "@/lib/utils";
 import type { PatientAccount } from "@/types";
 
@@ -13,7 +14,7 @@ import type { PatientAccount } from "@/types";
  */
 export function PatientQrImage({ token, className }: { token: string; className?: string }) {
   const src = useMemo(() => {
-    const svg = renderSVG(patientQrUrl(window.location.origin, token), {
+    const svg = renderSVG(patientQrUrl(publicOrigin(), token), {
       ecc: "M",
       border: 2,
       pixelSize: 10,

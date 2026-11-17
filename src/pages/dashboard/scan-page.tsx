@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { RequirePermission } from "@/components/layout/require-permission";
 import { PageHeader } from "@/components/shared/page-header";
@@ -17,7 +18,18 @@ export default function ScanPage() {
 
 function ScanPageContent() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const token = searchParams.get("qr");
+  const fromUrl = searchParams.get("qr");
+  // El ?qr= se guarda y se quita de la dirección: recargar o volver atrás no repite el escaneo, que puede dejar una
+  // cita atendida (revisión del 2026-11-16). Uno nuevo (otro /q/…) cambia el panel.
+  const [seen, setSeen] = useState(fromUrl);
+  const [linkToken, setLinkToken] = useState(fromUrl);
+  if (fromUrl !== seen) {
+    setSeen(fromUrl);
+    if (fromUrl) setLinkToken(fromUrl);
+  }
+  useEffect(() => {
+    if (fromUrl) setSearchParams({}, { replace: true });
+  }, [fromUrl, setSearchParams]);
 
   return (
     <div className="space-y-6">
@@ -29,14 +41,7 @@ function ScanPageContent() {
       />
       <Card className="max-w-md">
         <CardContent>
-          <ScanPanel
-            // Con otro ?qr= (otro escaneo con la cámara del celular), se busca de nuevo.
-            key={token ?? "camera"}
-            initialToken={token}
-            onReset={() => {
-              if (token) setSearchParams({}, { replace: true });
-            }}
-          />
+          <ScanPanel key={linkToken ?? "camera"} initialToken={linkToken} onReset={() => setLinkToken(null)} />
         </CardContent>
       </Card>
     </div>

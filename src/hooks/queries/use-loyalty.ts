@@ -192,7 +192,10 @@ export function useScanQr() {
   const afterScan = useAfterScan();
   return useMutation({
     mutationFn: (token: string) => data.loyalty.scan(businessId, token),
-    onSuccess: (result) => (result.status === "linked" && result.completedNow ? afterScan(result) : undefined),
+    // Sin esperar las recargas: el resultado se muestra enseguida.
+    onSuccess: (result) => {
+      if (result.status === "linked" && result.completedNow) void afterScan(result);
+    },
   });
 }
 
@@ -202,7 +205,9 @@ export function useLinkScan() {
   const afterScan = useAfterScan();
   return useMutation({
     mutationFn: (input: { token: string; appointmentId: string | null; clientId: string }) => data.loyalty.link(businessId, input),
-    onSuccess: (result) => afterScan(result),
+    onSuccess: (result) => {
+      void afterScan(result);
+    },
   });
 }
 
@@ -212,7 +217,9 @@ export function useScanNewClient() {
   const afterScan = useAfterScan();
   return useMutation({
     mutationFn: (input: { token: string; client: Omit<ClientInput, "phone" | "isActive"> }) => data.loyalty.newClient(businessId, input),
-    onSuccess: (result) => afterScan(result, true),
+    onSuccess: (result) => {
+      void afterScan(result, true);
+    },
   });
 }
 
@@ -222,7 +229,9 @@ export function useCompleteScan() {
   const afterScan = useAfterScan();
   return useMutation({
     mutationFn: (input: { token: string; appointmentId: string }) => data.loyalty.complete(businessId, input),
-    onSuccess: (result) => afterScan(result),
+    onSuccess: (result) => {
+      void afterScan(result);
+    },
   });
 }
 

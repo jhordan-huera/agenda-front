@@ -1,5 +1,5 @@
 import { AlertTriangle, CameraOff, Check, CircleCheck, ExternalLink, Loader2, RotateCw, ScanQrCode, UserRoundCheck, UserRoundPlus } from "lucide-react";
-import { useEffect, useEffectEvent, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { FormField } from "@/components/shared/form-field";
@@ -22,18 +22,20 @@ import { createQrDetector, type QrDetector } from "./qr-detector";
 /**
  * «Escanear» (spec 052): la cámara lee el QR de la cuenta del paciente (o se pega su enlace). La primera vez en este
  * negocio se elige quién es (la ficha con su mismo teléfono, la de una cita de hoy o una ficha nueva) y la cuenta
- * queda unida a esa ficha. Al escanear, su única cita de hoy por atender queda atendida sola (pedido del dueño); con
- * varias, «Marcar como atendida» en la que corresponde. Lo usan el diálogo de la Agenda y de Inicio y la página
- * /dashboard/escanear (a la que lleva /q/:token con `?qr=`, p. ej. al leer el QR con la cámara del celular).
+ * queda unida a esa ficha. Al escanear, su cita de hoy queda atendida sola si es la única pendiente o confirmada, de
+ * un solo paciente y desde una hora antes de su inicio (decisiones del dueño); las demás, con «Marcar como atendida».
+ * Lo usan el diálogo de la Agenda y de Inicio y la página /dashboard/escanear (a la que lleva /q/:token con `?qr=`,
+ * p. ej. al leer el QR con la cámara del celular). Un QR que llega como enlace no se escanea solo: alguien del equipo
+ * confirma que el paciente está ahí (revisión de seguridad: si no, bastaba mandar el enlace por WhatsApp).
  */
 export function ScanPanel({
   initialToken,
   onReset,
   onNavigate,
 }: {
-  /** El token que trae la dirección (?qr=): se busca al abrir, sin la cámara. */
+  /** El token que trajo la dirección (?qr=): se busca después de confirmar que el paciente está ahí, sin la cámara. */
   initialToken?: string | null;
-  /** «Escanear otro» (la página quita el ?qr=). */
+  /** «Escanear otro» o «Usar la cámara» (la página olvida el token del enlace). */
   onReset?: () => void;
   /** Al ir a la ficha (el diálogo se cierra). */
   onNavigate?: () => void;
@@ -58,16 +60,9 @@ export function ScanPanel({
     }
   };
 
-  // El ?qr= de la dirección, una sola vez (la página cambia de panel si cambia el ?qr=). Mientras tanto, sin la
-  // cámara: no se pide permiso para nada.
+  // El token del enlace (?qr=): espera el toque «El paciente está aquí». Mientras tanto, sin la cámara: no se pide
+  // permiso para nada.
   const [initial, setInitial] = useState(() => (initialToken ? readQrToken(initialToken) : null));
-  const started = useRef(false);
-  const lookupInitial = useEffectEvent((value: string) => void lookup(value));
-  useEffect(() => {
-    if (started.current || !initial) return;
-    started.current = true;
-    lookupInitial(initial);
-  }, [initial]);
 
   const reset = () => {
     setInitial(null);
@@ -77,7 +72,11 @@ export function ScanPanel({
     onReset?.();
   };
 
-  if (scan.isPending || (initial && token === null && !error)) {
+  if (initial && token === null && !error && !scan.isPending) {
+    return <ConfirmLinkScan onConfirm={() => void lookup(initial)} onCancel={reset} />;
+  }
+
+  if (scan.isPending) {
     return (
       <div className="space-y-3" role="status" aria-label="Buscando al paciente">
         <Skeleton className="h-14 rounded-lg" />
@@ -116,6 +115,35 @@ export function ScanPanel({
   }
 
   return <QrReader onToken={(found) => void lookup(found)} />;
+}
+
+/**
+ * Un QR que llegó como enlace (la cámara del celular o un mensaje): se escanea sólo si el paciente está ahí. Escanear
+ * puede unir su cuenta y dejar su cita atendida.
+ */
+function ConfirmLinkScan({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3 rounded-lg border bg-muted/40 p-3 text-sm">
+        <ScanQrCode className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+        <div className="space-y-1">
+          <p className="font-medium">Abriste el QR de un paciente desde un enlace</p>
+          <p className="text-muted-foreground">
+            Escanéalo sólo si el paciente está frente a ti: puede unir su cuenta a su ficha y dejar su cita de hoy atendida.
+            No abras QR que te manden por mensaje.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={onConfirm}>
+          <UserRoundCheck /> El paciente está aquí: escanear
+        </Button>
+        <Button variant="outline" onClick={onCancel}>
+          Usar la cámara
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 /* ----------------------------------------------------------------- Leer el QR -- */
@@ -419,7 +447,7 @@ function ChoosePatient({
         <h3 className="text-base font-semibold">¿Quién es {result.accountName}?</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Es la primera vez que escaneas su QR aquí. Su cuenta es del teléfono terminado en {result.accountPhoneEnd}. Elige su
-          ficha: su cuenta queda unida y, si tiene una cita hoy por atender, queda atendida.
+          ficha: su cuenta queda unida y, si ya es la hora de su cita de hoy, queda atendida.
         </p>
       </div>
 
@@ -433,13 +461,15 @@ function ChoosePatient({
               <ChoiceRow
                 key={client.clientId}
                 checked={chosen === `c:${client.clientId}`}
-                disabled={client.linkedToOther}
+                disabled={client.linkedToOther || !client.isActive}
                 onSelect={() => setChosen(`c:${client.clientId}`)}
                 title={client.clientName}
                 detail={
                   client.linkedToOther
                     ? "Ya está unida a otra cuenta"
-                    : client.documentEnd
+                    : !client.isActive
+                      ? "Ficha inactiva: actívala en Clientes para unirla"
+                      : client.documentEnd
                       ? `Cédula terminada en ${client.documentEnd}: compruébala con el paciente`
                       : "Sin cédula: comprueba con el paciente que es él o ella"
                 }
@@ -482,16 +512,24 @@ function ChoosePatient({
       {!nothing && (
         <SubmitButton type="button" loading={link.isPending} loadingText="Uniendo…" disabled={!chosenClient && !chosenAppointment} onClick={submit}>
           <UserRoundCheck />
-          {chosenAppointment && isOpen(chosenAppointment) ? "Unir y marcar como atendida" : "Unir a esta ficha"}
+          {chosenAppointment?.completesOnScan ? "Unir y marcar como atendida" : "Unir a esta ficha"}
         </SubmitButton>
       )}
 
       {can("clients.manage") && (
         <div className="space-y-2 border-t pt-4">
-          <p className="text-sm text-muted-foreground">¿Todavía no tiene ficha en tu consultorio?</p>
+          <p className="text-sm text-muted-foreground">
+            {result.phoneClients.length > 0
+              ? "Ya hay una ficha con su teléfono: crea otra sólo si es otra persona (por ejemplo, un familiar)."
+              : "¿Todavía no tiene ficha en tu consultorio?"}
+          </p>
           <Button variant="outline" onClick={() => setCreating(true)}>
             <UserRoundPlus /> Paciente nuevo: crear su ficha
           </Button>
+          <p className="text-xs text-muted-foreground">
+            ¿Ya tiene ficha con otro teléfono? Pon en su ficha el de su cuenta (terminado en {result.accountPhoneEnd}) y vuelve a
+            escanear su QR: no le crees otra.
+          </p>
         </div>
       )}
       <ClientFormDialog
@@ -567,7 +605,9 @@ function LinkedPatient({
             <span className="font-medium">
               Su cita de hoy quedó atendida: {result.completedNow.startTime} · {result.completedNow.serviceName}.
             </span>{" "}
-            <span className="text-muted-foreground">Si no correspondía, cámbiala desde la Agenda.</span>
+            <span className="text-muted-foreground">
+              Si no correspondía, el propietario puede corregirla desde la cita («Corregir estado»).
+            </span>
           </p>
         </div>
       )}
@@ -592,6 +632,13 @@ function LinkedPatient({
                   </div>
                   <StatusBadge status={appointment.status} />
                 </div>
+                {isOpen(appointment) && !appointment.completesOnScan && (
+                  <p className="text-xs text-muted-foreground">
+                    {appointment.withOthers
+                      ? "Es una sesión con varios pacientes: márcala cuando termine (queda atendida para todos)."
+                      : `Empieza a las ${appointment.startTime}: márcala cuando sea su hora.`}
+                  </p>
+                )}
                 {isOpen(appointment) ? (
                   <SubmitButton
                     type="button"
