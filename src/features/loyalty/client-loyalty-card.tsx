@@ -11,11 +11,19 @@ import { LOYALTY_LEVELS, PATIENT_RESET_HOURS, describeBenefit, formatRewardCode 
 import { getErrorMessage } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { buildPatientResetWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
-import type { Business, Client, LoyaltyMember, LoyaltyProgram, LoyaltyReward } from "@/types";
+import type { Business, Client, ClientLoyalty, LoyaltyMember, LoyaltyProgram, LoyaltyReward } from "@/types";
 import { describeMissing, progressSlots, rewardDetail, sortRewards, stampsLabel } from "./loyalty-text";
 import { RedeemRewardDialog } from "./redeem-reward-dialog";
 import { RewardStatusBadge } from "./reward-status-badge";
 import { StampIcon } from "./stamp-icon";
+
+/** Si tiene cuenta de paciente: unida, creada con su teléfono y sin unir todavía, unida a otra ficha o ninguna. */
+const ACCOUNT_TEXT: Record<ClientLoyalty["account"], string> = {
+  linked: "Tiene su cuenta unida: ve su tarjeta y sus premios en su celular.",
+  pending: "Creó su cuenta con este teléfono, pero todavía no está unida: escanea su QR («Escanear» en la Agenda) para unirla.",
+  elsewhere: "Su teléfono tiene una cuenta, unida a otra ficha de tu consultorio (un teléfono compartido).",
+  none: "Sin cuenta: suma igual. Si crea su cuenta en «Mi tarjeta», escanea su QR para unirla.",
+};
 
 /** Del historial (canjeadas, vencidas y anuladas) se ven éstas; el resto, con «Ver todo». */
 const HISTORY_SHOWN = 3;
@@ -91,11 +99,9 @@ export function ClientLoyaltyCard({ client, business }: { client: Client; busine
       <CardContent className="space-y-4">
         <CardProgress program={program} card={card} />
 
-        <p className="flex items-start gap-2 text-sm text-muted-foreground">
-          <Smartphone className="mt-0.5 size-4 shrink-0" aria-hidden />
-          {card?.hasAccount
-            ? "Tiene su cuenta unida: ve su tarjeta y sus premios en su celular."
-            : "Sin cuenta unida: suma igual. Si crea su cuenta, escanea su QR en su próxima cita."}
+        <p className={cn("flex items-start gap-2 text-sm", loyalty.account === "pending" ? "text-foreground" : "text-muted-foreground")}>
+          <Smartphone className={cn("mt-0.5 size-4 shrink-0", loyalty.account === "pending" && "text-primary")} aria-hidden />
+          <span>{ACCOUNT_TEXT[loyalty.account]}</span>
         </p>
 
         {(available.length > 0 || history.length > 0) && (
@@ -131,7 +137,7 @@ export function ClientLoyaltyCard({ client, business }: { client: Client; busine
           </section>
         )}
 
-        {card?.hasAccount && can("clients.manage") && (
+        {loyalty.account === "linked" && can("clients.manage") && (
           <div className="border-t pt-4">
             <Button variant="outline" size="sm" onClick={() => setConfirmReset(true)}>
               <KeyRound /> Enlace para cambiar la contraseña

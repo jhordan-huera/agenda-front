@@ -46,6 +46,7 @@ const {
   socialLinksOf,
 } = await import("../src/lib/constants/loyalty.ts");
 const { normalizePhone } = await import("../src/lib/validations/fields.ts");
+const { isEasyPassword, patientSignupSchema } = await import("../src/lib/validations/loyalty.ts");
 const { socialLinksSchema } = await import("../src/lib/validations/business.ts");
 const { describeMissing, progressSlots, redeemPriceNote, rewardDetail, sortRewards } = await import("../src/features/loyalty/loyalty-text.ts");
 const { buildLoyaltyWhatsAppMessage, buildPatientResetWhatsAppMessage } = await import("../src/lib/whatsapp.ts");
@@ -159,8 +160,20 @@ ok(oneLeft === "Te falta 1 cita para Kit.", "la tarjeta del paciente: «Te falta
 const threeLeft = nextPrizeText({ slots: 5, stamps: 2, benefits, next: { benefitId: "b", name: "Kit", visitsRequired: 5, missing: 3 } });
 ok(threeLeft === "Te faltan 3 citas para Kit.", "y «Te faltan 3 citas»", threeLeft);
 
+console.log("\nLa contraseña del paciente: también un PIN de 4 números (pedido del dueño)");
+const signup = (password: string) => patientSignupSchema.safeParse({ name: "Ana Pérez", phone: "0991234567", password });
+ok(signup("4827").success, "un PIN de 4 números que no es de los fáciles, aceptado");
+ok(signup("secreta123").success, "una contraseña de siempre, también");
+ok(!signup("482").success, "menos de 4, no");
+for (const easy of ["0000", "1111", "1234", "4321", "0123", "7890", "1212", "1122", "1990", "2024", "2580", "12345678", "abcd"]) {
+  ok(isEasyPassword(easy) && !signup(easy).success, `«${easy}» es de los fáciles`);
+}
+for (const fine of ["4827", "7351", "1593", "2026a", "luna-azul"]) ok(!isEasyPassword(fine), `«${fine}» no es de los fáciles`);
+const easyPin = signup("1234");
+ok(!easyPin.success && easyPin.error.issues[0]?.message === "Ese PIN es muy fácil de adivinar: elige otro", "el aviso dice PIN cuando son números", easyPin.error?.issues);
+
 if (failures) {
   console.error(`\n${failures} comprobación(es) fallaron`);
   process.exit(1);
 }
-console.log("\nTodo bien: los beneficios, el precio al canjear, los niveles, el código, el QR, las redes, el teléfono y los textos.");
+console.log("\nTodo bien: los beneficios, el precio al canjear, los niveles, el código, el QR, las redes, el teléfono, los textos y el PIN.");

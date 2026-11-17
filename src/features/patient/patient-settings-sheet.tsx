@@ -227,7 +227,7 @@ function PasswordSection() {
             />
           )}
         </FormField>
-        <FormField label="La contraseña nueva" error={errors.newPassword} hint="Mínimo 8 caracteres.">
+        <FormField label="La contraseña nueva" error={errors.newPassword} hint="Mínimo 4 caracteres: puede ser un PIN de 4 números.">
           {(field) => (
             <PasswordInput
               {...field}

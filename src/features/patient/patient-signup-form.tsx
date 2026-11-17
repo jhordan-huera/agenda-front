@@ -89,7 +89,7 @@ export function PatientSignupForm({
           </div>
         )}
       </FormField>
-      <FormField label="Contraseña" error={errors.password} hint="Mínimo 8 caracteres.">
+      <FormField label="Contraseña o PIN" error={errors.password} hint="Mínimo 4 caracteres: puede ser un PIN de 4 números.">
         {(field) => (
           <PasswordInput
             {...field}

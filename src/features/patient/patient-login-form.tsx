@@ -71,7 +71,7 @@ export function PatientLoginForm({
           </div>
         )}
       </FormField>
-      <FormField label="Contraseña" error={errors.password}>
+      <FormField label="Contraseña o PIN" error={errors.password}>
         {(field) => (
           <PasswordInput
             {...field}

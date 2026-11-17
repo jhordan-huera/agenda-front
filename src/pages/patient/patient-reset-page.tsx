@@ -102,7 +102,7 @@ function ResetForm({ token, firstName }: { token: string; firstName: string | nu
             {formError}
           </p>
         )}
-        <FormField label="Contraseña nueva" error={fieldError} hint="Mínimo 8 caracteres.">
+        <FormField label="Contraseña nueva" error={fieldError} hint="Mínimo 4 caracteres: puede ser un PIN de 4 números.">
           {(field) => (
             <PasswordInput
               {...field}

@@ -1,7 +1,8 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusinessId } from "@/features/auth/use-session";
 import { data, type LoyaltyRewardFilters } from "@/lib/data";
-import type { LoyaltyBenefitKind } from "@/types";
+import type { ClientInput } from "@/lib/validations/client";
+import type { LoyaltyBenefitKind, ScanResult } from "@/types";
 import { queryKeys } from "./query-keys";
 import { useInvalidateActivity } from "./use-invalidate-activity";
 
@@ -163,36 +164,65 @@ export function useRedeemReward() {
 
 /* -- «Escanear» -- */
 
-/** Leer el QR: si la cuenta todavía no está unida aquí, su nombre y las citas de hoy; si ya lo está, el paciente. */
-export function useScanQr() {
-  const businessId = useBusinessId();
-  return useMutation({ mutationFn: (token: string) => data.loyalty.scan(businessId, token) });
-}
-
-/** Unir la cuenta a la ficha del paciente de una cita de hoy (la primera vez en este negocio). */
-export function useLinkScan() {
-  const businessId = useBusinessId();
-  const invalidate = useInvalidateLoyalty();
-  return useMutation({
-    mutationFn: (input: { token: string; appointmentId: string; clientId: string }) => data.loyalty.link(businessId, input),
-    onSuccess: () => invalidate(),
-  });
-}
-
-/** «Marcar como atendida» con el QR: por el mismo camino que la ficha (la actividad, el email y el sello). */
-export function useCompleteScan() {
+/** Después de un escaneo que unió una cuenta o marcó una cita: la tarjeta, la Agenda y los controles al día. */
+function useAfterScan() {
   const businessId = useBusinessId();
   const queryClient = useQueryClient();
   const invalidate = useInvalidateLoyalty();
+  return (result: ScanResult, changedClients = false) =>
+    Promise.all([
+      invalidate(),
+      ...(result.status === "linked" && result.completedNow
+        ? [
+            queryClient.invalidateQueries({ queryKey: queryKeys.appointments(businessId) }),
+            // Una cita atendida puede darle un control (spec 051).
+            queryClient.invalidateQueries({ queryKey: ["control-reminders", businessId] }),
+          ]
+        : []),
+      ...(changedClients ? [queryClient.invalidateQueries({ queryKey: queryKeys.clients(businessId) })] : []),
+    ]);
+}
+
+/**
+ * Leer el QR: si la cuenta todavía no está unida aquí, su nombre, las fichas con su teléfono y las citas de hoy; si
+ * ya lo está, el paciente, y su única cita de hoy por atender queda atendida sola (`completedNow`).
+ */
+export function useScanQr() {
+  const businessId = useBusinessId();
+  const afterScan = useAfterScan();
+  return useMutation({
+    mutationFn: (token: string) => data.loyalty.scan(businessId, token),
+    onSuccess: (result) => (result.status === "linked" && result.completedNow ? afterScan(result) : undefined),
+  });
+}
+
+/** Unir la cuenta (la primera vez en este negocio): a la ficha de una cita de hoy o a una con su mismo teléfono. */
+export function useLinkScan() {
+  const businessId = useBusinessId();
+  const afterScan = useAfterScan();
+  return useMutation({
+    mutationFn: (input: { token: string; appointmentId: string | null; clientId: string }) => data.loyalty.link(businessId, input),
+    onSuccess: (result) => afterScan(result),
+  });
+}
+
+/** «Paciente nuevo»: crear su ficha con el teléfono de la cuenta y unirla. */
+export function useScanNewClient() {
+  const businessId = useBusinessId();
+  const afterScan = useAfterScan();
+  return useMutation({
+    mutationFn: (input: { token: string; client: Omit<ClientInput, "phone" | "isActive"> }) => data.loyalty.newClient(businessId, input),
+    onSuccess: (result) => afterScan(result, true),
+  });
+}
+
+/** «Marcar como atendida» con el QR, si tiene varias citas hoy: por el mismo camino que la ficha (actividad, email, sello). */
+export function useCompleteScan() {
+  const businessId = useBusinessId();
+  const afterScan = useAfterScan();
   return useMutation({
     mutationFn: (input: { token: string; appointmentId: string }) => data.loyalty.complete(businessId, input),
-    onSuccess: () =>
-      Promise.all([
-        invalidate(),
-        queryClient.invalidateQueries({ queryKey: queryKeys.appointments(businessId) }),
-        // Una cita atendida puede darle un control (spec 051).
-        queryClient.invalidateQueries({ queryKey: ["control-reminders", businessId] }),
-      ]),
+    onSuccess: (result) => afterScan(result),
   });
 }
 

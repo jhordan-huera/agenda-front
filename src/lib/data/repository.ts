@@ -502,7 +502,10 @@ export interface LoyaltyRepository {
   redeem(businessId: string, rewardId: string, appointmentId: string | null): Promise<LoyaltyReward>;
   clientLoyalty(businessId: string, clientId: string): Promise<ClientLoyalty>;
   scan(businessId: string, token: string): Promise<ScanResult>;
-  link(businessId: string, input: { token: string; appointmentId: string; clientId: string }): Promise<ScanResult>;
+  /** Unir la cuenta: con una cita de hoy o, sin cita (`appointmentId` null), a una ficha con su mismo teléfono. */
+  link(businessId: string, input: { token: string; appointmentId: string | null; clientId: string }): Promise<ScanResult>;
+  /** «Paciente nuevo»: crea su ficha (el teléfono lo pone la API, el de la cuenta) y une la cuenta. */
+  newClient(businessId: string, input: { token: string; client: Omit<ClientInput, "phone" | "isActive"> }): Promise<ScanResult>;
   complete(businessId: string, input: { token: string; appointmentId: string }): Promise<ScanResult>;
   /** El enlace de un solo uso para que el paciente cree otra contraseña (con el teléfono para el WhatsApp). */
   resetLink(businessId: string, clientId: string): Promise<PatientResetLink>;

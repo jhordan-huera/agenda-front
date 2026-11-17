@@ -1,6 +1,7 @@
 import { readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
@@ -94,6 +95,9 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
+      // `npm run dev:https`: el panel en https con un certificado propio, para probar desde el celular lo que sólo
+      // funciona en una página segura, como la cámara de «Escanear» (spec 052). Nunca en el build.
+      ...(process.env.DEV_HTTPS === "1" ? [basicSsl({ name: "agenda360-local" })] : []),
       stylesheetAfterBootScreen(),
       specialtyPages(siteUrlFrom(env)),
       // Aplicación instalable: service worker propio (src/sw.ts) con la lista de archivos de cada

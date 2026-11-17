@@ -326,6 +326,7 @@ export const apiRepository: DataRepository = {
     clientLoyalty: (businessId, clientId) => api.get<ClientLoyalty>(`${business(businessId)}/clients/${id(clientId)}/loyalty`),
     scan: (businessId, token) => api.post<ScanResult>(`${business(businessId)}/scan`, { token }),
     link: (businessId, input) => api.post<ScanResult>(`${business(businessId)}/scan/link`, input),
+    newClient: (businessId, input) => api.post<ScanResult>(`${business(businessId)}/scan/new-client`, input),
     complete: (businessId, input) => api.post<ScanResult>(`${business(businessId)}/scan/complete`, input),
     resetLink: (businessId, clientId) =>
       api.post<PatientResetLink>(`${business(businessId)}/clients/${id(clientId)}/patient-reset-link`),
