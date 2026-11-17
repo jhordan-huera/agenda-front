@@ -1,17 +1,24 @@
+import { useSearchParams } from "react-router";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageTitle } from "@/components/shared/page-title";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PatientAuth } from "@/features/patient/patient-auth";
 import { PatientHome } from "@/features/patient/patient-home";
+import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { PatientShell } from "@/features/patient/patient-shell";
-import { usePatientAccount } from "@/hooks/queries/use-patient-account";
+import { usePatientAccount, usePatientInvite } from "@/hooks/queries/use-patient-account";
+import { PATIENT_INVITE_PARAM } from "@/lib/constants/loyalty";
 
 /**
  * «Mi tarjeta» (/mi-tarjeta, spec 052): sin sesión, entrar o crear la cuenta del paciente (opcional: reservar no la
- * pide); con sesión, su tarjeta de fidelización (diseño B, «Tarjeta clara») o su QR si todavía no tiene ninguna.
+ * pide); con sesión, su tarjeta de fidelización (diseño B, «Tarjeta clara») o su QR si todavía no tiene ninguna. Con
+ * `?consultorio=<slug>` (el QR que el consultorio comparte), sin sesión: su logo, su nombre y sus colores, y «Crear mi
+ * cuenta» primero.
  */
 export default function PatientCardPage() {
   const accountQuery = usePatientAccount();
+  const [searchParams] = useSearchParams();
+  const invite = usePatientInvite(searchParams.get(PATIENT_INVITE_PARAM)).data ?? null;
 
   if (accountQuery.isPending) {
     return (
@@ -38,10 +45,12 @@ export default function PatientCardPage() {
   const account = accountQuery.data;
   if (!account) {
     return (
-      <PatientShell business={null}>
-        <PageTitle title="Mi tarjeta" />
-        <PatientAuth />
-      </PatientShell>
+      <BrandThemeProvider colors={invite?.brandColors ?? null}>
+        <PatientShell business={invite}>
+          <PageTitle title="Mi tarjeta" />
+          <PatientAuth key={invite ? "invitado" : "directo"} invite={invite} />
+        </PatientShell>
+      </BrandThemeProvider>
     );
   }
 

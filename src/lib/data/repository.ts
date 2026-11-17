@@ -110,6 +110,7 @@ import type {
   PatientAccount,
   PatientCard,
   PatientResetLink,
+  PatientInvite,
   ScanResult,
   SocialLinks,
   ClientActivity,
@@ -516,6 +517,8 @@ export interface LoyaltyRepository {
 /** La cuenta del paciente (spec 052): /api/patient, con su propia cookie, aparte de la sesión del equipo. */
 export interface PatientRepository {
   config(): Promise<{ captchaSiteKey: string | null }>;
+  /** La invitación del QR del consultorio (su nombre, su logo y el programa) para «Mi tarjeta». */
+  invite(slug: string): Promise<PatientInvite>;
   signup(input: { name: string; phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
   login(input: { phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
   logout(): Promise<void>;

@@ -53,6 +53,7 @@ import type {
   PatientAccount,
   PatientCard,
   PatientResetLink,
+  PatientInvite,
   ScanResult,
   ClientActivity,
   PendingPaymentsSummary,
@@ -335,6 +336,7 @@ export const apiRepository: DataRepository = {
 
   patient: {
     config: () => api.get<{ captchaSiteKey: string | null }>("/patient/config"),
+    invite: (slug) => api.get<PatientInvite>(`/patient/invite/${encodeURIComponent(slug)}`),
     signup: (input) => api.post<PatientAccount>("/patient/signup", input),
     login: (input) => api.post<PatientAccount>("/patient/login", input),
     logout: () => api.post<void>("/patient/logout"),

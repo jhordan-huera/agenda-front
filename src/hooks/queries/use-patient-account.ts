@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { data, DataError } from "@/lib/data";
-import type { PatientAccount } from "@/types";
+import type { PatientAccount, PatientInvite } from "@/types";
 
 /*
  * La cuenta del paciente (spec 052): /api/patient, con su propia cookie, aparte de la sesión del equipo. Sus claves
@@ -16,6 +16,7 @@ export const patientKeys = {
   account: ["patient", "account"] as const,
   cards: ["patient", "cards"] as const,
   reset: (token: string) => ["patient", "reset", token] as const,
+  invite: (slug: string) => ["patient", "invite", slug] as const,
 };
 
 const isUnauthorized = (error: unknown) => error instanceof DataError && error.code === "unauthorized";
@@ -26,6 +27,27 @@ export function usePatientConfig() {
     queryKey: patientKeys.config,
     queryFn: () => data.patient.config(),
     staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+/**
+ * La invitación del QR del consultorio (/mi-tarjeta?consultorio=<slug>): su nombre y su logo; null sin consultorio
+ * o si el enlace no es de ninguno (la página sigue como siempre).
+ */
+export function usePatientInvite(slug: string | null) {
+  return useQuery({
+    queryKey: patientKeys.invite(slug ?? ""),
+    enabled: Boolean(slug),
+    retry: false,
+    staleTime: 10 * 60_000,
+    queryFn: async (): Promise<PatientInvite | null> => {
+      try {
+        return await data.patient.invite(slug!);
+      } catch (error) {
+        if (error instanceof DataError && error.code === "not_found") return null;
+        throw error;
+      }
+    },
   });
 }
 

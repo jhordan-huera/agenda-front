@@ -1,30 +1,11 @@
 import { Download, FileImage } from "lucide-react";
 import { useContext, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { encode, renderSVG } from "uqr";
+import { renderSVG } from "uqr";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BrandPaletteContext } from "@/features/branding/brand-palette-context";
-import { DEFAULT_BRAND_COLORS, resolveBrandPalette, type BrandPalettes } from "@/lib/brand-theme";
-
-interface SheetColors {
-  qr: string;
-  ink: string;
-  muted: string;
-  paper: string;
-}
-
-/**
- * Colores de la lámina: los del negocio (o los de Agenda360), siempre los del modo claro, también con la
- * pantalla en oscuro (spec 019): el QR va sobre blanco y con el color del texto, casi negro, para que lo lea
- * cualquier cámara, y la lámina se imprime. Sin colores propios, los de Agenda360 con la misma fórmula (los
- * mismos de src/index.css).
- */
-function sheetColors(palettes: BrandPalettes | null): SheetColors {
-  const { light } = palettes ?? resolveBrandPalette(DEFAULT_BRAND_COLORS);
-  return { qr: light.text, ink: light.ink, muted: light.graphite, paper: "#ffffff" };
-}
-const FONT = '"Geist Variable", ui-sans-serif, system-ui, sans-serif';
+import { canvasToPng, displayUrl, downloadBlob as download, drawQr, fitText, qrSide, SHEET_FONT as FONT, sheetColors, type SheetColors } from "@/lib/qr-sheet";
 
 interface BookingQrDialogProps {
   open: boolean;
@@ -93,32 +74,6 @@ export function BookingQrDialog({ open, onOpenChange, url, businessName, slug }:
   );
 }
 
-/** "https://agenda.app/book/dra-nadia" → "agenda.app/book/dra-nadia" */
-function displayUrl(url: string): string {
-  return url.replace(/^https?:\/\//, "");
-}
-
-function download(blob: Blob, fileName: string): void {
-  const href = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = href;
-  link.download = fileName;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(href), 1000);
-}
-
-/** Achica la letra hasta que el texto quepa en el ancho (con un mínimo). */
-function fitText(ctx: CanvasRenderingContext2D, text: string, weight: number, size: number, maxWidth: number, minSize: number) {
-  let current = size;
-  ctx.font = `${weight} ${current}px ${FONT}`;
-  while (current > minSize && ctx.measureText(text).width > maxWidth) {
-    current -= 2;
-    ctx.font = `${weight} ${current}px ${FONT}`;
-  }
-}
-
 /**
  * Lámina para imprimir (1200 px de ancho): "Reserva tu cita", el nombre del negocio, el QR y el
  * enlace escrito, por si alguien prefiere teclearlo.
@@ -129,14 +84,12 @@ async function renderPrintablePng(url: string, businessName: string, colors: She
     document.fonts.load(`600 40px ${FONT}`),
   ]).catch(() => undefined);
 
-  const qr = encode(url, { border: 0 });
   const width = 1200;
   const margin = 100;
-  const module = Math.floor((width - margin * 2 - 80) / qr.size);
-  const qrSize = module * qr.size;
+  const maxQr = width - margin * 2 - 80;
   const qrTop = 330;
-  const height = qrTop + qrSize + 240;
 
+  const height = qrTop + qrSide(url, maxQr, false) + 240;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -156,13 +109,7 @@ async function renderPrintablePng(url: string, businessName: string, colors: She
   fitText(ctx, businessName, 800, 72, width - margin * 2, 36);
   ctx.fillText(businessName, width / 2, 245);
 
-  const left = Math.round((width - qrSize) / 2);
-  ctx.fillStyle = colors.qr;
-  qr.data.forEach((row, y) =>
-    row.forEach((dark, x) => {
-      if (dark) ctx.fillRect(left + x * module, qrTop + y * module, module, module);
-    }),
-  );
+  const qrSize = drawQr(ctx, url, { left: (width - maxQr) / 2, top: qrTop, maxSize: maxQr, color: colors.qr, withLogo: false });
 
   ctx.fillStyle = colors.ink;
   const link = displayUrl(url);
@@ -173,7 +120,5 @@ async function renderPrintablePng(url: string, businessName: string, colors: She
   ctx.font = `500 32px ${FONT}`;
   ctx.fillText("Escanéalo con la cámara de tu celular", width / 2, qrTop + qrSize + 165);
 
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("No se generó la imagen"))), "image/png"),
-  );
+  return canvasToPng(canvas);
 }

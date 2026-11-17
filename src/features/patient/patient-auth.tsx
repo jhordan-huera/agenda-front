@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePatientSession } from "@/hooks/queries/use-patient-account";
-import type { PatientAccount } from "@/types";
+import type { PatientAccount, PatientInvite } from "@/types";
 import { firstName } from "./patient-card-text";
 import { PatientLoginForm } from "./patient-login-form";
 import { PatientSignupForm } from "./patient-signup-form";
@@ -10,7 +10,7 @@ import { PatientSignupForm } from "./patient-signup-form";
 type AuthTab = "entrar" | "crear";
 
 const STEPS = [
-  "Crea tu cuenta con tu teléfono y una contraseña.",
+  "Crea tu cuenta con tu teléfono y una contraseña o un PIN de 4 números.",
   "En tu próxima cita, muestra tu QR: el consultorio lo escanea y lo une a tu ficha.",
   "Después de ese escaneo, tu tarjeta aparece aquí con tus sellos y tus premios. Cada cita atendida suma un sello.",
 ];
@@ -19,9 +19,10 @@ const STEPS = [
  * «Mi tarjeta» sin sesión (spec 052): qué es la cuenta (sólo para la tarjeta de fidelización; reservar no la pide),
  * «Entrar» y «Crear mi cuenta», y cómo empieza a sumar.
  */
-export function PatientAuth() {
+export function PatientAuth({ invite = null }: { invite?: PatientInvite | null }) {
   const { setAccount } = usePatientSession();
-  const [tab, setTab] = useState<AuthTab>("entrar");
+  // Desde el QR del consultorio, casi siempre es alguien sin cuenta: «Crear mi cuenta» primero.
+  const [tab, setTab] = useState<AuthTab>(invite ? "crear" : "entrar");
   const [phone, setPhone] = useState("");
 
   const signedIn = (created: boolean) => (account: PatientAccount) => {
@@ -32,10 +33,13 @@ export function PatientAuth() {
   return (
     <div className="space-y-6 pb-8">
       <div>
-        <h1 className="text-[1.625rem] leading-tight font-bold tracking-[-0.02em]">Tu tarjeta de fidelización</h1>
+        <h1 className="text-[1.625rem] leading-tight font-bold tracking-[-0.02em]">
+          {invite ? (invite.programName ? `«${invite.programName}»` : `La tarjeta de ${invite.name}`) : "Tu tarjeta de fidelización"}
+        </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Junta sellos con cada cita atendida y gana los premios de tu consultorio. Para reservar una cita no necesitas cuenta:
-          esta cuenta es sólo para tu tarjeta.
+          {invite
+            ? `${invite.name} te invita a su tarjeta de fidelización: junta un sello con cada cita atendida y gana sus premios. Para reservar una cita no necesitas cuenta: esta cuenta es sólo para tu tarjeta.`
+            : "Junta sellos con cada cita atendida y gana los premios de tu consultorio. Para reservar una cita no necesitas cuenta: esta cuenta es sólo para tu tarjeta."}
         </p>
       </div>
 

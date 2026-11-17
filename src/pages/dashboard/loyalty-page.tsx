@@ -8,6 +8,7 @@ import { MetricStrip } from "@/features/dashboard/metric-strip";
 import { LoyaltyBenefits } from "@/features/loyalty/loyalty-benefits";
 import { LoyaltyMembers } from "@/features/loyalty/loyalty-members";
 import { LoyaltyIntro, LoyaltyProgramForm } from "@/features/loyalty/loyalty-program-form";
+import { PatientInviteButton } from "@/features/loyalty/patient-invite-dialog";
 import { LoyaltyRewards } from "@/features/loyalty/loyalty-rewards";
 import { SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
@@ -50,6 +51,7 @@ function LoyaltyPageContent() {
       <PageHeader
         title="Fidelización"
         description="Tu tarjeta de sellos: cada cita atendida suma uno y, al llegar a las citas de un beneficio, el paciente gana su premio."
+        actions={<PatientInviteButton />}
       />
 
       <MetricStrip

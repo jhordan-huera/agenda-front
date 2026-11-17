@@ -172,6 +172,11 @@ for (const fine of ["4827", "7351", "1593", "2026a", "luna-azul"]) ok(!isEasyPas
 const easyPin = signup("1234");
 ok(!easyPin.success && easyPin.error.issues[0]?.message === "Ese PIN es muy fácil de adivinar: elige otro", "el aviso dice PIN cuando son números", easyPin.error?.issues);
 
+console.log("\nEl QR del consultorio para sus pacientes");
+const { patientInviteUrl } = await import("../src/lib/constants/loyalty.ts");
+ok(patientInviteUrl("https://agenda360.app/", "clinica-sonrisa") === "https://agenda360.app/mi-tarjeta?consultorio=clinica-sonrisa", "«Mi tarjeta» con el consultorio", patientInviteUrl("https://agenda360.app/", "clinica-sonrisa"));
+ok(readQrToken(patientInviteUrl("https://agenda360.app", "clinica-sonrisa")) === null, "«Escanear» no lo confunde con el QR de un paciente");
+
 if (failures) {
   console.error(`\n${failures} comprobación(es) fallaron`);
   process.exit(1);

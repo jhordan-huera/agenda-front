@@ -3,6 +3,7 @@ import { RequirePermission } from "@/components/layout/require-permission";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Card, CardContent } from "@/components/ui/card";
+import { PatientInviteButton } from "@/features/loyalty/patient-invite-dialog";
 import { ScanPanel } from "@/features/loyalty/scan-panel";
 
 /** «Escanear» (spec 052): la cámara para el QR del paciente; /q/:token trae aquí el token (?qr=) y lo busca directo. */
@@ -21,7 +22,11 @@ function ScanPageContent() {
   return (
     <div className="space-y-6">
       <PageTitle title="Escanear" />
-      <PageHeader title="Escanear" description="El QR de la tarjeta del paciente: marca su cita de hoy como atendida." />
+      <PageHeader
+        title="Escanear"
+        description="El QR de la tarjeta del paciente: marca su cita de hoy como atendida."
+        actions={<PatientInviteButton />}
+      />
       <Card className="max-w-md">
         <CardContent>
           <ScanPanel

@@ -17,8 +17,11 @@ export function PatientShell({
   onSettings,
   children,
 }: {
-  /** null: sin tarjeta que mostrar (entrar, crear la cuenta, el enlace de la contraseña): el logo de Agenda360. */
-  business: PatientCard["business"] | null;
+  /**
+   * El consultorio de la tarjeta que ve o el que lo invitó con su QR; null: sin tarjeta que mostrar (entrar, crear la
+   * cuenta, el enlace de la contraseña): el logo de Agenda360.
+   */
+  business: Pick<PatientCard["business"], "name" | "logoUrl"> | null;
   stampIcon?: StampIconName;
   /** Abre los ajustes de la cuenta (sólo con sesión). */
   onSettings?: () => void;
@@ -55,7 +58,7 @@ export function PatientShell({
 }
 
 /** El logo del consultorio (entero, sobre su placa blanca) o, sin logo, su sello en un círculo de su color. */
-function BusinessMark({ business, stampIcon }: { business: PatientCard["business"]; stampIcon: StampIconName }) {
+function BusinessMark({ business, stampIcon }: { business: Pick<PatientCard["business"], "name" | "logoUrl">; stampIcon: StampIconName }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       {business.logoUrl ? (
