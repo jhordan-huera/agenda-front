@@ -24,9 +24,11 @@ export const AUDIT_TYPE_LABELS: Record<AuditEntityType, string> = {
   subscription: "Suscripción",
   clinical_record: "Historias clínicas",
   waitlist: "Lista de espera",
+  loyalty: "Tarjeta de fidelización",
   user: "Usuarios",
   platform: "Plataforma",
   session: "Sesiones",
+  patient_account: "Cuentas de pacientes",
 };
 
 /** Filtros para la API: las fechas del calendario, en la hora local del navegador (hasta: día incluido). */

@@ -28,17 +28,23 @@ function buildUrl(path: string, query?: Record<string, QueryValue>): string {
 
 declare global {
   interface Window {
-    /** La petición que public/early-data.js lanza al abrir una página de reservas. */
-    __agendaEarly?: { path: string; response: Promise<Response> };
+    /**
+     * Las peticiones que public/early-data.js lanza al abrir la página, por ruta: la página de reservas y, en el panel,
+     * la sesión y los datos que el panel espera antes de mostrarse.
+     */
+    __agendaEarly?: Record<string, { response: Promise<Response>; at: number }>;
   }
 }
 
+/** Sólo al arrancar: pasado este tiempo, una respuesta adelantada que nadie usó ya no se toma (podría estar vieja). */
+const EARLY_MAX_AGE_MS = 10_000;
+
 /** La respuesta adelantada de esta ruta, una sola vez (después, la app pide como siempre). */
 function takeEarlyResponse(method: string, path: string, options: RequestOptions): Promise<Response> | null {
-  const early = typeof window === "undefined" ? undefined : window.__agendaEarly;
-  if (!early || method !== "GET" || options.query || API_URL !== "/api" || early.path !== path) return null;
-  window.__agendaEarly = undefined;
-  return early.response;
+  const early = typeof window === "undefined" ? undefined : window.__agendaEarly?.[path];
+  if (!early || method !== "GET" || options.query || API_URL !== "/api") return null;
+  delete window.__agendaEarly![path];
+  return Date.now() - early.at <= EARLY_MAX_AGE_MS ? early.response : null;
 }
 
 /** Hace la petición y devuelve el JSON. Los errores llegan como DataError con mensaje para el usuario. */

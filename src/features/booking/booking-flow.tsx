@@ -21,6 +21,7 @@ import { initialContact, otherPeopleOf, type ContactValues } from "./contact";
 import { ProfessionalStep } from "./professional-step";
 import { DetailsStep } from "./details-step";
 import { forgetSavedContact, saveContact } from "./saved-contact";
+import { readServiceLink } from "./service-link";
 import { ServiceStep } from "./service-step";
 import { TimeSlots } from "./time-slots";
 import { TimezoneNote } from "./timezone-note";
@@ -59,10 +60,19 @@ export function BookingFlow({ slug, profile }: { slug: string; profile: PublicBu
     return read && profile.services.some((candidate) => candidate.id === read.serviceId) ? read : null;
   });
   const waitlistEntry = usePublicWaitlist(offer?.token ?? null);
-  const [step, setStep] = useState<BookingStep>(offer ? "datetime" : "service");
-  const [serviceId, setServiceId] = useState<string | null>(offer?.serviceId ?? null);
+  // «Reservar mi control» desde el email o el WhatsApp (spec 051): el servicio, si sigue en la página, y el
+  // profesional, si lo atiende. Sin la fecha ni la hora: el paciente las elige.
+  const [serviceLink] = useState(() => {
+    const read = offer ? null : readServiceLink(searchParams);
+    const target = read && profile.services.find((candidate) => candidate.id === read.serviceId);
+    if (!read || !target) return null;
+    const attends = profile.professionals.some((professional) => professional.id === read.professionalId && offersService(professional, target.id));
+    return { serviceId: target.id, professionalId: attends ? read.professionalId : null };
+  });
+  const [step, setStep] = useState<BookingStep>(offer || serviceLink ? "datetime" : "service");
+  const [serviceId, setServiceId] = useState<string | null>(offer?.serviceId ?? serviceLink?.serviceId ?? null);
   /** Id del profesional, ANY_PROFESSIONAL ("el primero disponible") o null si aún no se eligió. */
-  const [professionalChoice, setProfessionalChoice] = useState<string | null>(offer?.professionalId ?? null);
+  const [professionalChoice, setProfessionalChoice] = useState<string | null>(offer?.professionalId ?? serviceLink?.professionalId ?? null);
   const [requestedDate, setRequestedDate] = useState<ISODate | null>(offer?.date ?? null);
   const [requestedTime, setRequestedTime] = useState<string | null>(offer?.time ?? null);
   const [contact, setContact] = useState<ContactValues>(initialContact);

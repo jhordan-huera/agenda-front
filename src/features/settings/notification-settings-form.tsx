@@ -19,6 +19,7 @@ const settingsOf = (business: Business): Required<NotificationSettings> => ({
   ...DEFAULT_NOTIFICATION_SETTINGS,
   ...business.notificationSettings,
   surveys: business.notificationSettings.surveys ?? false,
+  controlReminders: business.notificationSettings.controlReminders ?? false,
 });
 
 /** Guardados de las dos secciones en fila: cada uno parte de lo que dejó el anterior. */
@@ -250,6 +251,44 @@ export function SurveySettingsForm({ business }: { business: Business }) {
         description="Al día siguiente de su cita atendida, un email con 5 estrellas y un comentario opcional. A cada paciente se le pregunta como mucho una vez cada 3 meses, y puede pedir no recibirlas."
         checked={values.surveys}
         onCheckedChange={(checked) => setField("surveys", checked)}
+      />
+    </SettingsSection>
+  );
+}
+
+/**
+ * Recordatorio de control (spec 051): el email del día que le toca volver al paciente. La hoja «Controles» de la Agenda
+ * funciona aunque esté apagado; «Volver en» se elige en cada servicio.
+ */
+export function ControlReminderSettingsForm({ business }: { business: Business }) {
+  const current = settingsOf(business);
+  const { values, setField, dirty, reset } = useSettingsForm({ controlReminders: current.controlReminders });
+  const { save, saving } = useSaveNotificationSettings(business);
+
+  const submit = async () => {
+    try {
+      await save(values);
+      reset(values);
+      toast.success(values.controlReminders ? "Recordatorio de control encendido" : "Recordatorio de control apagado");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  return (
+    <SettingsSection
+      title="Recordatorio de control"
+      description="Para que tus pacientes vuelvan cuando les toca. Elige en cada servicio cuándo le toca volver («Volver en»): a quién le toca lo ves siempre en Agenda → Controles."
+      dirty={dirty}
+      saving={saving}
+      onSubmit={submit}
+      onDiscard={() => reset()}
+    >
+      <SwitchField
+        label="Recordar a los pacientes cuando les toca volver"
+        description="El día que le toca, un email con el botón para reservar. Sólo a quien no tiene una cita por delante, una vez por control, y puede pedir no recibirlos. Al encenderlo no se les escribe a quienes ya les tocaba."
+        checked={values.controlReminders}
+        onCheckedChange={(checked) => setField("controlReminders", checked)}
       />
     </SettingsSection>
   );

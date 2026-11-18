@@ -1,0 +1,6 @@
+# Si encuentras un fallo de seguridad en Agenda360, escríbenos: lo revisamos y te respondemos.
+# Por favor, no accedas a datos de pacientes ni de negocios que no sean tuyos y danos tiempo para corregirlo
+# antes de publicarlo.
+Contact: mailto:novastackcore@gmail.com
+Expires: 2027-11-18T00:00:00.000Z
+Preferred-Languages: es, en

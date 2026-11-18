@@ -23,10 +23,11 @@ import { PlanLimitBanner } from "@/features/dashboard/plan-limit-banner";
 import { TodayList } from "@/features/dashboard/today-list";
 import { WeekBars } from "@/features/dashboard/week-bars";
 import { InstallAppCard } from "@/features/install/install-app";
+import { ScanButton } from "@/features/loyalty/scan-dialog";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
 import { useAgendas } from "@/features/professionals/use-agendas";
-import { useCurrentBusiness, useCurrentUser } from "@/hooks/queries/use-account";
-import { useAppointments, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
+import { useCurrentBusiness, useCurrentUser, usePlanUsage } from "@/hooks/queries/use-account";
+import { useAppointments, usePendingPaymentsSummary, useUpdateAppointmentStatus } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
 import { useBlockedTimes, useSchedules } from "@/hooks/queries/use-schedule";
 import { useBusinessNow } from "@/hooks/use-business-now";
@@ -83,6 +84,13 @@ export default function DashboardPage() {
   const freeHours = freeHoursLeft(now.date, today, schedules, blockedTimes, now.minutes);
   const remaining = today.filter((a) => timeToMinutes(a.endTime) > now.minutes).length;
   const loading = appointmentsQuery.isPending || lookupsPending || schedulesQuery.isPending || blockedQuery.isPending;
+  // Las tarjetas salen todas juntas, con sus datos: si cada una apareciera al llegar lo suyo («Por cobrar», el aviso
+  // del plan, la lista de hoy), las de abajo saltarían (Speed Insights, 2026-11-15). Hasta entonces, el esqueleto.
+  const pendingPayments = usePendingPaymentsSummary();
+  const usage = usePlanUsage();
+  const settled = (query: { data: unknown; isError: boolean; fetchStatus: string }) =>
+    query.data !== undefined || query.isError || query.fetchStatus === "idle";
+  const ready = !loading && settled(pendingPayments) && settled(usage);
 
   const clientName = (appointment: Appointment) => getAppointmentClientNames(clientsById, appointment, { fallback: "Cliente" });
   const serviceName = (id: string) => getServiceName(servicesById, id);
@@ -119,7 +127,8 @@ export default function DashboardPage() {
       <PageTitle title="Inicio" />
       <PageHeader
         title={capitalize(formatDate(now.date, "EEEE d 'de' MMMM"))}
-        description={loading ? "…" : summary}
+        // Con su ancho, los botones caben en una fila (con «Escanear», spec 052).
+        description={<span className="block max-w-lg">{ready ? summary : "…"}</span>}
         actions={
           <>
             {can("schedule.manage") && (
@@ -130,6 +139,8 @@ export default function DashboardPage() {
             <Button variant="outline" size="lg" onClick={() => setQuickDialog("client")}>
               <UserPlus /> Nuevo cliente
             </Button>
+            {/* El QR de la tarjeta del paciente (spec 052): marca su cita de hoy como atendida. */}
+            {can("appointments.manage") && business?.loyaltyAllowed && <ScanButton compact />}
             <Button size="lg" onClick={() => dialogs.openCreate()}>
               <CalendarPlus /> Nueva cita
             </Button>
@@ -139,107 +150,130 @@ export default function DashboardPage() {
 
       <InstallAppCard className="lg:hidden" />
 
-      <PlanLimitBanner />
+      {ready ? (
+        <>
+          <PlanLimitBanner />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
-        <div className="min-w-0 space-y-6">
-          {loading ? (
-            <Skeleton className="h-44 rounded-2xl" />
-          ) : appointmentsQuery.isError ? (
-            <ErrorState onRetry={() => appointmentsQuery.refetch()} />
-          ) : (
-            <NextUp
-              appointment={next}
-              clients={next ? appointmentClientIds(next).flatMap((id) => clientsById.get(id) ?? []) : []}
-              serviceName={next ? serviceName(next.serviceId) : ""}
-              business={business ?? undefined}
-              now={now}
-              onOpen={dialogs.openDetails}
-              onCreate={() => dialogs.openCreate()}
-            />
-          )}
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
+            <div className="min-w-0 space-y-6">
+              {loading ? (
+                <Skeleton className="h-44 rounded-2xl" />
+              ) : appointmentsQuery.isError ? (
+                <ErrorState onRetry={() => appointmentsQuery.refetch()} />
+              ) : (
+                <NextUp
+                  appointment={next}
+                  clients={next ? appointmentClientIds(next).flatMap((id) => clientsById.get(id) ?? []) : []}
+                  serviceName={next ? serviceName(next.serviceId) : ""}
+                  business={business ?? undefined}
+                  now={now}
+                  onOpen={dialogs.openDetails}
+                  onCreate={() => dialogs.openCreate()}
+                />
+              )}
 
-          <DashCard aria-labelledby="day-heading">
-            <DashCardHeader
-              id="day-heading"
-              title="Tu día"
-              aside={
-                !loading &&
-                `${plural(today.length, "cita", "citas")} hoy, ${plural(metrics.todayPending, "por confirmar", "por confirmar")}`
-              }
-            />
-            {loading ? (
-              <Skeleton className="h-28 rounded-xl" />
-            ) : bounds ? (
-              <DayRibbon
-                bounds={bounds}
-                now={now}
-                appointments={today}
-                schedules={schedules}
-                // Con varias agendas, en la franja del día sólo los bloqueos de todo el negocio.
-                blockedTimes={agendas.multiple ? blockedTimes.filter((block) => block.professionalId === null) : blockedTimes}
-                nextId={next?.date === now.date ? next.id : null}
-                clientName={clientName}
-                onOpen={dialogs.openDetails}
-              />
-            ) : (
-              <p className="rounded-xl bg-muted px-4 py-6 text-center text-muted-foreground">
-                Hoy no atiendes según tu horario.{" "}
-                {can("schedule.manage") && (
-                  <Link to="/dashboard/schedule" className="font-semibold text-ink underline underline-offset-4">
-                    Revisar mis horarios
-                  </Link>
+              <DashCard aria-labelledby="day-heading">
+                <DashCardHeader
+                  id="day-heading"
+                  title="Tu día"
+                  aside={
+                    !loading &&
+                    `${plural(today.length, "cita", "citas")} hoy, ${plural(metrics.todayPending, "por confirmar", "por confirmar")}`
+                  }
+                />
+                {loading ? (
+                  <Skeleton className="h-28 rounded-xl" />
+                ) : bounds ? (
+                  <DayRibbon
+                    bounds={bounds}
+                    now={now}
+                    appointments={today}
+                    schedules={schedules}
+                    // Con varias agendas, en la franja del día sólo los bloqueos de todo el negocio.
+                    blockedTimes={agendas.multiple ? blockedTimes.filter((block) => block.professionalId === null) : blockedTimes}
+                    nextId={next?.date === now.date ? next.id : null}
+                    clientName={clientName}
+                    onOpen={dialogs.openDetails}
+                  />
+                ) : (
+                  <p className="rounded-xl bg-muted px-4 py-6 text-center text-muted-foreground">
+                    Hoy no atiendes según tu horario.{" "}
+                    {can("schedule.manage") && (
+                      <Link to="/dashboard/schedule" className="font-semibold text-ink underline underline-offset-4">
+                        Revisar mis horarios
+                      </Link>
+                    )}
+                  </p>
                 )}
-              </p>
-            )}
-          </DashCard>
+              </DashCard>
 
-          {!loading && (
-            <TodayList
-              professionalOf={agendas.multiple ? (appointment) => agendas.byId(appointment.professionalId) : undefined}
-              appointments={today}
-              now={now}
-              nextId={next?.date === now.date ? next.id : null}
-              clientName={clientName}
-              serviceName={serviceName}
-              onOpen={dialogs.openDetails}
-              onConfirm={confirm}
-              confirmingIds={confirmingIds}
-            />
-          )}
+              {!loading && (
+                <TodayList
+                  professionalOf={agendas.multiple ? (appointment) => agendas.byId(appointment.professionalId) : undefined}
+                  appointments={today}
+                  now={now}
+                  nextId={next?.date === now.date ? next.id : null}
+                  clientName={clientName}
+                  serviceName={serviceName}
+                  onOpen={dialogs.openDetails}
+                  onConfirm={confirm}
+                  confirmingIds={confirmingIds}
+                />
+              )}
 
-          {/* La semana y el mes, en la columna principal: se leen después del día. */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,1fr)_15rem]">
-            <WeekBars appointments={appointments} now={now} />
-            <dl className="grid grid-cols-2 content-start gap-6 sm:grid-cols-1">
-              <KpiTile label="Ingresos del mes" value={loading ? "…" : formatCurrency(metrics.monthRevenue, business?.currency)} />
-              <KpiTile label="Clientes activos" value={loading ? "…" : metrics.activeClients} />
-            </dl>
+              {/* La semana y el mes, en la columna principal: se leen después del día. */}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,1fr)_15rem]">
+                <WeekBars appointments={appointments} now={now} />
+                <dl className="grid grid-cols-2 content-start gap-6 sm:grid-cols-1">
+                  <KpiTile label="Ingresos del mes" value={loading ? "…" : formatCurrency(metrics.monthRevenue, business?.currency)} />
+                  <KpiTile label="Clientes activos" value={loading ? "…" : metrics.activeClients} />
+                </dl>
+              </div>
+            </div>
+
+            <aside className="grid grid-cols-1 content-start gap-6 md:grid-cols-2 xl:grid-cols-1">
+              {loading ? (
+                <Skeleton className="h-48" />
+              ) : (
+                <PendingBookings
+                  appointments={pending}
+                  now={now}
+                  clientName={clientName}
+                  serviceName={serviceName}
+                  onOpen={dialogs.openDetails}
+                  onConfirm={confirm}
+                  confirmingIds={confirmingIds}
+                />
+              )}
+              <PendingPaymentsTile currency={business?.currency} />
+              {business ? <BookingLinkCard slug={business.slug} /> : <Skeleton className="h-40 rounded-xl" />}
+            </aside>
           </div>
-        </div>
-
-        <aside className="grid grid-cols-1 content-start gap-6 md:grid-cols-2 xl:grid-cols-1">
-          {loading ? (
-            <Skeleton className="h-48" />
-          ) : (
-            <PendingBookings
-              appointments={pending}
-              now={now}
-              clientName={clientName}
-              serviceName={serviceName}
-              onOpen={dialogs.openDetails}
-              onConfirm={confirm}
-              confirmingIds={confirmingIds}
-            />
-          )}
-          <PendingPaymentsTile currency={business?.currency} />
-          {business ? <BookingLinkCard slug={business.slug} /> : <Skeleton className="h-40 rounded-xl" />}
-        </aside>
-      </div>
+        </>
+      ) : (
+        <HomeSkeleton />
+      )}
 
       {dialogs.dialogs}
       <ClientFormDialog open={quickDialog === "client"} onOpenChange={closeQuickDialog} />
       <BlockedTimeFormDialog open={quickDialog === "block"} onOpenChange={closeQuickDialog} />
+    </div>
+  );
+}
+
+/** Inicio mientras llegan sus datos: la forma de la página, para que nada salte cuando aparece. */
+function HomeSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]" aria-hidden>
+      <div className="min-w-0 space-y-6">
+        <Skeleton className="h-44 rounded-2xl" />
+        <Skeleton className="h-52 rounded-2xl" />
+        <Skeleton className="h-72 rounded-2xl" />
+      </div>
+      <div className="grid grid-cols-1 content-start gap-6 md:grid-cols-2 xl:grid-cols-1">
+        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-40 rounded-2xl" />
+      </div>
     </div>
   );
 }

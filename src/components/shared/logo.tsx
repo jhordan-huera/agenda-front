@@ -39,9 +39,10 @@ export function LogoMark({ className, markClassName }: { className?: string; mar
   );
 }
 
+// font-brand: el nombre del logotipo en Geist, aunque todo lo demás vaya en Geist Mono.
 function Wordmark() {
   return (
-    <span>
+    <span className="font-brand">
       <span className="font-extrabold">{WORD}</span>
       {NUMBER && <span className="font-medium">{NUMBER}</span>}
     </span>

@@ -167,6 +167,10 @@ function ReportsPageContent() {
 
       {appointmentsQuery.isError ? (
         <ErrorState onRetry={() => appointmentsQuery.refetch()} />
+      ) : loading && !appointmentsQuery.isPlaceholderData ? (
+        // Al abrir la página, las cifras salen todas juntas: si cada tarjeta creciera al llegar lo suyo, las de abajo
+        // saltarían (Speed Insights, 2026-11-15). Al cambiar de periodo se siguen viendo las de antes, con «…».
+        <ReportsSkeleton />
       ) : (
         <div className="space-y-6 print:hidden">
           {/* La cifra que el profesional busca primero: cuánto generó en el periodo. */}
@@ -501,3 +505,16 @@ function ProfessionalBreakdownCard({
   );
 }
 
+/** Reportes mientras llegan sus datos: la forma de la página, para que nada salte cuando aparece. */
+function ReportsSkeleton() {
+  return (
+    <div className="space-y-6 print:hidden" aria-hidden>
+      <Skeleton className="h-44 rounded-xl" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Skeleton className="h-72 rounded-xl" />
+        <Skeleton className="h-72 rounded-xl" />
+      </div>
+      <Skeleton className="h-80 rounded-xl" />
+    </div>
+  );
+}

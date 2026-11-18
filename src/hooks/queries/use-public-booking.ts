@@ -29,11 +29,13 @@ export function useCreateBooking(slug: string, getCaptchaToken: GetCaptchaToken)
 }
 
 /** Site Key del CAPTCHA del registro (la de la reserva viene en el perfil del negocio). */
-export function useCaptchaSiteKey() {
+/** `enabled`: el inicio de sesión del equipo la pide sólo cuando la API exige el CAPTCHA. */
+export function useCaptchaSiteKey(enabled = true) {
   return useQuery({
     queryKey: queryKeys.captchaSiteKey,
     queryFn: () => data.publicBooking.getCaptchaSiteKey(),
     staleTime: Number.POSITIVE_INFINITY,
+    enabled,
   });
 }
 
@@ -136,4 +138,22 @@ export function useAnswerSurvey(token: string) {
 /** «No quiero recibir estas encuestas». */
 export function useSurveyOptOut(token: string) {
   return useMutation({ mutationFn: () => data.publicBooking.surveyOptOut(token) });
+}
+
+/** El enlace del recordatorio de control (spec 051): el negocio y si ya pidió no recibirlos. */
+export function usePublicControlReminder(token: string) {
+  return useQuery({
+    queryKey: queryKeys.publicControlReminder(token),
+    queryFn: () => data.publicBooking.getControlReminder(token),
+    retry: false,
+  });
+}
+
+/** «No quiero recibir estos recordatorios»: la página pasa a «Listo». */
+export function useControlReminderOptOut(token: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => data.publicBooking.controlReminderOptOut(token),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.publicControlReminder(token) }),
+  });
 }

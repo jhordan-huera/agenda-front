@@ -11,10 +11,11 @@ import { useSession } from "@/features/auth/use-session";
 import { useUpdateBusiness } from "@/hooks/queries/use-account";
 import { useCategories } from "@/hooks/queries/use-categories";
 import { TIMEZONES, getTimezoneInfo } from "@/lib/constants/business";
+import { EMPTY_SOCIAL_LINKS, SOCIAL_NETWORKS } from "@/lib/constants/loyalty";
 import { getErrorMessage } from "@/lib/data";
-import { businessProfileSchema, type BusinessProfileInput } from "@/lib/validations/business";
+import { businessProfileSchema, socialLinksSchema, type BusinessProfileInput } from "@/lib/validations/business";
 import { validate } from "@/lib/validations/validate";
-import type { Business, BusinessCategory } from "@/types";
+import type { Business, BusinessCategory, SocialLinks } from "@/types";
 import { BookingLinkField } from "./booking-link-field";
 import { ImageUploadField } from "./image-upload-field";
 import { SettingsSection } from "./settings-section";
@@ -31,7 +32,8 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
   const { categories } = useCategories();
   // Se ofrecen las activas y, si estuviera desactivada, la que ya tiene el negocio.
   const categoryOptions = categories.filter((category) => category.isActive || category.id === business.category);
-  const saved: BusinessProfileInput = {
+  // Las redes del negocio (spec 052): un backend anterior no las manda (vacías).
+  const saved: BusinessProfileInput & { socialLinks: SocialLinks } = {
     name: business.name,
     description: business.description,
     category: business.category,
@@ -43,6 +45,7 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
     lat: business.lat,
     lng: business.lng,
     logoUrl: business.logoUrl,
+    socialLinks: { ...EMPTY_SOCIAL_LINKS, ...business.socialLinks },
   };
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(saved);
   const [uploading, setUploading] = useState(false);
@@ -50,12 +53,15 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
   const point = values.lat !== null && values.lng !== null ? { lat: values.lat, lng: values.lng } : null;
 
   const submit = async () => {
-    const result = validate(businessProfileSchema, values);
-    setErrors(result.errors);
-    if (!result.success) return;
+    const { socialLinks, ...profile } = values;
+    const result = validate(businessProfileSchema, profile);
+    // Se guardan como el enlace de cada red («@sonrisa» pasa a https://www.instagram.com/sonrisa).
+    const social = validate(socialLinksSchema, socialLinks);
+    setErrors({ ...result.errors, ...social.errors });
+    if (!result.success || !social.success) return;
     try {
-      await updateBusiness.mutateAsync(result.data);
-      reset(result.data);
+      await updateBusiness.mutateAsync({ ...result.data, socialLinks: social.data });
+      reset({ ...result.data, socialLinks: social.data });
       toast.success("Datos del negocio actualizados");
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -143,6 +149,40 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
           {(field) => <Input {...field} type="email" value={values.email} onChange={(e) => setField("email", e.target.value)} />}
         </FormField>
       </div>
+      <fieldset className="grid gap-3">
+        <legend className="mb-1 text-sm font-medium">
+          Redes sociales <span className="font-normal text-muted-foreground">(opcional)</span>
+        </legend>
+        <p className="text-xs text-muted-foreground">
+          Salen en tu página de reservas y en la tarjeta de fidelización de tus pacientes, sólo las que pongas. Escribe tu
+          @usuario o el enlace de tu página.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {SOCIAL_NETWORKS.map((network) => (
+            <FormField key={network.key} label={network.label} error={errors[network.key]}>
+              {(field) => (
+                <Input
+                  {...field}
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="@usuario"
+                  value={values.socialLinks[network.key]}
+                  onChange={(e) => {
+                    setField("socialLinks", { ...values.socialLinks, [network.key]: e.target.value });
+                    // Su error desaparece al corregirlo, como el de los demás campos.
+                    setErrors((current) => {
+                      if (!(network.key in current)) return current;
+                      const next = { ...current };
+                      delete next[network.key];
+                      return next;
+                    });
+                  }}
+                />
+              )}
+            </FormField>
+          ))}
+        </div>
+      </fieldset>
       <FormField
         label="Ubicación del local"
         error={errors.lat}

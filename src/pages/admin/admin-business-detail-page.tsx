@@ -38,6 +38,7 @@ import { AddOwnerDialog } from "@/features/admin/add-owner-dialog";
 import { BusinessBillingFields } from "@/features/admin/business-billing-fields";
 import { BusinessHero } from "@/features/admin/business-hero";
 import { ClientRequiredFieldsCard } from "@/features/admin/client-required-fields-card";
+import { LoyaltyAllowedCard } from "@/features/admin/loyalty-allowed-card";
 import { MultiClientAppointmentsCard } from "@/features/admin/multi-client-appointments-card";
 import { PaymentRemindersCard } from "@/features/admin/payment-reminders-card";
 import { DeleteBusinessDialog } from "@/features/admin/delete-business-dialog";
@@ -439,6 +440,7 @@ export default function AdminBusinessDetailPage() {
         <TabsContent value="ajustes" forceMount className="space-y-6 data-[state=inactive]:hidden">
           <ClientRequiredFieldsCard key={business.id} business={business} />
           <MultiClientAppointmentsCard key={`multi-${business.id}`} business={business} />
+          <LoyaltyAllowedCard key={`loyalty-${business.id}`} business={business} />
           <PaymentRemindersCard key={`pay-${business.id}`} business={business} />
           <Card className="border-destructive/30">
             <CardHeader>

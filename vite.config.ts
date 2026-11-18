@@ -1,6 +1,7 @@
 import { readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
@@ -94,6 +95,9 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
+      // `npm run dev:https`: el panel en https con un certificado propio, para probar desde el celular lo que sólo
+      // funciona en una página segura, como la cámara de «Escanear» (spec 052). Nunca en el build.
+      ...(process.env.DEV_HTTPS === "1" ? [basicSsl({ name: "agenda360-local" })] : []),
       stylesheetAfterBootScreen(),
       specialtyPages(siteUrlFrom(env)),
       // Aplicación instalable: service worker propio (src/sw.ts) con la lista de archivos de cada
@@ -107,7 +111,7 @@ export default defineConfig(({ mode }) => {
         injectRegister: false,
         injectManifest: {
           // La letra, sólo en alfabeto latino (las otras variantes no se usan en español).
-          globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}", "assets/sora-latin-wght-*.woff2"],
+          globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}", "assets/geist-latin-wght-*.woff2", "assets/geist-mono-latin-wght-*.woff2"],
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         },
         devOptions: { enabled: false },
@@ -129,7 +133,11 @@ export default defineConfig(({ mode }) => {
         : []),
       withoutSourceMaps(),
     ],
-    define: { "import.meta.env.VITE_RELEASE": JSON.stringify(release) },
+    define: {
+      "import.meta.env.VITE_RELEASE": JSON.stringify(release),
+      // La dirección pública para los QR y el enlace de reservas (src/lib/public-url.ts): sólo en lo que se publica.
+      "import.meta.env.VITE_PUBLIC_SITE_URL": JSON.stringify(mode === "production" ? siteUrlFrom(env) : ""),
+    },
     build: { sourcemap: sourceMaps ? "hidden" : false },
     // El worker de MapLibre es un módulo ES (ver src/components/shared/map-base.ts).
     worker: { format: "es" },

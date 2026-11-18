@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:https": "DEV_HTTPS=1 vite --host",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint",
@@ -19,21 +20,24 @@
     "check:pending-payments": "node scripts/check-pending-payments.ts",
     "check:waitlist": "node scripts/check-waitlist.ts",
     "check:specialties": "node scripts/check-specialties.ts",
-    "check:surveys": "node scripts/check-surveys.ts"
+    "check:surveys": "node scripts/check-surveys.ts",
+    "check:control-reminders": "node scripts/check-control-reminders.ts",
+    "check:loyalty": "node scripts/check-loyalty.ts"
   },
   "dependencies": {
-    "@fontsource-variable/schibsted-grotesk": "^5.3.0",
-    "@fontsource-variable/sora": "^5.3.0",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
     "@sentry/browser": "^11.11.0",
     "@tanstack/react-query": "^5.107.1",
     "@vercel/analytics": "^2.0.1",
-    "@vercel/functions": "^3.11.0",
+    "@vercel/functions": "^3.11.1",
     "@vercel/speed-insights": "^2.1.0",
+    "barcode-detector": "3.2.3",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
     "date-fns": "^4.4.0",
     "fflate": "0.8.3",
-    "lucide-react": "^1.70.0",
+    "lucide-react": "^1.71.0",
     "maplibre-gl": "^6.17.0",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",
@@ -45,7 +49,8 @@
     "tw-animate-css": "^1.4.0",
     "uqr": "^0.1.3",
     "write-excel-file": "4.1.1",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "zxing-wasm": "3.1.6"
   },
   "overrides": {
     "@vercel/cli-config": {
@@ -58,6 +63,7 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-basic-ssl": "2.3.0",
     "@vitejs/plugin-react": "^6.3.0",
     "oxlint": "^1.93.0",
     "tailwindcss": "^4.3.3",

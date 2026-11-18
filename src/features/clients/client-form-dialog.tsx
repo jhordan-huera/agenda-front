@@ -33,16 +33,27 @@ interface ClientFormDialogProps {
   defaultEmail?: string;
   defaultPhone?: string;
   onSaved?: (client: Client) => void;
+  /**
+   * Crear la ficha por otro camino: «Paciente nuevo» de Escanear (spec 052), que la crea con el teléfono de la cuenta
+   * (lo pone la API) y la une. `lockedPhone` es lo que se ve en el teléfono, que no se escribe.
+   */
+  custom?: {
+    title: string;
+    description: string;
+    submitLabel: string;
+    lockedPhone: string;
+    onSubmit: (input: Omit<ClientInput, "phone" | "isActive">) => Promise<void>;
+  };
 }
 
-export function ClientFormDialog({ open, onOpenChange, client, defaultName, defaultEmail, defaultPhone, onSaved }: ClientFormDialogProps) {
+export function ClientFormDialog({ open, onOpenChange, client, defaultName, defaultEmail, defaultPhone, onSaved, custom }: ClientFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{client ? "Editar cliente" : "Nuevo cliente"}</DialogTitle>
+          <DialogTitle>{custom?.title ?? (client ? "Editar cliente" : "Nuevo cliente")}</DialogTitle>
           <DialogDescription>
-            {client ? "Actualiza los datos de contacto y las notas." : "Registra los datos de contacto de tu cliente."}
+            {custom?.description ?? (client ? "Actualiza los datos de contacto y las notas." : "Registra los datos de contacto de tu cliente.")}
           </DialogDescription>
         </DialogHeader>
         <ClientForm
@@ -50,10 +61,11 @@ export function ClientFormDialog({ open, onOpenChange, client, defaultName, defa
           defaultName={defaultName}
           defaultEmail={defaultEmail}
           defaultPhone={defaultPhone}
+          custom={custom}
           onCancel={() => onOpenChange(false)}
           onSaved={(saved) => {
             onOpenChange(false);
-            onSaved?.(saved);
+            if (saved) onSaved?.(saved);
           }}
         />
       </DialogContent>
@@ -66,6 +78,7 @@ function ClientForm({
   defaultName = "",
   defaultEmail = "",
   defaultPhone = "",
+  custom,
   onCancel,
   onSaved,
 }: {
@@ -73,10 +86,13 @@ function ClientForm({
   defaultName?: string;
   defaultEmail?: string;
   defaultPhone?: string;
+  custom?: ClientFormDialogProps["custom"];
   onCancel: () => void;
-  onSaved: (client: Client) => void;
+  /** Al guardar: la ficha (null si la guardó `custom`). */
+  onSaved: (client: Client | null) => void;
 }) {
   const saveClient = useSaveClient();
+  const [customPending, setCustomPending] = useState(false);
   const showError = useErrorToast();
   const { data: business } = useCurrentBusiness();
   // Los datos obligatorios los elige el super admin para cada negocio (la API valida con los mismos).
@@ -99,6 +115,21 @@ function ClientForm({
     event.preventDefault();
     // Sin el negocio aún no se sabe qué datos son obligatorios (el botón espera a que cargue).
     if (!business) return;
+    if (custom) {
+      const result = validate(clientSchemaFor(required).omit({ phone: true, isActive: true }), values);
+      setErrors(result.errors);
+      if (!result.success) return;
+      setCustomPending(true);
+      try {
+        await custom.onSubmit(result.data);
+        onSaved(null);
+      } catch (error) {
+        showError(error);
+      } finally {
+        setCustomPending(false);
+      }
+      return;
+    }
     const result = validate(clientSchemaFor(required), values);
     setErrors(result.errors);
     if (!result.success) return;
@@ -138,17 +169,23 @@ function ClientForm({
         )}
       </FormField>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField label="Teléfono" error={errors.phone} optional={!required.phone}>
-          {(field) => (
-            <Input
-              {...field}
-              type="tel"
-              placeholder="+593 99 123 4567"
-              value={values.phone}
-              onChange={(e) => set("phone", e.target.value)}
-            />
-          )}
-        </FormField>
+        {custom ? (
+          <FormField label="Teléfono" hint="El de su cuenta: lo pone Agenda360.">
+            {(field) => <Input {...field} value={custom.lockedPhone} disabled readOnly />}
+          </FormField>
+        ) : (
+          <FormField label="Teléfono" error={errors.phone} optional={!required.phone}>
+            {(field) => (
+              <Input
+                {...field}
+                type="tel"
+                placeholder="+593 99 123 4567"
+                value={values.phone}
+                onChange={(e) => set("phone", e.target.value)}
+              />
+            )}
+          </FormField>
+        )}
         <FormField label="Email" error={errors.email} optional={!required.email}>
           {(field) => (
             <Input {...field} type="email" value={values.email} onChange={(e) => set("email", e.target.value)} />
@@ -165,19 +202,21 @@ function ClientForm({
           <Textarea {...field} rows={3} value={values.notes} onChange={(e) => set("notes", e.target.value)} />
         )}
       </FormField>
-      <label className="flex items-center justify-between gap-4 rounded-lg border p-3">
-        <span>
-          <span className="block text-sm font-medium">Cliente activo</span>
-          <span className="block text-xs text-muted-foreground">Los inactivos no aparecen al crear citas.</span>
-        </span>
-        <Switch checked={values.isActive} onCheckedChange={(checked) => set("isActive", checked)} />
-      </label>
+      {!custom && (
+        <label className="flex items-center justify-between gap-4 rounded-lg border p-3">
+          <span>
+            <span className="block text-sm font-medium">Cliente activo</span>
+            <span className="block text-xs text-muted-foreground">Los inactivos no aparecen al crear citas.</span>
+          </span>
+          <Switch checked={values.isActive} onCheckedChange={(checked) => set("isActive", checked)} />
+        </label>
+      )}
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <SubmitButton loading={saveClient.isPending} disabled={!business}>
-          {client ? "Guardar cambios" : "Crear cliente"}
+        <SubmitButton loading={saveClient.isPending || customPending} disabled={!business}>
+          {custom?.submitLabel ?? (client ? "Guardar cambios" : "Crear cliente")}
         </SubmitButton>
       </DialogFooter>
     </form>

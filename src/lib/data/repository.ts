@@ -79,6 +79,7 @@ import type {
   PaymentReceiptUpload,
   PublicAppointment,
   PublicAppointmentResult,
+  PublicControlReminder,
   PublicSurvey,
   PublicWaitlistEntry,
   SurveySummary,
@@ -99,6 +100,19 @@ import type {
   BusinessRole,
   BusinessStatus,
   Client,
+  ClientLoyalty,
+  ControlReminder,
+  LoyaltyBenefit,
+  LoyaltyMember,
+  LoyaltyProgram,
+  LoyaltyReward,
+  LoyaltySummary,
+  PatientAccount,
+  PatientCard,
+  PatientResetLink,
+  PatientInvite,
+  ScanResult,
+  SocialLinks,
   ClientActivity,
   PendingPaymentsSummary,
   ClientImportResult,
@@ -173,6 +187,8 @@ export interface UpdateBusinessInput extends Partial<BusinessProfileInput> {
   brandColors?: BrandColors | null;
   /** Qué pacientes ve quien tiene el rol Profesional. */
   professionalScope?: ProfessionalScope;
+  /** Las redes del negocio (spec 052), ya como enlaces; sin el campo, no se tocan. */
+  socialLinks?: SocialLinks;
 }
 
 export interface BusinessRepository {
@@ -454,6 +470,78 @@ export interface PublicBookingRepository {
   answerSurvey(token: string, input: SurveyAnswerInput): Promise<PublicSurvey>;
   /** «No quiero recibir estas encuestas». Repetirlo no hace nada. */
   surveyOptOut(token: string): Promise<{ optedOut: true }>;
+  /** El recordatorio de control (spec 051), en /recordatorio/:token: el negocio y si ya pidió no recibirlos. */
+  getControlReminder(token: string): Promise<PublicControlReminder>;
+  /** «No quiero recibir estos recordatorios». Repetirlo no hace nada. */
+  controlReminderOptOut(token: string): Promise<{ optedOut: true }>;
+}
+
+/** Filtros de «Recompensas» (spec 052). `code`: busca una por su código, escrito como sea. */
+export interface LoyaltyRewardFilters {
+  clientId?: string;
+  benefitId?: string;
+  status?: string;
+  code?: string;
+}
+
+/**
+ * La tarjeta de fidelización (spec 052), lo del equipo: el programa y los beneficios (propietario y administrador), la
+ * ficha, el canje (también Recepción) y «Escanear» (quien maneja citas; el Profesional, en su agenda).
+ */
+export interface LoyaltyRepository {
+  program(businessId: string): Promise<LoyaltyProgram>;
+  saveProgram(businessId: string, input: unknown): Promise<LoyaltyProgram>;
+  benefits(businessId: string): Promise<LoyaltyBenefit[]>;
+  createBenefit(businessId: string, input: unknown): Promise<LoyaltyBenefit>;
+  updateBenefit(businessId: string, benefitId: string, input: unknown): Promise<LoyaltyBenefit>;
+  /** Lo borra si nadie lo ganó; si no, lo archiva (`archived`). */
+  deleteBenefit(businessId: string, benefitId: string): Promise<{ archived: boolean }>;
+  members(businessId: string): Promise<LoyaltyMember[]>;
+  rewards(businessId: string, filters?: LoyaltyRewardFilters): Promise<LoyaltyReward[]>;
+  summary(businessId: string): Promise<LoyaltySummary>;
+  /** Canjear, en una cita del paciente (su precio baja si no está pagada) o sin cita. */
+  redeem(businessId: string, rewardId: string, appointmentId: string | null): Promise<LoyaltyReward>;
+  clientLoyalty(businessId: string, clientId: string): Promise<ClientLoyalty>;
+  scan(businessId: string, token: string): Promise<ScanResult>;
+  /** Unir la cuenta: con una cita de hoy o, sin cita (`appointmentId` null), a una ficha con su mismo teléfono. */
+  link(businessId: string, input: { token: string; appointmentId: string | null; clientId: string }): Promise<ScanResult>;
+  /** «Paciente nuevo»: crea su ficha (el teléfono lo pone la API, el de la cuenta) y une la cuenta. */
+  newClient(businessId: string, input: { token: string; client: Omit<ClientInput, "phone" | "isActive"> }): Promise<ScanResult>;
+  complete(businessId: string, input: { token: string; appointmentId: string }): Promise<ScanResult>;
+  /** El enlace de un solo uso para que el paciente cree otra contraseña (con el teléfono para el WhatsApp). */
+  resetLink(businessId: string, clientId: string): Promise<PatientResetLink>;
+  /** «Desunir la cuenta»: la ficha conserva sus sellos; la cuenta deja de ver esta tarjeta. */
+  unlink(businessId: string, clientId: string): Promise<{ unlinked: true }>;
+}
+
+/** La cuenta del paciente (spec 052): /api/patient, con su propia cookie, aparte de la sesión del equipo. */
+export interface PatientRepository {
+  config(): Promise<{ captchaSiteKey: string | null }>;
+  /** La invitación del QR del consultorio (su nombre, su logo y el programa) para «Mi tarjeta». */
+  invite(slug: string): Promise<PatientInvite>;
+  signup(input: { name: string; phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
+  login(input: { phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
+  logout(): Promise<void>;
+  /** «Cerrar sesión en todos los dispositivos» (revisión de seguridad 2026-11-18). */
+  logoutEverywhere(): Promise<void>;
+  me(): Promise<PatientAccount>;
+  cards(): Promise<PatientCard[]>;
+  newQr(): Promise<PatientAccount>;
+  changePassword(input: { currentPassword: string; newPassword: string }): Promise<void>;
+  /** Pide la contraseña de la cuenta. */
+  deleteAccount(password: string): Promise<void>;
+  resetInfo(token: string): Promise<{ valid: boolean; firstName: string | null }>;
+  resetPassword(token: string, password: string): Promise<PatientAccount>;
+}
+
+/**
+ * Los controles (spec 051): la hoja «Controles» de la Agenda (los vencidos y los de los próximos 30 días) o, con
+ * `clientId`, los de ese paciente. El rol Profesional, sólo los de su agenda.
+ */
+export interface ControlReminderRepository {
+  list(businessId: string, clientId?: string): Promise<ControlReminder[]>;
+  /** «Quitar»: ese control sale de la lista y no se le escribe. */
+  remove(businessId: string, appointmentId: string): Promise<{ removed: true }>;
 }
 
 /** Las opiniones de los pacientes (spec 048): quien ve Reportes; el rol Profesional, sólo las de su agenda. */
@@ -546,6 +634,8 @@ export interface PlatformAdminRepository {
    * el negocio no lo cambia.
    */
   setMultiClientAppointments(businessId: string, enabled: boolean): Promise<Business>;
+  /** La tarjeta de fidelización en un negocio (spec 052): sólo el super admin; al quitarla se apaga el programa. */
+  setLoyaltyAllowed(businessId: string, enabled: boolean): Promise<Business>;
   /**
    * «Pedir el comprobante de pago» (spec 039). Sólo el super admin: el interruptor y, con él encendido, los
    * días de los recordatorios (siempre antes de la cita).
@@ -691,6 +781,9 @@ export interface DataRepository {
   publicBooking: PublicBookingRepository;
   waitlist: WaitlistRepository;
   surveys: SurveyRepository;
+  controlReminders: ControlReminderRepository;
+  loyalty: LoyaltyRepository;
+  patient: PatientRepository;
   images: ImageRepository;
   platform: PlatformRepository;
   admin: PlatformAdminRepository;

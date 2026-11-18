@@ -2,6 +2,7 @@ import { Check, Copy, ExternalLink, QrCode } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { publicOrigin } from "@/lib/public-url";
 import { BookingQrDialog } from "./booking-qr-dialog";
 
 interface BookingLinkFieldProps {
@@ -17,7 +18,7 @@ interface BookingLinkFieldProps {
 export function BookingLinkField({ savedSlug, pendingChange, businessName }: BookingLinkFieldProps) {
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const url = `${window.location.origin}/book/${savedSlug}`;
+  const url = `${publicOrigin()}/book/${savedSlug}`;
 
   useEffect(() => {
     if (!copied) return;

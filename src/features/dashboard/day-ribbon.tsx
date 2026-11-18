@@ -27,7 +27,7 @@ const PAGE_SHARE = 0.8;
 const REVEAL_SHARE = 0.15;
 /**
  * Desde qué ancho de franja cabe «citas» en los avisos de la barra, junto a ‹, «Ahora» y › (medido con
- * Sora: «← 12 citas» y «12 citas →»). «antes» y «más tarde» caben desde PHONE_WIDTH.
+ * Geist: «← 12 citas» y «12 citas →»). «antes» y «más tarde» caben desde PHONE_WIDTH.
  */
 const COUNT_WORD_WIDTH = 312;
 

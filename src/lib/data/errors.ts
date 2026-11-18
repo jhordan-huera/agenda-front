@@ -16,6 +16,8 @@ export type DataErrorCode =
   | "two_factor_required"
   /** Aviso de prueba en el celular: el servicio de avisos del navegador lo rechazó o no respondió (spec 013). */
   | "push_failed"
+  /** Inicio de sesión del equipo: varios intentos desde una conexión nueva, hace falta el CAPTCHA (revisión 2026-11-18). */
+  | "captcha_required"
   | "server";
 
 /** Error de la capa de datos con mensaje listo para mostrar al usuario. */

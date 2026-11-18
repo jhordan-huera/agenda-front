@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarOff, ChevronLeft, ChevronRight, ClipboardCheck, Hourglass, Loader2, Plus, ReceiptText } from "lucide-react";
+import { CalendarCheck, CalendarClock, CalendarOff, ChevronLeft, ChevronRight, ClipboardCheck, Hourglass, Loader2, Plus, ReceiptText } from "lucide-react";
 import { useState, type ComponentProps } from "react";
 import { useSearchParams } from "react-router";
 import { ErrorState } from "@/components/shared/error-state";
@@ -33,10 +33,13 @@ import { ALL_AGENDAS, ProfessionalSelect } from "@/features/professionals/profes
 import { useAgendas } from "@/features/professionals/use-agendas";
 import { BlockedTimeFormDialog } from "@/features/schedule/blocked-time-form-dialog";
 import { ClientFormDialog } from "@/features/clients/client-form-dialog";
+import { ControlRemindersSheet } from "@/features/control-reminders/control-reminders-sheet";
+import { ScanButton } from "@/features/loyalty/scan-dialog";
 import { WaitlistSheet } from "@/features/waitlist/waitlist-sheet";
+import { useControlReminders } from "@/hooks/queries/use-control-reminders";
 import { useCloseWaitlistEntry, useWaitlist } from "@/hooks/queries/use-waitlist";
 import { WAITLIST_PARAM } from "@/lib/constants/notices";
-import type { WaitlistEntry } from "@/types";
+import type { ControlReminder, WaitlistEntry } from "@/types";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useAppointments, useMoveAppointment } from "@/hooks/queries/use-appointments";
 import { useLookups } from "@/hooks/queries/use-lookups";
@@ -156,6 +159,17 @@ export default function CalendarPage() {
   // ?appointment=<id> (enlace del email "Comprobante de pago"): abre la ficha de esa cita.
   const dialogs = useAppointmentDialogs(searchParams.get("appointment"));
 
+  // Los controles (spec 051): sólo si algún servicio tiene «Volver en». «Agendar» abre la cita nueva con el paciente, el
+  // servicio y el profesional; al guardarla, el control sale solo (ya tiene una cita por delante).
+  const controlsOn = [...servicesById.values()].some((service) => service.returnAfterDays);
+  const controlReminders = useControlReminders(controlsOn);
+  const controlCount = (controlReminders.data ?? []).filter((control) => agenda === ALL_AGENDAS || control.professionalId === agenda).length;
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const scheduleControl = (control: ControlReminder) => {
+    setControlsOpen(false);
+    dialogs.openCreate({ clientId: control.clientId, serviceId: control.serviceId, professionalId: control.professionalId });
+  };
+
   const professionalsById = new Map(agendas.all.map((p) => [p.id, p]));
   // «Sin comprobante» (spec 039): la misma regla que la ficha de la cita; sin el interruptor, ninguna.
   const missingReceipt = paymentReminders
@@ -224,7 +238,10 @@ export default function CalendarPage() {
       <PageHeader
         title="Agenda"
         description={
-          agendas.multiple ? "Las citas de todos los profesionales, por día, semana, mes o en el tablero." : "Gestiona tus citas por día, semana, mes o en el tablero."
+          // Con su ancho, los botones caben en una fila (con «Escanear», spec 052).
+          <span className="block max-w-lg">
+            {agendas.multiple ? "Las citas de todos los profesionales, por día, semana, mes o en el tablero." : "Gestiona tus citas por día, semana, mes o en el tablero."}
+          </span>
         }
         actions={
           <>
@@ -238,11 +255,18 @@ export default function CalendarPage() {
                 <Hourglass /> Lista de espera{waitlist.data ? ` (${waitlistCount})` : ""}
               </Button>
             )}
+            {controlsOn && (
+              <Button size="lg" variant="outline" onClick={() => setControlsOpen(true)}>
+                <CalendarClock /> Controles{controlReminders.data ? ` (${controlCount})` : ""}
+              </Button>
+            )}
             {can("schedule.manage") && (
               <Button size="lg" variant="outline" onClick={() => setBlockDialogOpen(true)}>
                 <CalendarOff /> Bloquear horario
               </Button>
             )}
+            {/* El QR de la tarjeta del paciente (spec 052): marca su cita de hoy como atendida. */}
+            {can("appointments.manage") && business?.loyaltyAllowed && <ScanButton compact />}
             <Button
               size="lg"
               onClick={() =>
@@ -444,6 +468,15 @@ export default function CalendarPage() {
           business={business}
           agendaId={agenda !== ALL_AGENDAS ? agenda : null}
           onSchedule={(entry) => scheduleFromWaitlist(entry)}
+        />
+      )}
+      {controlsOn && business && (
+        <ControlRemindersSheet
+          open={controlsOpen}
+          onOpenChange={setControlsOpen}
+          business={business}
+          agendaId={agenda !== ALL_AGENDAS ? agenda : null}
+          onSchedule={scheduleControl}
         />
       )}
       <ClientFormDialog

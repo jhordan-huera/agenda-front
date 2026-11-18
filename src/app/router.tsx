@@ -56,6 +56,9 @@ export const router = createBrowserRouter([
           { path: "schedule", lazy: lazyPage(() => import("@/pages/dashboard/schedule-page")) },
           { path: "reports", lazy: lazyPage(() => import("@/pages/dashboard/reports-page")) },
           { path: "settings", lazy: lazyPage(() => import("@/pages/dashboard/settings-page")) },
+          // Tarjeta de fidelización (spec 052): «Fidelización» y «Escanear» (el QR de la cuenta del paciente).
+          { path: "fidelizacion", lazy: lazyPage(() => import("@/pages/dashboard/loyalty-page")) },
+          { path: "escanear", lazy: lazyPage(() => import("@/pages/dashboard/scan-page")) },
           // La página «Avisos» de la campana (spec 014).
           { path: "notices", lazy: lazyPage(() => import("@/pages/dashboard/notices-page")) },
           { path: "clinical-templates", lazy: lazyPage(() => import("@/pages/dashboard/clinical-templates-page")) },
@@ -94,6 +97,12 @@ export const router = createBrowserRouter([
       { path: "/lista-de-espera/:token", lazy: lazyPage(() => import("@/pages/waitlist-page")) },
       // La encuesta después de la cita (spec 048): el enlace del email del día siguiente, sin sesión.
       { path: "/encuesta/:token", lazy: lazyPage(() => import("@/pages/survey-page")) },
+      // El recordatorio de control (spec 051): «No quiero recibir estos recordatorios», sin sesión.
+      { path: "/recordatorio/:token", lazy: lazyPage(() => import("@/pages/control-reminder-page")) },
+      // La cuenta del paciente (spec 052): su tarjeta, el enlace del consultorio para la contraseña y el QR.
+      { path: "/mi-tarjeta", lazy: lazyPage(() => import("@/pages/patient/patient-card-page")) },
+      { path: "/mi-tarjeta/clave/:token", lazy: lazyPage(() => import("@/pages/patient/patient-reset-page")) },
+      { path: "/q/:token", lazy: lazyPage(() => import("@/pages/patient/qr-landing-page")) },
       { path: "/privacidad", lazy: lazyPage(() => import("@/pages/privacy-page")) },
       // Las páginas por especialidad (spec 041); las direcciones con tilde llevan a la de siempre.
       ...["/psicologos", "/fisioterapeutas", "/odontologos"].map((path) => ({ path, lazy: lazyPage(() => import("@/pages/specialty-page")) })),

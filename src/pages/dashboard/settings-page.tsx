@@ -16,6 +16,7 @@ import { BusinessSettingsForm } from "@/features/settings/business-settings-form
 import { ClinicalSettingsCard } from "@/features/settings/clinical-settings-card";
 import { EmailOutbox } from "@/features/settings/email-outbox";
 import {
+  ControlReminderSettingsForm,
   MonthlyReportSettingsForm,
   NotificationSettingsForm,
   SurveySettingsForm,
@@ -136,6 +137,7 @@ export default function SettingsPage() {
                 {/* Spec 040: sólo el propietario, fuera del modo soporte. */}
                 {session?.role === "owner" && !session.support && <MonthlyReportSettingsForm business={business} />}
                 <SurveySettingsForm business={business} />
+                <ControlReminderSettingsForm business={business} />
               </>
             ))}
             <EmailOutbox />

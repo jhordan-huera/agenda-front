@@ -50,6 +50,8 @@ const same = (actual: unknown, expected: unknown, label: string) => ok(actual ==
 
 const ID = "0b6e1c2a-5f3d-4c8e-9a1b-2c3d4e5f6a7b";
 const HEX = "9f3c2b1a0d9e8f7a6b5c4d3e2f1a0b9c";
+/** Un token del enlace de la contraseña del paciente (spec 052): base64url, aquí sin cifras. */
+const RESET = "AbcDef_GhiJkl-MnoPqrStuVwxYzaBcdEfgHiJkLmNo";
 
 console.log("\nLa página, para Sentry");
 same(errorPagePath(`/dashboard/clients/${ID}?tab=historia#notas`), "/dashboard/clients/[id]", "un paciente del panel: sin su id ni los parámetros");
@@ -57,6 +59,9 @@ same(errorPagePath("/book/psicovalle"), "/book/[negocio]", "la página de reserv
 same(errorPagePath("/book/mente-abierta/confirmacion"), "/book/[negocio]/confirmacion", "y lo que sigue, igual");
 same(errorPagePath("/cita/Xk9_aB3-qwerty"), "/cita/[token]", "«Tu cita»: sin su token, aunque sea corto");
 same(errorPagePath(`/pago/${HEX}`), "/pago/[token]", "el pago: sin su token");
+same(errorPagePath(`/mi-tarjeta/clave/${RESET}`), "/mi-tarjeta/clave/[token]", "el enlace de la contraseña del paciente: sin su token, aunque no tenga cifras");
+same(errorPagePath(`/q/${HEX}`), "/q/[token]", "el QR del paciente: sin su token");
+same(errorPagePath("/mi-tarjeta"), "/mi-tarjeta", "«Mi tarjeta» queda igual");
 same(errorPagePath(`/admin/businesses/${ID}`), "/admin/businesses/[id]", "un negocio de /admin");
 same(errorPagePath("/dashboard/agenda"), "/dashboard/agenda", "una página sin datos queda igual");
 same(errorPagePath("/"), "/", "la portada");
@@ -67,6 +72,7 @@ same(errorApiPath("/public/businesses/mente-abierta/clients/lookup"), "/public/b
 same(errorApiPath(`/public/appointments/AbCdEf123456_x/confirm`), "/public/appointments/[token]/confirm", "«Tu cita»: sin el token");
 same(errorApiPath(`/public/payments/${HEX}/receipts`), "/public/payments/[token]/receipts", "el pago: sin el token");
 same(errorApiPath("/public/referrals/PSICO24"), "/public/referrals/[código]", "la recomendación: sin el código");
+same(errorApiPath(`/patient/reset/${RESET}`), "/patient/reset/[token]", "el enlace de la contraseña del paciente: sin el token");
 same(errorApiPath("/auth/check/ana.perez%40correo.com"), "/auth/check/[email]", "un email en la ruta");
 same(errorApiPath("/clients/lookup/0991234567"), "/clients/lookup/[número]", "un teléfono o una cédula en la ruta");
 same(errorApiPath("/auth/session"), "/auth/session", "una ruta sin datos queda igual");
@@ -74,6 +80,8 @@ same(errorApiPath("/auth/session"), "/auth/session", "una ruta sin datos queda i
 console.log("\nLa analítica sigue igual");
 same(anonymizePath(`/dashboard/clients/${ID}`), "/dashboard/clients/[id]", "el id");
 same(anonymizePath(`/pago/${HEX}`), "/pago/[token]", "el token del pago");
+same(anonymizePath(`/mi-tarjeta/clave/${RESET}`), "/mi-tarjeta/clave/[token]", "el enlace de la contraseña del paciente");
+same(anonymizePath(`/q/${HEX}`), "/q/[token]", "el QR del paciente");
 
 console.log("\nEl mensaje");
 const message = scrubMessage("No se pudo enviar a ana.perez@correo.com, tel. 0991234567 o +593 99 123 4567, cédula 1712345678");
@@ -100,6 +108,7 @@ console.log("\nQuién lo vio");
 same(userTypeFor("/book/psicovalle", { superAdmin: true, signedIn: true }), "paciente", "en la página de reservas: paciente, aunque haya sesión");
 same(userTypeFor("/cita/abc", { superAdmin: false, signedIn: false }), "paciente", "en «Tu cita»: paciente");
 same(userTypeFor("/pago/abc", { superAdmin: false, signedIn: false }), "paciente", "en el pago: paciente");
+same(userTypeFor("/mi-tarjeta", { superAdmin: false, signedIn: false }), "paciente", "en «Mi tarjeta»: paciente");
 same(userTypeFor("/admin", { superAdmin: true, signedIn: true }), "super admin", "el super admin");
 same(userTypeFor("/dashboard", { superAdmin: false, signedIn: true }), "equipo", "el equipo de un negocio");
 same(userTypeFor("/", { superAdmin: false, signedIn: false }), "visitante", "alguien sin sesión");

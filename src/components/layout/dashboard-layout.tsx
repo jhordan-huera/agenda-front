@@ -16,8 +16,10 @@ import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { useInstallableApp } from "@/features/install/use-installable-app";
 import { NoticeBell } from "@/features/notices/notice-bell";
 import { PushPrompt } from "@/features/push/push-prompt";
-import { useCurrentBusiness } from "@/hooks/queries/use-account";
+import { useCurrentBusiness, useSubscription } from "@/hooks/queries/use-account";
 import { isBillingUnavailable, useBusinessBilling } from "@/hooks/queries/use-billing";
+import { useProfessionals } from "@/hooks/queries/use-professionals";
+import { useServices } from "@/hooks/queries/use-services";
 import { useToCloseCount } from "@/hooks/queries/use-to-close";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { TO_CLOSE_PARAM } from "@/lib/constants/notices";
@@ -53,7 +55,14 @@ function DashboardShell() {
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   // El panel se viste con los colores del negocio (si eligió unos propios).
-  const { data: business } = useCurrentBusiness();
+  const businessQuery = useCurrentBusiness();
+  const business = businessQuery.data;
+  // Lo que decide cómo se ve el panel (el menú con «Profesionales», los botones de la Agenda, los textos que dependen
+  // de si hay varias agendas): se espera antes de mostrarlo, así sale completo de una vez y no salta al llegar cada
+  // dato (Speed Insights, 2026-11-15). public/early-data.js ya lo pidió mientras se descargaba la app. Si alguno
+  // falla, no se bloquea: cada página muestra su error.
+  const coreQueries = [businessQuery, useSubscription(), useProfessionals(), useServices()];
+  const coreLoaded = coreQueries.every((query) => query.data !== undefined || query.isError || query.fetchStatus === "idle");
   // Citas por cerrar (spec 018): el contador se pide como el de la campana (al entrar, al volver a la
   // pestaña y cada 3 minutos con la pestaña visible). Cada uno ve lo suyo: el rol Profesional, su agenda.
   const toClose = useToCloseCount();
@@ -114,7 +123,7 @@ function DashboardShell() {
       { replace: true },
     );
   }, [openToClose, setSearchParams]);
-  if ((mayBlock && !toClose.loaded) || !billingLoaded) return <FullPageLoader />;
+  if ((mayBlock && !toClose.loaded) || !billingLoaded || !coreLoaded) return <FullPageLoader />;
   const showBanner = !blocked && !toClose.hidden && toClose.overdue > 0;
   const toCloseValue = { count: toClose, open: () => setListOpen(true) };
   const remindLater = () => {

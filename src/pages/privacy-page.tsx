@@ -7,13 +7,14 @@ import { SupportContact } from "@/components/shared/support-contact";
 import { usePlatformSettings } from "@/hooks/queries/use-admin";
 import { APP_NAME, DEFAULT_SUPPORT_EMAIL } from "@/lib/constants/app";
 
-const LAST_UPDATED = "12 de noviembre de 2026";
+const LAST_UPDATED = "16 de noviembre de 2026";
 
 /**
  * Política de privacidad (Ley Orgánica de Protección de Datos Personales del Ecuador, LOPDP).
  * Pública: la enlazan la web, el inicio de sesión, el registro y la página de reservas. Sólo promete
  * lo que existe (spec 015): lo que falta (avisar de los cambios desde la app) no. La descarga de los
- * datos desde el panel existe desde la spec 028.
+ * datos desde el panel existe desde la spec 028; la cuenta del paciente para la tarjeta de fidelización, desde la
+ * spec 052 (punto 7).
  */
 export default function PrivacyPage() {
   const settings = usePlatformSettings();
@@ -71,6 +72,10 @@ export default function PrivacyPage() {
                 tratamiento) y sólo para prestarle el servicio. Para ejercer tus derechos, dirígete primero al negocio; si nos
                 escribes a nosotros, se lo trasladaremos.
               </li>
+              <li>
+                <strong>Si creas la cuenta de tu tarjeta de fidelización</strong>, {APP_NAME} es el responsable de los datos de
+                esa cuenta. Tus sellos y tus premios son del negocio, como tu ficha (ver punto 7).
+              </li>
             </ul>
           </Section>
 
@@ -87,6 +92,10 @@ export default function PrivacyPage() {
               <li>
                 <strong>Clientes y reservas:</strong> nombre, cédula, email, teléfono, dirección, notas y citas. En las citas
                 a domicilio, la dirección y el punto marcado en el mapa.
+              </li>
+              <li>
+                <strong>Cuenta del paciente (opcional):</strong> nombre, teléfono, contraseña (guardada cifrada) y un código
+                QR; y, en la tarjeta de fidelización, los sellos, los premios y sus códigos (ver punto 7).
               </li>
               <li>
                 <strong>Historia clínica:</strong> si el profesional la usa, datos de salud de sus pacientes (antecedentes,
@@ -162,7 +171,45 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section title="7. Proveedores y transferencias internacionales">
+          <Section title="7. La cuenta del paciente y la tarjeta de fidelización">
+            <p>
+              Algunos negocios tienen una tarjeta de fidelización: cada cita atendida suma un sello y, con los sellos, el
+              paciente gana premios. Para ver su tarjeta, el paciente puede crear una cuenta en «Mi tarjeta».{" "}
+              <strong>La cuenta es opcional</strong>: para reservar una cita no hace falta, y los sellos se suman igual en
+              la ficha del negocio.
+            </p>
+            <ul>
+              <li>
+                <strong>Qué guarda la cuenta:</strong> tu nombre, tu teléfono (con él entras), tu contraseña (guardada
+                cifrada: nadie puede leerla, ni nosotros) y un código QR propio, que puedes cambiar cuando quieras. Si el
+                negocio te envía un enlace para crear otra contraseña, también guarda qué negocio lo envió y cuándo, para
+                avisarte.
+              </li>
+              <li>
+                <strong>Cómo se une a tu ficha:</strong> sólo cuando alguien del equipo de un negocio escanea tu QR en
+                persona, en una cita, y elige tu ficha. Antes de eso, tu cuenta no ve nada de ningún negocio: crear una
+                cuenta con un teléfono no da acceso a ningún dato.
+              </li>
+              <li>
+                <strong>Lo que ves tú:</strong> sólo tus tarjetas, de los negocios que escanearon tu QR: tus sellos, tus
+                premios con su código y tus visitas (la fecha y el servicio). Nunca nada de la historia clínica ni de otros
+                pacientes.
+              </li>
+              <li>
+                <strong>Lo que ve el negocio:</strong> al escanear tu QR, el nombre de tu cuenta; después, en tu ficha, que
+                tienes cuenta, tus sellos y tus premios. Si olvidas tu contraseña, puede enviarte por WhatsApp, al teléfono de
+                tu cuenta, un enlace de un solo uso que vence a las 24 horas: queda en su registro de actividad y, al usarlo,
+                tu cuenta te avisa. Nunca ve tu contraseña.
+              </li>
+              <li>
+                <strong>Eliminarla:</strong> puedes eliminar tu cuenta cuando quieras desde el engranaje de «Mi tarjeta». Se
+                borran tu cuenta, tu QR y tus sesiones; los negocios conservan tu ficha, tus sellos y tus premios como parte
+                de sus registros.
+              </li>
+            </ul>
+          </Section>
+
+          <Section title="8. Proveedores y transferencias internacionales">
             <p>Para funcionar usamos estos proveedores, que tratan los datos sólo para prestarnos su servicio:</p>
             <ul>
               <li>
@@ -195,8 +242,9 @@ export default function PrivacyPage() {
                 pago.
               </li>
               <li>
-                <strong>Cloudflare (Turnstile)</strong>, que comprueba en la página de reservas que quien busca su cédula o
-                reserva no es un programa automático: ve tu dirección IP y datos técnicos de tu navegador.
+                <strong>Cloudflare (Turnstile)</strong>, que comprueba en la página de reservas, y al crear la cuenta de la
+                tarjeta de fidelización, que quien busca su cédula, reserva o crea la cuenta no es un programa automático: ve
+                tu dirección IP y datos técnicos de tu navegador.
               </li>
               <li>
                 <strong>ntfy y healthchecks.io</strong>, para avisos internos de funcionamiento al equipo de {APP_NAME}, con
@@ -224,7 +272,7 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section title="8. Cuánto tiempo los guardamos">
+          <Section title="9. Cuánto tiempo los guardamos">
             <ul>
               <li>Los datos de cada negocio, sus clientes y sus citas, mientras el negocio tenga su cuenta.</li>
               <li>
@@ -244,13 +292,17 @@ export default function PrivacyPage() {
                 fecha y si se entregó.
               </li>
               <li>
+                La cuenta del paciente, hasta que la elimine. Los enlaces para crear otra contraseña vencen a las 24 horas y
+                se borran 30 días después.
+              </li>
+              <li>
                 El negocio decide cuánto tiempo conserva las historias clínicas de sus pacientes, según la normativa de salud
                 que le aplique.
               </li>
             </ul>
           </Section>
 
-          <Section title="9. Cómo protegemos los datos">
+          <Section title="10. Cómo protegemos los datos">
             <ul>
               <li>Conexiones cifradas (HTTPS) y contraseñas guardadas cifradas.</li>
               <li>Cookie de sesión protegida, accesos por roles y aislamiento entre negocios.</li>
@@ -258,7 +310,8 @@ export default function PrivacyPage() {
                 Bloqueo temporal de la cuenta tras varios intentos fallidos de inicio de sesión y alertas ante intentos
                 sospechosos.
               </li>
-              <li>Verificación anti-robots en la página de reservas.</li>
+              <li>Verificación anti-robots en la página de reservas y al crear la cuenta de la tarjeta de fidelización.</li>
+              <li>Un límite de intentos de inicio de sesión en la cuenta de la tarjeta de fidelización.</li>
               <li>
                 Una copia de seguridad diaria de la base de datos, cifrada: sólo {APP_NAME} tiene la clave para abrirla.
               </li>
@@ -267,15 +320,16 @@ export default function PrivacyPage() {
             </ul>
           </Section>
 
-          <Section title="10. Cookies y almacenamiento del navegador">
+          <Section title="11. Cookies y almacenamiento del navegador">
             <p>
-              Usamos una sola cookie, imprescindible para mantener tu sesión iniciada: dura 24 horas o 30 días si eliges
-              «recordarme», y se borra al cerrar sesión. El navegador también guarda datos temporales de la pestaña para que
-              la aplicación funcione. No usamos cookies de publicidad ni de analítica.
+              Usamos una cookie, imprescindible para mantener tu sesión iniciada: dura 24 horas o 30 días si eliges
+              «recordarme», y se borra al cerrar sesión. Si tienes la cuenta de tu tarjeta de fidelización, otra cookie,
+              aparte, mantiene esa sesión: dura 180 días y se borra al salir. El navegador también guarda datos temporales
+              de la pestaña para que la aplicación funcione. No usamos cookies de publicidad ni de analítica.
             </p>
           </Section>
 
-          <Section title="11. Tus derechos">
+          <Section title="12. Tus derechos">
             <p>
               Puedes pedir en cualquier momento <strong>acceder</strong> a tus datos, <strong>rectificarlos y
               actualizarlos</strong>, <strong>eliminarlos</strong>, <strong>oponerte</strong> a su tratamiento,
@@ -284,6 +338,8 @@ export default function PrivacyPage() {
             </p>
             <p>
               Escríbenos a {contact}. Si eres cliente o paciente de un negocio, también puedes pedírselo directamente a él.
+              Si tienes la cuenta de la tarjeta de fidelización, puedes eliminarla tú mismo desde el engranaje de «Mi
+              tarjeta».
               Responderemos en un plazo máximo de 15 días. Para la portabilidad, el propietario de cada negocio puede
               descargar sus datos en cualquier momento desde su panel (pacientes y citas en Excel, historias clínicas y sus
               archivos), y cada profesional, los de su agenda. Si no quedas conforme, puedes reclamar ante la
@@ -291,14 +347,14 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section title="12. Menores de edad">
+          <Section title="13. Menores de edad">
             <p>
               Las cuentas de {APP_NAME} son para personas mayores de edad. Cuando un profesional atiende a menores, es quien
               registra sus datos, con el consentimiento de su representante legal.
             </p>
           </Section>
 
-          <Section title="13. Cambios en esta política">
+          <Section title="14. Cambios en esta política">
             <p>
               Si cambiamos esta política, publicaremos aquí la nueva versión con su fecha de actualización. Si el cambio es
               importante, se lo comunicaremos a los negocios antes de que se aplique.

@@ -46,6 +46,8 @@ import { ClientNotesCard } from "@/features/clients/client-notes-card";
 import { getClientSummary, summarizeByClient } from "@/features/clients/client-summary";
 import { DeleteClientDialog } from "@/features/clients/delete-client-dialog";
 import { clientMissingFields, missingDataText } from "@/features/clients/missing-fields";
+import { ClientControls } from "@/features/control-reminders/client-controls";
+import { ClientLoyaltyCard } from "@/features/loyalty/client-loyalty-card";
 import { PendingPaymentsCard } from "@/features/payments/pending-payments-card";
 import { PatientFeedbackCard } from "@/features/reports/patient-feedback-card";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
@@ -65,6 +67,8 @@ export default function ClientDetailPage() {
   const now = useBusinessNow(business?.timezone);
   const appointmentsQuery = useAppointments({ clientId: id });
   const { servicesById } = useLookups();
+  // Los controles (spec 051): sólo si algún servicio tiene «Volver en».
+  const controlsOn = [...servicesById.values()].some((service) => service.returnAfterDays);
   const dialogs = useAppointmentDialogs();
   const { can } = usePermissions();
   const clinicalAccess = useClinicalAccess();
@@ -144,7 +148,10 @@ export default function ClientDetailPage() {
             </CardHeader>
             <CardContent>
               {upcoming.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">No tiene citas programadas.</p>
+                <div className="space-y-3">
+                  <p className="py-6 text-center text-sm text-muted-foreground">No tiene citas programadas.</p>
+                  {business && <ClientControls clientId={client.id} business={business} enabled={controlsOn} />}
+                </div>
               ) : (
                 <ul className="-mx-3">
                   {upcoming.map((appointment) => (
@@ -232,7 +239,9 @@ export default function ClientDetailPage() {
               <p className="flex items-center gap-3">
                 <IdCard className="size-4 text-muted-foreground" aria-hidden />
                 {client.documentId ? (
-                  <span>Cédula {client.documentId}</span>
+                  <span>
+                    Cédula <span className="font-mono">{client.documentId}</span>
+                  </span>
                 ) : (
                   <span className="text-muted-foreground">Sin cédula</span>
                 )}
@@ -240,7 +249,7 @@ export default function ClientDetailPage() {
               <p className="flex items-center gap-3">
                 <Phone className="size-4 text-muted-foreground" aria-hidden />
                 {client.phone ? (
-                  <a href={`tel:${client.phone}`} className="hover:underline">
+                  <a href={`tel:${client.phone}`} className="font-mono hover:underline">
                     {client.phone}
                   </a>
                 ) : (
@@ -291,6 +300,8 @@ export default function ClientDetailPage() {
             </CardContent>
           </Card>
           <ClientNotesCard client={client} />
+          {/* La tarjeta de fidelización (spec 052): al final, para que nada salte cuando llega. */}
+          {business && <ClientLoyaltyCard client={client} business={business} />}
         </div>
       </div>
     </>

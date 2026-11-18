@@ -3,7 +3,7 @@ import { NewBookingNotice, WeekSample } from "@/components/shared/week-sample";
 
 const TRUST = [
   { icon: MapPin, label: "Hecho en Ecuador" },
-  { icon: IdCard, label: "Tus pacientes no crean cuenta" },
+  { icon: IdCard, label: "Tus pacientes reservan sin crear cuenta" },
 ];
 
 /** El ancho de lo que va en el panel: en pantallas grandes no se estira, queda centrado. */

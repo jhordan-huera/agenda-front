@@ -13,12 +13,12 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://owrmbzomwufznfjnyada.supabase.co; font-src 'self' data:; connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://owrmbzomwufznfjnyada.supabase.co https://*.ingest.us.sentry.io; worker-src 'self' blob:; child-src 'self' blob:; frame-src https://challenges.cloudflare.com https://maps.google.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://owrmbzomwufznfjnyada.supabase.co; font-src 'self' data:; connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://owrmbzomwufznfjnyada.supabase.co https://*.ingest.us.sentry.io; worker-src 'self' blob:; child-src 'self' blob:; frame-src https://challenges.cloudflare.com https://maps.google.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
         },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), payment=(), usb=(), geolocation=(self)" },
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), payment=(), usb=(), geolocation=(self)" },
         { "key": "Strict-Transport-Security", "value": "max-age=63072000" },
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
         { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" }
@@ -38,6 +38,22 @@
     },
     {
       "source": "/encuesta/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/recordatorio/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/mi-tarjeta",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/mi-tarjeta/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/q/:path*",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
     }
   ]

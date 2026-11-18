@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@fontsource-variable/sora";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 
 /*
  * Modo oscuro (spec 019): la clase `dark` en <html>, que ponen public/theme-boot.js y
@@ -71,10 +72,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
-  /* La portada «Panel de marca» (spec 043) y las páginas por especialidad: una sola familia, que cargan sólo ellas. */
-  --font-display: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Geist Mono en todo: el panel, las páginas del paciente, la portada y las páginas por especialidad (pedido del dueño,
+     2026-11-16: primero Geist, después las cifras con el cero tachado y al final también las letras, y la portada). */
+  --font-sans: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* La portada «Panel de marca» (spec 043) y las páginas por especialidad (antes Schibsted Grotesk y después Geist). */
+  --font-display: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Sólo el logotipo (el símbolo con «Agenda360»: logo.tsx, la barra y el pie de la portada) sigue en Geist. */
+  --font-brand: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
   --color-ink: var(--ink);
@@ -154,7 +160,7 @@
  * - Durazno (#FCD9C2, --highlight): marca lo elegido o lo nuevo (la hora reservada, el día elegido, la
  *   reserva que entra), con el trazo de marcador (.marker). Su tono suave (#FBEAE0, --secondary), con
  *   el texto en --lilac-ink (el nombre viene del lila de antes), viste insignias y botones secundarios.
- * - Tipografía: Sora; las horas, grandes, gruesas y con cifras tabulares.
+ * - Tipografía: Geist Mono en todo (el panel, las páginas del paciente y la portada); Geist sólo en el logotipo.
  * - Panel (diseño de aplicación SaaS, claro): el lienzo (--canvas) con el menú y las tarjetas en
  *   blanco; lo destacado, en un degradado del principal al tono del resaltado. --shell (casi negro con
  *   el tono de la marca) viste etiquetas y el cierre y el pie de la portada. Con los colores de un
@@ -381,6 +387,54 @@
     .marker-sweep::before {
       animation: none;
     }
+  }
+}
+
+/*
+ * Los colores de la portada y de las páginas por especialidad (pedido del dueño, 2026-11-16): 60 % crema #eee2cb (el
+ * fondo), 30 % verde #1b4532 (el panel, los textos y los botones oscuros) y 10 % rojo #ee4129 (el botón principal, las
+ * reservas online del ejemplo y los detalles). El panel de la app sigue con la marca (tomate). El rojo nunca lleva texto
+ * claro ni va como texto pequeño sobre el crema: no llega al contraste mínimo. Sobre él, el texto es verde muy oscuro.
+ * Se cambian los tokens que usa la portada sólo dentro de [data-landing].
+ */
+[data-landing] {
+  --wall: #eee2cb;
+  --background: #f7f0e1;
+  --foreground: #1b4532;
+  --card: #f7f0e1;
+  --card-foreground: #1b4532;
+  --muted: #e6d7bb;
+  --muted-foreground: #42604f;
+  --border: rgb(27 69 50 / 0.14);
+  --ring: #1b4532;
+  --primary: #1b4532;
+  --primary-foreground: #0b1d14;
+  --accent: #e6d7bb;
+  --accent-foreground: #1b4532;
+  --ink: #ee4129;
+  --highlight: #e2d1ab;
+  --highlight-foreground: #1b4532;
+  --hero: #1b4532;
+  --hero-end: #143627;
+  --hero-foreground: #eee2cb;
+}
+@media screen {
+  .dark [data-landing]:not(:where(.light, .light *)) {
+    --wall: #0e2018;
+    --background: #153023;
+    --foreground: #eee2cb;
+    --card: #153023;
+    --card-foreground: #eee2cb;
+    --muted: #1a3829;
+    --muted-foreground: #b7c2b2;
+    --border: rgb(238 226 203 / 0.14);
+    --ring: #eee2cb;
+    --primary: #eee2cb;
+    --highlight: #2c4a3b;
+    --highlight-foreground: #eee2cb;
+    --hero: #1f4f39;
+    --hero-end: #1b4532;
+    --hero-foreground: #eee2cb;
   }
 }
 

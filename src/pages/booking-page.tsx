@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BrandThemeProvider } from "@/features/branding/brand-theme-provider";
 import { BookingFlow } from "@/features/booking/booking-flow";
 import { BookingHeader } from "@/features/booking/booking-header";
+import { SocialLinks } from "@/features/loyalty/social-links";
 import { usePublicProfile } from "@/hooks/queries/use-public-booking";
 
 /** Página pública de reservas: /book/:username (sin sesión ni panel). */
@@ -93,6 +94,8 @@ export default function BookingPage() {
             <BookingFlow slug={username} profile={profile} />
           )}
         </main>
+        {/* Las redes del negocio (spec 052): sólo las que puso; sin ninguna, nada. */}
+        <SocialLinks links={profile.business.socialLinks} businessName={profile.business.name} className="px-4 pt-2" />
         {/* «Hecho con Agenda360» (spec 022): en todos los pasos y en «¡Cita reservada!». */}
         <MadeWithAgenda360 slug={username}>
           {" · "}

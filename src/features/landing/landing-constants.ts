@@ -5,7 +5,7 @@ export const DEMO_BOOKING_PATH = "/book/jhordan";
 export const LANDING_HERO = {
   title: "Tu consulta, ordenada desde la primera reserva.",
   text: "Tus pacientes eligen su hora en tu página, reciben su recordatorio y confirman que van. Tú ves la semana entera de un vistazo.",
-  note: "Gratis para empezar, sin tarjeta. Tus pacientes no crean cuenta.",
+  note: "Gratis para empezar, sin tarjeta. Tus pacientes reservan sin crear cuenta.",
 };
 
 /** Las anclas de la portada: las usan la barra de arriba y el pie. Las de antes de la spec 043 siguen igual. */

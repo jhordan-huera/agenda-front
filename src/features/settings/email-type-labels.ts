@@ -40,4 +40,7 @@ export const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   waitlist_joined: "Alta en la lista de espera",
   waitlist_offer: "Hora libre para la lista de espera",
   survey_request: "Encuesta después de la cita",
+  control_reminder: "Recordatorio de control",
+  loyalty_reward: "Premio de la tarjeta",
+  loyalty_linked: "Cuenta unida a la tarjeta",
 };
