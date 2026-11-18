@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CAPTCHA_BOX_CLASS, useCaptcha } from "@/features/booking/use-captcha";
+import { useCaptchaSiteKey } from "@/hooks/queries/use-public-booking";
 import { getHomePath, isTwoFactorChallenge, safeNextPath, type Session } from "@/lib/auth";
 import { DataError, getErrorMessage } from "@/lib/data/errors";
 import { cn } from "@/lib/utils";
@@ -28,6 +30,13 @@ export function LoginForm() {
   const [pending, setPending] = useState(false);
   /** Con la verificación en dos pasos: la contraseña es correcta y falta el código. */
   const [challenge, setChallenge] = useState<string | null>(null);
+  /**
+   * Varios intentos desde una conexión nueva (revisión de seguridad 2026-11-18): la API pide el CAPTCHA y, desde
+   * entonces, cada intento lleva su token. Desde el navegador de siempre no se pide.
+   */
+  const [needsCaptcha, setNeedsCaptcha] = useState(false);
+  const siteKey = useCaptchaSiteKey(needsCaptcha);
+  const { containerRef: captchaRef, getToken: getCaptchaToken } = useCaptcha(needsCaptcha ? (siteKey.data ?? null) : null);
 
   useEffect(() => {
     loadAuthSchemas().catch(() => undefined);
@@ -55,7 +64,7 @@ export function LoginForm() {
 
     setPending(true);
     try {
-      const outcome = await signIn(result.data);
+      const outcome = await signIn(needsCaptcha ? { ...result.data, captchaToken: await getCaptchaToken() } : result.data);
       if (isTwoFactorChallenge(outcome)) {
         setChallenge(outcome.challenge);
         setPending(false);
@@ -63,6 +72,7 @@ export function LoginForm() {
       }
       enter(outcome);
     } catch (error) {
+      if (error instanceof DataError && error.code === "captcha_required") setNeedsCaptcha(true);
       setFormError(getErrorMessage(error));
       setPending(false);
     }
@@ -138,6 +148,7 @@ export function LoginForm() {
           ¿Olvidaste tu contraseña?
         </Link>
       </div>
+      {needsCaptcha && <div ref={captchaRef} className={CAPTCHA_BOX_CLASS} />}
       <SubmitButton size="lg" className="h-11 w-full text-base" loading={pending} loadingText="Ingresando…">
         Iniciar sesión <ArrowRight className="transition-transform duration-150 group-hover/button:translate-x-0.5" />
       </SubmitButton>

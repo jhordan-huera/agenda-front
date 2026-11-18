@@ -28,6 +28,7 @@ export const AUDIT_TYPE_LABELS: Record<AuditEntityType, string> = {
   user: "Usuarios",
   platform: "Plataforma",
   session: "Sesiones",
+  patient_account: "Cuentas de pacientes",
 };
 
 /** Filtros para la API: las fechas del calendario, en la hora local del navegador (hasta: día incluido). */

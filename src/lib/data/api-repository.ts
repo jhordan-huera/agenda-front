@@ -340,6 +340,7 @@ export const apiRepository: DataRepository = {
     signup: (input) => api.post<PatientAccount>("/patient/signup", input),
     login: (input) => api.post<PatientAccount>("/patient/login", input),
     logout: () => api.post<void>("/patient/logout"),
+    logoutEverywhere: () => api.post<void>("/patient/logout-all"),
     me: () => api.get<PatientAccount>("/patient/me"),
     cards: () => api.get<PatientCard[]>("/patient/cards"),
     newQr: () => api.post<PatientAccount>("/patient/qr"),

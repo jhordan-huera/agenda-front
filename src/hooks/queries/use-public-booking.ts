@@ -29,11 +29,13 @@ export function useCreateBooking(slug: string, getCaptchaToken: GetCaptchaToken)
 }
 
 /** Site Key del CAPTCHA del registro (la de la reserva viene en el perfil del negocio). */
-export function useCaptchaSiteKey() {
+/** `enabled`: el inicio de sesión del equipo la pide sólo cuando la API exige el CAPTCHA. */
+export function useCaptchaSiteKey(enabled = true) {
   return useQuery({
     queryKey: queryKeys.captchaSiteKey,
     queryFn: () => data.publicBooking.getCaptchaSiteKey(),
     staleTime: Number.POSITIVE_INFINITY,
+    enabled,
   });
 }
 

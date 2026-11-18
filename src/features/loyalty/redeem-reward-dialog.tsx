@@ -57,7 +57,16 @@ function ClientRedeemForm({ reward, onDone }: { reward: LoyaltyReward; onDone: (
   const { data: business } = useCurrentBusiness();
   const now = useBusinessNow(business?.timezone);
   const appointmentsQuery = useAppointments({ clientId: reward.clientId, from: now.date });
-  const options = (appointmentsQuery.data ?? []).filter((item) => item.status !== "cancelled" && item.date >= now.date);
+  // Sólo las citas donde el canje vale (revisión de seguridad 2026-11-18; la API lo comprueba igual): «Servicio gratis»,
+  // en una de ese servicio; un premio que cambia el precio, nunca en una sesión con varios pacientes.
+  const changesPrice = reward.kind !== "custom";
+  const options = (appointmentsQuery.data ?? []).filter(
+    (item) =>
+      item.status !== "cancelled" &&
+      item.date >= now.date &&
+      (reward.kind !== "free_service" || item.serviceId === reward.serviceId) &&
+      (!changesPrice || item.extraClientIds.length === 0),
+  );
   return <RedeemForm reward={reward} options={options} loading={appointmentsQuery.isPending} onDone={onDone} />;
 }
 

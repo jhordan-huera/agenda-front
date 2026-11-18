@@ -59,13 +59,13 @@ export function PatientSettingsSheet({
     toast.success("Eliminamos tu cuenta.");
   };
 
-  const logout = async () => {
+  const logout = async (everywhere = false) => {
     setLeaving(true);
     try {
-      await data.patient.logout();
+      await (everywhere ? data.patient.logoutEverywhere() : data.patient.logout());
       onOpenChange(false);
       setAccount(null);
-      toast.success("Saliste de tu cuenta.");
+      toast.success(everywhere ? "Cerramos tu sesión en todos tus dispositivos." : "Saliste de tu cuenta.");
     } catch (error) {
       toast.error(getErrorMessage(error));
       setLeaving(false);
@@ -110,10 +110,18 @@ export function PatientSettingsSheet({
               <h3 id="patient-exit-title" className="font-semibold">
                 Salir
               </h3>
-              <p className="text-sm text-muted-foreground">Para volver a entrar, usa tu teléfono y tu contraseña.</p>
-              <Button variant="outline" className="h-11" disabled={leaving} onClick={logout}>
-                <LogOut aria-hidden /> Salir de mi cuenta
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                Para volver a entrar, usa tu teléfono y tu contraseña. Si entraste en un celular que ya no tienes, cierra la
+                sesión en todos.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" className="h-11" disabled={leaving} onClick={() => logout()}>
+                  <LogOut aria-hidden /> Salir de mi cuenta
+                </Button>
+                <Button variant="ghost" className="h-11" disabled={leaving} onClick={() => logout(true)}>
+                  Cerrar sesión en todos los dispositivos
+                </Button>
+              </div>
             </section>
 
             <section aria-labelledby="patient-delete-title" className="space-y-2 border-t pt-6">

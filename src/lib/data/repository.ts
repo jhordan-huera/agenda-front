@@ -522,6 +522,8 @@ export interface PatientRepository {
   signup(input: { name: string; phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
   login(input: { phone: string; password: string; captchaToken?: string }): Promise<PatientAccount>;
   logout(): Promise<void>;
+  /** «Cerrar sesión en todos los dispositivos» (revisión de seguridad 2026-11-18). */
+  logoutEverywhere(): Promise<void>;
   me(): Promise<PatientAccount>;
   cards(): Promise<PatientCard[]>;
   newQr(): Promise<PatientAccount>;
