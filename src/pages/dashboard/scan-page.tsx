@@ -5,13 +5,16 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageTitle } from "@/components/shared/page-title";
 import { Card, CardContent } from "@/components/ui/card";
 import { PatientInviteButton } from "@/features/loyalty/patient-invite-dialog";
+import { RequireLoyalty } from "@/features/loyalty/require-loyalty";
 import { ScanPanel } from "@/features/loyalty/scan-panel";
 
 /** «Escanear» (spec 052): la cámara para el QR del paciente; /q/:token trae aquí el token (?qr=) y lo busca directo. */
 export default function ScanPage() {
   return (
     <RequirePermission permission="appointments.manage">
-      <ScanPageContent />
+      <RequireLoyalty title="Escanear">
+        <ScanPageContent />
+      </RequireLoyalty>
     </RequirePermission>
   );
 }

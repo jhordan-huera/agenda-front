@@ -632,6 +632,8 @@ export interface PlatformAdminRepository {
    * el negocio no lo cambia.
    */
   setMultiClientAppointments(businessId: string, enabled: boolean): Promise<Business>;
+  /** La tarjeta de fidelización en un negocio (spec 052): sólo el super admin; al quitarla se apaga el programa. */
+  setLoyaltyAllowed(businessId: string, enabled: boolean): Promise<Business>;
   /**
    * «Pedir el comprobante de pago» (spec 039). Sólo el super admin: el interruptor y, con él encendido, los
    * días de los recordatorios (siempre antes de la cita).

@@ -266,7 +266,7 @@ export default function CalendarPage() {
               </Button>
             )}
             {/* El QR de la tarjeta del paciente (spec 052): marca su cita de hoy como atendida. */}
-            {can("appointments.manage") && <ScanButton compact />}
+            {can("appointments.manage") && business?.loyaltyAllowed && <ScanButton compact />}
             <Button
               size="lg"
               onClick={() =>

@@ -389,6 +389,8 @@ export const apiRepository: DataRepository = {
       api.put<Subscription>(`/admin/businesses/${id(businessId)}/max-professionals`, { maxProfessionals }),
     setClientRequiredFields: (businessId, fields) =>
       api.put<Business>(`/admin/businesses/${id(businessId)}/client-required-fields`, fields),
+    setLoyaltyAllowed: (businessId, enabled) =>
+      api.put<Business>(`/admin/businesses/${id(businessId)}/loyalty-allowed`, { enabled }),
     setMultiClientAppointments: (businessId, enabled) =>
       api.put<Business>(`/admin/businesses/${id(businessId)}/multi-client-appointments`, { enabled }),
     setPaymentReminders: (businessId, input) => api.put<Business>(`/admin/businesses/${id(businessId)}/payment-reminders`, input),

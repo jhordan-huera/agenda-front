@@ -10,6 +10,7 @@ import { LoyaltyMembers } from "@/features/loyalty/loyalty-members";
 import { LoyaltyIntro, LoyaltyProgramForm } from "@/features/loyalty/loyalty-program-form";
 import { PatientInviteButton } from "@/features/loyalty/patient-invite-dialog";
 import { LoyaltyRewards } from "@/features/loyalty/loyalty-rewards";
+import { RequireLoyalty } from "@/features/loyalty/require-loyalty";
 import { SettingsSectionSkeleton } from "@/features/settings/settings-section";
 import { useCurrentBusiness } from "@/hooks/queries/use-account";
 import { useLoyaltyBenefits, useLoyaltyProgram, useLoyaltySummary } from "@/hooks/queries/use-loyalty";
@@ -26,7 +27,9 @@ const TABS = [
 export default function LoyaltyPage() {
   return (
     <RequirePermission permission="loyalty.manage">
-      <LoyaltyPageContent />
+      <RequireLoyalty title="Fidelización">
+        <LoyaltyPageContent />
+      </RequireLoyalty>
     </RequirePermission>
   );
 }

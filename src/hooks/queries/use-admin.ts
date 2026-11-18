@@ -258,6 +258,15 @@ export function useSetClientRequiredFields() {
   });
 }
 
+/** La tarjeta de fidelización en un negocio (spec 052; como los datos obligatorios: se recarga también el negocio). */
+export function useSetLoyaltyAllowed() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ businessId, enabled }: { businessId: string; enabled: boolean }) => data.admin.setLoyaltyAllowed(businessId, enabled),
+    onSuccess: (business) => onBusinessSettingSaved(queryClient, business),
+  });
+}
+
 /** Citas con varios pacientes en un negocio (como los datos obligatorios: se recarga también el negocio). */
 export function useSetMultiClientAppointments() {
   const queryClient = useQueryClient();

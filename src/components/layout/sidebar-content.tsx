@@ -25,7 +25,9 @@ export function SidebarContent({ onNavigate, bell }: { onNavigate?: () => void; 
   const multiAgenda = useMultiAgendaAccess();
   const signOut = useSignOut();
   const { collapsed } = useSidebarCollapse();
-  const items = NAV_ITEMS.filter((item) => (!item.permission || can(item.permission)) && (!item.multiAgenda || multiAgenda));
+  const items = NAV_ITEMS.filter(
+    (item) => (!item.permission || can(item.permission)) && (!item.multiAgenda || multiAgenda) && (!item.loyalty || business?.loyaltyAllowed),
+  );
 
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
