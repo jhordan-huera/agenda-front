@@ -73,7 +73,7 @@ export default function AdminUsersPage() {
   const count = (value: UserFilter) => all.filter((row) => matchesFilter(row, value)).length;
   const requestPassword = (row: AdminUserSummary) => {
     const name = getFullName(row.user);
-    setPassword.request({ id: row.user.id, name, email: row.user.email });
+    setPassword.request({ id: row.user.id, name, email: row.user.email, phone: row.user.phone });
   };
   const requestToggle = (row: AdminUserSummary) => setToggleDialog({ open: true, row });
 

@@ -13,6 +13,8 @@ import { ActivityLog } from "@/features/settings/activity-log";
 import { BrandColorsSettings } from "@/features/settings/brand-colors-settings";
 import { BookingSettingsForm } from "@/features/settings/booking-settings-form";
 import { BusinessSettingsForm } from "@/features/settings/business-settings-form";
+import { KeyRound } from "lucide-react";
+import { ChangePasswordForm } from "@/features/settings/change-password-form";
 import { ClinicalSettingsCard } from "@/features/settings/clinical-settings-card";
 import { EmailOutbox } from "@/features/settings/email-outbox";
 import {
@@ -99,6 +101,8 @@ export default function SettingsPage() {
             ) : (
               <>
                 <ProfileSettingsForm user={userQuery.data} />
+                {/* La propia contraseña (spec 054), cualquier rol. En modo soporte no: sería la del super admin. */}
+                {!session?.support && <ChangePasswordForm icon={KeyRound} />}
                 <OwnAgendaCard />
               </>
             )}

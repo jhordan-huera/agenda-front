@@ -27,6 +27,7 @@ import { getHomePath, loginPathFor } from "@/lib/auth";
 import { AppShell } from "./app-shell";
 import { SidebarContent } from "./sidebar-content";
 import { SuspendedBusinessScreen } from "./suspended-business-screen";
+import { NewPasswordScreen } from "@/features/auth/new-password-screen";
 
 /** Layout del panel del negocio: protege las rutas y muestra la navegación. */
 export default function DashboardLayout() {
@@ -46,6 +47,8 @@ export default function DashboardLayout() {
   }, [status, session, needsTwoFactor, navigate, location.pathname, location.search]);
 
   if (status !== "authenticated" || !session?.businessId || needsTwoFactor) return <FullPageLoader />;
+  // Con una contraseña temporal, primero la contraseña nueva (spec 054): la API rechaza el resto hasta entonces.
+  if (session.passwordChangeRequired) return <NewPasswordScreen />;
   if (session.businessStatus === "suspended" && !session.support) return <SuspendedBusinessScreen />;
   return <DashboardShell />;
 }

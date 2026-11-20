@@ -6,6 +6,7 @@ import { FullPageLoader } from "@/components/shared/full-page-loader";
 import { Logo } from "@/components/shared/logo";
 import { PageTitle } from "@/components/shared/page-title";
 import { Button } from "@/components/ui/button";
+import { NewPasswordScreen } from "@/features/auth/new-password-screen";
 import { useSession } from "@/features/auth/use-session";
 import { useInstallableApp } from "@/features/install/use-installable-app";
 import { OnboardingWizard } from "@/features/onboarding/onboarding-wizard";
@@ -28,6 +29,8 @@ export default function OnboardingPage() {
   }, [status, home, navigate]);
 
   if (status !== "authenticated" || home !== "/onboarding") return <FullPageLoader />;
+  // Con una contraseña temporal, primero la contraseña nueva (spec 054).
+  if (session?.passwordChangeRequired) return <NewPasswordScreen />;
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">

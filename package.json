@@ -22,7 +22,8 @@
     "check:specialties": "node scripts/check-specialties.ts",
     "check:surveys": "node scripts/check-surveys.ts",
     "check:control-reminders": "node scripts/check-control-reminders.ts",
-    "check:loyalty": "node scripts/check-loyalty.ts"
+    "check:loyalty": "node scripts/check-loyalty.ts",
+    "check:password-recovery": "node scripts/check-password-recovery.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

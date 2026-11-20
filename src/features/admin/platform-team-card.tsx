@@ -106,7 +106,7 @@ export function PlatformTeamCard() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => passwordDialog.request({ id: user.id, name, email: user.email })}
+                        onClick={() => passwordDialog.request({ id: user.id, name, email: user.email, phone: user.phone })}
                       >
                         <KeyRound /> Contraseña
                       </Button>

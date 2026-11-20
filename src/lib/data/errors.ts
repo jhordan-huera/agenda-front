@@ -18,6 +18,8 @@ export type DataErrorCode =
   | "push_failed"
   /** Inicio de sesión del equipo: varios intentos desde una conexión nueva, hace falta el CAPTCHA (revisión 2026-11-18). */
   | "captcha_required"
+  /** La sesión se abrió con una contraseña temporal: primero hay que crear la propia (spec 054). */
+  | "password_change_required"
   | "server";
 
 /** Error de la capa de datos con mensaje listo para mostrar al usuario. */
