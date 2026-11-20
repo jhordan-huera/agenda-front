@@ -44,7 +44,8 @@ export function LoginForm() {
 
   // Con `?next=` (la pantalla de un aviso, spec 013) vuelve allí si es de su panel; si no, al Inicio. También tras la verificación en dos pasos.
   const enter = (session: Session) => {
-    toast.success("¡Bienvenido de nuevo!");
+    // Con una contraseña temporal (spec 054), el panel pide crear la propia: todavía no es un «bienvenido».
+    if (!session.passwordChangeRequired) toast.success("¡Bienvenido de nuevo!");
     navigate(safeNextPath(searchParams.get("next"), session) ?? getHomePath(session), { replace: true });
   };
 

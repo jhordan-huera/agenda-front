@@ -1,4 +1,4 @@
-import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
+import { APP_NAME, DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { BANK_ACCOUNT_TYPE_LABELS, TIMEZONES } from "@/lib/constants/business";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { Appointment, AppointmentStatus, BankAccount, Business, ISODate, WhatsAppNoticeKind } from "@/types";
@@ -33,6 +33,21 @@ export function getWhatsAppUrl(phone: string, timezone: string, message: string)
 /** Enlace al WhatsApp de soporte de la plataforma (números sin prefijo: Ecuador). */
 export function getSupportWhatsAppUrl(phone: string, message: string): string | null {
   return getWhatsAppUrl(phone, DEFAULT_TIMEZONE, message);
+}
+
+/**
+ * El mensaje con la contraseña temporal que el super admin envía por WhatsApp desde «Cambiar contraseña» (spec 054,
+ * pedido del dueño el 2026-11-20). La contraseña va sola en su renglón, para copiarla sin errores.
+ */
+export function buildTemporaryPasswordMessage(data: { firstName: string; email: string; password: string; loginUrl: string }): string {
+  return [
+    `Hola ${data.firstName}, te escribe el soporte de ${APP_NAME}.`,
+    "",
+    "Tu contraseña temporal es:",
+    data.password,
+    "",
+    `Entra en ${data.loginUrl} con tu email (${data.email}). Al entrar te pediremos crear tu propia contraseña.`,
+  ].join("\n");
 }
 
 /** Enlace para compartir un mensaje por WhatsApp eligiendo a quién (sin número): «Compartir por WhatsApp». */

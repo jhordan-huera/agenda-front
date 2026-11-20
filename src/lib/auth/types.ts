@@ -1,6 +1,8 @@
 import type {
   ChangePasswordInput,
+  ForgotPasswordInput,
   LoginInput,
+  NewPasswordInput,
   RegisterInput,
   ThemeModeInput,
   TwoFactorDisableInput,
@@ -50,6 +52,12 @@ export interface Session {
    */
   themeMode: ThemeMode;
   /**
+   * Se entró con una contraseña temporal (la del email de «¿Olvidaste tu contraseña?» o la que puso el soporte, spec
+   * 054): el panel y /admin sólo muestran «Crea tu contraseña nueva» y la API responde `password_change_required` al
+   * resto. Un backend anterior no lo manda: se toma como false.
+   */
+  passwordChangeRequired?: boolean;
+  /**
    * Sólo en el frontend: el super admin está gestionando un negocio ("Gestionar negocio").
    * Mientras tanto, businessId/role apuntan a ese negocio con permisos de propietario.
    */
@@ -69,8 +77,15 @@ export interface AuthService {
   /** Falla con `forbidden` si el super admin cerró el registro público. */
   signUp(input: RegisterInput): Promise<Session>;
   signOut(): Promise<void>;
-  /** Sólo el super admin: las contraseñas de los usuarios las pone él desde el panel /admin. */
+  /** La propia contraseña, con la actual: cualquier cuenta del equipo y el super admin (spec 054). */
   changePassword(input: ChangePasswordInput): Promise<void>;
+  /**
+   * «¿Olvidaste tu contraseña?» (spec 054): si el email tiene una cuenta, le llega una contraseña temporal. Responde
+   * igual exista o no.
+   */
+  requestTemporaryPassword(input: ForgotPasswordInput): Promise<void>;
+  /** «Crea tu contraseña nueva», después de entrar con una contraseña temporal (spec 054). Devuelve la sesión libre. */
+  newPassword(input: NewPasswordInput): Promise<Session>;
   /**
    * Modo de pantalla de la propia cuenta (spec 019), con cualquier rol. Queda en la actividad; el mismo
    * modo otra vez no cambia nada.

@@ -20,6 +20,8 @@ export const apiAuthService: AuthService = {
   signUp: (input) => api.post<Session>("/auth/register", input).then(withThemeMode),
   signOut: () => api.post<void>("/auth/logout"),
   changePassword: (input) => api.post<void>("/auth/change-password", input),
+  requestTemporaryPassword: (input) => api.post<void>("/auth/forgot-password", input),
+  newPassword: (input) => api.post<Session>("/auth/new-password", input).then(withThemeMode),
   setThemeMode: (input) => api.put<{ mode: ThemeMode }>("/auth/theme-mode", input),
   twoFactor: {
     status: () => api.get<TwoFactorStatus>("/auth/two-factor"),

@@ -28,7 +28,8 @@
         return response.ok ? response.clone().json() : null;
       })
       .then(function (session) {
-        if (!session) return;
+        // Con una contraseña temporal, la API sólo deja crear la nueva (spec 054): no se pide nada más.
+        if (!session || session.passwordChangeRequired) return;
         var paths = ["/users/" + encodeURIComponent(session.userId)];
         if (session.platformRole) {
           // El Resumen del super admin (/admin): lo que la página espera antes de mostrarse.

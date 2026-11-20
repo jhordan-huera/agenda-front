@@ -12,7 +12,10 @@ import { useSettingsForm } from "./use-settings-form";
 
 const EMPTY: ChangePasswordInput = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
-/** Cambio de la propia contraseña del super admin (las de los usuarios las pone él desde /admin). */
+/**
+ * Cambio de la propia contraseña, con la actual: cualquier cuenta del equipo (Configuración → Perfil) y el super admin
+ * (/admin → Configuración), spec 054. Cierra las demás sesiones abiertas de la cuenta.
+ */
 export function ChangePasswordForm({ icon }: { icon?: LucideIcon } = {}) {
   const { values, setField, errors, setErrors, dirty, reset } = useSettingsForm(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -37,7 +40,7 @@ export function ChangePasswordForm({ icon }: { icon?: LucideIcon } = {}) {
     <SettingsSection
       title="Contraseña"
       icon={icon}
-      description="La contraseña de tu cuenta de super admin."
+      description="La contraseña con la que entras. Al cambiarla se cierran tus sesiones abiertas en otros aparatos."
       dirty={dirty}
       saving={saving}
       onSubmit={submit}

@@ -11,6 +11,7 @@ import { DEFAULT_TIMEZONE } from "@/lib/constants/app";
 import { AdminSidebar } from "./admin-sidebar";
 import { AppShell } from "./app-shell";
 import { TwoFactorRequiredScreen } from "./two-factor-required-screen";
+import { NewPasswordScreen } from "@/features/auth/new-password-screen";
 
 /**
  * Layout del panel de plataforma (/admin). Sólo el super admin entra; el resto vuelve
@@ -31,6 +32,8 @@ export default function AdminLayout() {
   }, [status, session, isSuperAdmin, navigate, location.pathname, location.search]);
 
   if (status !== "authenticated" || !isSuperAdmin) return <FullPageLoader />;
+  // Con una contraseña temporal, primero la contraseña nueva (spec 054); después, si falta, la verificación en dos pasos.
+  if (session.passwordChangeRequired) return <NewPasswordScreen />;
   if (session.twoFactorSetupRequired) return <TwoFactorRequiredScreen />;
   // Los colores que eligió este super admin para su panel (spec 007); sin ellos, los de Agenda360.
   return (

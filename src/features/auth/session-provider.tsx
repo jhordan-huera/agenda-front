@@ -90,9 +90,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // La API respondió 401 (sesión caducada o cerrada desde otro dispositivo): se vuelve a leer la
     // sesión y, si ya no existe, los layouts redirigen al login. Con `two_factor_required` (super admin
-    // sin la verificación en dos pasos), la sesión nueva lo dice y el panel le pide activarla.
+    // sin la verificación en dos pasos), la sesión nueva lo dice y el panel le pide activarla. Con
+    // `password_change_required` (spec 054), igual: la sesión dice que falta crear la contraseña.
     const needsSession = (error: unknown) =>
-      error instanceof DataError && (error.code === "unauthorized" || error.code === "two_factor_required");
+      error instanceof DataError &&
+      (error.code === "unauthorized" || error.code === "two_factor_required" || error.code === "password_change_required");
     const queries = queryClient.getQueryCache().subscribe((event) => {
       if (event.type === "updated" && event.action.type === "error" && needsSession(event.action.error)) void refresh();
     });

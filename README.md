@@ -175,9 +175,11 @@ src/
 
 ## Contraseñas y soporte
 
-- **Las contraseñas las pone el super admin**: al crear un negocio, al agregar miembros a un equipo
-  (sólo él puede) y al cambiársela a un usuario; el usuario la recibe por email y no puede cambiarla.
-  "¿Olvidaste tu contraseña?" muestra el email de soporte.
+- **Las contraseñas que pone el super admin son temporales** (spec 054): al crear un negocio, al agregar
+  miembros a un equipo (sólo él puede) y al cambiársela a un usuario; llega por email (y, si quiere, por
+  WhatsApp desde el diálogo) y al entrar con ella la persona crea la suya («Crea tu contraseña nueva»).
+  "¿Olvidaste tu contraseña?" envía una contraseña temporal por email (1 hora, una sola vez). Cualquier
+  cuenta cambia la suya en Configuración → Perfil con la actual.
 - **Cambiar el email de la cuenta** (Configuración → Perfil) pide la contraseña actual.
 - **Categorías**: los tipos de negocio están en la base de datos y el super admin los gestiona en
   `/admin/categories`. El negocio la elige al crearse y después sólo la cambia el super admin (ficha
@@ -211,7 +213,7 @@ Hay dos caminos, y el super admin decide cuáles están abiertos:
 1. **Registro propio** (`/register` → onboarding de 6 pasos): el profesional crea su cuenta y su
    negocio, con plan Free. Se puede cerrar desde `/admin/settings` → "Registro público abierto";
    con el registro cerrado, `/register` muestra un aviso y el backend rechaza las altas.
-   **En producción está cerrado**: las contraseñas las pone siempre el super admin.
+   **En producción está cerrado**: las contraseñas las pone el super admin (temporales, spec 054).
 2. **Alta por el super admin** (`/admin/businesses` → "Nuevo negocio"): datos del negocio con su
    descripción, sus servicios (nombre, minutos y precio; se propone el del tipo de negocio), su
    horario semanal (varios intervalos por día) y el plan. **Sin propietario**: su página de
